@@ -71,6 +71,18 @@ static GenDesc GenAASGN  = { TOK_AND_ASSIGN,    GEN_NOPUSH,     g_and };
 static GenDesc GenXOASGN = { TOK_XOR_ASSIGN,    GEN_NOPUSH,     g_xor };
 static GenDesc GenOASGN  = { TOK_OR_ASSIGN,     GEN_NOPUSH,     g_or  };
 
+/* Suzy hardware math generators for the fork-specific '!*', '!/' and '!%'
+** operators (see LYNX_CODEGEN_DESIGN.md 2.6). Same precedence, associativity
+** and type rules as the standard multiplicative operators; only the code
+** generators differ.
+*/
+static const GenDesc SuzyOps[] = {
+    { TOK_STAR,     GEN_NOPUSH | GEN_COMM,  g_suzymul   },
+    { TOK_DIV,      GEN_NOPUSH,             g_suzydiv   },
+    { TOK_MOD,      GEN_NOPUSH,             g_suzymod   },
+    { TOK_INVALID,  0,                      0           }
+};
+
 
 
 /*****************************************************************************/
@@ -1907,7 +1919,30 @@ static void hie_internal (const GenDesc* Ops,   /* List of generators */
     ExprWithCheck (hienext, Expr);
 
     *UsedGen = 0;
-    while ((Gen = FindGen (CurTok.Tok, Ops)) != 0) {
+    while (1) {
+
+        Gen = FindGen (CurTok.Tok, Ops);
+
+        /* Fork extension: a '!' in binary-operator position followed by a
+        ** multiplicative operator selects the Suzy hardware math generators
+        ** ('!*', '!/', '!%'). In valid C, '!' can never appear here, so this
+        ** collides with no legal program; '!' in unary position (as in
+        ** 'a * !*p') is consumed by the unary-expression parser and never
+        ** reaches this loop. The check against Ops restricts the match to
+        ** the precedence level that owns the multiplicative operators.
+        */
+        if (Gen == 0 && CurTok.Tok == TOK_BOOL_NOT &&
+            FindGen (NextTok.Tok, Ops) != 0) {
+            const GenDesc* SuzyGen = FindGen (NextTok.Tok, SuzyOps);
+            if (SuzyGen != 0) {
+                NextToken ();           /* Skip the '!' */
+                Gen = SuzyGen;
+            }
+        }
+
+        if (Gen == 0) {
+            break;
+        }
 
         /* Tell the caller that we handled it's ops */
         *UsedGen = 1;

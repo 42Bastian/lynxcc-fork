@@ -427,6 +427,13 @@ void g_rsub (unsigned flags, unsigned long val);
 void g_mul (unsigned flags, unsigned long val);
 void g_div (unsigned flags, unsigned long val);
 void g_mod (unsigned flags, unsigned long val);
+void g_suzymul (unsigned flags, unsigned long val);
+void g_suzydiv (unsigned flags, unsigned long val);
+void g_suzymod (unsigned flags, unsigned long val);
+/* Suzy hardware math variants (Lynx fork). Reached only via the '!*', '!/'
+** and '!%' operators; they call the tossuzy* runtime entries in lynx.lib
+** for int operands and fall back to the software routines for longs.
+*/
 void g_or (unsigned flags, unsigned long val);
 void g_xor (unsigned flags, unsigned long val);
 void g_and (unsigned flags, unsigned long val);

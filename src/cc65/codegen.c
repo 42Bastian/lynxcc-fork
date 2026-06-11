@@ -2738,6 +2738,121 @@ void g_mod (unsigned flags, unsigned long val)
 
 
 
+void g_suzymul (unsigned flags, unsigned long val)
+/* Primary = TOS * Primary, via the Suzy hardware multiplier. Reached only
+** through the fork-specific '!*' operator. The hardware is 16x16, so long
+** operands fall back to the software routines. One unsigned routine serves
+** both signednesses: the low 16 bits of the product are identical.
+*/
+{
+    static const char* const ops[4] = {
+        "tossuzymulax", "tossuzyumulax", "tosmuleax", "tosumuleax"
+    };
+
+    int p2;
+
+    /* The hardware multiplies 16x16; use the software routine for longs */
+    if ((flags & CF_TYPEMASK) == CF_LONG) {
+        g_mul (flags, val);
+        return;
+    }
+
+    /* Do strength reduction if the value is constant and a power of two:
+    ** shifts beat the hardware.
+    */
+    if (flags & CF_CONST && (p2 = PowerOf2 (val)) >= 0) {
+        /* Generate a shift instead */
+        g_asl (flags, p2);
+        return;
+    }
+
+    /* If the right hand side is const, the lhs is not on stack but still
+    ** in the primary register.
+    */
+    if (flags & CF_CONST) {
+        flags &= ~CF_FORCECHAR;         /* Handle chars as ints */
+        g_push (flags & ~CF_CONST, 0);
+    }
+
+    /* Use the hardware routine over the stack */
+    oper (flags, val, ops);
+}
+
+
+
+void g_suzydiv (unsigned flags, unsigned long val)
+/* Primary = TOS / Primary, via the Suzy hardware divider. Reached only
+** through the fork-specific '!/' operator. The hardware divide is 16-bit
+** and unsigned only; the signed entry fixes up the sign in software, and
+** long operands fall back to the software routines.
+*/
+{
+    static const char* const ops[4] = {
+        "tossuzydivax", "tossuzyudivax", "tosdiveax", "tosudiveax"
+    };
+
+    int p2;
+
+    /* The hardware divides 16-bit operands; use software for longs */
+    if ((flags & CF_TYPEMASK) == CF_LONG) {
+        g_div (flags, val);
+        return;
+    }
+
+    /* Do strength reduction if the value is constant and a power of two */
+    if ((flags & CF_CONST) && (p2 = PowerOf2 (val)) >= 0) {
+        /* Generate a shift instead */
+        g_asr (flags, p2);
+    } else {
+        /* Generate a division */
+        if (flags & CF_CONST) {
+            /* lhs is not on stack */
+            flags &= ~CF_FORCECHAR;     /* Handle chars as ints */
+            g_push (flags & ~CF_CONST, 0);
+        }
+        oper (flags, val, ops);
+    }
+}
+
+
+
+void g_suzymod (unsigned flags, unsigned long val)
+/* Primary = TOS % Primary, via the Suzy hardware math unit. Reached only
+** through the fork-specific '!%' operator. The hardware remainder register
+** is buggy (see suzyumod.s), so the routines compute n - (n/d)*d with one
+** hardware divide plus one hardware multiply. Long operands fall back to
+** the software routines.
+*/
+{
+    static const char* const ops[4] = {
+        "tossuzymodax", "tossuzyumodax", "tosmodeax", "tosumodeax"
+    };
+
+    int p2;
+
+    /* The hardware handles 16-bit operands; use software for longs */
+    if ((flags & CF_TYPEMASK) == CF_LONG) {
+        g_mod (flags, val);
+        return;
+    }
+
+    /* Check if we can do some cost reduction */
+    if ((flags & CF_CONST) && (flags & CF_UNSIGNED) && val != 0xFFFFFFFF && (p2 = PowerOf2 (val)) >= 0) {
+        /* We can do that with an AND operation */
+        g_and (flags, val - 1);
+    } else {
+        /* Do it the hard way... */
+        if (flags & CF_CONST) {
+            /* lhs is not on stack */
+            flags &= ~CF_FORCECHAR;     /* Handle chars as ints */
+            g_push (flags & ~CF_CONST, 0);
+        }
+        oper (flags, val, ops);
+    }
+}
+
+
+
 void g_or (unsigned flags, unsigned long val)
 /* Primary = TOS | Primary */
 {

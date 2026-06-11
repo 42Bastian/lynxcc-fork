@@ -11,8 +11,11 @@ done (benefits unoptimized builds; at `-O` the peepholes already produced these 
 (measured 76 vs 93 avg cycles on a 6-case switch; constant-time dispatch). §2.5 SMC
 runtime — done for `memcpy`/`memset` (8–12% for n ≥ 256/512); `mul`/shifts were examined
 and have no SMC opportunity (pure register/zp loops), see §2.6 for the better approach.
-§2.6 Suzy hardware multiply/divide — designed, not implemented. §2.7 cycle-cost model —
-not implemented.
+§2.6 Suzy hardware multiply/divide — done: `!*`/`!/`/`!%` operators (parser combination in
+`hie_internal`, hardware generators `g_suzymul`/`g_suzydiv`/`g_suzymod`, five `tossuzy*`
+routines in `libsrc/lynx/`); verified against C semantics on 3144 operand pairs (corner
+values plus randoms) in a 65C02+Suzy simulator, including the divide-by-zero contract and
+the sign fixups. §2.7 cycle-cost model — not implemented.
 
 ## 1. Background
 
@@ -186,25 +189,65 @@ and `MATHC/MATHD`, result in `MATHE..MATHH`; writing `MATHA` starts the operatio
 32÷16 divide with remainder (dividend in `MATHE..MATHH`, divisor in `MATHN/MATHP`,
 quotient in `MATHA..MATHD`; writing `MATHE` starts it). A multiply completes in roughly
 44–54 ticks (≈ 11–14 CPU cycles) and a divide in at most ~400 ticks (≈ 100 CPU cycles);
-completion is polled via the math-working bit in `SPRSYS`. The register definitions are
-already in this tree's `_suzy.h`/`lynx.inc`.
+completion is polled via the math-working bit in `SPRSYS` (per-operation status:
+`MULTSTAT`/`DIVSTAT`); divide timing is 176 + 14·N ticks where N is the count of leading
+zeros in the divisor. The register definitions are already in this tree's
+`_suzy.h`/`lynx.inc`. Reference: Lynx hardware docs §12.1
+(http://www.monlynx.de/lynx/lynx9.html).
 
-**Mapping to cc65 runtime entry points** (overrides live in `libsrc/lynx/`, which the
-library build's vpath ordering prefers over `libsrc/runtime/` — the same mechanism other
-targets use):
+**Selection model: explicit opt-in operators, software by default.** The standard `*`,
+`/`, `%` operators keep the stock software routines unchanged. Suzy math is requested
+per call site with the fork-specific operators `!*`, `!/`, `!%` (same precedence,
+associativity, and type/promotion rules as their standard counterparts). This is
+unambiguous to parse: in valid C, `!` can never appear in binary-operator position, so a
+`!` where a multiplicative operator is expected — including inside `a * !*p`, where the
+`!` is in unary position — collides with no legal program.
 
-1. `tosumulax`/`tosmulax` (`mul.s` override): one unsigned hardware multiply serves both —
+Implementation:
+
+- *Scanner*: unchanged. `!*` must NOT be lexed as one token (it would break `!*p`);
+  the parser combines the two tokens by context.
+- *Parser* (`src/cc65/expr.c`): in the multiplicative-level `hie_internal` loop, if
+  `CurTok == TOK_BOOL_NOT` and `NextTok` is `TOK_STAR`/`TOK_DIV`/`TOK_MOD`, consume both
+  and select the hardware generator.
+- *Codegen* (`src/cc65/codegen.c`): hardware variants of `g_mul`/`g_div`/`g_mod` emitting
+  calls to new runtime entries (below). Constant folding is kept, as is the
+  power-of-two→shift strength reduction (shifts beat the hardware).
+- *Library*: the Suzy routines live under NEW entry names (`tossuzymulax`,
+  `tossuzyudivax`, `tossuzyumodax`, `tossuzydivax`, `tossuzymodax`) in `libsrc/lynx/`,
+  coexisting with the untouched software `tosmulax` family in `lynx.lib`. No vpath
+  override, no runtime flag, no per-call dispatch overhead.
+
+Consequences to document: source using `!*`/`!/`/`!%` is fork-specific (other compilers
+reject it), and compiler-generated multiplies (array indexing, pointer scaling) always
+use software — only explicit call sites get Suzy. The §2.6 constraints below (contention,
+IRQ, polling) therefore only apply at sites the programmer explicitly marked, which makes
+the "no math in IRQ handlers" contract auditable by grep.
+
+**Mapping to cc65 runtime entry points** (the new `tossuzy*` entries in `libsrc/lynx/`;
+the stock software routines in `libsrc/runtime/` remain the `*`/`/`/`%` implementations):
+
+1. `tossuzyumulax`/`tossuzymulax` (`suzymul.s`): one unsigned hardware multiply serves both —
    cc65's int multiply returns only the low 16 bits of the product, which are identical
    for signed and unsigned operands. No sign handling needed at all. Estimated ~50 cycles
    total including register setup/readback, versus ~150–400 for the software loop: 3–8×.
-2. `tosudivax`/`tosumodax` (`udiv.s`/`umod.s` overrides): zero-extend the 16-bit dividend
-   into `MATHE..MATHH`, divide, read quotient or remainder. Estimated ~6× faster.
-3. `tosdivax`/`tosmodax`: signed division differs from unsigned — negate operands to
+2. `tossuzyudivax`/`tossuzyumodax` (`suzyudiv.s`/`suzyumod.s`): zero-extend the 16-bit dividend
+   into `MATHE..MATHH`, divide, read quotient. **Do not read the hardware remainder**: the
+   Lynx hardware documentation (§12.1.4, "Bugs in MathLand") states the remainder register
+   has two value-dependent errors — "just don't use it." Modulo must instead be computed
+   as `n − (n/d)·d`: one hardware divide, one hardware multiply, one 16-bit subtract.
+   Still ≈3–4× faster than the software loop, but roughly twice the cost of the quotient
+   path (~44 extra ticks plus register writes).
+3. `tossuzydivax`/`tossuzymodax` (`suzydiv.s`/`suzymod.s`): signed division differs from unsigned — negate operands to
    positive in software, divide unsigned in hardware, fix up the result sign (C truncation
-   semantics). Do **not** use Suzy's sign-math mode: the hardware's signed handling has
-   documented bugs; unsigned-plus-software-fixup is the established safe practice.
+   semantics). Software fixup is **mandatory**, not a choice: Suzy's divide is unsigned
+   only — its sign-math mode applies solely to multiply (and is buggy there: $8000 is
+   treated as positive and 0 as negative, and signed mode destroys input operands
+   in-place).
 4. `umul16x16r32`/`udiv32by16r16` (used by `lz4`, `tgi` scaling and others): natural fits,
-   the hardware is exactly these widths.
+   the hardware is exactly these widths. These are library-internal helpers, not reached
+   by the `!*` operators — switching them to Suzy is a separate per-helper decision (via
+   the normal vpath override) and is safe for `tgi` since its drawing is synchronous.
 
 **Constraints that the implementation must respect:**
 
@@ -219,7 +262,18 @@ targets use):
 - **Poll before read**: results must not be read until the `SPRSYS` math-working bit
   clears. The multiply is short enough that the poll usually succeeds on first check.
 - **Accumulator mode off**: `SPRSYS` accumulate must be cleared, or results accumulate
-  into `MATHJ..MATHM` across calls.
+  into `MATHJ..MATHM` across calls. Side benefit: unsigned non-accumulate multiply is the
+  fastest mode (44 ticks vs 54 with sign/accumulate).
+- **Hardware non-reentrancy beyond IRQs**: per the hardware docs, even a careful IRQ-side
+  save/restore of the math registers fails — writing the inputs back *starts a new
+  operation* and disturbs values a repetitive-multiply caller may still need. There is no
+  safe save/restore protocol; the only contract is "no math in IRQ handlers."
+- **Unsafe-access bit pollution**: the `SPRSYS` unsafe-access bit is broken for math
+  operations (documented hardware bug) — every math op may set it spuriously. Code using
+  that bit for sprite debugging must reset it after math; document this in the routine
+  headers (or clear it in the routines if the write is cheap enough).
+- **Divide-by-zero**: hardware returns $FFFFFFFF and sets a flag bit. C behavior is
+  undefined, so returning $FFFF is acceptable; document it.
 
 **Verification**: differential simulator tests (as used for §2.1/§2.4/§2.5) need a Suzy
 math model added to the simulator, or hardware/emulator validation via Handy/Mednafen
@@ -276,5 +330,6 @@ ABI changes would break every existing object file and driver.
 Each step is independently shippable: (1) runtime fast paths — done, (2) `Opt65C02SaveRegs`
 + `Opt65C02Ind` ordering fix — done, reverted (no measurable effect), (3) direct codegen
 for `(zp)` and `STZ` — done, (4) jump-table switches — done, (5) cycle model — open,
-(6) SMC runtime variants — done, (7) Suzy hardware multiply/divide (§2.6) — next: it has
-the largest remaining payoff and is library-only, no compiler changes.
+(6) SMC runtime variants — done, (7) Suzy hardware multiply/divide (§2.6) — done
+(parser + codegen + five lynx.lib routines; simulator-verified). Remaining: (5) the
+cycle-cost model (§2.7).

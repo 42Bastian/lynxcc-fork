@@ -27,8 +27,18 @@ Implemented so far:
 - **Self-modifying-code runtime variants** (§2.5): `memcpy`/`memset` patch
   their own operands (the Lynx executes from RAM), measured 8–12% faster for
   n ≥ 256/512.
+- **Suzy hardware multiply/divide** (§2.6): the fork-specific operators `!*`,
+  `!/` and `!%` route int multiply/divide/modulo through Suzy's hardware math
+  unit (estimated 3–8× on those operations). The standard `*`, `/`, `%`
+  operators are unchanged; only explicitly marked call sites use the hardware,
+  so the "no math in IRQ handlers" contract is auditable by grep. Long
+  operands fall back to software; powers of two still become shifts; the buggy
+  hardware remainder register is avoided (`!%` computes `n - (n/d)*d`).
+  Implemented as `tossuzy*` routines in `libsrc/lynx/` plus the parser
+  combination in `expr.c` and hardware generators in `codegen.c`; verified
+  against C semantics on 3144 operand pairs in a 65C02+Suzy simulator. Note:
+  source using these operators is fork-specific — other compilers reject it.
 
 Explored and reverted: additional 65C02 peephole passes (§2.2) — the patterns
 do not occur in compiler output, zero diffs on a 48-file corpus. Designed but
-not yet implemented: Suzy hardware multiply/divide (§2.6, the next step) and
-a cycle-cost model (§2.7).
+not yet implemented: a cycle-cost model (§2.7).

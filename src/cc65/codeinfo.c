@@ -300,6 +300,12 @@ static const FuncInfo FuncInfoTable[] = {
     { "tossuba0",       REG_A,                REG_AXY                        },
     { "tossubax",       REG_AX,               REG_AXY                        },
     { "tossubeax",      REG_EAX,              REG_EAXY                       },
+    { "tossuzydivax",   REG_AX,               REG_AXY | REG_PTR1 | REG_TMP1  }, /* also tmp2 */
+    { "tossuzymodax",   REG_AX,               REG_AXY | REG_PTR1 | REG_TMP1  }, /* also tmp2, tmp3 */
+    { "tossuzymulax",   REG_AX,               REG_AXY                        },
+    { "tossuzyudivax",  REG_AX,               REG_AXY                        },
+    { "tossuzyumodax",  REG_AX,               REG_AXY | REG_TMP1             }, /* also tmp2 */
+    { "tossuzyumulax",  REG_AX,               REG_AXY                        },
     { "tosudiv0ax",     REG_AX,               REG_ALL & ~REG_SAVE            },
     { "tosudiva0",      REG_A,                REG_EAXY | REG_PTR1            }, /* also ptr4 */
     { "tosudivax",      REG_AX,               REG_EAXY | REG_PTR1            }, /* also ptr4 */
