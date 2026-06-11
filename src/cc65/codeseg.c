@@ -839,6 +839,28 @@ CodeLabel* CS_GenLabel (CodeSeg* S, struct CodeEntry* E)
 
 
 
+void CS_RetainLabel (CodeSeg* S, const char* Name)
+/* Mark the label with the given name as retained: It is referenced from
+** data (e.g. a switch jump table), which the optimizer cannot see, so it
+** must never be deleted, merged away or renamed. If the label does not
+** exist, it is created as a forward reference.
+*/
+{
+    /* Generate the hash over the label, then search for the label */
+    unsigned Hash = HashStr (Name) % CS_LABEL_HASH_SIZE;
+    CodeLabel* L = CS_FindLabel (S, Name, Hash);
+
+    /* If we don't have the label, it's a forward ref - create it */
+    if (L == 0) {
+        L = CS_NewCodeLabel (S, Name, Hash);
+    }
+
+    /* Mark it as retained */
+    L->Flags |= CLF_RETAINED;
+}
+
+
+
 void CS_DelLabel (CodeSeg* S, CodeLabel* L)
 /* Remove references from this label and delete it. */
 {
@@ -948,6 +970,13 @@ void CS_MergeLabels (CodeSeg* S)
             /* Get the next label */
             CodeLabel* L = CE_GetLabel (E, J);
 
+            /* Retained labels are referenced from data, so they must keep
+            ** their name and stay attached to the entry.
+            */
+            if (L->Flags & CLF_RETAINED) {
+                continue;
+            }
+
             /* Move all references from this label to the reference label */
             CL_MoveRefs (L, RefLab);
 
@@ -957,9 +986,11 @@ void CS_MergeLabels (CodeSeg* S)
 
         /* The reference label is the only remaining label. Check if there
         ** are any references to this label, and delete it if this is not
-        ** the case.
+        ** the case. Retained labels are referenced from data and must
+        ** stay, even if there are no visible references.
         */
-        if (CollCount (&RefLab->JumpFrom) == 0) {
+        if (CollCount (&RefLab->JumpFrom) == 0 &&
+            (RefLab->Flags & CLF_RETAINED) == 0) {
             /* Delete the label */
             CS_DelLabel (S, RefLab);
         }
@@ -987,6 +1018,14 @@ void CS_MoveLabels (CodeSeg* S, struct CodeEntry* Old, struct CodeEntry* New)
 
             /* Get the next label */
             CodeLabel* OldLabel = CE_GetLabel (Old, OldLabelCount);
+
+            /* Retained labels are referenced from data, so they must keep
+            ** their name. Move the label itself instead of its references.
+            */
+            if (OldLabel->Flags & CLF_RETAINED) {
+                CE_MoveLabel (OldLabel, New);
+                continue;
+            }
 
             /* Move references */
             CL_MoveRefs (OldLabel, NewLabel);
@@ -1028,8 +1067,10 @@ void CS_RemoveLabelRef (CodeSeg* S, struct CodeEntry* E)
     /* The entry jumps no longer to L */
     CE_ClearJumpTo (E);
 
-    /* If there are no more references, delete the label */
-    if (CollCount (&L->JumpFrom) == 0) {
+    /* If there are no more references, delete the label. Retained labels
+    ** are referenced from data and must stay.
+    */
+    if (CollCount (&L->JumpFrom) == 0 && (L->Flags & CLF_RETAINED) == 0) {
         CS_DelLabel (S, L);
     }
 }
@@ -1240,6 +1281,14 @@ int CS_IsBasicBlock (CodeSeg* S, unsigned First, unsigned Last)
 
             /* Get this label */
             CodeLabel* L = CE_GetLabel (E, LabelIndex);
+
+            /* A retained label may be reached through references that are
+            ** not visible to us (e.g. a switch jump table), so the range
+            ** cannot be proven to be a basic block.
+            */
+            if (L->Flags & CLF_RETAINED) {
+                return 0;
+            }
 
             /* Walk over all entries that jump to this label. Check for each
             ** of the entries if it is out of the range.
@@ -1482,6 +1531,25 @@ void CS_GenRegInfo (CodeSeg* S)
             unsigned LabelCount = CE_GetLabelCount (E);
             if (LabelCount > 0) {
 
+                /* Check if any label is retained. Retained labels may be
+                ** reached through references that are not visible to us
+                ** (e.g. a switch jump table), so the register contents are
+                ** unknown.
+                */
+                unsigned LIdx;
+                int Retained = 0;
+                for (LIdx = 0; LIdx < LabelCount; ++LIdx) {
+                    if (CE_GetLabel (E, LIdx)->Flags & CLF_RETAINED) {
+                        Retained = 1;
+                        break;
+                    }
+                }
+                if (Retained) {
+                    RC_Invalidate (&Regs);
+                    CurrentRegs = &Regs;
+                    goto HaveRegs;
+                }
+
                 /* Loop over all entry points that jump here. If these entry
                 ** points already have register info, check if all values are
                 ** known and identical. If all values are identical, and the
@@ -1494,13 +1562,19 @@ void CS_GenRegInfo (CodeSeg* S)
                 unsigned Entry;
                 if (WasJump) {
                     /* Preceeding insn was an unconditional branch */
-                    CodeEntry* J = CL_GetRef(Label, 0);
-                    if (J->RI) {
-                        Regs = J->RI->Out2;
-                    } else {
+                    if (CL_GetRefCount (Label) == 0) {
+                        /* No visible references at all */
                         RC_Invalidate (&Regs);
+                        Entry = 0;
+                    } else {
+                        CodeEntry* J = CL_GetRef(Label, 0);
+                        if (J->RI) {
+                            Regs = J->RI->Out2;
+                        } else {
+                            RC_Invalidate (&Regs);
+                        }
+                        Entry = 1;
                     }
-                    Entry = 1;
                 } else {
                     Regs = *CurrentRegs;
                     Entry = 0;
@@ -1543,6 +1617,8 @@ void CS_GenRegInfo (CodeSeg* S)
 
                 /* Use this register info */
                 CurrentRegs = &Regs;
+
+HaveRegs:       ;
 
             }
 

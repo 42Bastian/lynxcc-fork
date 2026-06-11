@@ -6,8 +6,9 @@
 <url url="mailto:gregdk@users.sf.net" name="Greg King">
 
 <abstract>
-cc65 is a C compiler for 6502 targets. It supports several 6502 based home
-computers like the Commodore and Atari machines, but it is easily retargetable.
+cc65 is a C compiler for 6502 targets. This tree supports a single target,
+the Atari Lynx (65SC02), and includes Lynx-specific code-generation
+improvements.
 </abstract>
 
 <!-- Table of contents -->
@@ -28,6 +29,13 @@ There are separate documents named <url url="library.html"> and <url
 url="funcref.html"> that cover the library that is available for the compiler.
 If you know C, and are interested in doing actual programming, the library
 documentation is probably of much more use than this document.
+
+This tree targets the Atari Lynx exclusively and contains Lynx-specific
+code-generation improvements (65C02 runtime fast paths, direct 65C02
+emission, jump-table switches, and self-modifying-code runtime variants).
+See the <url url="lynx.html" name="Lynx-specific documentation"> for a
+summary and <tt/LYNX_CODEGEN_DESIGN.md/ in the source tree for the full
+design and measurements.
 
 If you need some hints for getting the best code out of the compiler, you
 may have a look at <url url="coding.html"> which covers some code generation
@@ -397,34 +405,16 @@ Here is a description of all the command line options:
   default CPU. The CPU setting can be overriden by use of the <tt/<ref
   id="option--cpu" name="--cpu">/ option.
 
-  The following target systems are supported:
+  The following target systems are supported in this tree:
 
   <itemize>
   <item>none
-  <item>apple2
-  <item>apple2enh
-  <item>atari
-  <item>atarixl
-  <item>atmos
-  <item>c16 (works also for the c116 with memory up to 32K)
-  <item>c64
-  <item>c128
-  <item>cbm510 (CBM-II series with 40 column video)
-  <item>cbm610 (all CBM-II II computers with 80 column video)
-  <item>geos-apple
-  <item>geos-cbm
-  <item>lunix
   <item>lynx
-  <item>nes
-  <item>osic1p
-  <item>pet (all CBM PET systems except the 2001)
-  <item>plus4
-  <item>sim6502
-  <item>sim65c02
-  <item>supervision
-  <item>telestrat
-  <item>vic20
   </itemize>
+
+  Other upstream cc65 target names are still accepted by the tools for
+  compatibility, but their libraries and linker configurations have been
+  removed, so only <tt/lynx/ (and <tt/none/) are usable.
 
   <tag><tt>-v, --verbose</tt></tag>
 
@@ -766,9 +756,6 @@ This cc65 version has some extensions to the ISO C standard.
 
         will assign the value 5 to <tt/GLen/.
 
-        See the <url url="geos.html" name="GEOS library document"> for examples
-        on how to use that feature.
-        <p>
 
 <item>  cc65 implements flexible array struct members as defined in the C99 ISO
         standard. As an extension, these fields may be initialized. There are
@@ -829,59 +816,6 @@ This cc65 version has some extensions to the ISO C standard.
 The compiler defines several macros at startup:
 
 <descrip>
-  <tag><tt>__APPLE2__</tt></tag>
-
-  This macro is defined if the target is the Apple ][ (-t apple2) or the enhanced Apple //e (-t apple2enh).
-
-  <tag><tt>__APPLE2ENH__</tt></tag>
-
-  This macro is defined if the target is the enhanced Apple //e (-t apple2enh).
-
-  <tag><tt>__ATARI2600__</tt></tag>
-
-  This macro is defined if the target is the Atari 2600 game console.
-
-  <tag><tt>__ATARI5200__</tt></tag>
-
-  This macro is defined if the target is the Atari 5200 game console.
-
-  <tag><tt>__ATARI__</tt></tag>
-
-  This macro is defined if the target is the Atari 400/800 (-t atari) or the Atari 800XL/130XE (-t atarixl).
-
-  <tag><tt>__ATARIXL__</tt></tag>
-
-  This macro is defined if the target is the Atari 800XL/130XE (-t atarixl).
-
-  <tag><tt>__ATMOS__</tt></tag>
-
-  This macro is defined if the target is the Oric Atmos (-t atmos).
-
-  <tag><tt>__C128__</tt></tag>
-
-  This macro is defined if the target is the Commodore 128 (-t c128).
-
-  <tag><tt>__C16__</tt></tag>
-
-  This macro is defined if the target is the Commodore 16/116 (-t c16) or the Commodore Plus/4 (-t plus4).
-
-  <tag><tt>__C64__</tt></tag>
-
-  This macro is defined if the target is the Commodore 64 (-t c64).
-
-  <tag><tt>__CBM__</tt></tag>
-
-  This macro is defined if the target system is one of the CBM targets.
-
-  <tag><tt>__CBM510__</tt></tag>
-
-  This macro is defined if the target is the CBM 500 series of computers.
-
-  <tag><tt>__CBM610__</tt></tag>
-
-  This macro is defined if the target is one of the CBM 600/700 family of
-  computers (called B series in the US).
-
   <tag><tt>__CC65__</tt></tag>
 
   This macro is always defined. Its value is the version number of the
@@ -898,10 +832,6 @@ The compiler defines several macros at startup:
   <item><tt/__CC65_STD_CC65__/
   </itemize>
 
-  <tag><tt>__CX16__</tt></tag>
-
-  This macro is defined if the target is the Commander X16 (-t cx16).
-
   <tag><tt>__DATE__</tt></tag>
 
   This macro expands to the date of translation of the preprocessing
@@ -916,33 +846,14 @@ The compiler defines several macros at startup:
 
   This macro expands to a string containing the name of the C source file.
 
-  <tag><tt>__GEOS__</tt></tag>
-
-  This macro is defined if you are compiling for one of the GEOS systems.
-
-  <tag><tt>__GEOS_APPLE__</tt></tag>
-
-  This macro is defined if you are compiling for the Apple GEOS system (-t geos-apple).
-
-  <tag><tt>__GEOS_CBM__</tt></tag>
-
-  This macro is defined if you are compiling for the GEOS 64/128 system (-t geos-cbm).
-
   <tag><tt>__LINE__</tt></tag>
 
   This macro expands to the current line number.
 
-  <tag><tt>__LUNIX__</tt></tag>
-
-  This macro is defined if you are compiling for the LUnix system (-t lunix).
-
   <tag><tt>__LYNX__</tt></tag>
 
-  This macro is defined if the target is the Atari Lynx (-t lynx).
-
-  <tag><tt>__NES__</tt></tag>
-
-  This macro is defined if the target is the Nintendo Entertainment System (-t nes).
+  This macro is defined if the target is the Atari Lynx (-t lynx) - the only
+  target with library support in this tree.
 
   <tag><tt>__OPT__</tt></tag>
 
@@ -960,47 +871,20 @@ The compiler defines several macros at startup:
 
   Is defined if the compiler was called with the <tt/-Os/ command line option.
 
-  <tag><tt>__OSIC1P__</tt></tag>
-
-  This macro is defined if the target is the Ohio Scientific Challenger 1P
-  (-t osic1p).
-
-  <tag><tt>__PET__</tt></tag>
-
-  This macro is defined if the target is the PET family of computers (-t pet).
-
-  <tag><tt>__PLUS4__</tt></tag>
-
-  This macro is defined if the target is the Commodore Plus/4 (-t plus4).
-
   <tag><tt>__STDC_HOSTED__</tt></tag>
 
   This macro is expands to the integer constant 1.
 
-  <tag><tt>__SIM6502__</tt></tag>
-
-  This macro is defined if the target is sim65 in 6502 mode (-t sim6502).
-
-  <tag><tt>__SIM65C02__</tt></tag>
-  This macro is defined if the target is sim65 in 65C02 mode (-t sim65c02).
-
-  <tag><tt>__SUPERVISION__</tt></tag>
-
-  This macro is defined if the target is the Supervision (-t supervision).
-
-  <tag><tt>__TELESTRAT__</tt></tag>
-
-  This macro is defined if the target is the Telestrat (-t telestrat).
-  
   <tag><tt>__TIME__</tt></tag>
 
   This macro expands to the time of translation of the preprocessing
   translation unit in the form "hh:mm:ss".
-
-  <tag><tt>__VIC20__</tt></tag>
-
-  This macro is defined if the target is the Commodore VIC20 (-t vic20).
 </descrip>
+
+Macros for upstream cc65 targets (such as <tt/__C64__/ or <tt/__ATARI__/) are
+still emitted by the compiler when the corresponding <tt/-t/ option is given,
+but those targets are unusable in this tree because their libraries have been
+removed.
 
 
 
@@ -1051,8 +935,8 @@ parameter with the <tt/#pragma/.
 
   Each literal string and each literal character in the source is translated
   by use of a translation table. That translation table is preset when the
-  compiler is started, depending on the target system; for example, to map
-  ISO-8859-1 characters into PETSCII if the target is a Commodore machine.
+  compiler is started, depending on the target system. For the Lynx target,
+  the mapping is plain ASCII.
 
   This pragma allows to change entries in the translation table, so the
   translation for individual characters, or even the complete table may be

@@ -311,6 +311,49 @@ No mouse drivers are currently available for the Lynx.
 </descrip><p>
 
 
+<sect>Lynx-specific code-generation optimizations<p>
+
+This tree contains a set of 65SC02/Lynx code-generation improvements over
+stock cc65 2.19. The full design, measurements, and verification plan are in
+<tt/LYNX_CODEGEN_DESIGN.md/ at the root of the source tree. Summary:
+
+<descrip>
+
+  <tag/Runtime library fast paths/
+  The hottest runtime routines (<tt/pushax/, <tt/ldaxsp/, <tt/staxsp/,
+  <tt/staspidx/, <tt/pusha/, <tt/enter/) have 65C02 variants using
+  <tt>(zp)</tt> addressing and <tt>PHX/PLX</tt>-style instructions, saving
+  1-4 cycles per call. These routines run on every C stack or pointer access, so
+  the savings apply to nearly all compiled code.
+
+  <tag/Direct 65C02 emission in the compiler/
+  The code generator emits <tt/(zp)/ indirect addressing for zero-index
+  pointer loads and stores, and <tt/STZ/ for constant-zero stores, directly
+  instead of relying on the peephole optimizer. This mainly benefits
+  unoptimized builds; at <tt/-O/ the peepholes already produced these forms.
+
+  <tag/Jump-table switches/
+  Dense <tt/char/-typed <tt/switch/ statements with enough cases are compiled
+  to a <tt/JMP (table,x)/ dispatch instead of a compare/branch cascade.
+  Dispatch cost is constant regardless of the number of cases (measured 76
+  vs 93 average cycles on a 6-case switch). Word-sized switches keep the
+  cascade.
+
+  <tag/Self-modifying-code runtime variants/
+  Because the Lynx executes from RAM, <tt/memcpy/ and <tt/memset/ use
+  self-modifying code (guarded by <tt/__LYNX__/), measured 8-12 percent
+  faster for sizes of 256/512 bytes and up. The SMC macros used are available
+  to your own code as well, see <url url="smc.html" name="the SMC macro
+  documentation">. Note that SMC routines are not reentrant; the same
+  contract as the rest of the zero-page runtime applies.
+
+</descrip>
+
+Planned but not yet implemented: routing integer multiply and divide through
+Suzy's hardware math unit, and a cycle-cost model for the optimizer (see the
+design document, sections 2.6 and 2.7).
+
+
 <sect>Limitations<p>
 
 

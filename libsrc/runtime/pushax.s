@@ -7,13 +7,15 @@
         .export         push0, pusha0, pushax
         .importzp       sp
 
+        .macpack        cpu
+
 push0:  lda     #0
 pusha0: ldx     #0
 
 ; This function is used *a lot*, so don't call any subroutines here.
 ; Beware: The value in ax must not be changed by this function!
 ; Beware^2: The optimizer knows about the value of Y after the function
-;           returns!
+;           returns! Both code paths exit with Y = 0.
 
 .proc   pushax
 
@@ -29,7 +31,12 @@ pusha0: ldx     #0
         sta     (sp),y          ; (27)
         pla                     ; (31)
         dey                     ; (33)
-        sta     (sp),y          ; (38)
-        rts                     ; (44)     
+.if (.cpu .bitand ::CPU_ISET_65SC02)
+        sta     (sp)            ; (38) one cycle less than sta (sp),y
+        rts                     ; (44)
+.else
+        sta     (sp),y          ; (39)
+        rts                     ; (45)
+.endif
 
 .endproc

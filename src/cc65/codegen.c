@@ -866,12 +866,21 @@ void g_getind (unsigned Flags, unsigned Offs)
 
         case CF_INT:
             if (Flags & CF_TEST) {
-                AddCodeLine ("ldy #$%02X", Offs);
-                AddCodeLine ("sta ptr1");
-                AddCodeLine ("stx ptr1+1");
-                AddCodeLine ("lda (ptr1),y");
-                AddCodeLine ("iny");
-                AddCodeLine ("ora (ptr1),y");
+                if (Offs == 0 && (CPUIsets[CPU] & CPU_ISET_65SC02) != 0) {
+                    /* Use the (zp) addressing mode for the low byte */
+                    AddCodeLine ("sta ptr1");
+                    AddCodeLine ("stx ptr1+1");
+                    AddCodeLine ("lda (ptr1)");
+                    AddCodeLine ("ldy #$01");
+                    AddCodeLine ("ora (ptr1),y");
+                } else {
+                    AddCodeLine ("ldy #$%02X", Offs);
+                    AddCodeLine ("sta ptr1");
+                    AddCodeLine ("stx ptr1+1");
+                    AddCodeLine ("lda (ptr1),y");
+                    AddCodeLine ("iny");
+                    AddCodeLine ("ora (ptr1),y");
+                }
             } else {
                 AddCodeLine ("ldy #$%02X", Offs+1);
                 AddCodeLine ("jsr ldaxidx");
@@ -1119,17 +1128,31 @@ void g_putind (unsigned Flags, unsigned Offs)
     if ((Offs & 0xFF) > 256 - sizeofarg (Flags | CF_FORCECHAR)) {
 
         /* Overflow - we need to add the low byte also */
-        AddCodeLine ("ldy #$00");
-        AddCodeLine ("clc");
-        AddCodeLine ("pha");
-        AddCodeLine ("lda #$%02X", Offs & 0xFF);
-        AddCodeLine ("adc (sp),y");
-        AddCodeLine ("sta (sp),y");
-        AddCodeLine ("iny");
-        AddCodeLine ("lda #$%02X", (Offs >> 8) & 0xFF);
-        AddCodeLine ("adc (sp),y");
-        AddCodeLine ("sta (sp),y");
-        AddCodeLine ("pla");
+        if ((CPUIsets[CPU] & CPU_ISET_65SC02) != 0) {
+            /* Use the (zp) addressing mode for the low byte */
+            AddCodeLine ("clc");
+            AddCodeLine ("pha");
+            AddCodeLine ("lda #$%02X", Offs & 0xFF);
+            AddCodeLine ("adc (sp)");
+            AddCodeLine ("sta (sp)");
+            AddCodeLine ("ldy #$01");
+            AddCodeLine ("lda #$%02X", (Offs >> 8) & 0xFF);
+            AddCodeLine ("adc (sp),y");
+            AddCodeLine ("sta (sp),y");
+            AddCodeLine ("pla");
+        } else {
+            AddCodeLine ("ldy #$00");
+            AddCodeLine ("clc");
+            AddCodeLine ("pha");
+            AddCodeLine ("lda #$%02X", Offs & 0xFF);
+            AddCodeLine ("adc (sp),y");
+            AddCodeLine ("sta (sp),y");
+            AddCodeLine ("iny");
+            AddCodeLine ("lda #$%02X", (Offs >> 8) & 0xFF);
+            AddCodeLine ("adc (sp),y");
+            AddCodeLine ("sta (sp),y");
+            AddCodeLine ("pla");
+        }
 
         /* Complete address is on stack, new offset is zero */
         Offs = 0;
@@ -1300,7 +1323,12 @@ void g_reglong (unsigned Flags)
 
         case CF_INT:
             if (Flags & CF_UNSIGNED) {
-                if (IS_Get (&CodeSizeFactor) >= 200) {
+                if ((CPUIsets[CPU] & CPU_ISET_65SC02) != 0 &&
+                    IS_Get (&CodeSizeFactor) >= 200) {
+                    /* Shorter and faster and doesn't clobber Y */
+                    AddCodeLine ("stz sreg");
+                    AddCodeLine ("stz sreg+1");
+                } else if (IS_Get (&CodeSizeFactor) >= 200) {
                     AddCodeLine ("ldy #$00");
                     AddCodeLine ("sty sreg");
                     AddCodeLine ("sty sreg+1");
@@ -3005,17 +3033,26 @@ void g_asr (unsigned flags, unsigned long val)
                     val -= 24;
                 }
                 if (val >= 16) {
-                    AddCodeLine ("ldy #$00");
-                    AddCodeLine ("ldx sreg+1");
-                    if ((flags & CF_UNSIGNED) == 0) {
-                        unsigned L = GetLocalLabel();
-                        AddCodeLine ("bpl %s", LocalLabelName (L));
-                        AddCodeLine ("dey");
-                        g_defcodelabel (L);
+                    if ((flags & CF_UNSIGNED) != 0 &&
+                        (CPUIsets[CPU] & CPU_ISET_65SC02) != 0) {
+                        /* Use stz, which is shorter and doesn't clobber Y */
+                        AddCodeLine ("ldx sreg+1");
+                        AddCodeLine ("lda sreg");
+                        AddCodeLine ("stz sreg+1");
+                        AddCodeLine ("stz sreg");
+                    } else {
+                        AddCodeLine ("ldy #$00");
+                        AddCodeLine ("ldx sreg+1");
+                        if ((flags & CF_UNSIGNED) == 0) {
+                            unsigned L = GetLocalLabel();
+                            AddCodeLine ("bpl %s", LocalLabelName (L));
+                            AddCodeLine ("dey");
+                            g_defcodelabel (L);
+                        }
+                        AddCodeLine ("lda sreg");
+                        AddCodeLine ("sty sreg+1");
+                        AddCodeLine ("sty sreg");
                     }
-                    AddCodeLine ("lda sreg");
-                    AddCodeLine ("sty sreg+1");
-                    AddCodeLine ("sty sreg");
                     val -= 16;
                 }
                 if (val >= 8) {
@@ -3030,10 +3067,16 @@ void g_asr (unsigned flags, unsigned long val)
                         AddCodeLine ("bcc %s", LocalLabelName (L));
                         AddCodeLine ("dey");
                         g_defcodelabel (L);
+                        AddCodeLine ("sty sreg+1");
+                    } else if ((CPUIsets[CPU] & CPU_ISET_65SC02) != 0) {
+                        /* Use stz, which is shorter and keeps the value of
+                        ** sreg+1 in Y.
+                        */
+                        AddCodeLine ("stz sreg+1");
                     } else {
                         AddCodeLine ("ldy #$00");
+                        AddCodeLine ("sty sreg+1");
                     }
-                    AddCodeLine ("sty sreg+1");
                     val -= 8;
                 }
                 if (val >= 4) {
@@ -4302,11 +4345,122 @@ void g_initstatic (unsigned InitLabel, unsigned VarLabel, unsigned Size)
 
 
 
+static int g_switchtable (Collection* Nodes, unsigned DefaultLabel)
+/* If the case values on the last level are dense enough, dispatch through
+** a jump table using the 65C02 jmp (table,x) instruction. The selector
+** byte is expected in A. Return true if code was generated, return false
+** if the case values don't qualify for a jump table.
+*/
+{
+    unsigned SlotLabel[128];    /* Case label for each table slot */
+    unsigned Count;             /* Number of case values */
+    unsigned MinV, MaxV;        /* Value range of the cases */
+    unsigned Range;             /* Size of the value range */
+    unsigned TableLabel;        /* Label of the jump table */
+    unsigned I;
+
+    /* The jmp (table,x) instruction is only available on the 65(S)C02 */
+    if ((CPUIsets[CPU] & CPU_ISET_65SC02) == 0) {
+        return 0;
+    }
+
+    /* Require a minimum number of cases, otherwise the compare cascade
+    ** is just as good.
+    */
+    Count = CollCount (Nodes);
+    if (Count < 5) {
+        return 0;
+    }
+
+    /* Determine the value range. All nodes on the last level must be leaf
+    ** nodes with a defined label.
+    */
+    MinV = 255;
+    MaxV = 0;
+    for (I = 0; I < Count; ++I) {
+        CaseNode* N = CollAtUnchecked (Nodes, I);
+        unsigned V;
+        if (!CN_IsLeafNode (N)) {
+            return 0;
+        }
+        V = CN_GetValue (N);
+        if (V < MinV) {
+            MinV = V;
+        }
+        if (V > MaxV) {
+            MaxV = V;
+        }
+    }
+    Range = MaxV - MinV + 1;
+
+    /* The biased selector is doubled for the table index, so the range is
+    ** limited to 128 entries. Require a density of at least 50%, so the
+    ** table does not grow too large for sparse case values.
+    */
+    if (Range > 128 || Range > 2 * Count) {
+        return 0;
+    }
+
+    /* Fill the table slots. Holes in the value range jump to the default
+    ** label.
+    */
+    for (I = 0; I < Range; ++I) {
+        SlotLabel[I] = DefaultLabel;
+    }
+    for (I = 0; I < Count; ++I) {
+        CaseNode* N = CollAtUnchecked (Nodes, I);
+        SlotLabel[CN_GetValue (N) - MinV] = CN_GetLabel (N);
+    }
+
+    /* Generate the dispatch code. The bias subtraction also handles
+    ** selectors outside the range via the unsigned distance: anything
+    ** not in [MinV..MaxV] ends up >= Range after the wrap around.
+    */
+    if (MinV != 0) {
+        AddCodeLine ("sec");
+        AddCodeLine ("sbc #$%02X", MinV);
+    }
+    AddCodeLine ("cmp #$%02X", Range);
+    AddCodeLine ("jcs %s", LocalLabelName (DefaultLabel));
+    AddCodeLine ("asl a");
+    AddCodeLine ("tax");
+
+    /* Generate the jump and the table */
+    TableLabel = GetLocalLabel ();
+    AddCodeLine ("jmp (%s,x)", LocalLabelName (TableLabel));
+
+    g_userodata ();
+    g_defdatalabel (TableLabel);
+    for (I = 0; I < Range; ++I) {
+        AddDataLine ("\t.word\t%s", LocalLabelName (SlotLabel[I]));
+    }
+
+    /* The labels in the table are referenced from the data segment, which
+    ** the optimizer cannot see. Mark them as retained, so they are never
+    ** deleted, merged away or renamed.
+    */
+    CS_RetainLabel (CS->Code, LocalLabelName (DefaultLabel));
+    for (I = 0; I < Count; ++I) {
+        CaseNode* N = CollAtUnchecked (Nodes, I);
+        CS_RetainLabel (CS->Code, LocalLabelName (CN_GetLabel (N)));
+    }
+
+    /* Code was generated */
+    return 1;
+}
+
+
+
 void g_switch (Collection* Nodes, unsigned DefaultLabel, unsigned Depth)
 /* Generate code for a switch statement */
 {
     unsigned NextLabel = 0;
     unsigned I;
+
+    /* On the last level, try to dispatch through a jump table */
+    if (Depth == 1 && g_switchtable (Nodes, DefaultLabel)) {
+        return;
+    }
 
     /* Setup registers and determine which compare insn to use */
     const char* Compare;

@@ -61,6 +61,60 @@ evenCount:
         adc     ptr3+1
         sta     ptr2+1
 
+.if .defined(__LYNX__)
+
+; On the Lynx the whole address space is RAM, so we can use self modifying
+; code: For large fills, the 256 byte block loop uses absolute,Y addressing
+; with patched operands. Stores with absolute,Y take 5 instead of 6 cycles.
+; The patching costs are only paid when there is at least one full block to
+; fill. The zero page pointers are kept in sync for the tail loop below.
+; Note: Like the rest of the zero page based runtime, this function is not
+; reentrant.
+; The fill value is in X here, A is free for the patching.
+
+        lda     ptr3+1          ; Get high byte of n
+        beq     L2S             ; Jump if zero - no blocks, small fill
+
+        lda     ptr1            ; Patch the lower section operands
+        sta     L1a+1
+        sta     L1c+1
+        lda     ptr1+1
+        sta     L1a+2
+        sta     L1c+2
+        lda     ptr2            ; Patch the upper section operands
+        sta     L1b+1
+        sta     L1d+1
+        lda     ptr2+1
+        sta     L1b+2
+        sta     L1d+2
+
+        txa                     ; Restore fill value
+        ldx     ptr3+1          ; Get the block count
+
+; Set 256/512 byte blocks
+                                ; y is still 0 here
+L1:
+L1a:    sta     $FADE,y         ; Patched: lower section
+L1b:    sta     $FADE,y         ; Patched: upper section
+        iny
+L1c:    sta     $FADE,y         ; Patched: lower section
+L1d:    sta     $FADE,y         ; Patched: upper section
+        iny
+        bne     L1
+        inc     L1a+2           ; Advance the patched operands
+        inc     L1c+2           ; to the next page
+        inc     L1b+2
+        inc     L1d+2
+        inc     ptr1+1          ; Keep the zero page pointers in
+        inc     ptr2+1          ; sync for the tail loop
+        dex                     ; Next 256 byte block
+        bne     L1              ; Repeat if any
+        beq     L2              ; Blocks done, fill value still in A
+
+L2S:    txa                     ; Restore fill value
+
+.else
+
         txa                     ; restore fill value
         ldx     ptr3+1          ; Get high byte of n
         beq     L2              ; Jump if zero
@@ -77,6 +131,8 @@ L1:     .repeat 2               ; Unroll this a bit to make it faster
         inc     ptr2+1
         dex                     ; Next 256 byte block
         bne     L1              ; Repeat if any
+
+.endif
 
 ; Set the remaining bytes if any
 

@@ -99,7 +99,7 @@ Makefile. However to quickly switch between compilers and/or cc65 targets it is
 best done on the GNU Make command line like this:
 
 <tscreen><verb>
-make CC65_TARGET=c64
+make CC65_TARGET=lynx
 </verb></tscreen>
 
 

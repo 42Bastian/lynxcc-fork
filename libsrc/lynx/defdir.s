@@ -28,3 +28,12 @@ len0 = __STARTUP_SIZE__ + __ONCE_SIZE__ + __CODE_SIZE__ + __DATA_SIZE__ + __RODA
         .word   __MAIN_START__
         .word   len0
 __DIRECTORY_END__:
+
+; ------------------------------------------------------------------------
+; Make sure the optional segments whose sizes are used in 'len0' above
+; always exist, even if nothing in the program contributes code to them.
+; Without this, a program that uses no IRQ/clock code has no LOWCODE
+; segment, ld65 never defines __LOWCODE_SIZE__, and the link fails with
+; an unresolved external. Declaring the segments empty here costs nothing.
+        .segment "LOWCODE"
+        .segment "ONCE"

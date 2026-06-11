@@ -163,33 +163,15 @@ Here is a description of all of the command-line options:
   <itemize>
   <item>none
   <item>module
-  <item>apple2
-  <item>apple2enh
-  <item>atari2600
-  <item>atari
-  <item>atarixl
-  <item>atmos
-  <item>c16 (works also for the c116 with memory up to 32K)
-  <item>c64
-  <item>c128
-  <item>cbm510 (CBM-II series with 40-column video)
-  <item>cbm610 (all CBM series-II computers with 80-column video)
-  <item>geos-apple
-  <item>geos-cbm
-  <item>lunix
   <item>lynx
-  <item>nes
-  <item>pet (all CBM PET systems except the 2001)
-  <item>plus4
-  <item>sim6502
-  <item>sim65c02
-  <item>supervision
-  <item>telestrat
-  <item>vic20
   </itemize>
 
-  There are a few more targets defined but neither of them is actually
-  supported.
+  Other upstream cc65 target names are still recognized, but their default
+  configurations and libraries have been removed from this tree, so only the
+  targets listed above are usable. For the Lynx, additional configurations
+  are provided as files: <tt/lynx-bll.cfg/ (BLL download-compatible
+  binaries), <tt/lynx-coll.cfg/ (reserves a collision-detection buffer) and
+  <tt/lynx-uploader.cfg/.
 
 
   <tag><tt>-u sym[:addrsize], --force-import sym[:addrsize]</tt></tag>
@@ -256,12 +238,9 @@ Here is a description of all of the command-line options:
 
   <tag><tt>-Ln</tt></tag>
 
-  This option allows you to create a file that contains all global labels and
-  may be loaded into the VICE emulator using the <tt/ll/ (load label) command
-  or into the Oricutron emulator using the <tt/sl/ (symbols load) command. You
-  may use this to debug your code with VICE. Note: Older versions had some
-  bugs in the label code. If you have problems, please get the latest <url
-  url="http://vice-emu.sourceforge.net" name="VICE"> version.
+  This option allows you to create a file that contains all global labels,
+  in VICE label-file format. Some emulators and debugging tools understand
+  this format and can use it to show symbolic names in their monitors.
 
 
   <label id="option-S">
@@ -269,8 +248,8 @@ Here is a description of all of the command-line options:
 
   Using -S you may define the default starting address. If and how this
   address is used depends on the config file in use. For the default
-  configurations, only the "none", "apple2" and "apple2enh" systems honor an
-  explicit start address, all other default configs provide their own.
+  configurations, only the "none" system honors an explicit start address,
+  the other default configs provide their own.
 
 
   <tag><tt>-V, --version</tt></tag>
@@ -455,7 +434,8 @@ Case is ignored for keywords, that is, section or attribute names, but it is
 <sect1>Memory areas<p>
 
 Memory areas are specified in a <tt/MEMORY/ section. Let's have a look at an
-example (this one describes the usable memory layout of the C64):
+example (this one describes the usable memory layout of an imaginary 6502
+machine):
 
 <tscreen><verb>
         MEMORY {
@@ -509,7 +489,7 @@ remainder of the line is ignored if this character is found.
 
 <sect1>Segments<p>
 
-Let's assume you have written a program for your trusty old C64, and you would
+Let's assume you have written a program for the machine above, and you would
 like to run it. For testing purposes, it should run in the <tt/RAM/ area. So
 we will start to assign segments to memory sections in the <tt/SEGMENTS/
 section:
@@ -689,7 +669,7 @@ attributes specified.
 <sect1>LOAD and RUN addresses (ROMable code)<p>
 
 Let us look now at a more complex example. Say, you've successfully tested
-your new "Super Operating System" (SOS for short) for the C64, and you
+your new "Super Operating System" (SOS for short) for a 6502 machine, and you
 will now go and replace the ROMs by your own code. When doing that, you
 face a new problem: If the code runs in RAM, we need not to care about
 read/write data. But now, if the code is in ROM, we must care about it.

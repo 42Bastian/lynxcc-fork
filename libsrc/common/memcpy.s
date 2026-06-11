@@ -18,6 +18,52 @@
 _memcpy:
         jsr     memcpy_getparams
 
+.if .defined(__LYNX__)
+
+; On the Lynx the whole address space is RAM, so we can use self modifying
+; code: For large copies, the 256 byte block loop uses absolute,Y addressing
+; with patched operands, which is faster than (zp),Y. The patching costs are
+; only paid when there is at least one full 256 byte block to copy. The zero
+; page pointers are kept in sync, so the tail loop below works unchanged.
+; Note: Like the rest of the zero page based runtime, this function is not
+; reentrant.
+
+memcpy_upwards:                 ; assert Y = 0
+        ldx     ptr3+1          ; Get high byte of n
+        beq     L2              ; Jump if zero
+
+        lda     ptr1            ; Patch the source operands
+        sta     L1a+1
+        sta     L1c+1
+        lda     ptr1+1
+        sta     L1a+2
+        sta     L1c+2
+        lda     ptr2            ; Patch the destination operands
+        sta     L1b+1
+        sta     L1d+1
+        lda     ptr2+1
+        sta     L1b+2
+        sta     L1d+2
+
+L1:                             ; Unrolled copy of 256 byte blocks
+L1a:    lda     $FADE,y         ; Patched: source
+L1b:    sta     $FADE,y         ; Patched: destination
+        iny
+L1c:    lda     $FADE,y         ; Patched: source
+L1d:    sta     $FADE,y         ; Patched: destination
+        iny
+        bne     L1
+        inc     L1a+2           ; Advance the patched operands
+        inc     L1c+2           ; to the next page
+        inc     L1b+2
+        inc     L1d+2
+        inc     ptr1+1          ; Keep the zero page pointers in
+        inc     ptr2+1          ; sync for the tail loop
+        dex                     ; Next 256 byte block
+        bne     L1              ; Repeat if any
+
+.else
+
 memcpy_upwards:                 ; assert Y = 0
         ldx     ptr3+1          ; Get high byte of n
         beq     L2              ; Jump if zero
@@ -32,6 +78,8 @@ L1:     .repeat 2               ; Unroll this a bit to make it faster...
         inc     ptr2+1
         dex                     ; Next 256 byte block
         bne     L1              ; Repeat if any
+
+.endif
 
         ; the following section could be 10% faster if we were able to copy
         ; back to front - unfortunately we are forced to copy strict from

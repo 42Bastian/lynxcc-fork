@@ -277,23 +277,23 @@ driver!
 
 <sect1>Example - Convert and link a graphics driver<p>
 
-As an example, here are some instructions to convert and use the c64-hi.tgi
-graphics driver:
+As an example, here are some instructions to convert and use the
+lynx-160-102-16.tgi graphics driver:
 
-First, convert the driver, generating a label named "_c64_hi" for the code
-segment. Use the assembler to generate an object file from the assembler
+First, convert the driver, generating a label named "_lynx_160_102_16" for the
+code segment. Use the assembler to generate an object file from the assembler
 output.
 
   <tscreen><verb>
-        co65 --code-label _c64_hi c64-hi.tgi
-        ca65 c64-hi.s
+        co65 --code-label _lynx_160_102_16 lynx-160-102-16.tgi
+        ca65 lynx-160-102-16.s
   </verb></tscreen>
 
 Next, change your C code to declare a variable that is actually the address
 of the driver:
 
   <tscreen><verb>
-        extern void c64_hi[];
+        extern void lynx_160_102_16[];
   </verb></tscreen>
 
 Instead of loading and unloading the driver, change the code to install and
@@ -301,7 +301,7 @@ uninstall the driver, which will be already in memory after linking:
 
   <tscreen><verb>
         /* Install the driver */
-        tgi_install (c64_hi);
+        tgi_install (lynx_160_102_16);
 
         ...
 
@@ -310,7 +310,7 @@ uninstall the driver, which will be already in memory after linking:
   </verb></tscreen>
 
 Don't forget to link the driver object file to your application, otherwise you
-will get an "undefined external" error for the _c64_hi symbol.
+will get an "undefined external" error for the _lynx_160_102_16 symbol.
 
 
 

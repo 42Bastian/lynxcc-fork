@@ -1395,10 +1395,16 @@ void CE_Output (const CodeEntry* E)
     int Space;
     const char* Target;
 
-    /* If we have a label, print that */
+    /* If we have a label, print that. If there is more than one label,
+    ** all but the last one are output on separate lines, since two labels
+    ** cannot share one line.
+    */
     unsigned LabelCount = CollCount (&E->Labels);
     unsigned I;
     for (I = 0; I < LabelCount; ++I) {
+        if (I > 0) {
+            WriteOutput ("\n");
+        }
         CL_Output (CollConstAt (&E->Labels, I));
     }
 

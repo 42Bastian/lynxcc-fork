@@ -212,6 +212,13 @@ CodeLabel* CS_GenLabel (CodeSeg* S, struct CodeEntry* E);
 ** create a new label, attach it to E and return it.
 */
 
+void CS_RetainLabel (CodeSeg* S, const char* Name);
+/* Mark the label with the given name as retained: It is referenced from
+** data (e.g. a switch jump table), which the optimizer cannot see, so it
+** must never be deleted, merged away or renamed. If the label does not
+** exist, it is created as a forward reference.
+*/
+
 void CS_DelLabel (CodeSeg* S, CodeLabel* L);
 /* Remove references from this label and delete it. */
 

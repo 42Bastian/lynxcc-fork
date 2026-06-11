@@ -120,32 +120,25 @@ passing registers in and out.
 
 <sect>Target-specific stuff<p>
 
-For each supported system, there's a header file that contains calls or
-defines specific for that system. So, when programming for the C64, include
-<tt/&lt;c64.h&gt;/, for the C128, include <tt/&lt;c128.h&gt;/, and so on.
-To make the task for the Commodore systems easier, there is also a header file
-named <tt/&lt;cbm.h&gt;/ that will define stuff common for all CBM systems,
-and include the header file for the specific target system.
+This tree supports a single target, the Atari Lynx. The header file
+<tt/&lt;lynx.h&gt;/ contains calls and defines specific to the Lynx,
+and the hardware itself is described by <tt/&lt;_mikey.h&gt;/ and
+<tt/&lt;_suzy.h&gt;/.
 
 The header files contain
 
 <itemize>
 
-  <item>Defines for special keys (such as function keys)
-
-  <item>Defines for special characters (such as the graphics characters)
+  <item>Defines for special keys and characters
 
   <item>Variables with a fixed address in memory that may be used to access
-  special hardware. For the C64 and C128, there is a variable struct named
-  <tt/SID/. Writing to the fields of that struct will write to the SID device
-  instead. Using those variables will make your program more readable and more
-  portable. Don't fear ineffective code when using those variables, the
-  compiler will translate reads and writes to those structs into direct memory
-  accesses.
+  special hardware (the <tt/MIKEY/ and <tt/SUZY/ structs). Using those
+  variables will make your program more readable. Don't fear ineffective code
+  when using those variables, the compiler will translate reads and writes to
+  those structs into direct memory accesses.
 
-  <item>Other routines that make sense for only a specific system. One example
-  is routines to write memory locations in the system bank for the CBM-II
-  family.
+  <item>Other routines that make sense for only the Lynx, such as cartridge
+  and EEPROM access.
 
 </itemize>
 
@@ -157,36 +150,10 @@ The <tt/conio.h/ header file contains a large set of functions that do screen
 and keyboard I/O. The functions will write directly to the screen or poll the
 keyboard directly with no more help from the operating system than needed.
 This has some disadvantages, but on the other side it's fast and reasonably
-portable. Conio implementations exist for the following targets:
+portable. A conio implementation is provided for the Lynx.
 
-  <itemize>
-  <item>apple2
-  <item>apple2enh
-  <item>atari
-  <item>atari5200
-  <item>atarixl
-  <item>atmos
-  <item>c128
-  <item>c16 (works also for the c116 with up to 32K memory)
-  <item>c64
-  <item>cbm510 (40-column video)
-  <item>cbm610 (all CBM series-II computers with 80-column video)
-  <item>creativision
-  <item>cx16
-  <item>gamate
-  <item>geos-apple
-  <item>geos-cbm
-  <item>nes
-  <item>osic1p
-  <item>pce
-  <item>pet (all CBM PET systems except the 2001)
-  <item>plus4 (or expanded c16/c116)
-  <item>telestrat
-  <item>vic20
-  </itemize>
-
-The <tt/conio.h/ header file does include the system-specific header files also,
-which define constants for special characters and keys.
+The <tt/conio.h/ header file does include the system-specific header file also,
+which defines constants for special characters and keys.
 
 
 
@@ -200,21 +167,8 @@ function.
 
 <sect>Using a mouse - <tt/mouse.h/<p>
 
-Some target machines support a mouse. Mouse support currently is available for
-the following targets:
-
-  <itemize>
-  <item>apple2
-  <item>apple2enh
-  <item>atari
-  <item>atarixl
-  <item>c128
-  <item>c64
-  <item>cbm510
-  <item>cx16
-  </itemize>
-
-The available functions are declared in <tt/mouse.h/.
+The generic mouse API is declared in <tt/mouse.h/, but no mouse driver is
+provided for the Lynx.
 
 
 

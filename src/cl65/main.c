@@ -1421,8 +1421,10 @@ int main (int argc, char* argv [])
     CmdInit (&GRC,  CmdPath, "grc65");
     xfree (CmdPath);
 
-    /* Our default target is the C64 instead of "none" */
-    Target = TGT_C64;
+    /* Our default target is the Lynx instead of "none" -
+    ** the only target with library support in this tree.
+    */
+    Target = TGT_LYNX;
 
     /* Check the parameters */
     I = 1;

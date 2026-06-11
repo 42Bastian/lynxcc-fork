@@ -59,12 +59,23 @@ struct CodeEntry;
 
 
 
+/* Label flags */
+#define CLF_RETAINED    0x0001U         /* Label is referenced from data
+                                        ** (e.g. a switch jump table). Such
+                                        ** references are not visible to the
+                                        ** optimizer, so the label must never
+                                        ** be deleted, merged away or renamed,
+                                        ** and code reached through it must
+                                        ** not be treated as dead.
+                                        */
+
 /* Label structure */
 typedef struct CodeLabel CodeLabel;
 struct CodeLabel {
     CodeLabel*          Next;           /* Next in hash list */
     char*               Name;           /* Label name */
     unsigned            Hash;           /* Hash over the name */
+    unsigned            Flags;          /* Flags, see above */
     struct CodeEntry*   Owner;          /* Owner entry */
     Collection          JumpFrom;       /* Entries that jump here */
 };

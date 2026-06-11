@@ -1,40 +1,34 @@
-[Windows Snapshot](https://sourceforge.net/projects/cc65/files/cc65-snapshot-win32.zip)
+# cc65 for the Atari Lynx
 
-[Documentation](https://cc65.github.io/doc)
+This is cc65 2.19 stripped down to a single target — the Atari Lynx — and
+modified for faster 65SC02 code generation. All other machine targets,
+libraries, and configs have been removed. It includes the macro assembler,
+C compiler, linker, librarian, and the Lynx runtime library and drivers.
 
-[Wiki](https://github.com/cc65/wiki/wiki)
+Upstream cc65 documentation: [cc65.github.io/doc](https://cc65.github.io/doc)
 
-[![Build Status](https://api.travis-ci.org/cc65/cc65.svg?branch=master)](https://travis-ci.org/cc65/cc65/builds)
+## Lynx code-generation improvements
 
-cc65 is a complete cross development package for 65(C)02 systems, including
-a powerful macro assembler, a C compiler, linker, librarian and several
-other tools.
+See [LYNX_CODEGEN_DESIGN.md](LYNX_CODEGEN_DESIGN.md) for the full design,
+measurements, and verification plan.
 
-cc65 has C and runtime library support for many of the old 6502 machines,
-including
+Implemented so far:
 
-- the following Commodore machines:
-  - VIC20
-  - C16/C116 and Plus/4
-  - C64
-  - C128
-  - CBM 510 (aka P500)
-  - the 600/700 family
-  - newer PET machines (not 2001).
-- the Apple ]\[+ and successors.
-- the Atari 8-bit machines.
-- the Atari 2600 console.
-- the Atari 5200 console.
-- GEOS for the C64, C128 and Apple //e.
-- the Bit Corporation Gamate console.
-- the NEC PC-Engine (aka TurboGrafx-16) console.
-- the Nintendo Entertainment System (NES) console.
-- the Watara Supervision console.
-- the VTech Creativision console.
-- the Oric Atmos.
-- the Oric Telestrat.
-- the Lynx console.
-- the Ohio Scientific Challenger 1P.
+- **Runtime library fast paths** (§2.1): 65C02 variants of the hottest runtime
+  routines (`pushax`, `ldaxsp`, `staxsp`, `staspidx`, `pusha`, `enter`),
+  saving 1–4 cycles per call on every stack/pointer access.
+- **Direct 65C02 emission in the compiler** (§2.3): `(zp)` indirect addressing
+  for zero-index loads/stores and `STZ` for constant-zero stores, emitted up
+  front in `codegen.c` (mainly benefits unoptimized builds).
+- **Jump-table switches** (§2.4): dense char-typed switches dispatch via
+  `JMP (table,x)` instead of a compare cascade, with new `CLF_RETAINED` label
+  infrastructure. Constant-time dispatch; measured 76 vs 93 average cycles on
+  a 6-case switch.
+- **Self-modifying-code runtime variants** (§2.5): `memcpy`/`memset` patch
+  their own operands (the Lynx executes from RAM), measured 8–12% faster for
+  n ≥ 256/512.
 
-The libraries are fairly portable, so creating a version for other 6502s
-shouldn't be too much work.
+Explored and reverted: additional 65C02 peephole passes (§2.2) — the patterns
+do not occur in compiler output, zero diffs on a 48-file corpus. Designed but
+not yet implemented: Suzy hardware multiply/divide (§2.6, the next step) and
+a cycle-cost model (§2.7).

@@ -181,8 +181,8 @@ There are a few remaining options that control the behaviour of cl65:
   The default for this option is different from the compiler and linker, in the
   case that the option is missing:  While the other tools (compiler, assembler,
   and linker) will use the "none" system settings by default, cl65 will use
-  "c64" as a target system by default. That was chosen because most people
-  seem to use cc65 to develop for the C64.
+  "lynx" as a target system by default, since the Atari Lynx is the only
+  target with library support in this tree.
 
 
   <tag><tt>--no-target-lib</tt></tag>
@@ -236,7 +236,7 @@ package, it tries to be smart about several things.
 <itemize>
 
 <item>  If you don't give a target system on the command line, cl65
-        defaults to the C64.
+        defaults to the Atari Lynx.
 
 <item>  When linking, cl65 will supply the name of the library file for
         the target system to the linker; so, you don't have to do that.
@@ -268,7 +268,6 @@ The type of an input file is derived from its extension:
 <item>Assembler files: <tt/.s/, <tt/.asm/, <tt/.a65/
 <item>Object files: <tt/.o/, <tt/.obj/
 <item>Libraries: <tt/.a/, <tt/.lib/
-<item>GEOS resource files: <tt/.grc/
 <item>o65 files: <tt/.o65/, <tt/.emd/, <tt/.joy/, <tt/.tgi/
 </itemize>
 
@@ -283,16 +282,16 @@ assembler file (irq.s) will need the following separate steps to compile
 into an executable named morse:
 
 <tscreen><verb>
-        cc65 -g -Oi -t c64 morse.c
+        cc65 -g -Oi -t lynx morse.c
         ca65 -g morse.s
         ca65 -g irq.s
-        ld65 -o morse -t c64 c64.o morse.o irq.o c64.lib
+        ld65 -o morse -t lynx lynx.o morse.o irq.o lynx.lib
 </verb></tscreen>
 
 When using cl65, this is simplified to
 
 <tscreen><verb>
-        cl65 -g -Oi morse.c irq.s
+        cl65 -g -Oi -t lynx morse.c irq.s
 </verb></tscreen>
 
 As a general rule, you may use cl65 instead of cc65 at most times,

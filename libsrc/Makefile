@@ -2,39 +2,7 @@ ifneq ($(shell echo),)
   CMD_EXE = 1
 endif
 
-CBMS = c128   \
-       c16    \
-       c64    \
-       cbm510 \
-       cbm610 \
-       cx16   \
-       pet    \
-       plus4  \
-       vic20
-
-GEOS = geos-apple \
-       geos-cbm
-
-TARGETS = apple2       \
-          apple2enh    \
-          atari        \
-          atarixl      \
-          atari2600    \
-          atari5200    \
-          atmos        \
-          creativision \
-          $(CBMS)      \
-          $(GEOS)      \
-          gamate       \
-          lynx         \
-          nes          \
-          none         \
-          osic1p       \
-          pce          \
-          sim6502      \
-          sim65c02     \
-          supervision  \
-          telestrat
+TARGETS = lynx
 
 DRVTYPES = emd \
            joy \
@@ -122,57 +90,11 @@ else # TARGET
 CA65FLAGS =
 CC65FLAGS = -Or -W error
 
-EXTZP = cbm510 \
-        cbm610 \
-        lynx
+EXTZP = lynx
 
-MKINC = $(GEOS) \
-        atari   \
-        atarixl \
-        nes
-
-TARGETUTIL = apple2    \
-             apple2enh \
-             atari     \
-             geos-apple
-
-GEOSDIRS = common      \
-           conio       \
-           disk        \
-           dlgbox      \
-           file        \
-           graph       \
-           memory      \
-           menuicon    \
-           mousesprite \
-           process     \
-           runtime     \
-           system
-
-ifeq ($(TARGET),apple2enh)
-  SRCDIR = apple2
-  OBJPFX = a2
-  DRVPFX = a2e
-else ifeq ($(TARGET),atarixl)
-  SRCDIR = atari
-  OBJPFX = atr
-  DRVPFX = atrx
-else ifeq ($(TARGET),sim65c02)
-  SRCDIR = sim6502
-else
-  SRCDIR = $(TARGET)
-endif
+SRCDIR = $(TARGET)
 
 SRCDIRS = $(SRCDIR)
-
-ifeq ($(TARGET),$(filter $(TARGET),$(CBMS)))
-  SRCDIRS += cbm
-endif
-
-ifeq ($(TARGET),$(filter $(TARGET),$(GEOS)))
-  SRCDIRS += $(addprefix $(TARGET)/,  $(GEOSDIRS))
-  SRCDIRS += $(addprefix geos-common/,$(GEOSDIRS))
-endif
 
 SRCDIRS += common   \
            conio    \
@@ -203,14 +125,6 @@ DEPS += $(EXTRA_OBJS:../lib/%.o=../libwrk/$(TARGET)/%.d)
 ZPOBJ = ../libwrk/$(TARGET)/zeropage.o
 ifeq ($(TARGET),$(filter $(TARGET),$(EXTZP)))
   ZPOBJ += ../libwrk/$(TARGET)/extzp.o
-endif
-
-ifeq ($(TARGET),$(filter $(TARGET),$(MKINC)))
-  include $(SRCDIR)/Makefile.inc
-endif
-
-ifeq ($(TARGET),$(filter $(TARGET),$(TARGETUTIL)))
-  include $(SRCDIR)/targetutil/Makefile.inc
 endif
 
 define DRVTYPE_template

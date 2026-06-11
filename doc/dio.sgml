@@ -86,11 +86,6 @@ The following function returns the sector size of the currently inserted disk:
     unsigned __fastcall__ dio_query_sectsize (dhandle_t handle);
 </verb></tscreen>
 
-On the Atari platform, the sector size is handled specially. Please refer
-to the DIO section in the <url url="atari.html" name="Atari-specific
-platform documentation">.
-<p>
-
 The following function returns the sector count of the currently inserted disk:
 
 <tscreen><verb>
@@ -100,7 +95,7 @@ The following function returns the sector count of the currently inserted disk:
 <sect>Converting sector numbers<p>
 
 Since the read and write functions expect a sector number, for systems where
-the sectors aren't addressed by a logical sector number (e.g. CBM devices),
+the sectors aren't addressed by a logical sector number,
 there are 2 conversion functions. One of them converts a logical sector number
 to a head/track/sector triple. The other conversion function works the other
 way round.
@@ -122,7 +117,7 @@ This function converts track/head/sector to logical sector number.
 This function converts a logical sector number to track/head/sector notation.
 <p>
 
-Note, that on systems which natively use logical sector numbers (e.g. Atari),
+Note, that on systems which natively use logical sector numbers,
 the conversion functions are dummies. They ignore head/track
 (<tt>dio_phys_to_log</tt>) or return them as zero (<tt>dio_log_to_phys</tt>).
 The logical sector number is returned as physical sector and vice versa.
