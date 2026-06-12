@@ -69,6 +69,8 @@ tossuzymodax:
 @L3:    lda     SPRSYS
         bmi     @L3             ; wait for the multiply to complete
 
+        lda     __sprsys
+        sta     SPRSYS          ; restore SPRSYS      
 ; |remainder| = |n| - (|n|/|d|)*|d|, then apply the dividend's sign.
 
         sec
