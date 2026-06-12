@@ -264,6 +264,7 @@ static void move_ball (void)
 static void draw (void)
 {
     while (tgi_busy ()) {}
+    tgi_setcolor (COLOR_BLACK);         /* tgi_clear fills in draw color */
     tgi_clear ();
 
     paddle_scb.hpos = px;

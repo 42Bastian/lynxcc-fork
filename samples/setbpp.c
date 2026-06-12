@@ -141,6 +141,7 @@ static void render4 (void)
 {
     unsigned char pen;
 
+    tgi_setcolor (0);                   /* tgi_clear fills in draw color */
     tgi_clear ();
 
     /* The same four shades as the 2bpp screen, drawn by the sprite

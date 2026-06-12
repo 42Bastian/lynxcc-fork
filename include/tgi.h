@@ -66,8 +66,11 @@
 void tgi_init (void);
 /* Initialize graphics: enable the VBL timer interrupt, set up the collision
 ** buffer, reset the display (4bpp, unflipped, page 0 viewed and drawn), load
-** the default palette and select white as the drawing color. The hardware is
-** fixed, so this cannot fail.
+** the default palette and select black (pen 0) as the drawing color, so
+** tgi_init + tgi_clear yields a black screen. (The old loadable driver
+** defaulted to white: code that drew after init without an explicit
+** tgi_setcolor must now set its color first.) The hardware is fixed, so
+** this cannot fail.
 */
 
 void tgi_done (void);
@@ -76,7 +79,15 @@ void tgi_done (void);
 */
 
 void tgi_clear (void);
-/* Clear the draw page (sprite fill with pen 0). */
+/* Clear the draw page in the CURRENT drawing color (tgi_setcolor). After
+** tgi_init the drawing color is black, so init + clear gives a black
+** screen. (The old driver always cleared with pen 0 regardless of color.)
+*/
+
+void __fastcall__ tgi_clearrows (unsigned char first, unsigned char count);
+/* Clear rows [first, first+count) of the draw page in the current drawing
+** color. Bands reaching below the screen are clipped; count 0 is a no-op.
+*/
 
 
 
@@ -124,7 +135,8 @@ unsigned char __fastcall__ tgi_setframerate (unsigned char rate);
 
 void __fastcall__ tgi_setcollisiondetection (unsigned char active);
 /* Enable or disable Suzy's sprite collision detection (default: off). When
-** enabled, tgi_clear also erases the collision buffer.
+** enabled, tgi_clear/tgi_clearrows also erase the (corresponding rows of
+** the) collision buffer.
 */
 
 void __fastcall__ tgi_setbpp (unsigned char bpp);
@@ -132,7 +144,8 @@ void __fastcall__ tgi_setbpp (unsigned char bpp);
 ** CPU-rendered framebuffer mode: Mikey scans out 40 bytes/line (4080 bytes
 ** per page, upper 4080 bytes of each page free), but the sprite engine
 ** always renders 4bpp, so tgi_sprite/tgi_outtext output displays garbled
-** in 2bpp (tgi_clear with pen 0 stays valid). The mode relies on a DISPCTL
+** in 2bpp (tgi_clear stays valid only for colors 0, 5, 10 and 15, which
+** map to the 2bpp pens 0-3). The mode relies on a DISPCTL
 ** bit outside spec guarantees and is unverified on real hardware.
 */
 

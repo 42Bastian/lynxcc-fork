@@ -81,6 +81,7 @@ void main (void)
 
         /* Render into the back buffer, then request the swap */
         while (tgi_busy ()) {}
+        tgi_setcolor (COLOR_BLACK);     /* tgi_clear fills in draw color */
         tgi_clear ();
         tgi_sprite (&ball);
         tgi_setcolor (COLOR_WHITE);

@@ -105,12 +105,37 @@ tgi_circle(50, 40, 40);
 
 <quote>
 <descrip>
-<tag/Function/Clear the drawpage
+<tag/Function/Clear the drawpage in the current drawing color
 <tag/Header/<tt/<ref id="tgi.h" name="tgi.h">/
 <tag/Declaration/<tt/void tgi_clear (void);/
-<tag/Description/Clear the drawpage
+<tag/Description/Fills the whole drawpage with the current drawing color
+(see <tt/<ref id="tgi_setcolor" name="tgi_setcolor">/). After
+<tt/tgi_init/ the drawing color is black, so init + clear gives a black
+screen.
 <tag/Availability/cc65
-<tag/See also/Other tgi functions
+<tag/See also/<tt/<ref id="tgi_clearrows" name="tgi_clearrows">/
+<tag/Example/None.
+</descrip>
+</quote>
+
+
+<sect1>tgi_clearrows<label id="tgi_clearrows"><p>
+
+<quote>
+<descrip>
+<tag/Function/Clear a band of rows of the drawpage in the current drawing
+color
+<tag/Header/<tt/<ref id="tgi.h" name="tgi.h">/
+<tag/Declaration/<tt/void __fastcall__ tgi_clearrows (unsigned char first, unsigned char count);/
+<tag/Description/Fills the rows first to first+count-1 of the drawpage with
+the current drawing color. Bands reaching below the screen are clipped; a
+count of 0 is a no-op.
+<tag/Notes/<itemize>
+<item>The function is only available as fastcall function, so it may only
+be used in presence of a prototype.
+</itemize>
+<tag/Availability/cc65 (Lynx only)
+<tag/See also/<tt/<ref id="tgi_clear" name="tgi_clear">/
 <tag/Example/None.
 </descrip>
 </quote>

@@ -123,6 +123,7 @@ void main (void)
     for (;;) {
 
         /* Progress message */
+        tgi_setcolor (COLOR_BLACK);     /* tgi_clear fills in draw color */
         tgi_clear ();
         tgi_setcolor (COLOR_WHITE);
         tgi_outtextxy (4, 10, "SUZY MATH BENCH");
@@ -141,6 +142,7 @@ void main (void)
         hwmod = bench_hw_mod ();
 
         /* Results */
+        tgi_setcolor (COLOR_BLACK);
         tgi_clear ();
         tgi_setcolor (COLOR_WHITE);
         tgi_outtextxy (4,  2, "SUZY MATH BENCH");
