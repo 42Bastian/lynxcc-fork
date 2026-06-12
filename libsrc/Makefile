@@ -4,12 +4,7 @@ endif
 
 TARGETS = lynx
 
-DRVTYPES = emd \
-           joy \
-           mou \
-           ser
-
-OUTPUTDIRS := lib                                                                             \
+OUTPUTDIRS := lib                                                                            \
               asminc                                                                          \
               cfg                                                                             \
               include                                                                         \
@@ -95,18 +90,15 @@ SRCDIR = $(TARGET)
 
 SRCDIRS = $(SRCDIR)
 
-# The static TGI library (LYNX_TGI_DESIGN.md) builds as plain library
-# modules, not as a driver type.
-SRCDIRS += $(SRCDIR)/tgi
+# The static TGI, joy, and ser libraries (LYNX_TGI_DESIGN.md,
+# LYNX_JOY_SER_DESIGN.md) build as plain library modules, not as
+# driver types.
+SRCDIRS += $(SRCDIR)/tgi \
+           $(SRCDIR)/joy \
+           $(SRCDIR)/ser
 
 SRCDIRS += common   \
-           conio    \
-           dbg      \
-           em       \
-           joystick \
-           mouse    \
            runtime  \
-           serial   \
            zlib
 
 vpath %.s $(SRCDIRS)
@@ -129,48 +121,7 @@ ifeq ($(TARGET),$(filter $(TARGET),$(EXTZP)))
   ZPOBJ += ../libwrk/$(TARGET)/extzp.o
 endif
 
-define DRVTYPE_template
-
-$1_SRCDIR = $$(SRCDIR)/$1
-$1_STCDIR = ../libwrk/$$(TARGET)
-$1_DYNDIR = ../libwrk/$$(TARGET)/$1
-$1_DRVDIR = ../target/$$(TARGET)/drv/$1
-
-$1_SRCPAT = $$($1_SRCDIR)/$$(OBJPFX)%.s
-$1_STCPAT = $$($1_STCDIR)/$$(OBJPFX)%-$1.o
-$1_DYNPAT = $$($1_DYNDIR)/$$(OBJPFX)%.o
-$1_DRVPAT = $$($1_DRVDIR)/$$(DRVPFX)%.$1
-
-$1_SRCS := $$(wildcard $$($1_SRCDIR)/*.s)
-$1_STCS = $$(patsubst $$($1_SRCPAT),$$($1_STCPAT),$$($1_SRCS))
-$1_DYNS = $$(patsubst $$($1_SRCPAT),$$($1_DYNPAT),$$($1_SRCS))
-$1_DRVS = $$(patsubst $$($1_DYNPAT),$$($1_DRVPAT),$$($1_DYNS))
-
-$$($1_STCPAT): $$($1_SRCPAT)
-	@echo $$(TARGET) - $$< - static
-	@$$(CA65) -t $$(TARGET) -D DYN_DRV=0 $$(CA65FLAGS) --create-dep $$(@:.o=.d) -o $$@ $$<
-
-OBJS += $$($1_STCS)
-DEPS += $$($1_STCS:.o=.d)
-
-$$($1_DYNS): | $$($1_DYNDIR)
-
-$$($1_DRVPAT): $$($1_DYNPAT) $$(ZPOBJ) | $$($1_DRVDIR)
-	@echo $$(TARGET) - $$(<F)
-	@$$(LD65) -o $$@ -t module $$^
-
-$$($1_DYNDIR) $$($1_DRVDIR):
-	@$$(call MKDIR,$$@)
-
-$(TARGET): $$($1_DRVS)
-
-DEPS += $$($1_DYNS:.o=.d)
-
-endef # DRVTYPE_template
-
-$(foreach drvtype,$(DRVTYPES),$(eval $(call DRVTYPE_template,$(drvtype))))
-
-AR65 := $(if $(wildcard ../bin/ar65*),../bin/ar65,ar65)
+AR65 :=$(if $(wildcard ../bin/ar65*),../bin/ar65,ar65)
 CA65 := $(if $(wildcard ../bin/ca65*),../bin/ca65,ca65)
 CC65 := $(if $(wildcard ../bin/cc65*),../bin/cc65,cc65)
 LD65 := $(if $(wildcard ../bin/ld65*),../bin/ld65,ld65)

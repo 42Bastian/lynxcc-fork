@@ -59,7 +59,8 @@ EXELIST_lynx = \
         lynxdemo.lnx \
         suzybench.lnx \
         breakout.lnx \
-        setbpp.lnx
+        setbpp.lnx \
+        comlynx.lnx
 
 samples: $(EXELIST_$(SYS))
 

@@ -294,7 +294,6 @@ static void draw (void)
 
 void main (void)
 {
-    joy_install (joy_static_stddrv);
     tgi_init ();
     CLI ();
     while (tgi_busy ()) {}

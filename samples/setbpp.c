@@ -172,7 +172,6 @@ void main (void)
     unsigned char i;
 
     tgi_init ();                        /* 4bpp, page 0 viewed + drawn  */
-    joy_install (joy_static_stddrv);
     CLI ();
 
     tgi_setframerate (60);

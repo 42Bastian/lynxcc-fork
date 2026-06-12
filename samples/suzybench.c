@@ -113,7 +113,6 @@ void main (void)
 {
     clock_t swmul, hwmul, swdiv, hwdiv, swmod, hwmod;
 
-    joy_install (joy_static_stddrv);
     tgi_init ();
     CLI ();
 

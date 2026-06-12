@@ -48,7 +48,6 @@ void main (void)
     unsigned char size;                 /* ball size in pixels  */
 
     tgi_init ();
-    joy_install (joy_static_stddrv);
     CLI ();
 
     tgi_setframerate (60);
