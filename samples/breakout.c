@@ -293,7 +293,6 @@ static void draw (void)
 
 void main (void)
 {
-    tgi_install (tgi_static_stddrv);
     joy_install (joy_static_stddrv);
     tgi_init ();
     CLI ();

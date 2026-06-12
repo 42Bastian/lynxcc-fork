@@ -115,7 +115,6 @@
 /* The addresses of the static drivers */
 extern void lynx_stdjoy_joy[];        /* Referred to by joy_static_stddrv[] */
 extern void lynx_comlynx_ser[];
-extern void lynx_160_102_16_tgi[];    /* Referred to by tgi_static_stddrv[] */
 
 
 
@@ -191,13 +190,11 @@ unsigned __fastcall__ lynx_eewrite (unsigned cell, unsigned val);
 
 
 
-#define tgi_sprite(spr) tgi_ioctl(0, spr)
-#define tgi_flip() tgi_ioctl(1, (void*)0)
-#define tgi_setbgcolor(bgcol) tgi_ioctl(2, (void*)(bgcol))
-#define tgi_setframerate(rate) tgi_ioctl(3, (void*)(rate))
-#define tgi_busy() tgi_ioctl(4, (void*)0)
-#define tgi_updatedisplay() tgi_ioctl(4, (void*)1)
-#define tgi_setcollisiondetection(active) tgi_ioctl(5, (void*)(active))
+/* The former tgi_ioctl macros (tgi_sprite, tgi_flip, tgi_setbgcolor,
+** tgi_setframerate, tgi_busy, tgi_updatedisplay, tgi_setcollisiondetection)
+** are now real functions declared in <tgi.h>; existing call sites compile
+** unchanged. tgi_ioctl itself is gone.
+*/
 
 /* Define Hardware */
 #include <_mikey.h>

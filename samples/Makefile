@@ -49,16 +49,17 @@ endif
 
 .PRECIOUS: %.o
 
-.o:
-	$(LD) $(LDFLAGS_$(@F)_$(SYS)) $(LDFLAGS) -o $@ -t $(SYS) -m $@.map $^ $(SYS).lib
+%.lnx: %.o
+	$(LD) $(LDFLAGS_$(@F)_$(SYS)) $(LDFLAGS) -o $@ -t $(SYS) -m $(@:.lnx=.map) $^ $(SYS).lib
 
 # --------------------------------------------------------------------------
 # Samples that build for the Lynx
 
 EXELIST_lynx = \
-        lynxdemo \
-        suzybench \
-        breakout
+        lynxdemo.lnx \
+        suzybench.lnx \
+        breakout.lnx \
+        setbpp.lnx
 
 samples: $(EXELIST_$(SYS))
 

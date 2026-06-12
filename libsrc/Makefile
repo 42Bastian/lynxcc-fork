@@ -7,8 +7,7 @@ TARGETS = lynx
 DRVTYPES = emd \
            joy \
            mou \
-           ser \
-           tgi
+           ser
 
 OUTPUTDIRS := lib                                                                             \
               asminc                                                                          \
@@ -96,6 +95,10 @@ SRCDIR = $(TARGET)
 
 SRCDIRS = $(SRCDIR)
 
+# The static TGI library (LYNX_TGI_DESIGN.md) builds as plain library
+# modules, not as a driver type.
+SRCDIRS += $(SRCDIR)/tgi
+
 SRCDIRS += common   \
            conio    \
            dbg      \
@@ -104,7 +107,6 @@ SRCDIRS += common   \
            mouse    \
            runtime  \
            serial   \
-           tgi      \
            zlib
 
 vpath %.s $(SRCDIRS)

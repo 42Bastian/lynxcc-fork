@@ -108,6 +108,11 @@ compiler's register tracking in `codeinfo.c` must be updated to match).
    argument to match exactly and A to be dead. Extend to accept `INC mem`-adjacent forms and
    `LDX/STX` shapes; also emit `TRB/TSB` when the *value* (not the mask) is the loop
    invariant.
+   **Suzy-address hazard** (hardware spec ch. 3.1.2; see `LYNX_TGI_DESIGN.md` §5): one
+   instruction performing two Suzy accesses breaks Suzy, so RMW opcodes — including
+   `TRB/TSB` — must never target $FC00–$FCFF. The *stock* pass already has this latent
+   bug for `*(volatile uint8_t*)0xFCxx |= m`; add an address-range guard (constant
+   absolute operand in $FCxx → skip) to the existing pass and any extension.
 3. **`Opt65C02Ind` ordering fix**: the pass rewrites `(zp),y` → `(zp)` but leaves the now-dead
    `LDY #0` for `OptUnusedLoads` to collect. Confirm pass scheduling in `codeopt.c:1404-1410`
    guarantees the cleanup runs afterwards in the same group (currently the C02 group runs
