@@ -56,7 +56,9 @@ endif
 # Samples that build for the Lynx
 
 EXELIST_lynx = \
-        lynxdemo
+        lynxdemo \
+        suzybench \
+        breakout
 
 samples: $(EXELIST_$(SYS))
 
