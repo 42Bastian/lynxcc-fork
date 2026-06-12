@@ -44,6 +44,9 @@ tossuzyumulax:
         sta     MATHA           ; writing MATHA starts the multiply (44 ticks)
 @L0:    lda     SPRSYS
         bmi     @L0             ; wait for the math-working bit to clear
+        lda     __sprsys
+        sta     SPRSYS          ; restore SPRSYS      
+
         lda     MATHH           ; product bits 0..7
         ldx     MATHG           ; product bits 8..15
         jmp     incsp2          ; drop lhs, return result in A/X
