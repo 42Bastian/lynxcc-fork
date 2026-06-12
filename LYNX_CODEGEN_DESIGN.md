@@ -110,9 +110,13 @@ compiler's register tracking in `codeinfo.c` must be updated to match).
    invariant.
    **Suzy-address hazard** (hardware spec ch. 3.1.2; see `LYNX_TGI_DESIGN.md` §5): one
    instruction performing two Suzy accesses breaks Suzy, so RMW opcodes — including
-   `TRB/TSB` — must never target $FC00–$FCFF. The *stock* pass already has this latent
-   bug for `*(volatile uint8_t*)0xFCxx |= m`; add an address-range guard (constant
-   absolute operand in $FCxx → skip) to the existing pass and any extension.
+   `TRB/TSB` — must never target $FC00–$FCFF. The *stock* pass already had this latent
+   bug for `*(volatile uint8_t*)0xFCxx |= m`. **Guard done (2026-06-12):**
+   `IsSuzyHwAddr()` in `coptc02.c` skips the rewrite for constant operands in
+   $FC00–$FCFF (gated on `Target == TGT_LYNX`). Verified: $FC00/$FC28/$FC92/$FCFF stay
+   load/modify/store; $FBFF/$FD8B/$FE00 and symbolic RAM args still get `TRB/TSB`;
+   sim65c02 unaffected. Any future extension of this pass must route its emission
+   through the same guard.
 3. **`Opt65C02Ind` ordering fix**: the pass rewrites `(zp),y` → `(zp)` but leaves the now-dead
    `LDY #0` for `OptUnusedLoads` to collect. Confirm pass scheduling in `codeopt.c:1404-1410`
    guarantees the cleanup runs afterwards in the same group (currently the C02 group runs
