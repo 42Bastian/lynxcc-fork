@@ -25,8 +25,8 @@ _tgi_setframerate:
         cmp     #50
         beq     @r50
         lda     #1              ; Invalid rate
-        ldx     #0
-        rts
+        bra     @exit
+
 @r50:   lda     #$bd            ; 50 Hz
         ldx     #$31
         bra     @set
@@ -38,5 +38,6 @@ _tgi_setframerate:
 @set:   sta     HTIMBKUP
         stx     PBKUP
         lda     #0              ; Success
-        tax
+@exit:
+        ldx     #0
         rts
