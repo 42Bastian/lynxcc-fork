@@ -2853,6 +2853,27 @@ void g_suzymod (unsigned flags, unsigned long val)
 
 
 
+void g_suzymuldiv (unsigned flags)
+/* Primary = (a * b) / Primary via the Suzy hardware math unit, computed as a
+** single 16x16->32 multiply whose full 32-bit product is divided in place.
+** 'a' and 'b' are the two 16-bit ints on the stack (a pushed first, b second);
+** the divisor is already in the primary. Reached only through the fused
+** '!*'+'!/' parser path, so the operands are always 16-bit ints.
+*/
+{
+    if (flags & CF_UNSIGNED) {
+        AddCodeLine ("jsr tossuzyumuldivax");
+    } else {
+        AddCodeLine ("jsr tossuzymuldivax");
+    }
+
+    /* The runtime routine drops both stacked factors. */
+    pop (flags);
+    pop (flags);
+}
+
+
+
 void g_or (unsigned flags, unsigned long val)
 /* Primary = TOS | Primary */
 {

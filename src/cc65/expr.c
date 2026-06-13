@@ -1993,6 +1993,57 @@ static void hie_internal (const GenDesc* Ops,   /* List of generators */
             Error ("Integer expression expected");
         }
 
+        /* Fork extension: fuse 'a !* b !/ c' into a single Suzy multiply whose
+        ** full 32-bit product is divided in place. This keeps the intermediate
+        ** at 32 bits (no silent 16-bit overflow of a*b) and removes a readback
+        ** and reload between the multiply and the divide - it is the legit,
+        ** polled form of the multiply->divide register chaining that the
+        ** "QbertRoot" hardware joke abuses. Only the all-runtime 16-bit-int
+        ** case is fused; if either factor is constant or long, or the following
+        ** operator is not the Suzy '!/', we fall through to the standard
+        ** per-operator path, which stays correct. See LYNX_CODEGEN_DESIGN.md 2.6.
+        */
+        if (Gen->Func == g_suzymul && !lconst && !rconst &&
+            SizeOf (Expr->Type) <= 2 && SizeOf (Expr2.Type) <= 2 &&
+            CurTok.Tok == TOK_BOOL_NOT && NextTok.Tok == TOK_DIV) {
+
+            ExprDesc Expr3;
+            unsigned mdflags;
+
+            /* 'a' is already on the stack (lconst is false); push 'b' too. */
+            g_push (TypeOf (Expr2.Type), 0);
+
+            /* Consume the '!' and the '/'. */
+            NextToken ();
+            NextToken ();
+
+            /* Parse and load the divisor 'c'. */
+            MarkedExprWithCheck (hienext, &Expr3);
+            if (!IsClassInt (Expr3.Type)) {
+                Error ("Integer expression expected");
+                ED_MakeConstAbsInt (&Expr3, 1);
+            }
+            LoadExpr (CF_NONE, &Expr3);
+
+            /* Usual arithmetic conversions on 16-bit ints: the result is
+            ** unsigned iff any operand is unsigned.
+            */
+            if (IsSignUnsigned (Expr->Type) ||
+                IsSignUnsigned (Expr2.Type) ||
+                IsSignUnsigned (Expr3.Type)) {
+                mdflags = CF_INT | CF_UNSIGNED;
+                Expr->Type = type_uint;
+            } else {
+                mdflags = CF_INT;
+                Expr->Type = type_int;
+            }
+
+            /* Emit the fused multiply+divide; it drops both stacked factors. */
+            g_suzymuldiv (mdflags);
+            ED_MakeRValExpr (Expr);
+            continue;
+        }
+
         /* Check for const operands */
         if (lconst && rconst) {
 
