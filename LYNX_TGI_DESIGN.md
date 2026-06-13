@@ -312,6 +312,20 @@ must obey explicitly, not by accident:
   `tgi_sprite` passes user SCBs straight to hardware: document in `tgi.h` that an
   8-byte SCB palette must not begin at $xxFA (pad/align the SCB; ld65 `.align` or
   segment placement suffices). Worth a one-line check in a debug build of `tgi_sprite`.
+- **Sprite-data pad-byte bug (spec ch. 6, "Data Packing Format").** A hardware bug
+  requires that, in **PACKED** sprite data, the last meaningful bit of a scan line's
+  bit-stream not fall on bit 0 of a byte; when it does, the encoder must append a `$00`
+  pad byte to that line **and** add 1 to the line's offset byte (happens ~1/8 of lines).
+  This is a packed-encoding concern only. All library- and sample-built sprites use the
+  **LITERAL** encoding, where each line is delimited by its leading offset byte (= `1 +
+  data bytes`) rather than by a bit-position-sensitive end-of-packet detector, so they
+  need no pad byte — this is why `tgi-text.s` builds its 1bpp glyph strip without a fill
+  byte. Two corollaries the design records: (a) literal lines at **3bpp** must still be
+  padded to a whole-byte pixel count, since 3bpp doesn't tile bytes evenly and the spec
+  paints the leftover bits as 1-2 stray pixels (`BPP_2`/`BPP_4`/`BPP_1` are exempt); and
+  (b) any future packed-sprite authoring or import path must apply the pad-byte rule —
+  preferably via an offline `sprpck`-style packer rather than by hand. Full analysis in
+  `LYNX_SPRITE_PADBYTE_DESIGN.md`.
 - **"Please don't" — undefined bits (3.2).** The 2bpp mode of §2.7 uses a DISPCTL bit
   the Display chapter disowns; under the spec's own guidance this is exactly the kind of
   unapproved use it asks designers not to rely on. The feature stays (explicitly
