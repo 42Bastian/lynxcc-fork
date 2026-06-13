@@ -1539,7 +1539,8 @@ void CS_GenRegInfo (CodeSeg* S)
                 unsigned LIdx;
                 int Retained = 0;
                 for (LIdx = 0; LIdx < LabelCount; ++LIdx) {
-                    if (CE_GetLabel (E, LIdx)->Flags & CLF_RETAINED) {
+                    CodeLabel* L = CE_GetLabel (E, LIdx);
+                    if (L->Flags & CLF_RETAINED) {
                         Retained = 1;
                         break;
                     }
