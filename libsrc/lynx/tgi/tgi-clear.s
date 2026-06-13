@@ -79,12 +79,11 @@ common: sta     cls_y                   ; y = first (high byte stays 0)
         stx     cls_sy+1                ; sy = count.0 (8.8)
         stz     cls_sy
         lda     tgi_drawindex           ; pen byte = (c << 4) | c
-        sta     cls_pen
+        asl     a                       ; (c is 0..15, so its high nibble is
+        asl     a                       ; 0 and the low nibble survives the
+        asl     a                       ; OR with the unshifted variable)
         asl     a
-        asl     a
-        asl     a
-        asl     a
-        ora     cls_pen
+        ora     tgi_drawindex
         sta     cls_pen
         lda     #<tgi_cls_sprite
         ldx     #>tgi_cls_sprite

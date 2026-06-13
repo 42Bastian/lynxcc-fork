@@ -161,13 +161,12 @@ _tgi_outtext:
         lda     cury+1
         sta     text_y+1
 
-        ldy     #<-1            ; Calculate string length
-@L2:    iny
+        ldy     #<-1            ; Calculate string length (capped at the
+@L2:    iny                     ; 20-char draw limit, so a long string is
+        cpy     #20             ; not scanned past what will be drawn)
+        beq     @L3
         lda     (STRPTR),y
         bne     @L2
-        cpy     #20
-        bmi     @L3
-        ldy     #20             ; Draw at most 20 characters
 @L3:    sty     STRLEN
         tya
         bne     @L4
