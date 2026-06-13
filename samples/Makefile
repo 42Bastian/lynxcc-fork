@@ -59,6 +59,8 @@ EXELIST_lynx = \
         lynxdemo.lnx \
         suzybench.lnx \
         breakout.lnx \
+        invaders.lnx \
+        raycaster.lnx \
         setbpp.lnx \
         comlynx.lnx
 
