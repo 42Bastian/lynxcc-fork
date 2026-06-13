@@ -48,7 +48,6 @@ void main (void)
     unsigned char size;                 /* ball size in pixels  */
 
     tgi_init ();
-    joy_install (joy_static_stddrv);
     CLI ();
 
     tgi_setframerate (60);
@@ -81,6 +80,7 @@ void main (void)
 
         /* Render into the back buffer, then request the swap */
         while (tgi_busy ()) {}
+        tgi_setcolor (COLOR_BLACK);     /* tgi_clear fills in draw color */
         tgi_clear ();
         tgi_sprite (&ball);
         tgi_setcolor (COLOR_WHITE);

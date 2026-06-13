@@ -15,7 +15,12 @@ and have no SMC opportunity (pure register/zp loops), see §2.6 for the better a
 `hie_internal`, hardware generators `g_suzymul`/`g_suzydiv`/`g_suzymod`, five `tossuzy*`
 routines in `libsrc/lynx/`); verified against C semantics on 3144 operand pairs (corner
 values plus randoms) in a 65C02+Suzy simulator, including the divide-by-zero contract and
-the sign fixups. §2.7 cycle-cost model — not implemented.
+the sign fixups. §2.6.1 fused multiply-divide — done: `a !* b !/ c` is recognized
+as one operation in `hie_internal` and lowered through `g_suzymuldiv` to
+`tossuzy[u]muldivax` in `libsrc/lynx/suzymuldiv.s`; the 32-bit product is divided
+in place (no 16-bit truncation of the intermediate, one fewer readback/reload).
+Verified 0 mismatches vs a 32-bit C reference over 201k operand triples (corners +
+randoms + exhaustive small), signed and unsigned. §2.7 cycle-cost model — not implemented.
 
 ## 1. Background
 
@@ -110,9 +115,13 @@ compiler's register tracking in `codeinfo.c` must be updated to match).
    invariant.
    **Suzy-address hazard** (hardware spec ch. 3.1.2; see `LYNX_TGI_DESIGN.md` §5): one
    instruction performing two Suzy accesses breaks Suzy, so RMW opcodes — including
-   `TRB/TSB` — must never target $FC00–$FCFF. The *stock* pass already has this latent
-   bug for `*(volatile uint8_t*)0xFCxx |= m`; add an address-range guard (constant
-   absolute operand in $FCxx → skip) to the existing pass and any extension.
+   `TRB/TSB` — must never target $FC00–$FCFF. The *stock* pass already had this latent
+   bug for `*(volatile uint8_t*)0xFCxx |= m`. **Guard done (2026-06-12):**
+   `IsSuzyHwAddr()` in `coptc02.c` skips the rewrite for constant operands in
+   $FC00–$FCFF (gated on `Target == TGT_LYNX`). Verified: $FC00/$FC28/$FC92/$FCFF stay
+   load/modify/store; $FBFF/$FD8B/$FE00 and symbolic RAM args still get `TRB/TSB`;
+   sim65c02 unaffected. Any future extension of this pass must route its emission
+   through the same guard.
 3. **`Opt65C02Ind` ordering fix**: the pass rewrites `(zp),y` → `(zp)` but leaves the now-dead
    `LDY #0` for `OptUnusedLoads` to collect. Confirm pass scheduling in `codeopt.c:1404-1410`
    guarantees the cleanup runs afterwards in the same group (currently the C02 group runs
@@ -285,6 +294,38 @@ math model added to the simulator, or hardware/emulator validation via Handy/Med
 with an exhaustive-corner test ROM (0, 1, $7FFF, $8000, $FFFF operands; division by the
 same plus the divide-by-zero behavior, which on Suzy returns $FFFFFFFF and must match
 what callers tolerate today).
+
+#### 2.6.1 Fused multiply-divide (`a !* b !/ c`)
+
+The standalone `!*` returns only the low 16 bits of the product, so `(a !* b) !/ c`
+silently overflows whenever `a*b > 65535` — and it reads the product back to the CPU
+only to push and reload it before the divide. But Suzy's multiply lands its full 32-bit
+product in `MATHE..MATHH`, which *is* the divide's dividend register. So the parser fuses
+the chain into one operation: when `hie_internal` (multiplicative level) sees a Suzy `!*`
+immediately followed by a Suzy `!/`, with both factors runtime 16-bit ints, it pushes both
+factors, parses the divisor, and emits `g_suzymuldiv` instead of two separate generators.
+Any constant/long operand, or a following `!%`, falls through to the standard
+per-operator path (still correct). This is the legitimate, *polled* form of the
+multiply→divide register chaining that the "QbertRoot" hardware joke (hardware docs 12.4)
+abuses by racing an unfinished multiply.
+
+`libsrc/lynx/suzymuldiv.s` provides `tossuzyumuldivax` (unsigned) and `tossuzymuldivax`
+(signed). Both load the two stacked factors, start the multiply, poll, then start the
+divide by **rewriting `MATHE` with its own value** — `MATHE` already holds the product's
+MSB and writing it triggers the divide without disturbing the 32-bit dividend (writes to
+`MATHE` force nothing to zero). The signed entry reduces all three operands to magnitudes,
+runs the unsigned core, and negates the result iff an odd number of operands were negative
+($8000 negates to itself → read as the unsigned magnitude 32768, as in `tossuzydivax`).
+Benefits: a full 32-bit intermediate (kills the overflow, the main win for fixed-point
+scaling) plus the removed readback/reload. Constraints are identical to the other Suzy
+math routines (sprite engine idle, not IRQ-safe, unsafe-access bit pollution).
+
+Verified: 0 mismatches against a 32-bit C reference over 201,528 operand triples (corner
+values 0/1/$7FFF/$8000/$FFFF, randoms, and exhaustive small cases), for both signednesses;
+the old separate-op path diverged on ~199,982 of them (the overflow now fixed). Compiler
+output confirmed: signed→`tossuzymuldivax`, unsigned→`tossuzyumuldivax`, a lone `!*` still
+emits `tossuzymulax`, and `a !* b !/ c !/ d` fuses the first pair then chains a plain
+`tossuzydivax`. Pending: on-emulator/hardware run.
 
 ### 2.7 Infrastructure: a cycle-cost model
 

@@ -65,7 +65,9 @@
 
 /* SPRCTL0 $FC80 */
 #define BPP_4            0xC0
-#define BPP_3            0x80
+#define BPP_3            0x80     /* literal lines: pad each line to a whole-  */
+                                  /* byte pixel count (3bpp doesn't tile bytes */
+                                  /* evenly), else 1-2 stray pixels are painted*/
 #define BPP_2            0x40
 #define BPP_1            0x00
 #define HFLIP            0x20
@@ -80,6 +82,9 @@
 #define TYPE_BACKGROUND  0x00
 
 /* SPRCTL1 $FC81 */
+/* Suzy pad-byte bug (spec ch. 6): PACKED lines whose last bit lands on bit 0  */
+/* of a byte need a trailing $00 pad byte (offset++). LITERAL lines never do.  */
+/* See LYNX_SPRITE_PADBYTE_DESIGN.md.                                          */
 #define LITERAL          0x80
 #define PACKED           0x00
 #define ALGO3            0x40

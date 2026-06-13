@@ -69,12 +69,17 @@ cury:           .res    2
 
 textdir:        .res    1       ; TGI_TEXT_HORIZONTAL is 0
 
-; 8 rows with (one offset-byte plus 20 character bytes plus one fill-byte)
-; plus one 0-offset-byte.
-; (As an experiment, the fill-byte isn't being generated.
-;  It might not be needed to work around a Suzy bug.)
+; 8 rows of (one offset-byte plus up to 20 character bytes) plus one
+; 0-offset-byte terminator.
+;
+; No per-row pad/fill byte is emitted. The Suzy "pad-byte" sprite bug
+; (spec ch. 6) applies only to the PACKED encoding; this glyph strip is a
+; totally-literal 1bpp sprite (SPRCTL1 = LITERAL|REHV), where each line is
+; delimited by its leading offset byte, not by a bit-position-sensitive
+; end-of-packet detector, so no pad byte is ever required.
+; See LYNX_SPRITE_PADBYTE_DESIGN.md sec. 1.
 
-text_bitmap:    .res    8*(1+20+1)+1
+text_bitmap:    .res    8*(1+20)+1
 
 .data
 
@@ -156,22 +161,18 @@ _tgi_outtext:
         lda     cury+1
         sta     text_y+1
 
-        ldy     #<-1            ; Calculate string length
-@L2:    iny
+        ldy     #<-1            ; Calculate string length (capped at the
+@L2:    iny                     ; 20-char draw limit, so a long string is
+        cpy     #20             ; not scanned past what will be drawn)
+        beq     @L3
         lda     (STRPTR),y
         bne     @L2
-        cpy     #20
-        bmi     @L3
-        ldy     #20             ; Draw at most 20 characters
 @L3:    sty     STRLEN
         tya
         bne     @L4
         rts                     ; Zero-length string
-@L4:    iny                     ; Prepare text_bitmap
-
-; The next instruction is commented because the code won't include a fill-byte.
-;        iny
-        sty     STROFF
+@L4:    iny                     ; Prepare text_bitmap: offset byte = 1 + len
+        sty     STROFF          ; (no fill byte; literal sprites need none)
 
         ldy     #8-1            ; 8 pixel lines per character
         ldx     #$00
@@ -182,9 +183,6 @@ _tgi_outtext:
         adc     STROFF
         tax
 
-; This was the fill-byte.
-;        lda     #$FF
-;        sta     text_bitmap-1,x
         dey
         bpl     @L5
         stz     text_bitmap,x

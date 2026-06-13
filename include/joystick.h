@@ -2,32 +2,25 @@
 /*                                                                           */
 /*                                joystick.h                                 */
 /*                                                                           */
-/*               Read the joystick on systems that support it                */
+/*                    Read the Atari Lynx joypad inputs                      */
 /*                                                                           */
 /*                                                                           */
+/* Static, driver-less implementation for the Lynx-only cc65 tree           */
+/* (LYNX_JOY_SER_DESIGN.md). There is exactly one joypad, it is always      */
+/* present, and joy_read() reports every input the console has in a single  */
+/* call: d-pad, A, B, Option 1, Option 2 (low byte) and Pause (bit 8).      */
 /*                                                                           */
-/* (C) 1998-2011, Ullrich von Bassewitz                                      */
-/*                Roemerstrasse 52                                           */
-/*                D-70794 Filderstadt                                        */
-/* EMail:         uz@cc65.org                                                */
+/* The JOY_*_MASK values and test macros live in <lynx.h> (via target.h).   */
 /*                                                                           */
-/*                                                                           */
-/* This software is provided 'as-is', without any expressed or implied       */
-/* warranty.  In no event will the authors be held liable for any damages    */
-/* arising from the use of this software.                                    */
-/*                                                                           */
-/* Permission is granted to anyone to use this software for any purpose,     */
-/* including commercial applications, and to alter it and redistribute it    */
-/* freely, subject to the following restrictions:                            */
-/*                                                                           */
-/* 1. The origin of this software must not be misrepresented; you must not   */
-/*    claim that you wrote the original software. If you use this software   */
-/*    in a product, an acknowledgment in the product documentation would be  */
-/*    appreciated but is not required.                                       */
-/* 2. Altered source versions must be plainly marked as such, and must not   */
-/*    be misrepresented as being the original software.                      */
-/* 3. This notice may not be removed or altered from any source              */
-/*    distribution.                                                          */
+/* Behavior notes (changes from the old driver API):                        */
+/*  - Option 1/2 are no longer masked out of the low byte, and Pause is     */
+/*    reported in bit 8: code that treated the whole return value as a      */
+/*    boolean ("any input?") now also triggers on the switches.             */
+/*  - The old conio kbhit()/cgetc() keyboard emulation is gone. Edge        */
+/*    detection is the caller's one-liner:                                  */
+/*        now = joy_read (JOY_1); pressed = now & ~prev; prev = now;        */
+/*  - The Lynx conventions Pause+Opt1 = restart and Pause+Opt2 = flip       */
+/*    screen are game conventions, not hardware: honor them yourself.       */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -43,37 +36,19 @@
 
 
 /*****************************************************************************/
-/*                                  Definitions                              */
+/*                                Definitions                                */
 /*****************************************************************************/
 
 
 
-/* Error codes */
-#define JOY_ERR_OK              0       /* No error */
-#define JOY_ERR_NO_DRIVER       1       /* No driver available */
-#define JOY_ERR_CANNOT_LOAD     2       /* Error loading driver */
-#define JOY_ERR_INV_DRIVER      3       /* Invalid driver */
-#define JOY_ERR_NO_DEVICE       4       /* Device (hardware) not found */
+/* There is exactly one joypad, always present */
+#define JOY_COUNT               1
 
-/* Argument for the joy_read function */
+/* Return the number of joysticks supported (source compat, zero cost) */
+#define joy_count()             JOY_COUNT
+
+/* Argument for joy_read (ignored, kept for source compatibility) */
 #define JOY_1                   0
-#define JOY_2                   1
-
-/* Macros that evaluate the return code of joy_read */
-#define JOY_UP(v)               ((v) & JOY_UP_MASK)
-#define JOY_DOWN(v)             ((v) & JOY_DOWN_MASK)
-#define JOY_LEFT(v)             ((v) & JOY_LEFT_MASK)
-#define JOY_RIGHT(v)            ((v) & JOY_RIGHT_MASK)
-#define JOY_BTN_1(v)            ((v) & JOY_BTN_1_MASK)      /* Universally available */
-#define JOY_BTN_2(v)            ((v) & JOY_BTN_2_MASK)      /* Second button if available */
-#define JOY_BTN_3(v)            ((v) & JOY_BTN_3_MASK)      /* Third button if available  */
-#define JOY_BTN_4(v)            ((v) & JOY_BTN_4_MASK)      /* Fourth button if available */
-
-/* The name of the standard joystick driver for a platform */
-extern const char joy_stddrv[];
-
-/* The address of the static standard joystick driver for a platform */
-extern const void joy_static_stddrv[];
 
 
 
@@ -83,25 +58,11 @@ extern const void joy_static_stddrv[];
 
 
 
-unsigned char __fastcall__ joy_load_driver (const char* driver);
-/* Load and install a joystick driver. Return an error code. */
-
-unsigned char joy_unload (void);
-/* Uninstall, then unload the currently loaded driver. */
-
-unsigned char __fastcall__ joy_install (void* driver);
-/* Install an already loaded driver. Return an error code. */
-
-unsigned char joy_uninstall (void);
-/* Uninstall the currently loaded driver and return an error code.
-** Note: This call does not free allocated memory.
+unsigned __fastcall__ joy_read (unsigned char joystick);
+/* Read the joypad. Low byte: d-pad, Opt1, Opt2, B, A (raw $FCB0); bit 8:
+** Pause. Use the JOY_*_MASK macros from <lynx.h> to test individual inputs.
+** The argument is ignored.
 */
-
-unsigned char joy_count (void);
-/* Return the number of joysticks supported by the driver */
-
-unsigned char __fastcall__ joy_read (unsigned char joystick);
-/* Read a particular joystick */
 
 
 

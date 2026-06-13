@@ -35,6 +35,9 @@
 
 #include <string.h>
 
+/* common */
+#include "target.h"
+
 /* cc65 */
 #include "codeent.h"
 #include "codeinfo.h"
@@ -52,6 +55,21 @@
 /*****************************************************************************/
 /*                             Helper functions                              */
 /*****************************************************************************/
+
+
+
+static int IsSuzyHwAddr (const CodeEntry* E)
+/* Return true if the entry's argument is a constant address within the Lynx
+** Suzy hardware register range $FC00-$FCFF. Suzy breaks if one instruction
+** performs two Suzy accesses (hardware spec ch. 3.1.2; LYNX_CODEGEN_DESIGN.md
+** §2.2, LYNX_TGI_DESIGN.md §5), so read-modify-write opcodes such as TRB/TSB
+** must never target this range. Only checked for the Lynx target.
+*/
+{
+    return Target == TGT_LYNX               &&
+           (E->Flags & CEF_NUMARG) != 0     &&
+           E->Num >= 0xFC00 && E->Num <= 0xFCFF;
+}
 
 
 
@@ -126,6 +144,7 @@ unsigned Opt65C02BitOps (CodeSeg* S)
             L[2]->OPC == OP65_STA                               &&
             L[2]->AM == L[0]->AM                                &&
             strcmp (L[2]->Arg, L[0]->Arg) == 0                  &&
+            !IsSuzyHwAddr (L[0])                                &&
             !RegAUsed (S, I+3)) {
 
             char Buf[32];

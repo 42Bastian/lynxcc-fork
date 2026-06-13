@@ -141,6 +141,7 @@ static void render4 (void)
 {
     unsigned char pen;
 
+    tgi_setcolor (0);                   /* tgi_clear fills in draw color */
     tgi_clear ();
 
     /* The same four shades as the 2bpp screen, drawn by the sprite
@@ -171,7 +172,6 @@ void main (void)
     unsigned char i;
 
     tgi_init ();                        /* 4bpp, page 0 viewed + drawn  */
-    joy_install (joy_static_stddrv);
     CLI ();
 
     tgi_setframerate (60);

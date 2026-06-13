@@ -63,7 +63,7 @@ tgi_draw_sprite:
         sta     SPRGO
         stz     SDONEACK
 @L0:    stz     CPUSLEEP        ; Sleep until Suzy is done
-        bit     SPRSYS          ; Bit 0: sprite engine working
+        bit     SPRSYS          ; A still #1 from SPRGO: tests bit 0 (busy)
         bne     @L0
         stz     SDONEACK
         rts

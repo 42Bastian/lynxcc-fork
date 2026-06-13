@@ -51,9 +51,10 @@ smart linking finally applies. No header, no vectors, no install step, no module
 
 | Function | Implementation notes |
 |---|---|
-| `tgi_init()` | Absorbs old INSTALL+INIT+kernel `tgi_init`: enable VBL timer IRQ, set collision buffer regs ($A058), reset text defaults, set draw/view page 0, default palette, color white. Cannot fail (fixed hardware) → returns `void`, no error path. |
+| `tgi_init()` | Absorbs old INSTALL+INIT+kernel `tgi_init`: enable VBL timer IRQ, set collision buffer regs ($A058), reset text defaults, set draw/view page 0, default palette, color black (changed from the old driver's white; see §2.8). Cannot fail (fixed hardware) → returns `void`, no error path. |
 | `tgi_done()` | Unchanged semantics; keeps the 1-byte `_tgi_gmode` guard. |
-| `tgi_clear()` | The cls sprite + shared `draw_sprite` core. |
+| `tgi_clear()` | The cls sprite + shared `draw_sprite` core. Clears in the current draw colour; see §2.8. |
+| `tgi_clearrows(first, count)` | Lynx extension: clear a horizontal band of rows in the current draw colour. See §2.8. |
 | `tgi_sprite(scb)` | **Promoted from `tgi_ioctl(0,·)` to a real `__fastcall__` function**: `sta/stx` SCB pointer → `draw_sprite`. This is the hot call (once per frame per chain in `breakout.c`); drops the C ioctl wrapper + vector + cmp-chain (~40 cycles/call). |
 | `tgi_flip()` | Promoted from ioctl 1. |
 | `tgi_setbgcolor(c)` | Promoted from ioctl 2. |
@@ -127,7 +128,7 @@ per-driver `ERROR` byte are deleted (~250 bytes incl. message strings).
 libsrc/lynx/tgi/
   tgi-core.s      draw_sprite, DRAWINDEX, DRAWPAGE/VIEWPAGE vars   (always linked)
   tgi-init.s      tgi_init, tgi_done, _tgi_gmode
-  tgi-clear.s     tgi_clear + cls sprite
+  tgi-clear.s     tgi_clear, tgi_clearrows + shared cls sprite
   tgi-sprite.s    tgi_sprite
   tgi-page.s      setviewpage, setdrawpage, flip, busy, updatedisplay, irq (.interruptor)
   tgi-color.s     setcolor, getcolor, setbgcolor
@@ -179,6 +180,61 @@ Mednafen — may not implement 2bpp at all): pixel order within the byte (assume
 MSB-first, matching 4bpp nibble order), whether 2-bit pen numbers index palette entries
 0–3, and that PBKUP/line timing needs no adjustment for the halved DMA fetch. A small
 test ROM that hand-fills a 2bpp buffer with a known pattern settles all three.
+
+### 2.8 Coloured clears and partial clears: `tgi_clear` honours the draw colour, `tgi_clearrows`
+
+```c
+void tgi_clear (void);
+/* Clear the whole draw page in the current draw colour. */
+
+void __fastcall__ tgi_clearrows (unsigned char first, unsigned char count);
+/* Clear rows [first, first+count) of the draw page in the current draw
+** colour. Lynx extension (like tgi_setbpp). */
+```
+
+Both clear in the colour last set with `tgi_setcolor()` — no separate "clear colour"
+state. `tgi_clear(); /* after tgi_setcolor(BG_DEAD) */` paints the screen `BG_DEAD`.
+
+**Mechanism.** The existing cls sprite (1×1 1bpp pixel, hardware-scaled) serves both
+functions; everything stays in `tgi-clear.s`. Per call, before `tgi_draw_sprite`:
+
+- **Pen byte** ← `(c << 4) | c` with `c = tgi_drawindex` (new import from `tgi-core.s`).
+  Duplicating the colour into both nibbles of the 1bpp pen table makes the result
+  independent of which pixel index the stretched source pixel carries.
+- **Geometry**: `y` ← `first` (high byte 0), `sy` ← `count` in the integer half of the
+  8.8 word; `x = 0` / `sx = $A000` stay static. `tgi_clear` becomes a 4-byte preamble
+  (`first = 0, count = 102`) falling into the common path. Cost: ~25 bytes over today.
+
+**Edge cases.**
+
+- `count == 0`: explicit `rts` guard — Suzy's behaviour at `sy = 0` is not trusted.
+- `first + count > 102` (or `first > 101`): Suzy clips at the screen edge; partial or
+  fully offscreen bands draw nothing extra. No software range checks.
+- **Collision interplay**: because both functions share `tgi_cls_sprite`, the
+  `tgi_setcollisiondetection` type/SPRCOLL rewrite applies unchanged — with collision
+  detection on, a partial clear also erases the matching rows of the collision buffer.
+
+**Behaviour change — flag loudly.** `tgi_clear` previously always filled with pen 0.
+To keep the init→clear idiom black-clearing, `tgi_init`'s default draw colour changes
+from white to **black** (§2.1) — `tgi_init(); tgi_clear();` behaves exactly as before.
+The flip side: programs that drew (text, sprites) after init *without* an explicit
+`tgi_setcolor` relied on the old white default and now draw black-on-black — invisible,
+silently. Both changes are runtime-silent, not compile errors — call them out in the
+`tgi.h` comments for `tgi_init` and `tgi_clear`, and audit the samples (`breakout.c`,
+`lynxdemo.c`, etc.) for missing `tgi_setcolor(COLOR_WHITE)` in the same commit.
+
+**Alternative considered**: keying clears off `tgi_bgindex` (`tgi_setbgcolor`) instead.
+Rejected — one colour mechanism (`tgi_setcolor`) for all drawing as specified;
+`tgi_bgindex` stays text-only.
+
+**2bpp caveat (§2.7).** A colour-`c` clear writes bytes `$cc`. At 2bpp display depth
+that scans out uniformly only when both bit-pairs of the nibble match:
+`c ∈ {$0, $5, $A, $F}` → 2bpp pens 0–3. Pen 0 remains valid at any depth; other values
+produce a two-colour vertical stripe pattern. Documented, not guarded.
+
+**Touch list**: `tgi-clear.s` (rework), `tgi-init.s` (default colour white → black),
+`include/tgi.h` (prototype + revised `tgi_init`/`tgi_clear` comments), `doc/tgi.sgml`,
+samples (add `tgi_setcolor(COLOR_WHITE)` where the white default was assumed).
 
 ## 3. Deletions
 
@@ -256,6 +312,20 @@ must obey explicitly, not by accident:
   `tgi_sprite` passes user SCBs straight to hardware: document in `tgi.h` that an
   8-byte SCB palette must not begin at $xxFA (pad/align the SCB; ld65 `.align` or
   segment placement suffices). Worth a one-line check in a debug build of `tgi_sprite`.
+- **Sprite-data pad-byte bug (spec ch. 6, "Data Packing Format").** A hardware bug
+  requires that, in **PACKED** sprite data, the last meaningful bit of a scan line's
+  bit-stream not fall on bit 0 of a byte; when it does, the encoder must append a `$00`
+  pad byte to that line **and** add 1 to the line's offset byte (happens ~1/8 of lines).
+  This is a packed-encoding concern only. All library- and sample-built sprites use the
+  **LITERAL** encoding, where each line is delimited by its leading offset byte (= `1 +
+  data bytes`) rather than by a bit-position-sensitive end-of-packet detector, so they
+  need no pad byte — this is why `tgi-text.s` builds its 1bpp glyph strip without a fill
+  byte. Two corollaries the design records: (a) literal lines at **3bpp** must still be
+  padded to a whole-byte pixel count, since 3bpp doesn't tile bytes evenly and the spec
+  paints the leftover bits as 1-2 stray pixels (`BPP_2`/`BPP_4`/`BPP_1` are exempt); and
+  (b) any future packed-sprite authoring or import path must apply the pad-byte rule —
+  preferably via an offline `sprpck`-style packer rather than by hand. Full analysis in
+  `LYNX_SPRITE_PADBYTE_DESIGN.md`.
 - **"Please don't" — undefined bits (3.2).** The 2bpp mode of §2.7 uses a DISPCTL bit
   the Display chapter disowns; under the spec's own guidance this is exactly the kind of
   unapproved use it asks designers not to rely on. The feature stays (explicitly

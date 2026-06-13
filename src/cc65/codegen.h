@@ -434,6 +434,13 @@ void g_suzymod (unsigned flags, unsigned long val);
 ** and '!%' operators; they call the tossuzy* runtime entries in lynx.lib
 ** for int operands and fall back to the software routines for longs.
 */
+void g_suzymuldiv (unsigned flags);
+/* Fused '(a*b)/c' via the Suzy hardware math unit (Lynx fork). Reached only
+** via the fused '!*'+'!/' parser path: the two 16-bit factors are on the
+** stack (a pushed first, b second) and the divisor is in the primary. The
+** full 32-bit product is divided in place, so the intermediate is not
+** truncated to 16 bits. The runtime entry drops both stacked factors.
+*/
 void g_or (unsigned flags, unsigned long val);
 void g_xor (unsigned flags, unsigned long val);
 void g_and (unsigned flags, unsigned long val);

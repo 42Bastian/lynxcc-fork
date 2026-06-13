@@ -7,8 +7,10 @@
 ; tgi_init absorbs the old INSTALL+INIT driver entries and the kernel's
 ; tgi_init: it enables the VBL timer interrupt, sets up the collision
 ; buffer, resets the display to a known state (4bpp, unflipped, page 0
-; viewed and drawn), loads the default palette and selects white as the
-; drawing color. The hardware is fixed, so it cannot fail and returns void.
+; viewed and drawn), loads the default palette and selects black (pen 0)
+; as the drawing color, so that tgi_init + tgi_clear yields a black screen
+; (LYNX_TGI_DESIGN.md sec. 2.8; the old driver defaulted to white).
+; The hardware is fixed, so it cannot fail and returns void.
 ;
 ; Text style and the collision-detection setting are owned by their own
 ; modules and statically initialized to their defaults there; tgi_init
@@ -129,10 +131,9 @@ _tgi_init:
         dey
         bpl     @L1
 
-; Draw in white.
+; Draw in black (pen 0) - tgi_clear fills with the draw color (sec. 2.8).
 
-        lda     #$0F
-        sta     tgi_drawindex
+        stz     tgi_drawindex
 
 ; Remember that graphics mode is active.
 

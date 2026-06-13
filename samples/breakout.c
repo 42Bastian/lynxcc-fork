@@ -264,6 +264,7 @@ static void move_ball (void)
 static void draw (void)
 {
     while (tgi_busy ()) {}
+    tgi_setcolor (COLOR_BLACK);         /* tgi_clear fills in draw color */
     tgi_clear ();
 
     paddle_scb.hpos = px;
@@ -293,7 +294,6 @@ static void draw (void)
 
 void main (void)
 {
-    joy_install (joy_static_stddrv);
     tgi_init ();
     CLI ();
     while (tgi_busy ()) {}
