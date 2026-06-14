@@ -50,14 +50,31 @@ tossuzymodax:
         lda     #0
         sbc     ptr1+1
         sta     ptr1+1
-@L1:    lda     ptr1
+; Small-divisor normalization (design doc 2.6.3): for |divisor| < 256, divide
+; |dividend|<<8 by |divisor|<<8 for the same quotient ~112 ticks faster. Only
+; the divide is shifted; tmp1/tmp2 keep the original |divisor| for the
+; (|n|/|d|)*|d| multiply below, and MATHD/MATHC still hold the quotient.
+
+@L1:    lda     tmp2            ; |divisor| high byte
+        bne     @wide           ; >= 256 -> stock placement
+        stz     MATHP           ; (|d|<<8) low  = 0
+        lda     tmp1
+        sta     MATHN           ; (|d|<<8) high = |divisor| low byte
+        stz     MATHH           ; dividend bits 0..7  = 0 (forces MATHG = 0)
+        lda     ptr1
+        sta     MATHG           ; |n| low  -> bits 8..15
+        lda     ptr1+1
+        sta     MATHF           ; |n| high -> bits 16..23 (forces MATHE = 0)
+        stz     MATHE           ; writing MATHE starts the divide
+        bra     @div
+@wide:  lda     ptr1
         sta     MATHH           ; |dividend| low (also forces MATHG = 0)
         lda     ptr1+1
         sta     MATHG           ; |dividend| high
         stz     MATHF           ; zero-extend (also forces MATHE = 0)
         stz     MATHE           ; writing MATHE starts the divide
-@L2:    lda     SPRSYS
-        bmi     @L2             ; wait for the divide to complete
+@div:   lda     SPRSYS
+        bmi     @div            ; wait for the divide to complete
 
 ; The quotient low word is now in MATHD/MATHC, which is the multiply's
 ; C/D operand. Write |divisor| into B/A to compute (|n|/|d|)*|d|.

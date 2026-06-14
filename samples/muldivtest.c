@@ -1,23 +1,27 @@
 /*
-** muldivtest.c - On-hardware correctness test for the fused Suzy
-** multiply-divide operator 'a !* b !/ c' (see LYNX_CODEGEN_DESIGN.md 2.6.1).
+** muldivtest.c - On-hardware correctness test for this fork's Suzy hardware
+** math operators (see LYNX_CODEGEN_DESIGN.md 2.6).
 **
-** For every triple drawn from a corner-value table (skipping c == 0) it
-** compares the fused hardware result against an independent reference
-** computed with the software 32-bit long routines:
+** Six sweeps over a corner-value table, each comparing a Suzy hardware result
+** against an independent software reference:
 **
-**     got = a !* b !/ c;                       (Suzy, fused, 32-bit product)
-**     exp = (int)(((long)a * b) / c);          (software long math)
+**   MDV  a !* b !/ c   vs  (int)(((long)a*b)/c)     (fused, 32-bit product)
+**   DIV  a !/ b        vs  a / b                     (suzy?div.s, normalized)
+**   MOD  a !% b        vs  a % b                     (suzy?mod.s,  normalized)
 **
-** Both a signed sweep (tossuzymuldivax) and an unsigned sweep
-** (tossuzyumuldivax) are run. The screen shows pass/total for each and the
-** first failing triple, if any. "ALL PASS" means every case matched.
+** each in a signed (S) and unsigned (U) variant. The MDV reference uses long
+** math so it shares no code with the Suzy path; the DIV/MOD references use the
+** stock 16-bit software '/' and '%' routines, so a mismatch flags a divergence
+** between the normalized Suzy divide (design doc 2.6.3) and known-good software.
 **
-** The reference deliberately uses long math so it does NOT share any code
-** with the Suzy path under test.
+** The table includes divisors 1, 127, 255 (narrow, <256 -> normalized path),
+** 256 (boundary) and -1->$FFFF / 30000 / 32767 (wide path), exercising both
+** sides of the small-divisor shift.
+**
+** The screen shows pass/total per sweep and the first failing case, if any.
+** "ALL PASS" means every case matched. Press A to re-run.
 **
 ** Build:  cl65 -t lynx -O -o muldivtest.lnx muldivtest.c
-** Press A to re-run.
 */
 
 #include <lynx.h>
@@ -29,20 +33,43 @@
 static char buf[21];
 
 /* Corner values: 0, +/-1, +/-2, byte edges, +/-1000, +/-30000 and the
-** 16-bit signed extremes. The same magnitudes serve the unsigned sweep. */
-static const int  sval[] = {
+** 16-bit signed extremes. The same magnitudes serve the unsigned sweeps. */
+static const int sval[] = {
     0, 1, -1, 2, -2, 127, -128, 255, 256, -256,
     1000, -1000, 30000, -30000, 32767, -32768
 };
 #define NV (sizeof (sval) / sizeof (sval[0]))
 
+/* First-failure capture, shared across all sweeps. */
+static unsigned char anyfail;
+static char fbuf1[21], fbuf2[21];
+
+static void cap (const char* tag, long a, long b, long c, long got, long exp)
+{
+    if (anyfail) {
+        return;
+    }
+    anyfail = 1;
+    sprintf (fbuf1, "%s %ld %ld %ld", tag, a, b, c);
+    sprintf (fbuf2, "g%ld e%ld", got, exp);
+}
+
+static void row (unsigned char y, const char* tag,
+                 unsigned fail, unsigned pass, unsigned total)
+{
+    tgi_setcolor (fail ? COLOR_RED : COLOR_GREEN);
+    sprintf (buf, "%s %u/%u", tag, pass, total);
+    tgi_outtextxy (4, y, buf);
+}
+
 int main (void)
 {
-    unsigned       stotal = 0, spass = 0, utotal = 0, upass = 0;
-    int            sfa = 0, sfb = 0, sfc = 0, sfg = 0, sfe = 0;
-    int            ufa = 0, ufb = 0, ufc = 0, ufg = 0, ufe = 0;
-    unsigned char  sfail = 0, ufail = 0;
-    unsigned       i, j, k;
+    unsigned i, j, k;
+    /* per-sweep counters */
+    unsigned mds_t, mds_p, mdu_t, mdu_p;
+    unsigned dvs_t, dvs_p, dvu_t, dvu_p;
+    unsigned mos_t, mos_p, mou_t, mou_p;
+    unsigned char mds_f, mdu_f, dvs_f, dvu_f, mos_f, mou_f;
 
     tgi_init ();
     CLI ();
@@ -53,60 +80,78 @@ int main (void)
 
         tgi_setcolor (COLOR_BLACK);
         tgi_clear ();
-        tgi_setcolor (COLOR_WHITE);
-        tgi_outtextxy (4, 4, "MULDIV TEST");
         tgi_setcolor (COLOR_YELLOW);
-        tgi_outtextxy (4, 18, "RUNNING...");
+        tgi_outtextxy (4, 4, "RUNNING...");
         tgi_updatedisplay ();
         while (tgi_busy ()) {}
 
-        stotal = spass = utotal = upass = 0;
-        sfail = ufail = 0;
+        anyfail = 0;
+        mds_t = mds_p = mdu_t = mdu_p = 0;
+        dvs_t = dvs_p = dvu_t = dvu_p = 0;
+        mos_t = mos_p = mou_t = mou_p = 0;
+        mds_f = mdu_f = dvs_f = dvu_f = mos_f = mou_f = 0;
 
-        /* -------- signed sweep -------- */
+        /* -------- fused multiply-divide: triple loops -------- */
         for (i = 0; i < NV; ++i) {
             for (j = 0; j < NV; ++j) {
                 for (k = 0; k < NV; ++k) {
                     int a = sval[i], b = sval[j], c = sval[k];
-                    int got, exp;
                     if (c == 0) {
                         continue;
                     }
-                    got = a !* b !/ c;                       /* fused Suzy */
-                    exp = (int) (((long) a * (long) b) / (long) c);
-                    ++stotal;
-                    if (got == exp) {
-                        ++spass;
-                    } else if (!sfail) {
-                        sfail = 1;
-                        sfa = a; sfb = b; sfc = c; sfg = got; sfe = exp;
+                    {
+                        int sg = a !* b !/ c;
+                        int se = (int) (((long) a * (long) b) / (long) c);
+                        ++mds_t;
+                        if (sg == se) { ++mds_p; }
+                        else { mds_f = 1; cap ("MDS", a, b, c, sg, se); }
+                    }
+                    {
+                        unsigned ua = (unsigned) a, ub = (unsigned) b,
+                                 uc = (unsigned) c;
+                        unsigned ug = ua !* ub !/ uc;
+                        unsigned ue = (unsigned)
+                            (((unsigned long) ua * (unsigned long) ub)
+                             / (unsigned long) uc);
+                        ++mdu_t;
+                        if (ug == ue) { ++mdu_p; }
+                        else { mdu_f = 1; cap ("MDU", ua, ub, uc, ug, ue); }
                     }
                 }
             }
         }
 
-        /* -------- unsigned sweep (same magnitudes, treated as unsigned) -------- */
+        /* -------- plain divide and modulo: double loops -------- */
         for (i = 0; i < NV; ++i) {
             for (j = 0; j < NV; ++j) {
-                for (k = 0; k < NV; ++k) {
-                    unsigned a = (unsigned) sval[i];
-                    unsigned b = (unsigned) sval[j];
-                    unsigned c = (unsigned) sval[k];
-                    unsigned got, exp;
-                    if (c == 0) {
-                        continue;
-                    }
-                    got = a !* b !/ c;                       /* fused Suzy */
-                    exp = (unsigned) (((unsigned long) a * (unsigned long) b)
-                                      / (unsigned long) c);
-                    ++utotal;
-                    if (got == exp) {
-                        ++upass;
-                    } else if (!ufail) {
-                        ufail = 1;
-                        ufa = (int) a; ufb = (int) b; ufc = (int) c;
-                        ufg = (int) got; ufe = (int) exp;
-                    }
+                int a = sval[i], b = sval[j];
+                unsigned ua = (unsigned) a, ub = (unsigned) b;
+                if (b == 0) {
+                    continue;
+                }
+                {
+                    int g = a !/ b, e = a / b;       /* Suzy vs software */
+                    ++dvs_t;
+                    if (g == e) { ++dvs_p; }
+                    else { dvs_f = 1; cap ("DVS", a, b, 0, g, e); }
+                }
+                {
+                    unsigned g = ua !/ ub, e = ua / ub;
+                    ++dvu_t;
+                    if (g == e) { ++dvu_p; }
+                    else { dvu_f = 1; cap ("DVU", ua, ub, 0, g, e); }
+                }
+                {
+                    int g = a !% b, e = a % b;
+                    ++mos_t;
+                    if (g == e) { ++mos_p; }
+                    else { mos_f = 1; cap ("MOS", a, b, 0, g, e); }
+                }
+                {
+                    unsigned g = ua !% ub, e = ua % ub;
+                    ++mou_t;
+                    if (g == e) { ++mou_p; }
+                    else { mou_f = 1; cap ("MOU", ua, ub, 0, g, e); }
                 }
             }
         }
@@ -115,33 +160,25 @@ int main (void)
         tgi_setcolor (COLOR_BLACK);
         tgi_clear ();
         tgi_setcolor (COLOR_WHITE);
-        tgi_outtextxy (4, 2, "MULDIV TEST");
+        tgi_outtextxy (4, 2, "SUZY MATH TEST");
 
-        tgi_setcolor (sfail ? COLOR_RED : COLOR_GREEN);
-        sprintf (buf, "S %u/%u", spass, stotal);
-        tgi_outtextxy (4, 16, buf);
-        if (sfail) {
-            sprintf (buf, "%d*%d/%d", sfa, sfb, sfc);
-            tgi_outtextxy (4, 26, buf);
-            sprintf (buf, "g%d e%d", sfg, sfe);
-            tgi_outtextxy (4, 36, buf);
+        row (14, "MDS", mds_f, mds_p, mds_t);
+        row (23, "MDU", mdu_f, mdu_p, mdu_t);
+        row (32, "DVS", dvs_f, dvs_p, dvs_t);
+        row (41, "DVU", dvu_f, dvu_p, dvu_t);
+        row (50, "MOS", mos_f, mos_p, mos_t);
+        row (59, "MOU", mou_f, mou_p, mou_t);
+
+        tgi_setcolor (anyfail ? COLOR_RED : COLOR_GREEN);
+        tgi_outtextxy (4, 72, anyfail ? "FAIL:" : "ALL PASS");
+        if (anyfail) {
+            tgi_setcolor (COLOR_WHITE);
+            tgi_outtextxy (4, 82, fbuf1);
+            tgi_outtextxy (4, 91, fbuf2);
+        } else {
+            tgi_setcolor (COLOR_YELLOW);
+            tgi_outtextxy (4, 91, "A = AGAIN");
         }
-
-        tgi_setcolor (ufail ? COLOR_RED : COLOR_GREEN);
-        sprintf (buf, "U %u/%u", upass, utotal);
-        tgi_outtextxy (4, 50, buf);
-        if (ufail) {
-            sprintf (buf, "%u*%u/%u",
-                     (unsigned) ufa, (unsigned) ufb, (unsigned) ufc);
-            tgi_outtextxy (4, 60, buf);
-            sprintf (buf, "g%u e%u", (unsigned) ufg, (unsigned) ufe);
-            tgi_outtextxy (4, 70, buf);
-        }
-
-        tgi_setcolor ((!sfail && !ufail) ? COLOR_GREEN : COLOR_RED);
-        tgi_outtextxy (4, 86, (!sfail && !ufail) ? "ALL PASS" : "FAIL");
-        tgi_setcolor (COLOR_YELLOW);
-        tgi_outtextxy (4, 96, "A = AGAIN");
         tgi_updatedisplay ();
         while (tgi_busy ()) {}
 

@@ -327,6 +327,122 @@ output confirmed: signed→`tossuzymuldivax`, unsigned→`tossuzyumuldivax`, a l
 emits `tossuzymulax`, and `a !* b !/ c !/ d` fuses the first pair then chains a plain
 `tossuzydivax`. Pending: on-emulator/hardware run.
 
+#### 2.6.2 Effect on the shipped library code
+
+Because Suzy math is opt-in only, recompiling library source changes nothing. The
+standard `*`/`/`/`%` operators keep lowering to the software `tosmulax`/`tosdivax`
+family, and the compiler's *implicit* multiplies — array indexing, pointer scaling,
+struct strides — also stay software (§2.6, "compiler-generated multiplies always use
+software"). No `.c` source in `libsrc/` silently switches to the hardware unit. The math
+unit reaches library code only where it is hand-written in asm or where an internal
+helper is deliberately routed over to it. The effect therefore splits into three: what
+already uses it, what would change if it were pushed deeper, and the contract the whole
+library must hold so neither breaks.
+
+**What already uses it (safe by construction).** Two places in `libsrc/lynx` touch the
+math unit: the `tossuzy*` routines themselves (`suzymul/div/mod/muldiv/udiv/umod.s`),
+linked only when a program uses `!*`/`!/`/`!%`; and `tgi/tgi-text.s`, where
+`tgi_gettextwidth` computes `strlen*8*scale >> 8` as an inline unsigned Suzy multiply and
+text scaling writes 8.8 values straight into the sprite's sx/sy fields. Both are safe
+because TGI draws synchronously — the CPU waits for sprite completion, so the sprite
+engine (which shares the math unit) is provably idle when these run, and the math-working
+bit is polled before any result is read. That synchronous-draw assumption is load-bearing
+for everything below.
+
+**What would change if it were pushed deeper.** The candidates are the internal helpers
+of §2.6 point 4 — `umul16x16r32` / `udiv32by16r16` used by `lz4` and TGI scaling — which
+are exact width matches for the hardware. Converting them via a vpath override would give
+the documented 3–8× on those ops with no change at the call sites. For TGI scaling that is
+safe for the same synchronous-draw reason. For `lz4` it requires a per-helper audit that
+the routine is never entered mid-sprite or from an IRQ. The win stays concentrated and the
+surface small precisely *because* the switch is not automatic; the cost is that every
+converted helper inherits the constraints below and stops being grep-auditable once it is
+buried inside a general-purpose routine arbitrary code can call.
+
+**The contract the rest of the library must uphold.** The math unit is global,
+non-saveable hardware state (rewriting the inputs starts a new operation — there is no
+save/restore protocol), so any library use imposes invariants on the rest of the library:
+
+- *No Suzy math in IRQ handlers.* `irq.s`, `ser/*`, `clock.s`, and `joy/*` do no
+  multiply/divide today, and this must stay true: an interrupt doing hardware math mid
+  mainline operation would silently corrupt the result.
+- *Sprite engine idle.* Holds for TGI because drawing is synchronous. A future
+  *asynchronous* sprite library combined with C `!*` arithmetic would corrupt both — the
+  one architectural door that deeper adoption closes.
+- *Accumulate off / `__sprsys` shadow discipline.* The Suzy routines AND-mask the
+  `__sprsys` shadow (`& $3F`) to force sign-math and accumulate off while preserving the
+  sprite control bits, and `CLR_UNSAFE` in the shadow resets the unsafe-access bit.
+  `tgi-page.s`, `tgi-collision.s`, and `tgi-init.s` all route their SPRSYS writes through
+  that same shadow, so the two coexist correctly; any new SPRSYS writer must keep using
+  the shadow or it will desync.
+- *Unsafe-access bit pollution.* Every math op may spuriously set the SPRSYS unsafe bit
+  (hardware bug). `tgi-collision.s` reads SPRSYS for collision state, so collision or
+  sprite-debug code running after hardware math must reset that bit — the interaction to
+  watch if math use spreads.
+
+**Bottom line.** For the library as it stands the effect is contained and benign: a faster
+`tgi_gettextwidth`, free fractional text scaling, and operator-only routines that do not
+link unless used. No C library routine changed behavior and the interrupt-driven
+subsystems are clean. The cost is a library-wide contract (sprite engine idle, no math in
+IRQs, SPRSYS only via the shadow) that is satisfied everywhere today but becomes harder to
+guarantee the deeper the hardware unit is folded into general-purpose helpers such as
+`lz4`. The conservative course — and what the design already follows — is to keep Suzy
+math at explicit, auditable call sites plus the synchronous TGI paths, and to treat each
+internal-helper conversion as its own reentrancy audit.
+
+#### 2.6.3 Small-divisor normalization (shift both operands up by 8)
+
+Suzy's divide is not constant-time: `176 + 14·N` ticks where `N` is the count of leading
+zeros in the 16-bit divisor (§2.6, "Hardware capabilities"). A *small* divisor is therefore
+the *slow* case — divisor `1` carries 15 leading zeros (≈386 ticks), while any divisor
+≥256 carries at most 7 (≤274 ticks). Because the quotient of `(n·256) / (d·256)` equals
+that of `n / d`, left-shifting *both* operands by 8 leaves the result unchanged but pushes
+the divisor up into its high byte, erasing 8 leading zeros and saving `14·8 = 112` ticks
+on every divide whose divisor is `< 256`. For arithmetic that repeatedly divides by small
+runtime values — fixed-point scales, counts, velocities — this is a ~29% cut on the
+worst-case divide for the price of one branch.
+
+**Free for the 16/16 paths, by width.** In `suzyudiv.s`/`suzydiv.s` the dividend is at
+most 16 bits, zero-extended into the 32-bit `MATHE..MATHH` group, so `n<<8` is at most 24
+bits and can never overflow 32 — the shift is unconditionally safe whenever the divisor is
+small. It is also nearly free: shifting `n` left by 8 just writes the same two dividend
+bytes one register higher (`MATHG`/`MATHF` instead of `MATHH`/`MATHG`), and shifting the
+small divisor writes its byte to `MATHN` instead of `MATHP` — identical store counts. The
+only added cost is a one-byte test of the divisor's high byte (`cpx #0` / branch, ~5
+cycles) selecting the normalized path, with the existing register-pair zeroing discipline
+preserved (write `MATHH` before `MATHG`, `MATHF` before `MATHE`, since each of those writes
+forces its pair partner to 0). `suzydiv.s` (signed) applies the test to the already-formed
+`|divisor|` magnitude — `|dividend| ≤ 32768`, so `<<8` still fits 24 bits. `suzyumod.s`/`suzymod.s`
+carry the same edit (they inline their own divide rather than calling the shared routine):
+only the divide is normalized, while the saved original divisor drives the following
+`(n/d)·d` multiply, so `MATHD/MATHC` still hold the un-shifted quotient and the remainder is
+correct. Divide-by-zero is unaffected (`0<<8` is still 0), and the hardware remainder is
+scaled by 256 but never read.
+
+**Not free for fused muldiv — the "numerator too large" case.** In `suzymuldiv.s` the
+dividend *is* the full 32-bit product `a·b`; that width is the routine's whole reason to
+exist (it kills the `!*` overflow). Shifting `product<<8` overflows 32 bits unless the
+product already fits in 24, so the trick needs a *second* guard — `MATHE == 0` (product
+bits 24..31 zero) read after the multiply settles, **and** `c < 256` — before it is safe.
+That is a narrower, runtime-dependent payoff, so the conservative course is to leave the
+muldiv paths unnormalized (or gate strictly on `MATHE == 0`) rather than risk the overflow
+the fused routine was built to prevent.
+
+**Largest win is at compile time.** When the divisor is a compile-time constant `< 256`,
+`g_div`/`g_mod` can emit the normalized operand placement directly, with *no* runtime
+branch at all — the same family of move as the existing power-of-two→shift strength
+reduction (§2.6, "Constant folding is kept"). That captures most of the benefit on the
+common "divide by a small literal" site for zero added cost; the runtime high-byte test
+covers the variable-divisor remainder.
+
+Status: IMPLEMENTED. The narrow/wide split is in `suzyudiv.s`, `suzydiv.s`, `suzyumod.s`
+and `suzymod.s` (the muldiv paths are deliberately left unnormalized, per the product-width
+caveat above). `muldivtest` now sweeps plain `!/` and `!%` (signed and unsigned) alongside
+the fused operator, over a corner table that includes divisors `1`/`127`/`255` (narrow),
+`256` (boundary) and `$FFFF`/`30000`/`32767` (wide), comparing each against the stock
+software `/`/`%`. A host model of the exact byte stores validated 0 mismatches over all 176
+narrow-path corner pairs (unsigned and signed div/mod). Pending: on-emulator/hardware run.
+
 ### 2.7 Infrastructure: a cycle-cost model
 
 Add a per-opcode, per-addressing-mode cycle table to `opcodes.c` alongside size, plus a

@@ -39,15 +39,34 @@ tossuzyumodax:
         lda     __sprsys        ; sign-math off, accumulate off for the
         and     #$3F            ; multiply below; keeps the sprite control
         sta     SPRSYS          ; bits from the shadow byte
-        lda     (sp)            ; dividend low
+
+; Small-divisor normalization (design doc 2.6.3): for divisor < 256, divide
+; dividend<<8 by divisor<<8 for the same quotient ~112 ticks faster. Only the
+; divide is shifted; tmp1/tmp2 keep the original divisor for the (n/d)*d
+; multiply below, and MATHD/MATHC still hold the un-shifted quotient.
+
+        cpx     #0              ; divisor high byte zero -> divisor < 256
+        bne     @wide
+        stz     MATHP           ; (d<<8) low  = 0
+        lda     tmp1
+        sta     MATHN           ; (d<<8) high = divisor low byte
+        stz     MATHH           ; dividend bits 0..7  = 0 (forces MATHG = 0)
+        lda     (sp)            ; n low  -> bits 8..15
+        sta     MATHG
+        ldy     #1
+        lda     (sp),y          ; n high -> bits 16..23
+        sta     MATHF           ; (forces MATHE = 0)
+        stz     MATHE           ; writing MATHE starts the divide
+        bra     @div
+@wide:  lda     (sp)            ; dividend low
         sta     MATHH           ; (also forces MATHG = 0)
         ldy     #1
         lda     (sp),y          ; dividend high
         sta     MATHG
         stz     MATHF           ; zero-extend (also forces MATHE = 0)
         stz     MATHE           ; writing MATHE starts the divide
-@L0:    lda     SPRSYS
-        bmi     @L0             ; wait for the divide to complete
+@div:   lda     SPRSYS
+        bmi     @div            ; wait for the divide to complete
 
 ; The quotient low word is now in MATHD/MATHC, which is the multiply's
 ; C/D operand. Write the divisor into B/A to compute (n/d)*d.
