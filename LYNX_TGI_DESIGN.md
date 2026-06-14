@@ -67,7 +67,7 @@ smart linking finally applies. No header, no vectors, no install step, no module
 | `tgi_setpalette(p)` / `tgi_getpalette()` / `tgi_getdefpalette()` | Direct. |
 | `tgi_gotoxy(x,y)` | Kept solely as text cursor positioning for `tgi_outtext`. |
 | `tgi_settextstyle/settextdir/settextscale` | Bitmap-font only; see §2.3. |
-| `tgi_outtext(s)` / `tgi_outtextxy(x,y,s)` | Direct; font + 177-byte `text_bitmap` buffer link only when used. |
+| `tgi_outtext(s)` / `tgi_outtextxy(x,y,s)` | Direct; font + 169-byte `text_bitmap` buffer (`8*(1+20)+1`, §2.3.1) link only when used. |
 | `tgi_gettextwidth(s)` / `tgi_gettextheight(s)` | Bitmap math only (8 × scale × strlen). |
 
 The `lynx.h` macros (`tgi_sprite`, `tgi_flip`, …) become declarations of the real
@@ -104,7 +104,43 @@ Text scaling becomes a single 8.8 word per axis passed straight into the text sp
 `text_sx+1`); since Suzy sprite scaling is natively 8.8, passing the full word gives true
 fractional text scaling *at zero cost*. `tgi_gettextwidth` computes
 `(len*8*scale)>>8` — a natural client for the §2.6 Suzy multiply helpers in the codegen
-design. The 20-character-per-call limit of `OUTTEXT` is pre-existing and documented as-is.
+design. The 20-character-per-call draw limit is pre-existing; see §2.3.1.
+
+#### 2.3.1 The 20-character draw cap
+
+`tgi_outtext` / `tgi_outtextxy` draw **at most 20 characters per call**. The limit is a
+buffer bound, not an arbitrary one: the whole string is composed into a single fixed,
+statically-allocated glyph strip (`text_bitmap`) and blitted as one Suzy sprite. There is
+no heap and no second pass, so the buffer is sized for the worst case the renderers can
+emit — `8 * (1 + 20) + 1` bytes for the 8×8 font (8 rows of one offset byte plus up to 20
+glyph columns, plus a zero-offset terminator); the compact 5×5 strip (`build5x5`) fits
+inside the same allocation. See `tgi-text.s`.
+
+The cap is enforced **once**, in the shared `_tgi_outtext` prologue, by the strlen loop:
+
+```
+        ldy     #<-1
+@L2:    iny
+        cpy     #20             ; saturate STRLEN at 20
+        beq     @L3
+        lda     (STRPTR),y
+        bne     @L2
+@L3:    sty     STRLEN
+```
+
+Because the scan stops at index 20, a long string is never even read past the 20th byte.
+Both font builders (`build8x8`, `build5x5`) and `draw_and_advance` consume `STRLEN`, so the
+cap holds regardless of which font `tgi_setfont` has selected. Characters 21+ are **silently
+dropped** — there is no wrap, no truncation marker, and no error (the `tgi_error` model is
+removed, §2.5).
+
+**Caveat — `tgi_gettextwidth` is *not* capped.** It calls the full `_strlen` and returns the
+pixel width of the *entire* string, so for inputs longer than 20 characters it over-reports
+what `tgi_outtext` will actually paint. (`tgi_gettextheight` is length-independent, so it is
+unaffected.) Callers that lay out runs longer than 20 characters must split the text into
+chunks of ≤20 characters themselves and advance the cursor per chunk — for example via
+successive `tgi_outtextxy` calls, or `tgi_outtext` after a `tgi_gotoxy`, rather than relying
+on a single `tgi_gettextwidth` over the whole string.
 
 ### 2.4 IRQ hook
 

@@ -460,6 +460,11 @@ be used in presence of a prototype.
 <tag/Notes/<itemize>
 <item>The function is only available as fastcall function, so it may only
 be used in presence of a prototype.
+<item>The width is computed from the full string length and is <em/not/
+capped at 20 characters, whereas
+<ref id="tgi_outtext" name="tgi_outtext"> draws at most 20. For strings
+longer than 20 characters this returns more than will actually be painted;
+measure each &lt;=20-character run separately when laying out long text.
 </itemize>
 <tag/Availability/cc65
 <tag/See also/Other tgi functions.
@@ -730,6 +735,10 @@ The graphics cursor is moved to the end of the text.
 <tag/Notes/<itemize>
 <item>The function is only available as fastcall function, so it may only
 be used in presence of a prototype.
+<item>At most 20 characters are drawn per call. The string is composed into
+a single fixed bitmap and blitted as one sprite; any characters beyond the
+20th are silently dropped (no wrapping, no error). Split longer text into
+runs of 20 characters or fewer and emit them with successive calls.
 </itemize>
 <tag/Availability/cc65
 <tag/See also/Other tgi functions.
@@ -751,6 +760,9 @@ The graphics cursor is moved to the end of the text.
 <tag/Notes/<itemize>
 <item>The function is only available as fastcall function, so it may only
 be used in presence of a prototype.
+<item>At most 20 characters are drawn per call; see
+<ref id="tgi_outtext" name="tgi_outtext">. Characters beyond the 20th are
+silently dropped.
 </itemize>
 <tag/Availability/cc65
 <tag/See also/Other tgi functions.
