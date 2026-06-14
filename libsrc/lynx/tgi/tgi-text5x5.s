@@ -134,11 +134,24 @@ build5x5:
         adc     #0
         sta     DST+1
 
-        ; GP = tgi_font5x5 + (ch - 32) * 5
+        ; GP = tgi_font5x5 + t * 5, where t is the glyph index after folding
+        ; lower-case a-z onto A-Z and splicing the freed a-z slots out of the
+        ; table - so those 26 duplicate glyphs are never stored. See the table
+        ; layout note in tgi-font5x5.s.
         ldy     b5_idx
         lda     (STRPTR),y
+        cmp     #'a'            ; fold a-z -> A-Z (clear bit 5)
+        bcc     @nofold
+        cmp     #'z'+1
+        bcs     @nofold
+        and     #$DF
+@nofold:
         sec
-        sbc     #32             ; A = ch - 32  (preserved across the asl/rol)
+        sbc     #32             ; A = ch - 32 (preserved across the asl/rol)
+        cmp     #65             ; indices >= 65 are only { | } ~ (123-126):
+        bcc     @noslice        ;   close the 26-slot gap left by folded a-z
+        sbc     #26             ; (carry set) A -= 26  -> 65..68
+@noslice:
         sta     GP              ; GP = t
         stz     GP+1
         asl     GP

@@ -91,7 +91,7 @@ Build:
 1. Zero the `W` pixel bytes of all 5 rows (0 = background = transparent).
 2. Write each row's leading offset byte = `W+1`.
 3. For each char `i`, `bit = i*PITCH`, `byteidx = bit>>3`, `shift = bit & 7`:
-   * `gp = tgi_font5x5 + (ch-32)*5`
+   * `t = foldsplice(ch)` (fold `a`–`z`→`A`–`Z`, then drop the freed slots — see §5); `gp = tgi_font5x5 + t*5`
    * for each of 5 rows `r`, take `src = gp[r]` (5 ink bits in bits 7..3):
      `strip[row r][byteidx]   |= src >> shift`
      `strip[row r][byteidx+1] |= src << (8-shift)`   (carry into next byte;
@@ -106,15 +106,24 @@ The whole strip is one sprite scaled once, so glyph spacing scales with the text
 ## 5. The compact font module
 
 New file `libsrc/lynx/tgi/tgi-font5x5.s` exporting `tgi_font5x5`: **5 bytes per
-glyph**, 5 ink bits left-aligned in bits 7..3, **bit 1 = foreground**. Stored as
-a full **96-glyph** table (ASCII 32–127) so it stays index-compatible with the
-unchecked `(ch-32)*5`:
+glyph**, 5 ink bits left-aligned in bits 7..3, **bit 1 = foreground**.
 
-* 32–96: the converted strip glyphs (verified to round-trip from the BMP).
-* 97–122 (`a`–`z`): reuse the uppercase bitmaps (source is caps-only).
-* 123–127: blank.
+Because the source is caps-only, lower-case `a`–`z` would be byte-identical
+copies of `A`–`Z`. Rather than store them twice, the builder **folds** `a`–`z`
+onto `A`–`Z` (`AND #$DF`) and **splices** the freed slots out of the table, so
+the index is no longer a plain `(ch-32)`. Stored layout (**70 glyphs**):
 
-96 × 5 = **480 bytes** (vs 768 for the 8×8 font). Verified samples:
+* index `0..64` = ASCII `32..96` (space … backtick) — the converted strip
+  glyphs plus the filled punctuation (`{ | } ~` live at 123–126, see below).
+* index `65..68` = ASCII `123..126` (`{ | } ~`, designed to match).
+* index `69` = ASCII `127` (DEL, blank).
+
+The builder maps a character to its index with: fold `a`–`z`, `t = ch-32`,
+then `if t >= 65: t -= 26` (the only codes left above 64 after folding are
+`123..126`). See §6 for the exact code.
+
+70 × 5 = **350 bytes** (was 480 for a full 96-glyph table; 768 for the 8×8
+font). Verified samples:
 
 ```asm
 .byte $00, $00, $00, $00, $00   ; 32 ' '
