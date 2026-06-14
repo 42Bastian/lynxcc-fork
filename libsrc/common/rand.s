@@ -36,7 +36,8 @@
 ;  multiplication, adding only 1 additional adc instruction.
 ;
 
-        .export         _rand, _srand
+        .export         _rand, _srand, _randmask
+        .importzp       tmp1
 
 .data
 
@@ -60,6 +61,20 @@ _rand:  clc
         adc     rand+3
         sta     rand+3
         rts                     ; return bit (16-22,24-31) in (X,A)
+
+; unsigned char __fastcall__ randmask (unsigned char mask);
+;
+; Advance the generator and return the best output byte (bits 24-31)
+; ANDed with the caller-supplied mask, in A (X = 0). Convenient for
+; power-of-two ranges, e.g. randmask(0x07) -> 0..7. Because rand()
+; already returns the high-entropy bits in its low byte, masking here
+; keeps full quality (unlike masking the low bits of a raw LCG state).
+_randmask:
+        sta     tmp1            ; Save the mask (fastcall arg arrives in A)
+        jsr     _rand           ; Advance LCG; A = bits 24-31, X = bits 16-22
+        and     tmp1            ; Keep only the requested bits
+        ldx     #0              ; High byte of the (char) result is zero
+        rts
 
 _srand: sta     rand+0          ; Store the seed
         stx     rand+1

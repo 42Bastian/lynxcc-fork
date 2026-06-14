@@ -110,6 +110,7 @@ size_t _heapmaxavail (void);
 int rand (void);
 void __fastcall__ srand (unsigned seed);
 void _randomize (void);         /* Non-standard */
+unsigned char __fastcall__ randmask (unsigned char mask);  /* Non-standard */
 
 /* Other standard stuff */
 void abort (void) __attribute__ ((noreturn));
