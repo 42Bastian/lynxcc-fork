@@ -58,6 +58,8 @@ endif
 EXELIST_lynx = \
         lynxdemo.lnx \
         suzybench.lnx \
+        suzyasync.lnx \
+        suzyasyncbench.lnx \
         breakout.lnx \
         invaders.lnx \
         raycaster.lnx \
