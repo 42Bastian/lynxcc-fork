@@ -62,7 +62,8 @@ EXELIST_lynx = \
         invaders.lnx \
         raycaster.lnx \
         setbpp.lnx \
-        comlynx.lnx
+        comlynx.lnx \
+        fonttest.lnx
 
 samples: $(EXELIST_$(SYS))
 

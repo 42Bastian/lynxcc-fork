@@ -48,8 +48,9 @@
 #define tgi_getmaxcolor()       (TGI_COLORCOUNT - 1)
 #define tgi_getpagecount()      TGI_PAGECOUNT
 
-/* Font constant for use with tgi_settextstyle (bitmap font only) */
-#define TGI_FONT_BITMAP         0
+/* Font constants for use with tgi_setfont */
+#define TGI_FONT_BITMAP         0       /* System 8x8 font            */
+#define TGI_FONT_COMPACT        1       /* Transparent 5x5 font, 6px  */
 
 /* Direction constants for use with tgi_settextstyle */
 #define TGI_TEXT_HORIZONTAL     0
@@ -201,8 +202,16 @@ void __fastcall__ tgi_settextscale (unsigned width, unsigned height);
 
 void __fastcall__ tgi_settextstyle (unsigned width, unsigned height,
                                     unsigned char dir, unsigned char font);
-/* Set scaling and direction for text output. font must be TGI_FONT_BITMAP
-** (the argument is ignored; only the bitmap font exists).
+/* Set scaling and direction for text output. The font argument is ignored;
+** use tgi_setfont to choose a font.
+*/
+
+void __fastcall__ tgi_setfont (unsigned char font);
+/* Select the active text font: one of the TGI_FONT_XXX constants.
+** TGI_FONT_BITMAP is the system 8x8 font (the default); TGI_FONT_COMPACT is
+** the 5x5 font with a transparent background, drawn in the current pen at a
+** 6-px pitch. Linking tgi_setfont pulls in the compact font; programs that
+** stay with the 8x8 font need not call it.
 */
 
 void __fastcall__ tgi_settextdir (unsigned char dir);
