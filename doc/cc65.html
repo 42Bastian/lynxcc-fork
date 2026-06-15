@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cc65 Users Guide</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head><body>
+<div class="topbar"><a class="brand" href="index.html">lynxcc</a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><a href="cc65.html" class="active">cc65</a><a href="ca65.html">ca65</a><a href="ld65.html">ld65</a><a href="cl65.html">cl65</a><a href="library.html">Library</a><a href="funcref.html">Functions</a><a href="tgi.html">TGI</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>cc65 Users Guide</h1><p class="author"><a href="mailto:uz@cc65.org">Ullrich von Bassewitz</a>,<br> <a href="mailto:gregdk@users.sf.net">Greg King</a></p></header><div class="abstract">cc65 is a C compiler for 6502 targets. This tree supports a single target,
+the Atari Lynx (65SC02), and includes Lynx-specific code-generation
+improvements.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl1"><a href="#sect-2">2. Usage</a></li>
+<li class="lvl2"><a href="#sect-2-1">2.1. Command line option overview</a></li>
+<li class="lvl2"><a href="#sect-2-2">2.2. Command line options in detail</a></li>
+<li class="lvl1"><a href="#sect-3">3. Input and output</a></li>
+<li class="lvl1"><a href="#sect-4">4. Differences to the ISO standard</a></li>
+<li class="lvl1"><a href="#sect-5">5. Extensions</a></li>
+<li class="lvl1"><a href="#sect-6">6. Predefined macros</a></li>
+<li class="lvl1"><a href="#pragmas">7. #pragmas</a></li>
+<li class="lvl2"><a href="#pragma-allow-eager-inline">7.1. #pragma allow-eager-inline ([push,] on|off)</a></li>
+<li class="lvl2"><a href="#pragma-bss-name">7.2. #pragma bss-name ([push,] &lt;name&gt;)</a></li>
+<li class="lvl2"><a href="#pragma-charmap">7.3. #pragma charmap (&lt;index&gt;, &lt;code&gt;)</a></li>
+<li class="lvl2"><a href="#pragma-check-stack">7.4. #pragma check-stack ([push,] on|off)</a></li>
+<li class="lvl2"><a href="#pragma-code-name">7.5. #pragma code-name ([push,] &lt;name&gt;)</a></li>
+<li class="lvl2"><a href="#pragma-codesize">7.6. #pragma codesize ([push,] &lt;int&gt;)</a></li>
+<li class="lvl2"><a href="#pragma-data-name">7.7. #pragma data-name ([push,] &lt;name&gt;)</a></li>
+<li class="lvl2"><a href="#pragma-inline-stdfuncs">7.8. #pragma inline-stdfuncs ([push,] on|off)</a></li>
+<li class="lvl2"><a href="#pragma-local-strings">7.9. #pragma local-strings ([push,] on|off)</a></li>
+<li class="lvl2"><a href="#pragma-message">7.10. #pragma message (&lt;message&gt;)</a></li>
+<li class="lvl2"><a href="#pragma-optimize">7.11. #pragma optimize ([push,] on|off)</a></li>
+<li class="lvl2"><a href="#pragma-rodata-name">7.12. #pragma rodata-name ([push,] &lt;name&gt;)</a></li>
+<li class="lvl2"><a href="#pragma-regvaraddr">7.13. #pragma regvaraddr ([push,] on|off)</a></li>
+<li class="lvl2"><a href="#pragma-register-vars">7.14. #pragma register-vars ([push,] on|off)</a></li>
+<li class="lvl2"><a href="#pragma-signed-chars">7.15. #pragma signed-chars ([push,] on|off)</a></li>
+<li class="lvl2"><a href="#pragma-static-locals">7.16. #pragma static-locals ([push,] on|off)</a></li>
+<li class="lvl2"><a href="#pragma-warn">7.17. #pragma warn (name, [push,] on|off)</a></li>
+<li class="lvl2"><a href="#pragma-wrapped-call">7.18. #pragma wrapped-call (push, &lt;name&gt;, &lt;identifier&gt;)</a></li>
+<li class="lvl2"><a href="#pragma-writable-strings">7.19. #pragma writable-strings ([push,] on|off)</a></li>
+<li class="lvl2"><a href="#sect-7-20">7.20. #pragma zpsym (&lt;name&gt;)</a></li>
+<li class="lvl1"><a href="#register-vars">8. Register variables</a></li>
+<li class="lvl1"><a href="#inline-asm">9. Inline assembler</a></li>
+<li class="lvl1"><a href="#operators">10. The C language: operators</a></li>
+<li class="lvl2"><a href="#operators-standard">10.1. Standard operators</a></li>
+<li class="lvl2"><a href="#operators-bitwise">10.2. Bitwise operators</a></li>
+<li class="lvl2"><a href="#operators-suzy">10.3. Suzy hardware operators</a></li>
+<li class="lvl1"><a href="#asm-from-c">11. Calling assembly functions from C</a></li>
+<li class="lvl2"><a href="#asm-from-c-1">11.1. Calling conventions</a></li>
+<li class="lvl2"><a href="#asm-from-c-2">11.2. Prologue, before the function call</a></li>
+<li class="lvl2"><a href="#asm-from-c-3">11.3. Epilogue, after the function call</a></li>
+<li class="lvl1"><a href="#sect-11">12. Copyright</a></li>
+</ul></nav><h2 id="sect-1">1. Overview</h2>
+<p>cc65 was originally a C compiler for the Atari 8-bit machines written by
+John R. Dunning. In prior releases I've described the compiler by listing
+up the changes made by me. I have made many more changes in the meantime
+(and rewritten major parts of the compiler), so I will no longer do that,
+since the list would be too large and of no use to anyone. Instead I will
+describe the compiler in respect to the ANSI/ISO C standard.</p>
+<p>There are separate documents named <a href="library.html">library.html</a> and <a href="funcref.html">funcref.html</a> that cover the library that is available for the compiler.
+If you know C, and are interested in doing actual programming, the library
+documentation is probably of much more use than this document.</p>
+<p>This tree targets the Atari Lynx exclusively and contains Lynx-specific
+code-generation improvements (65C02 runtime fast paths, direct 65C02
+emission, jump-table switches, and self-modifying-code runtime variants).
+See the <a href="lynx.html">Lynx-specific documentation</a> for a
+summary and <code>LYNX_CODEGEN_DESIGN.md</code> in the source tree for the full
+design and measurements.</p>
+<p>If you need some hints for getting the best code out of the compiler, you
+may have a look at <a href="coding.html">coding.html</a> which covers some code generation
+issues.</p>
+<h2 id="sect-2">2. Usage</h2>
+<p>The compiler translates C files into files containing assembly code that
+may be translated by the ca65 macroassembler (for more information about
+the assembler, have a look at <a href="ca65.html">ca65.html</a>).</p>
+<h3 id="sect-2-1">2.1. Command line option overview</h3>
+<p>The compiler may be called as follows:</p>
+<pre class="verb">---------------------------------------------------------------------------
+Usage: cc65 [options] file
+Short options:
+  -Cl                           Make local variables static
+  -Dsym[=defn]                  Define a symbol
+  -E                            Stop after the preprocessing stage
+  -I dir                        Set an include directory search path
+  -O                            Optimize code
+  -Oi                           Optimize code, inline more code
+  -Or                           Enable register variables
+  -Os                           Inline some standard functions
+  -T                            Include source as comment
+  -V                            Print the compiler version number
+  -W warning[,...]              Suppress warnings
+  -d                            Debug mode
+  -g                            Add debug info to object file
+  -h                            Help (this text)
+  -j                            Default characters are signed
+  -mm model                     Set the memory model
+  -o name                       Name the output file
+  -r                            Enable register variables
+  -t sys                        Set the target system
+  -v                            Increase verbosity
+
+Long options:
+  --add-source                  Include source as comment
+  --all-cdecl                   Make functions default to __cdecl__
+  --bss-name seg                Set the name of the BSS segment
+  --check-stack                 Generate stack overflow checks
+  --code-name seg               Set the name of the CODE segment
+  --codesize x                  Accept larger code by factor x
+  --cpu type                    Set cpu type (6502, 65c02)
+  --create-dep name             Create a make dependency file
+  --create-full-dep name        Create a full make dependency file
+  --data-name seg               Set the name of the DATA segment
+  --debug                       Debug mode
+  --debug-info                  Add debug info to object file
+  --debug-opt name              Configure optimizations with a file
+  --debug-opt-output            Debug output of each optimization step
+  --dep-target target           Use this dependency target
+  --disable-opt name            Disable an optimization step
+  --eagerly-inline-funcs        Eagerly inline some known functions
+  --enable-opt name             Enable an optimization step
+  --help                        Help (this text)
+  --include-dir dir             Set an include directory search path
+  --inline-stdfuncs             Inline some standard functions
+  --list-opt-steps              List all optimizer steps and exit
+  --list-warnings               List available warning types for -W
+  --local-strings               Emit string literals immediately
+  --memory-model model          Set the memory model
+  --register-space b            Set space available for register variables
+  --register-vars               Enable register variables
+  --rodata-name seg             Set the name of the RODATA segment
+  --signed-chars                Default characters are signed
+  --standard std                Language standard (c89, c99, cc65)
+  --static-locals               Make local variables static
+  --target sys                  Set the target system
+  --verbose                     Increase verbosity
+  --version                     Print the compiler version number
+  --writable-strings            Make string literals writable
+---------------------------------------------------------------------------</pre>
+<h3 id="sect-2-2">2.2. Command line options in detail</h3>
+<p>Here is a description of all the command line options:</p>
+<dl>
+<dt><code>--all-cdecl</code></dt>
+<dd>
+<p>Tells the compiler that functions which aren't declared explicitly with
+  either the <code>__cdecl__</code> or <code>__fastcall__</code> calling conventions should
+  have the cdecl convention.  (Normally, functions that aren't variadic are
+  fast-called.)</p>
+<a id="option-bss-name"></a>
+</dd>
+<dt><code>--bss-name seg</code></dt>
+<dd>
+<p>Set the name of the bss segment. See also <code><a href="#pragma-bss-name">#pragma bss-name</a></code>.</p>
+<a id="option-check-stack"></a>
+</dd>
+<dt><code>--check-stack</code></dt>
+<dd>
+<p>Tells the compiler to generate code that checks for stack overflows. See
+  <code><a href="#pragma-check-stack">#pragma check-stack</a></code> for an
+  explanation of this feature.</p>
+<a id="option-code-name"></a>
+</dd>
+<dt><code>--code-name seg</code></dt>
+<dd>
+<p>Set the name of the code segment. See also <code><a href="#pragma-code-name">#pragma code-name</a></code></p>
+<a id="option-codesize"></a>
+</dd>
+<dt><code>--codesize x</code></dt>
+<dd>
+<p>This options allows finer control about speed vs. size decisions in the code
+  generation and optimization phases. It gives the allowed size increase
+  factor (in percent). The default is 100 when not using <code>-Oi</code> and 200 when
+  using <code>-Oi</code> (<code>-Oi</code> is the same as <code>-O --codesize 200</code>).</p>
+<a id="option--cpu"></a>
+</dd>
+<dt><code>--cpu CPU</code></dt>
+<dd>
+<p>Set the CPU, the compiler generates code for. You may specify "6502" or
+  "65C02" as the CPU. The default depends on the selected target (see option
+  <code><a href="#option-t">-t</a></code>). It is the 6502 CPU for most targets or
+  if no target has been set. Specifying 65C02 will use a few 65C02
+  instructions when generating code. Don't expect too much from this option:
+  In most cases the difference in size and speed is just 1-2%.</p>
+<a id="option-create-dep"></a>
+</dd>
+<dt><code>--create-dep name</code></dt>
+<dd>
+<p>Tells the compiler to generate a file containing the dependency list for the
+  compiled module in makefile syntax. The output is written to a file with the
+  given name. The output does not include system include files (in angle
+  brackets).</p>
+<a id="option-create-full-dep"></a>
+</dd>
+<dt><code>--create-full-dep name</code></dt>
+<dd>
+<p>Tells the compiler to generate a file containing the dependency list for the
+  compiled module in makefile syntax. The output is written to a file with the
+  given name. The output does include system include files (in angle
+  brackets).</p>
+<a id="option-data-name"></a>
+</dd>
+<dt><code>--data-name seg</code></dt>
+<dd>
+<p>Set the name of the data segment. See also <code><a href="#pragma-data-name">#pragma data-name</a></code></p>
+</dd>
+<dt><code>-d, --debug</code></dt>
+<dd>
+<p>Enables debug mode, for debugging the behavior of cc65.</p>
+</dd>
+<dt><code>--debug-opt name</code></dt>
+<dd>
+<p>The named file contains a list of specific optimization steps to enable or disable.
+  Each line contains the name of an optimization step with either a
+  <code>+</code> (enable) or <code>-</code> (disable) prefix.
+  The name <code>all</code> can be used to enable or disable all optimizations.
+  Comment lines may begin with <code>#</code> or <code>;</code>.</p>
+<p>Use <code>--list-opt-steps</code> to generate a complete list of available optimization steps.</p>
+<p>Use <code>--debug</code> to see a list of optimizations applied during compilation.</p>
+</dd>
+<dt><code>--debug-opt-output</code></dt>
+<dd>
+<p>For debugging the output of each optimization pass, step by step.
+  Generates a <code>name.opt</code> output listing for each optimized function <code>name</code>.</p>
+<a id="option-dep-target"></a>
+</dd>
+<dt><code>--dep-target target</code></dt>
+<dd>
+<p>When generating a dependency file, don't use the actual output file as the
+  target of the dependency, but the file specified with this option. The
+  option has no effect if neither <code><a href="#option-create-dep">--create-dep</a></code> nor <code><a href="#option-create-full-dep">--create-full-dep</a></code> is specified.</p>
+</dd>
+<dt><code>-D sym[=definition]</code></dt>
+<dd>
+<p>Define a macro on the command line. If no definition is given, the macro
+  is defined to the value "1".</p>
+</dd>
+<dt><code>-g, --debug-info</code></dt>
+<dd>
+<p>This will cause the compiler to insert a <code>.DEBUGINFO</code> command into the
+  generated assembler code. This will cause the assembler to include all
+  symbols in a special section in the object file.</p>
+<a id="option-eagerly-inline-funcs"></a>
+</dd>
+<dt><code>--eagerly-inline-funcs</code></dt>
+<dd>
+<p>Have the compiler eagerly inline these functions from the C library:</p>
+<ul>
+<li>
+<p><code>memcpy()</code></p>
+</li>
+<li>
+<p><code>memset()</code></p>
+</li>
+<li>
+<p><code>strcmp()</code></p>
+</li>
+<li>
+<p><code>strcpy()</code></p>
+</li>
+<li>
+<p><code>strlen()</code></p>
+</li>
+</ul>
+<p>Note: This has two consequences:</p>
+<ul>
+<li>
+<p>You may not use names of standard C functions for your own functions.
+        If you do that, your program is not standard-compliant anyway; but,
+        using <code>--eagerly-inline-funcs</code> actually will break things.</p>
+</li>
+<li>
+<p>The inlined string and memory functions will not handle strings or
+        memory areas larger than 255 bytes.</p>
+</li>
+</ul>
+<p><code>--eagerly-inline-funcs</code> implies the <code><a href="#option-inline-stdfuncs">--inline-stdfuncs</a></code> command line option.</p>
+<p>See also <code><a href="#pragma-allow-eager-inline">#pragma allow-eager-inline</a></code>.</p>
+</dd>
+<dt><code>-h, --help</code></dt>
+<dd>
+<p>Print the short option summary shown above.</p>
+<a id="option-inline-stdfuncs"></a>
+</dd>
+<dt><code>--inline-stdfuncs</code></dt>
+<dd>
+<p>Allow the compiler to inline some standard functions from the C library like
+  strlen.  This will not only remove the overhead for a function call, but will
+  make the code visible for the optimizer.  See also the <code><a href="#option-O">-Os</a></code> command line option and <code><a href="#pragma-inline-stdfuncs">#pragma inline-stdfuncs</a></code>.</p>
+<a id="option-list-warnings"></a>
+</dd>
+<dt><code>--list-warnings</code></dt>
+<dd>
+<p>List the names of warning types available for use with <code><a href="#option-W">-W</a></code>.</p>
+<a id="option-local-strings"></a>
+</dd>
+<dt><code>--local-strings</code></dt>
+<dd>
+<p>Emit string literals into the rodata segment as soon as they're encountered
+  in the source (even if you do nothing but get the sizeof those strings). The
+  default is to keep string literals until end of assembly, merge read only
+  literals if possible, and then output the literals into the data or rodata
+  segment that is active at that point. Use of this option prevents merging of
+  duplicate strings, but the options that change the name of one of the data
+  segments will work.</p>
+<p>You can also use <code><a href="#pragma-local-strings">#pragma local-strings</a></code> for fine grained control.</p>
+</dd>
+<dt><code>-o name</code></dt>
+<dd>
+<p>Specify the name of the output file. If you don't specify a name, the
+  name of the C input file is used, with the extension replaced by ".s".</p>
+<a id="option-register-vars"></a>
+</dd>
+<dt><code>-r, --register-vars</code></dt>
+<dd>
+<p><code>-r</code> will make the compiler honor the <code>register</code> keyword. Local
+  variables may be placed in registers (which are actually zero page
+  locations). There is some overhead involved with register variables, since
+  the old contents of the registers must be saved and restored. Since register
+  variables are of limited use without the optimizer, there is also a combined
+  switch: <code>-Or</code> will enable both, the optimizer and register variables.</p>
+<p>For more information about register variables see <a href="#register-vars">register variables</a>.</p>
+<p>The compiler setting can also be changed within the source file by using
+  <code><a href="#pragma-register-vars">#pragma register-vars</a></code>.</p>
+<a id="option-register-space"></a>
+</dd>
+<dt><code>--register-space</code></dt>
+<dd>
+<p>This option takes a numeric parameter and is used to specify, how much
+  zero page register space is available. Please note that just giving this
+  option will not increase or decrease by itself, it will just tell the
+  compiler about the available space. You will have to allocate that space
+  yourself using an assembler module with the necessary allocations, and a
+  linker configuration that matches the assembler module. The default value
+  for this option is 6 (bytes).</p>
+<p>If you don't know what all this means, please don't use this option.</p>
+<a id="option-rodata-name"></a>
+</dd>
+<dt><code>--rodata-name seg</code></dt>
+<dd>
+<p>Set the name of the rodata segment (the segment used for readonly data).
+  See also <code><a href="#pragma-rodata-name">#pragma rodata-name</a></code></p>
+<a id="option-signed-chars"></a>
+</dd>
+<dt><code>-j, --signed-chars</code></dt>
+<dd>
+<p>Using this option, you can make the default characters signed. Since the
+  6502 has no provisions for sign extending characters (which is needed on
+  almost any load operation), this will make the code larger and slower. A
+  better way is to declare characters explicitly as "signed" if needed. You
+  can also use <code><a href="#pragma-signed-chars">#pragma signed-chars</a></code> for better control of this option.</p>
+<a id="option--standard"></a>
+</dd>
+<dt><code>--standard std</code></dt>
+<dd>
+<p>This option allows to set the language standard supported. The argument is
+  one of</p>
+<dl>
+<dt>c89</dt>
+<dd>
+<p>This disables anything that is illegal in C89/C90. Among those things
+      are <code>//</code> comments and the non-standard keywords without
+      underscores. Please note that cc65 is not a fully C89 compliant compiler
+      despite this option. A few more things (like floats) are missing.</p>
+</dd>
+<dt>c99</dt>
+<dd>
+<p>This enables a few features from the C99 standard. With this option,
+      <code>//</code> comments are allowed. It will also cause warnings and even
+      errors in a few situations that are allowed with <code>--standard c89</code>.
+      For example, a call to a function without a prototype is an error in
+      this mode.</p>
+</dd>
+<dt>cc65</dt>
+<dd>
+<p>This is the default mode. It is like c99 mode, but additional features
+      are enabled. Among these are "void data", non-standard keywords without
+      the underlines, unnamed function parameters and the requirement for
+      main() to return an int.</p>
+</dd>
+</dl>
+<p>Please note that the compiler does not support the C99 standard and never
+  will. c99 mode is actually c89 mode with a few selected C99 extensions.</p>
+<a id="option-t"></a>
+<dt><code>-t target, --target target</code></dt>
+<dd>
+<p>This option is used to set the target system. The target system determines
+  the character set that is used for strings and character constants and the
+  default CPU. The CPU setting can be overriden by use of the <code><a href="#option--cpu">--cpu</a></code> option.</p>
+<p>The following target systems are supported in this tree:</p>
+<ul>
+<li>
+<p>none</p>
+</li>
+<li>
+<p>lynx</p>
+</li>
+</ul>
+<p>Other upstream cc65 target names are still accepted by the tools for
+  compatibility, but their libraries and linker configurations have been
+  removed, so only <code>lynx</code> (and <code>none</code>) are usable.</p>
+</dd>
+<dt><code>-v, --verbose</code></dt>
+<dd>
+<p>Using this option, the compiler will be somewhat more verbose if errors
+  or warnings are encountered.</p>
+<a id="option-writable-strings"></a>
+</dd>
+<dt><code>--writable-strings</code></dt>
+<dd>
+<p>Make string literals writable by placing them into the data segment instead
+  of the rodata segment. You can also use <code><a href="#pragma-writable-strings">#pragma writable-strings</a></code> to control this option from within
+  the source file.</p>
+<a id="option-static-locals"></a>
+</dd>
+<dt><code>-Cl, --static-locals</code></dt>
+<dd>
+<p>Use static storage for local variables instead of storage on the stack.
+  Since the stack is emulated in software, this gives shorter and usually
+  faster code, but the code is no longer reentrant. The difference between
+  <code>-Cl</code> and declaring local variables as static yourself is, that
+  initializer code is executed each time, the function is entered. So when
+  using</p>
+<pre class="verb">        void f (void)
+        {
+            unsigned a = 1;
+            ...
+        }
+  </pre>
+<p>the variable <code>a</code> will always have the value <code>1</code> when entering the
+  function and using <code>-Cl</code>, while in</p>
+<pre class="verb">        void f (void)
+        {
+            static unsigned a = 1;
+            ....
+        }
+  </pre>
+<p>the variable <code>a</code> will have the value <code>1</code> only the first time that the
+  function is entered, and will keep the old value from one call of the
+  function to the next.</p>
+<p>You may also use <code><a href="#pragma-static-locals">#pragma static-locals</a></code> to change this setting in your
+  sources.</p>
+<a id="option-include-dir"></a>
+</dd>
+<dt><code>-I dir, --include-dir dir</code></dt>
+<dd>
+<p>Set a directory where the compiler searches for include files. You may
+  use this option multiple times to add more than one directory to the
+  search list.</p>
+<a id="option-O"></a>
+</dd>
+<dt><code>-O, -Oi, -Or, -Os</code></dt>
+<dd>
+<p>Enable an optimizer run over the produced code.</p>
+<p>Using <code>-Oi</code>, the code generator will inline some code where otherwise a
+  runtime functions would have been called, even if the generated code is
+  larger. This will not only remove the overhead for a function call, but will
+  make the code visible for the optimizer. <code>-Oi</code> is an alias for
+  <code>-O --codesize 200</code>.</p>
+<p><code>-Or</code> will make the compiler honor the <code>register</code> keyword. Local
+  variables may be placed in registers (which are actually zero page
+  locations). See also the <code><a href="#option-register-vars">--register-vars</a></code> command line option, and the <a href="#register-vars">discussion of register variables</a> below.</p>
+<p>Using <code>-Os</code> will allow the compiler to inline some standard functions
+  from the C library like strlen.  This will not only remove the overhead
+  for a function call, but will make the code visible for the optimizer.
+  See also the <code><a href="#option-inline-stdfuncs">--inline-stdfuncs</a></code>
+  command line option.</p>
+<p>It is possible to concatenate the modifiers for <code>-O</code>. For example, to
+  enable register variables and inlining of standard functions, you may use
+  <code>-Ors</code>.</p>
+</dd>
+<dt><code>-T, --add-source</code></dt>
+<dd>
+<p>This include the source code as comments in the generated code. This is
+  normally not needed.</p>
+</dd>
+<dt><code>-V, --version</code></dt>
+<dd>
+<p>Print the version number of the compiler. When submitting a bug report,
+  please include the operating system you're using, and the compiler
+  version.</p>
+<a id="option-W"></a>
+</dd>
+<dt><code>-W name[,name,...]</code></dt>
+<dd>
+<p>This option allows to control warnings generated by the compiler. It is
+  followed by a comma-separated list of warnings that should be enabled or
+  disabled. To disable a warning, its name is prefixed by a minus sign. If
+  no such prefix exists, or the name is prefixed by a plus sign, the warning
+  is enabled.</p>
+<p>The following warning names currently are recognized:</p>
+<dl>
+<dt><code>const-comparison</code></dt>
+<dd>
+<p>Warn if the result of a comparison is constant.</p>
+</dd>
+<dt><code>error</code></dt>
+<dd>
+<p>Treat all warnings as errors.</p>
+</dd>
+<dt><code>no-effect</code></dt>
+<dd>
+<p>Warn about statements that don't have an effect.</p>
+</dd>
+<dt><code>remap-zero</code></dt>
+<dd>
+<p>Warn about a <code><a href="#pragma-charmap">#pragma charmap()</a></code>
+        that changes a character's code number from/to 0x00.</p>
+</dd>
+<dt><code>struct-param</code></dt>
+<dd>
+<p>Warn when passing structs by value.</p>
+</dd>
+<dt><code>unknown-pragma</code></dt>
+<dd>
+<p>Warn about #pragmas that aren't recognized by cc65.</p>
+</dd>
+<dt><code>unused-label</code></dt>
+<dd>
+<p>Warn about unused labels.</p>
+</dd>
+<dt><code>unused-param</code></dt>
+<dd>
+<p>Warn about unused function parameters.</p>
+</dd>
+<dt><code>unused-var</code></dt>
+<dd>
+<p>Warn about unused variables.</p>
+</dd>
+</dl>
+<p>The full list of available warning names can be retrieved by using the
+  option <code><a href="#option-list-warnings">--list-warnings</a></code>.</p>
+<p>You may use also <code><a href="#pragma-warn">#pragma warn</a></code> to
+  control this setting, for smaller pieces of code, from within your sources.</p>
+</dl>
+<h2 id="sect-3">3. Input and output</h2>
+<p>The compiler will accept one C file per invocation and create a file with
+the same base name, but with the extension replaced by ".s". The output
+file contains assembler code suitable for use with the ca65 macro
+assembler.</p>
+<p>Include files in quotes are searched in the following places:</p>
+<ol>
+<li>
+<p>The current file's directory.</p>
+</li>
+<li>
+<p>Any directory added with the <code>-I</code> option on the command line.</p>
+</li>
+<li>
+<p>The value of the environment variable <code>CC65_INC</code> if it is defined.</p>
+</li>
+</ol>
+<p>Include files in angle brackets are searched in the following places:</p>
+<ol>
+<li>
+<p>Any directory added with the <code>-I</code> option on the command line.</p>
+</li>
+<li>
+<p>The value of the environment variable <code>CC65_INC</code> if it is defined.</p>
+</li>
+<li>
+<p>A subdirectory named <code>include</code> of the directory defined in the
+      environment variable <code>CC65_HOME</code>, if it is defined.</p>
+</li>
+<li>
+<p>An optionally compiled-in directory.</p>
+</li>
+</ol>
+<h2 id="sect-4">4. Differences to the ISO standard</h2>
+<p>Apart from the things listed below, the compiler does support additional
+keywords, has several functions in the standard headers with names outside the
+reserved namespace and a few syntax extensions. All these can be disabled with
+the <code><a href="#option--standard">--standard</a></code> command line
+option. Its use for maximum standards compatibility is advised.</p>
+<p>Here is a list of differences between the language, the compiler accepts,
+and the one defined by the ISO standard:</p>
+<ul>
+<li>
+<p>The datatypes "float" and "double" are not available.</p>
+</li>
+<li>
+<p>C Functions may not return structs (or unions), and structs may not
+        be passed as parameters by value. However, struct assignment *is*
+        possible.</p>
+</li>
+<li>
+<p>Most of the C library is available with only the fastcall calling
+        convention (<a href="#extension-fastcall">see below</a>).  It means
+        that you must not mix pointers to those functions with pointers to
+        user-written, cdecl functions (the calling conventions are incompatible).</p>
+</li>
+<li>
+<p>The <code>volatile</code> keyword has almost no effect. That is not as bad
+        as it sounds, since the 6502 has so few registers that it isn't
+        possible to keep values in registers anyway.</p>
+</li>
+</ul>
+<p>There may be some more minor differences I'm currently not aware of. The
+biggest problem is the missing float data type. With this limitation in
+mind, you should be able to write fairly portable code.</p>
+<h2 id="sect-5">5. Extensions</h2>
+<p>This cc65 version has some extensions to the ISO C standard.</p>
+<ul>
+<li>
+<p>The compiler allows to insert assembler statements into the output
+        file. The syntax is</p>
+<pre class="verb">        asm [optional volatile] (&lt;string literal&gt;[, optional parameters]) ;
+        </pre>
+<p>or</p>
+<pre class="verb">        __asm__ [optional volatile] (&lt;string literal&gt;[, optional parameters]) ;
+        </pre>
+<p>The first form is in the user namespace; and, is disabled if the <code>-A</code>
+        switch is given.</p>
+<p>There is a whole section covering inline assembler statements,
+        <a href="#inline-asm">see there</a>.</p>
+<a id="extension-fastcall"></a>
+</li>
+<li>
+<p>The normal calling convention -- for non-variadic functions -- is
+        named "fastcall". The syntax for a function declaration that
+        <em>explicitly</em> uses fastcall is</p>
+<pre class="verb">        &lt;return type&gt; fastcall &lt;function name&gt; (&lt;parameter list&gt;)
+        </pre>
+<p>or</p>
+<pre class="verb">        &lt;return type&gt; __fastcall__ &lt;function name&gt; (&lt;parameter list&gt;)
+        </pre>
+<p>An example is</p>
+<pre class="verb">        void __fastcall__ f (unsigned char c)
+        </pre>
+<p>The first form of the fastcall keyword is in the user namespace and can
+        therefore be disabled with the <code><a href="#option--standard">--standard</a></code> command line option.</p>
+<p>For functions that are <code>fastcall</code>, the rightmost parameter is not
+        pushed on the stack but left in the primary register when the function
+        is called. That significantly reduces the cost of calling those functions.</p>
+</li>
+<li>
+<p>There is another calling convention named "cdecl". Variadic functions
+        (their prototypes have an ellipsis [<code>...</code>]) always use that
+        convention. The syntax for a function declaration using cdecl is</p>
+<pre class="verb">        &lt;return type&gt; cdecl &lt;function name&gt; (&lt;parameter list&gt;)
+        </pre>
+<p>or</p>
+<pre class="verb">        &lt;return type&gt; __cdecl__ &lt;function name&gt; (&lt;parameter list&gt;)
+        </pre>
+<p>An example is</p>
+<pre class="verb">        int* __cdecl__ f (unsigned char c)
+        </pre>
+<p>The first form of the cdecl keyword is in the user namespace;
+        and therefore, can be disabled with the <code><a href="#option--standard">--standard</a></code> command-line option.</p>
+<p>For functions that are <code>cdecl</code>, the rightmost parameter is pushed
+        onto the stack before the function is called. That increases the cost
+        of calling those functions, especially when they are called from many
+        places.</p>
+</li>
+<li>
+<p>There are two pseudo variables named <code>__AX__</code> and <code>__EAX__</code>.
+        Both refer to the primary register that is used by the compiler to
+        evaluate expressions or return function results. <code>__AX__</code> is of
+        type <code>unsigned int</code> and <code>__EAX__</code> of type <code>long unsigned int</code>
+        respectively. The pseudo variables may be used as lvalue and rvalue as
+        every other variable. They are most useful together with short
+        sequences of assembler code. For example, the macro</p>
+<pre class="verb">        #define hi(x)           \
+            (__AX__ = (x),      \
+             asm ("txa"),       \
+             asm ("ldx #$00"),  \
+             __AX__)
+        </pre>
+<p>will give the high byte of any unsigned value.</p>
+</li>
+<li>
+<p>Inside a function, the identifier <code>__func__</code> gives the name of the
+        current function as a string. Outside of functions, <code>__func__</code> is
+        undefined.
+        Example:</p>
+<pre class="verb">        #define PRINT_DEBUG(s)  printf ("%s: %s\n", __func__, s);
+        </pre>
+<p>The macro will print the name of the current function plus a given
+        string.</p>
+</li>
+<li>
+<p>cc65 allows the initialization of <code>void</code> variables. This may be
+        used to create arbitrary structures that are more compatible with
+        interfaces written for assembler languages. Here is an example:</p>
+<pre class="verb">        void GCmd = { (char)3, (unsigned)0x2000, (unsigned)0x3000 };
+        </pre>
+<p>That will be translated as follows:</p>
+<pre class="verb">        _GCmd:
+                .byte   3
+                .word   $2000
+                .word   $3000
+        </pre>
+<p>Since the variable is of type <code>void</code>, you may not use it as-is.
+        However, taking the address of the variable results in a <code>void*</code>
+        which may be passed to any function expecting a pointer.  Also, the
+        <code>sizeof</code> operator will give the length of the initializer:</p>
+<pre class="verb">        GLen = sizeof GCmd;
+        </pre>
+<p>will assign the value 5 to <code>GLen</code>.</p>
+</li>
+<li>
+<p>cc65 implements flexible array struct members as defined in the C99 ISO
+        standard. As an extension, these fields may be initialized. There are
+        several exceptions, however (which is probably the reason why the
+        standard does not define this feature, because it is highly
+        unorthogonal). Flexible array members cannot be initialized ...</p>
+<ul>
+<li>
+<p>... when defining an array of structs with flexible
+                members.</p>
+</li>
+<li>
+<p>... if such a struct is a member field of another struct
+                which is not the last field.</p>
+</li>
+<li>
+<p>... if the struct which contains a flexible array member is
+                declared as <code>register</code>, and the size and compiler settings
+                do allow the compiler actually to place the struct into the
+                register bank in the zero page.</p>
+</li>
+</ul>
+<p>Please note that -- as defined in the ISO C standard -- the <code>sizeof</code>
+        operator returns the struct size with the flexible array member having
+        size zero, even if it is initialized.</p>
+<li>
+<p>Computed gotos, a GCC extension, has limited support. With it you can
+        use fast jump tables from C. You can take the address of a label with
+        a double ampersand, putting them in a static const array of type void *.
+        Then you can jump to one of these labels as follows:</p>
+<pre class="verb">        static const void * const jumptable[] = {
+                &amp;&amp;add,
+                &amp;&amp;sub
+        };
+        goto *jumptable[somevar];
+
+        add:
+        ...code...
+        </pre>
+<p>In the jump table, no expressions are supported. The array index
+        used in the goto must be a simple variable or a constant.</p>
+</li>
+<li>
+<p>Binary literals, a C++14 feature and a GCC C extension, are accepted.
+        They can be disabled with the <code><a href="#option--standard">--standard</a></code> option.</p>
+<pre class="verb">        unsigned char foo = 0b101; // sets it to 5
+        </pre>
+</li>
+</ul>
+<h2 id="sect-6">6. Predefined macros</h2>
+<p>The compiler defines several macros at startup:</p>
+<dl>
+<dt><code>__CC65__</code></dt>
+<dd>
+<p>This macro is always defined. Its value is the version number of the
+  compiler in hex.  For example, version 2.14 of the compiler has this macro
+  defined as <code>0x02E0</code>.</p>
+</dd>
+<dt><code>__CC65_STD__</code></dt>
+<dd>
+<p>This macro is defined to one of the following depending on the <code><a href="#option--standard">--standard</a></code> command line option:</p>
+<ul>
+<li>
+<p><code>__CC65_STD_C89__</code></p>
+</li>
+<li>
+<p><code>__CC65_STD_C99__</code></p>
+</li>
+<li>
+<p><code>__CC65_STD_CC65__</code></p>
+</li>
+</ul>
+</dd>
+<dt><code>__DATE__</code></dt>
+<dd>
+<p>This macro expands to the date of translation of the preprocessing
+  translation unit in the form "Mmm dd yyyy".</p>
+</dd>
+<dt><code>__EAGERLY_INLINE_FUNCS__</code></dt>
+<dd>
+<p>Is defined if the compiler was called with the <code><a href="#option-eagerly-inline-funcs">--eagerly-inline-funcs</a></code> command line option.</p>
+</dd>
+<dt><code>__FILE__</code></dt>
+<dd>
+<p>This macro expands to a string containing the name of the C source file.</p>
+</dd>
+<dt><code>__LINE__</code></dt>
+<dd>
+<p>This macro expands to the current line number.</p>
+</dd>
+<dt><code>__LYNX__</code></dt>
+<dd>
+<p>This macro is defined if the target is the Atari Lynx (-t lynx) - the only
+  target with library support in this tree.</p>
+</dd>
+<dt><code>__OPT__</code></dt>
+<dd>
+<p>Is defined if the compiler was called with the <code>-O</code> command line option.</p>
+</dd>
+<dt><code>__OPT_i__</code></dt>
+<dd>
+<p>Is defined if the compiler was called with the <code>-Oi</code> command line option.</p>
+</dd>
+<dt><code>__OPT_r__</code></dt>
+<dd>
+<p>Is defined if the compiler was called with the <code>-Or</code> command line option.</p>
+</dd>
+<dt><code>__OPT_s__</code></dt>
+<dd>
+<p>Is defined if the compiler was called with the <code>-Os</code> command line option.</p>
+</dd>
+<dt><code>__STDC_HOSTED__</code></dt>
+<dd>
+<p>This macro is expands to the integer constant 1.</p>
+</dd>
+<dt><code>__TIME__</code></dt>
+<dd>
+<p>This macro expands to the time of translation of the preprocessing
+  translation unit in the form "hh:mm:ss".</p>
+</dd>
+</dl>
+<p>Macros for upstream cc65 targets (such as <code>__C64__</code> or <code>__ATARI__</code>) are
+still emitted by the compiler when the corresponding <code>-t</code> option is given,
+but those targets are unusable in this tree because their libraries have been
+removed.</p>
+<h2 id="pragmas">7. #pragmas</h2>
+<p>The compiler understands some pragmas that may be used to change code
+generation and other stuff. Some of these pragmas understand a special form:
+If the first parameter is <code>push</code>, the old value is saved onto a stack
+before changing it. The value may later be restored by using the <code>pop</code>
+parameter with the <code>#pragma</code>.</p>
+<h3 id="pragma-allow-eager-inline">7.1. <code>#pragma allow-eager-inline ([push,] on|off)</code></h3>
+<p>Allow eager inlining of known functions.  If the argument is "off", eager
+  inlining is disabled, otherwise it is enabled. Please note that (in contrast
+  to the <code><a href="#option-eagerly-inline-funcs">--eagerly-inline-funcs</a></code>
+  command line option) this pragma does not imply the <code><a href="#option-inline-stdfuncs">--inline-stdfuncs</a></code> command line option.  Rather it marks code to be safe for
+  eager inlining of known functions if inlining of standard functions is enabled.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<h3 id="pragma-bss-name">7.2. <code>#pragma bss-name ([push,] &lt;name&gt;)</code></h3>
+<p>This pragma changes the name used for the BSS segment (the BSS segment
+  is used to store uninitialized data). The argument is a string enclosed
+  in double quotes.</p>
+<p>Note: The default linker configuration file does only map the standard
+  segments. If you use other segments, you have to create a new linker
+  configuration file.</p>
+<p>Beware: The startup code will zero only the default BSS segment. If you
+  use another BSS segment, you have to do that yourself, otherwise
+  uninitialized variables do not have the value zero.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<p>Example:</p>
+<pre class="verb">        #pragma bss-name ("MyBSS")
+  </pre>
+<h3 id="pragma-charmap">7.3. <code>#pragma charmap (&lt;index&gt;, &lt;code&gt;)</code></h3>
+<p>Each literal string and each literal character in the source is translated
+  by use of a translation table. That translation table is preset when the
+  compiler is started, depending on the target system. For the Lynx target,
+  the mapping is plain ASCII.</p>
+<p>This pragma allows to change entries in the translation table, so the
+  translation for individual characters, or even the complete table may be
+  adjusted. Both arguments are assumed to be unsigned characters with a valid
+  range of 0-255.</p>
+<p>Beware of some pitfalls:</p>
+<ul>
+<li>
+<p>The character index is actually the code of the character in the
+        C source; so, character mappings do always depend on the source
+        character set. That means that <code>#pragma charmap()</code> is not
+        portable -- it depends on the build environment.</p>
+</li>
+<li>
+<p>While it is possible to use character literals as indices, the
+        result may be somewhat unexpected, since character literals are
+        themselves translated. For that reason, I would suggest to avoid
+        character literals, and use numeric character codes instead.</p>
+</li>
+<li>
+<p>It is risky to change index <code>0x00</code>, because string functions depend
+        on it. If it is changed, then the <code>'\0'</code> at the end of string
+        literals will become non-zero. Functions that are used on those
+        literals won't stop at the end of them. cc65 will warn you if you do
+        change that code number. You can turn off that <code>remap-zero</code> warning
+        if you are certain that you know what you are doing (see <code><a href="#pragma-warn">#pragma warn()</a></code>).</p>
+</li>
+</ul>
+<p>Example:</p>
+<pre class="verb">  /* Use a space wherever an 'a' occurs in ISO-8859-1 source */
+  #pragma charmap (0x61, 0x20);
+  </pre>
+<h3 id="pragma-check-stack">7.4. <code>#pragma check-stack ([push,] on|off)</code></h3>
+<p>Tells the compiler to insert calls to a stack checking subroutine to detect
+  stack overflows. The stack checking code will lead to somewhat larger and
+  slower programs, so you may want to use this pragma when debugging your
+  program and switch it off for the release version. If a stack overflow is
+  detected, the program is aborted.</p>
+<p>If the argument is "off", stack checks are disabled (the default), otherwise
+  they're enabled.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<h3 id="pragma-code-name">7.5. <code>#pragma code-name ([push,] &lt;name&gt;)</code></h3>
+<p>This pragma changes the name used for the CODE segment (the CODE segment
+  is used to store executable code). The argument is a string enclosed in
+  double quotes.</p>
+<p>Note: The default linker configuration file does only map the standard
+  segments. If you use other segments, you have to create a new linker
+  configuration file.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<p>Example:</p>
+<pre class="verb">        #pragma code-name ("MyCODE")
+  </pre>
+<h3 id="pragma-codesize">7.6. <code>#pragma codesize ([push,] &lt;int&gt;)</code></h3>
+<p>This pragma allows finer control about speed vs. size decisions in the code
+  generation and optimization phase. It gives the allowed size increase factor
+  (in percent). The default is can be changed by use of the <code><a href="#option-codesize">--codesize</a></code> compiler option.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<h3 id="pragma-data-name">7.7. <code>#pragma data-name ([push,] &lt;name&gt;)</code></h3>
+<p>This pragma changes the name used for the DATA segment (the DATA segment
+  is used to store initialized data). The argument is a string enclosed in
+  double quotes.</p>
+<p>Note: The default linker configuration file does only map the standard
+  segments. If you use other segments, you have to create a new linker
+  configuration file.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<p>Example:</p>
+<pre class="verb">        #pragma data-name ("MyDATA")
+  </pre>
+<h3 id="pragma-inline-stdfuncs">7.8. <code>#pragma inline-stdfuncs ([push,] on|off)</code></h3>
+<p>Allow the compiler to inline some standard functions from the C library like
+  strlen.  If the argument is "off", inlining is disabled, otherwise it is enabled.</p>
+<p>See also the <code><a href="#option-inline-stdfuncs">--inline-stdfuncs</a></code>
+  command line option.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<h3 id="pragma-local-strings">7.9. <code>#pragma local-strings ([push,] on|off)</code></h3>
+<p>When "on", emit string literals to the data segment when they're encountered
+  in the source. The default ("off") is to keep string literals until end of
+  assembly, merge read only literals if possible, and then output the literals
+  into the data or rodata segment that is active at that point.</p>
+<p>Using this <code>#pragma</code> it is possible to control the behaviour from within
+  the source. When <code>#pragma local-strings</code> is active, string literals are
+  output immediately, which means that they go into the currently active data
+  or rodata segment, but cannot be merged. When inactive, string literals are
+  remembered and output as a whole when translation is finished.</p>
+<h3 id="pragma-message">7.10. <code>#pragma message (&lt;message&gt;)</code></h3>
+<p>This pragma is used to display informational messages at compile-time.</p>
+<p>The message intented to be displayed must be a string literal.</p>
+<p>Example:</p>
+<pre class="verb">        #pragma message ("in a bottle")
+  </pre>
+<p>Results in the compiler outputting the following to stderr:</p>
+<pre class="verb">        example.c(42): Note: in a bottle
+  </pre>
+<h3 id="pragma-optimize">7.11. <code>#pragma optimize ([push,] on|off)</code></h3>
+<p>Switch optimization on or off. If the argument is "off", optimization is
+  disabled, otherwise it is enabled. Please note that this pragma only effects
+  whole functions. The setting in effect when the function is encountered will
+  determine if the generated code is optimized or not.</p>
+<p>Optimization and code generation is also controlled by the <a href="#pragma-codesize">codesize pragma</a>.</p>
+<p>The default is "off", but may be changed with the <code><a href="#option-O">-O</a></code> compiler option.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<h3 id="pragma-rodata-name">7.12. <code>#pragma rodata-name ([push,] &lt;name&gt;)</code></h3>
+<p>This pragma changes the name used for the RODATA segment (the RODATA
+  segment is used to store readonly data). The argument is a string
+  enclosed in double quotes.</p>
+<p>Note: The default linker configuration file does only map the standard
+  segments. If you use other segments, you have to create a new linker
+  configuration file.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<p>Example:</p>
+<pre class="verb">        #pragma rodata-name ("MyRODATA")
+  </pre>
+<h3 id="pragma-regvaraddr">7.13. <code>#pragma regvaraddr ([push,] on|off)</code></h3>
+<p>The compiler does not allow to take the address of register variables.
+  The regvaraddr pragma changes this. Taking the address of a register
+  variable is allowed after using this pragma with "on" as argument.
+  Using "off" as an argument switches back to the default behaviour.</p>
+<p>Beware: The C standard does not allow taking the address of a variable
+  declared as register. So your programs become non-portable if you use
+  this pragma. In addition, your program may not work. This is usually the
+  case if a subroutine is called with the address of a register variable,
+  and this subroutine (or a subroutine called from there) uses
+  register variables. So be careful with this #pragma.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<p>Example:</p>
+<pre class="verb">        #pragma regvaraddr(on)  /* Allow taking the address
+                                 * of register variables
+                                 */
+  </pre>
+<h3 id="pragma-register-vars">7.14. <code>#pragma register-vars ([push,] on|off)</code></h3>
+<p>Enables or disables use of register variables. If register variables are
+  disabled (the default), the <code>register</code> keyword is ignored. Register
+  variables are explained in more detail in <a href="#register-vars">a separate
+  chapter</a>.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<h3 id="pragma-signed-chars">7.15. <code>#pragma signed-chars ([push,] on|off)</code></h3>
+<p>Changes the signedness of the default character type. If the argument is
+  "on", default characters are signed, otherwise characters are unsigned. The
+  compiler default is to make characters unsigned since this creates a lot
+  better code. This default may be overridden by the <code><a href="#option-signed-chars">--signed-chars</a></code> command line option.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<h3 id="pragma-static-locals">7.16. <code>#pragma static-locals ([push,] on|off)</code></h3>
+<p>Use variables in the bss segment instead of variables on the stack. This
+  pragma changes the default set by the compiler option <code><a href="#option-static-locals">--static-locals</a></code>. If the argument is "on",
+  local variables are allocated in the BSS segment, leading to shorter and in
+  most cases faster, but non-reentrant code.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<h3 id="pragma-warn">7.17. <code>#pragma warn (name, [push,] on|off)</code></h3>
+<p>Switch compiler warnings on or off. "name" is the name of a warning (see the
+  <code><a href="#option-W">-W</a></code> compiler option for a list). The name is
+  followed either by "pop", which restores the last pushed state, or by "on" or
+  "off", optionally preceeded by "push" to push the current state before
+  changing it.</p>
+<p>Example:</p>
+<pre class="verb">        /* Don't warn about the unused parameter in function func */
+        #pragma warn (unused-param, push, off)
+        static int func (int unused)
+        {
+            return 0;
+        }
+        #pragma warn (unused-param, pop)
+  </pre>
+<h3 id="pragma-wrapped-call">7.18. <code>#pragma wrapped-call (push, &lt;name&gt;, &lt;identifier&gt;)</code></h3>
+<p>This pragma sets a wrapper for functions, often used for trampolines.</p>
+<p>The name is a function returning <code>void</code>, and taking no parameters.
+  It must preserve the CPU's <code>A</code> and <code>X</code> registers if it wraps any
+  <code>__fastcall__</code> functions that have parameters.  It must preserve
+  the <code>Y</code> register if it wraps any variadic functions (they have "<code>...</code>"
+  in their prototypes).</p>
+<p>The identifier is an 8-bit number that's set into <code>tmp4</code>.</p>
+<p>The address of a wrapped function is passed in <code>ptr4</code>.  The wrapper can
+  call that function by using "<code>jsr callptr4</code>".</p>
+<p>This feature is useful, for example, with banked memory, to switch banks
+  automatically to where a wrapped function resides, and then to restore the
+  previous bank when it returns.</p>
+<p>The <code>#pragma</code> requires the push or pop argument as explained above.</p>
+<p>Example:</p>
+<pre class="verb">/* Note that this code can be in a header. */
+void mytrampoline(void); /* Doesn't corrupt __AX__ */
+
+#pragma wrapped-call (push, mytrampoline, 5)
+void somefunc1(void);
+void somefunc2(int, char *);
+#pragma wrapped-call (pop)
+  </pre>
+<h3 id="pragma-writable-strings">7.19. <code>#pragma writable-strings ([push,] on|off)</code></h3>
+<p>Changes the storage location of string literals. For historical reasons,
+  the C standard defines that string literals are of type "char[]", but
+  writing to such a literal causes undefined behaviour. Most compilers
+  (including cc65) place string literals in the read-only data segment, which
+  may cause problems with old C code that writes to string literals.</p>
+<p>Using this pragma (or the corresponding command line option <code><a href="#option-writable-strings">--writable-strings</a></code>) causes the
+  literals to be placed in the data segment so they can be written to without
+  worry.</p>
+<p>The <code>#pragma</code> understands the push and pop parameters as explained above.</p>
+<h3 id="sect-7-20">7.20. <code>#pragma zpsym (&lt;name&gt;)</code></h3>
+<p>Tell the compiler that the -- previously as external declared -- symbol with
+  the given name is a zero page symbol (usually from an assembler file).
+  The compiler will create a matching import declaration for the assembler.</p>
+<p>Example:</p>
+<pre class="verb">        extern int foo;
+        #pragma zpsym ("foo");  /* foo is in the zeropage */
+  </pre>
+<h2 id="register-vars">8. Register variables</h2>
+<p>The runtime for all supported platforms has 6 bytes of zero page space
+available for register variables (this could be increased, but I think it's a
+good value). So you can declare register variables up to a total size of 6 per
+function. The compiler will allocate register space on a "first come, first
+served" base and convert any <code>register</code> declarations that exceed the
+available register space silently to <code>auto</code>. Parameters can also be
+declared as <code>register</code>, this will in fact give slightly shorter code than
+using a register variable.</p>
+<p>Since a function must save the current values of the registers on entry and
+restore them on exit, there is an overhead associated with register variables,
+and this overhead is quite high (about 20 bytes per variable). This means that
+just declaring anything as <code>register</code> is not a good idea.</p>
+<p>The best use for register variables are pointers, especially those that point
+to structures. The magic number here is about 3 uses of a struct field: If the
+function contains this number or even more, the generated code will be usually
+shorter and faster when using a register variable for the struct pointer. The
+reason for this is that the register variable can in many cases be used as a
+pointer directly. Having a pointer in an auto variable means that this pointer
+must first be copied into a zero page location, before it can be dereferenced.</p>
+<p>Second best use for register variables are counters. However, there is not
+much difference in the code generated for counters, so you will need at least
+100 operations on this variable (for example in a loop) to make it worth the
+trouble. The only savings you get here are by the use of a zero page variable
+instead of one on the stack or in the data segment.</p>
+<p>Register variables must be explicitly enabled, either by using <code><a href="#option-O">-Or</a></code> or <code><a href="#option-register-vars">--register-vars</a></code> on the command line or by use of <code><a href="#pragma-register-vars">#pragma register-vars</a></code>. Register variables
+are only accepted on function top level, register variables declared in
+interior blocks are silently converted to <code>auto</code>. With register variables
+disabled, all variables declared as <code>register</code> are actually auto variables.</p>
+<p>Please take care when using register variables: While they are helpful and can
+lead to a tremendous speedup when used correctly, improper usage will cause
+bloated code and a slowdown.</p>
+<h2 id="inline-asm">9. Inline assembler</h2>
+<p>The compiler allows to insert assembler statements into the output file. The
+syntax is</p>
+<pre class="verb">        asm [optional volatile] (&lt;string literal&gt;[, optional parameters]) ;</pre>
+<p>or</p>
+<pre class="verb">        __asm__ [optional volatile] (&lt;string literal&gt;[, optional parameters]) ;</pre>
+<p>The first form is in the user namespace; and, is disabled by <code><a href="#option--standard">--standard</a></code> if the argument is not <code>cc65</code>.</p>
+<p>The <code>asm</code> statement can be used only inside a function.  Please note that
+the result of an inline assembler expression is always of type <code>void</code>.</p>
+<p>The contents of the string literal are preparsed by the compiler; and, inserted
+into the generated assembly output, so that it can be processed further by
+the backend -- and, especially the optimizer. For that reason, the compiler does
+allow only regular 6502 opcodes to be used with the inline assembler. Pseudo
+instructions (like <code>.import</code>, <code>.byte</code>, and so on) are <em>not</em> allowed,
+even if the ca65 assembler (which is used to translate the generated assembler
+code) would accept them. The built-in inline assembler is not a replacement for
+the full-blown macro assembler which comes with the compiler.</p>
+<p>Note: Inline assembler statements are subject to all optimizations done by the
+compiler. There currently is no way to protect an inline assembler statement
+-- alone -- from being moved or removed completely by the optimizer. If in
+doubt, check the generated assembler output; or, disable optimizations (for
+that function).</p>
+<p>As a shortcut, you can put the <code>volatile</code> qualifier in your <code>asm</code>
+statements.  It will disable optimization for the functions in which those
+<code>asm volatile</code> statements sit.  The effect is the same as though you put
+<code>#pragma optimize(push, off)</code> above those functions, and <code>#pragma
+optimize(pop)</code> below those functions.</p>
+<p>The string literal may contain format specifiers from the following list. For
+each format specifier, an argument is expected which is inserted instead of
+the format specifier, before passing the assembly code line to the backend.</p>
+<ul>
+<li>
+<p><code>%b</code> - Numerical 8-bit value</p>
+</li>
+<li>
+<p><code>%w</code> - Numerical 16-bit value</p>
+</li>
+<li>
+<p><code>%l</code> - Numerical 32-bit value</p>
+</li>
+<li>
+<p><code>%v</code> - Assembler name of a global variable or function</p>
+</li>
+<li>
+<p><code>%o</code> - Stack offset of a local variable</p>
+</li>
+<li>
+<p><code>%g</code> - Assembler name of a C label</p>
+</li>
+<li>
+<p><code>%s</code> - The argument is converted to a string</p>
+</li>
+<li>
+<p><code>%%</code> - The % sign itself</p>
+</li>
+</ul>
+<p>Using those format specifiers, you can access C <code>#defines</code>, variables, or
+similar stuff from the inline assembler. For example, to load the value of
+a C <code>#define</code> into the Y index register, one would use</p>
+<pre class="verb">        #define OFFS  23
+        __asm__ ("ldy #%b", OFFS);</pre>
+<p>Or, to access a struct member of a static variable:</p>
+<pre class="verb">        typedef struct {
+            unsigned char x;
+            unsigned char y;
+            unsigned char color;
+            unsigned char data[32];
+        } pixel_t;
+        static pixel_t pixel;
+        __asm__ ("ldy #%b", offsetof(pixel_t, color));
+        __asm__ ("lda %v,y", pixel);
+
+        /* or to access an array member */
+        static unsigned char i;
+        __asm__ ("ldy %v", i);
+        __asm__ ("lda %v+%b,y", pixel, offsetof(pixel_t, data));</pre>
+<p>The next example shows how to use global variables to exchange data between C
+and assembler; and, how to handle assembler jumps:</p>
+<pre class="verb">        static unsigned char globalSubA, globalSubB, globalSubResult;
+
+        /* return a-b, return 255 if b&gt;a */
+        unsigned char sub (unsigned char a, unsigned char b)
+        {
+            globalSubA = a;
+            globalSubB = b;
+            __asm__ ("sec");
+            __asm__ ("lda %v", globalSubA);
+            __asm__ ("sbc %v", globalSubB);
+            __asm__ ("bcs %g", jumpSubNoError);
+            __asm__ ("lda #$FF");
+        jumpSubNoError:
+            __asm__ ("sta %v", globalSubResult);
+            return globalSubResult;
+        }</pre>
+<p>Arrays also can be accessed:</p>
+<pre class="verb">        static const unsigned char globalSquareTable[] = {
+            0, 1, 4, 9, 16, 25, 36, 49, 64, 81,
+            100, 121, 144, 169, 196, 225
+        };
+        static unsigned char globalSquareA, globalSquareResult;
+
+        /* return a*a for a&lt;16, else 255 */
+        unsigned char square (unsigned char a)
+        {
+            if (a &gt; 15) {
+                return 255;
+            }
+            globalSquareA = a;
+            __asm__ ("ldx %v", globalSquareA);
+            __asm__ ("lda %v,x", globalSquareTable);
+            __asm__ ("sta %v", globalSquareResult);
+            return globalSquareResult;
+        }</pre>
+<p>Note: Do not embed the assembler labels that are used as names of global
+variables or functions into your <code>asm</code> statements. Code such as this:</p>
+<pre class="verb">        int foo;
+        int bar (void) { return 1; }
+        ...
+        __asm__ ("lda _foo");           /* DON'T DO THAT! */
+        ...
+        __asm__ ("jsr _bar");           /* DON'T DO THAT EITHER! */</pre>
+<p>might stop working if the way that the compiler generates those names is changed in
+a future version. Instead, use the format specifiers from the table above:</p>
+<pre class="verb">        __asm__ ("lda %v", foo);        /* OK */
+        ...
+        __asm__ ("jsr %v", bar);        /* OK */</pre>
+<h2 id="operators">10. The C language: operators</h2>
+<p>cc65 accepts the full set of C operators. This section summarises how they
+behave on the Lynx target, where the native integer types are 8, 16 and 32 bits
+wide (<code>char</code> is 8 bits, <code>int</code> is 16 bits and <code>long</code>
+is 32 bits) and there is no floating-point type &mdash; the <code>float</code> and
+<code>double</code> operators do not exist (<a href="#sect-4">see section 4</a>). On
+top of the standard operators this fork adds three hardware operators
+(<code>!*</code>, <code>!/</code>, <code>!%</code>) that route multiplication and
+division through the Suzy math unit.</p>
+<h3 id="operators-standard">10.1. Standard operators</h3>
+<p>All of the usual C operators are available and follow the standard precedence,
+associativity and promotion rules:</p>
+<ul>
+<li>
+<p><strong>Arithmetic:</strong> <code>+</code>, <code>-</code>, <code>*</code>,
+        <code>/</code>, <code>%</code>, and unary <code>+</code>/<code>-</code>.
+        Multiplication and division of runtime values are emitted as calls to the
+        software runtime routines; multiplication or division by a constant power
+        of two is strength-reduced to a shift. There is no floating-point
+        arithmetic.</p>
+</li>
+<li>
+<p><strong>Increment / decrement:</strong> prefix and postfix <code>++</code>
+        and <code>--</code>.</p>
+</li>
+<li>
+<p><strong>Relational and equality:</strong> <code>&lt;</code>, <code>&lt;=</code>,
+        <code>&gt;</code>, <code>&gt;=</code>, <code>==</code>, <code>!=</code>.</p>
+</li>
+<li>
+<p><strong>Logical:</strong> <code>&amp;&amp;</code>, <code>||</code>, and unary
+        <code>!</code>, with the usual short-circuit evaluation.</p>
+</li>
+<li>
+<p><strong>Assignment:</strong> plain <code>=</code> and the compound forms
+        <code>+=</code>, <code>-=</code>, <code>*=</code>, <code>/=</code>,
+        <code>%=</code>, <code>&amp;=</code>, <code>|=</code>, <code>^=</code>,
+        <code>&lt;&lt;=</code>, <code>&gt;&gt;=</code>. Struct assignment is
+        supported even though structs may not be returned from, or passed by value
+        to, functions (<a href="#sect-4">see section 4</a>).</p>
+</li>
+<li>
+<p><strong>Conditional, comma, cast and <code>sizeof</code>:</strong> the ternary
+        <code>?:</code>, the comma operator <code>,</code>, cast expressions
+        <code>(type)x</code>, and <code>sizeof</code> all behave as in standard C.</p>
+</li>
+<li>
+<p><strong>Member, pointer and subscript:</strong> <code>.</code>,
+        <code>-&gt;</code>, unary <code>*</code> (indirection), unary <code>&amp;</code>
+        (address-of) and <code>[]</code>. Pointer arithmetic scales by the
+        pointed-to type using the software multiply.</p>
+</li>
+</ul>
+<h3 id="operators-bitwise">10.2. Bitwise operators</h3>
+<p>The bitwise operators work on the integer types in their natural width &mdash;
+8 bits for <code>char</code>, 16 for <code>int</code>, 32 for <code>long</code>
+&mdash; after the usual integer promotions:</p>
+<ul>
+<li><p><code>&amp;</code> &mdash; bitwise AND</p></li>
+<li><p><code>|</code> &mdash; bitwise OR</p></li>
+<li><p><code>^</code> &mdash; bitwise XOR</p></li>
+<li><p><code>~</code> &mdash; one's-complement (unary)</p></li>
+<li><p><code>&lt;&lt;</code> &mdash; left shift</p></li>
+<li><p><code>&gt;&gt;</code> &mdash; right shift (arithmetic for signed operands,
+        logical for unsigned)</p></li>
+</ul>
+<p>Because the 6502 shifts one bit at a time, shifting by a small constant is
+cheap while shifting by a large or runtime count is correspondingly more
+expensive. Each operator has a matching compound-assignment form
+(<code>&amp;=</code>, <code>|=</code>, <code>^=</code>, <code>&lt;&lt;=</code>,
+<code>&gt;&gt;=</code>).</p>
+<h3 id="operators-suzy">10.3. Suzy hardware operators</h3>
+<p>This fork adds three multiplicative operators that are specific to the Lynx and
+are rejected by any other compiler: <code>!*</code>, <code>!/</code> and
+<code>!%</code>. They are written exactly like their standard counterparts
+<code>*</code>, <code>/</code> and <code>%</code> and share the same precedence,
+associativity and type/promotion rules, but instead of the software runtime loops
+they route the operation through Suzy's hardware math unit (a 16&times;16&rarr;32
+multiply and a 32&divide;16 divide):</p>
+<pre class="verb">        unsigned a, b, c, q, r;
+        ...
+        q = a !* b;        // hardware multiply (low 16 bits of the product)
+        q = a !/ b;        // hardware divide
+        r = a !% b;        // hardware remainder, computed as a - (a/b)*b</pre>
+<p>The standard <code>*</code>, <code>/</code> and <code>%</code> operators are
+unchanged and keep using the software routines, so Suzy math is strictly opt-in:
+only the call sites you mark with <code>!</code> use the hardware. Compiler-generated
+multiplies (array indexing, pointer scaling) always use software. A hardware
+multiply completes in roughly 11&ndash;14 CPU cycles and a divide in at most ~100,
+several times faster than the software loops.</p>
+<p>Notes and limitations:</p>
+<ul>
+<li>
+<p>The operators are fork-specific. Code that uses them will not compile with
+        other cc65 builds or other C compilers.</p>
+</li>
+<li>
+<p>Because the standalone <code>!*</code> yields only the low 16 bits of the
+        product, <code>(a !* b) !/ c</code> would overflow whenever
+        <code>a*b &gt; 65535</code>. The compiler therefore recognises the fused
+        form <code>a !* b !/ c</code> &mdash; when both factors are runtime 16-bit
+        ints &mdash; as a single operation that keeps the full 32-bit product as
+        the dividend, avoiding the overflow. A constant or <code>long</code>
+        operand, or a trailing <code>!%</code>, falls back to the per-operator
+        path.</p>
+</li>
+<li>
+<p>The hardware remainder register is unusable (a documented Lynx bug), so
+        <code>!%</code> is computed as <code>a - (a/b)*b</code>: one hardware
+        divide plus one hardware multiply.</p>
+</li>
+<li>
+<p>Division by zero yields <code>0xFFFF</code> (the hardware returns all-ones);
+        as in standard C the result is otherwise undefined.</p>
+</li>
+<li>
+<p>The math unit is shared, global hardware state. Do <strong>not</strong> use
+        these operators inside interrupt handlers, and do not mix them with
+        asynchronous (non-blocking) sprite rendering, which uses the same unit
+        &mdash; either would corrupt results. The synchronous TGI driver is safe
+        by construction.</p>
+</li>
+</ul>
+<p>For the full hardware contract and the runtime entry points, see
+<code>LYNX_CODEGEN_DESIGN.md</code> &sect;2.6 in the source tree.</p>
+<h2 id="asm-from-c">11. Calling assembly functions from C</h2>
+<p>This section covers the internal details of cc65 code generation needed to call
+assembly functions from C. It was originally written by
+<a href="mailto:bbbradsmith@users.noreply.github.com">Brad Smith</a>.</p>
+<h3 id="asm-from-c-1">11.1. Calling conventions</h3>
+<p>There are two calling conventions used in cc65:</p>
+<ul>
+<li>
+<p><code>cdecl</code> - passes all parameters on the C-stack.</p>
+</li>
+<li>
+<p><code>fastcall</code> - passes the rightmost parameter in
+  registers <code>A/X/sreg</code> and all others on the C-stack.</p>
+</li>
+</ul>
+<p>The default convention is <code>fastcall</code>, but this can be changed with
+the <code>--all-cdecl</code> command line option. If a convention is specified in
+the function's declaration, that convention will be used instead.
+Variadic functions will always use <code>cdecl</code> convention.</p>
+<p>If the <code>--standard</code> command line option is used,
+the <code>cdecl</code> and <code>fastcall</code> keywords will not be available.
+The standard compliant variations <code>__cdecl__</code> and <code>__fastcall__</code> are always available.</p>
+<p>If a function has a prototype, parameters are pushed to the C-stack as their respective types
+(i.e. a <code>char</code> parameter will push 1 byte), but if a function has no prototype, default
+promotions will apply. This means that with no prototype, <code>char</code> will be promoted
+to <code>int</code> and be pushed as 2 bytes. "K &amp; R"-style forward declarations may be used,
+but they will function the same as if no prototype was used.</p>
+<h3 id="asm-from-c-2">11.2. Prologue, before the function call</h3>
+<p>If the function is declared as fastcall, the rightmost argument will be loaded into
+the <code>A/X/sreg</code> registers:</p>
+<ul>
+<li>
+<p><code>A</code> - 8-bit parameter, or low byte of larger types</p>
+</li>
+<li>
+<p><code>X</code> - 16-bit high byte, or second byte of 32-bits</p>
+</li>
+<li>
+<p><code>sreg</code> - Zeropage pseudo-register including high 2 bytes of 32-bit parameter</p>
+</li>
+</ul>
+<p>All other parameters will be pushed to the C-stack from left to right.
+The rightmost parameter will have the lowest address on the stack,
+and multi-byte parameters will have their least significant byte at the lower address.</p>
+<p>The <code>sp</code> pseudo-register is a zeropage pointer to the base of the C-stack.
+If the function is variadic, the <code>Y</code> register will contain the number of
+bytes pushed to the stack for this function.</p>
+<p>Example:</p>
+<pre class="verb">// C prototype
+void cdecl foo(unsigned bar, unsigned char baz);
+
+; C-stack layout within the function:
+;
+;            +------------------+
+;            | High byte of bar |
+; Offset 2 -&gt;+------------------+
+;            | Low byte of bar  |
+; Offset 1 -&gt;+------------------+
+;            | baz              |
+; Offset 0 -&gt;+------------------+
+
+; Example code for accessing bar. The variable is in A/X after this code snippet:
+;
+    ldy     #2      ; Offset of high byte of bar
+    lda     (sp),y  ; High byte now in A
+    tax             ; High byte now in X
+    dey             ; Offset of low byte of bar
+    lda     (sp),y  ; Low byte now in A</pre>
+<h3 id="asm-from-c-3">11.3. Epilogue, after the function call</h3>
+<h4 id="asm-from-c-3-1">11.3.1. Return requirements</h4>
+<p>If the function has a return value, it will appear in the <code>A/X/sreg</code> registers.</p>
+<p>Functions with an 8-bit return value (<code>char</code> or <code>unsigned char</code>) are expected
+to promote this value to a 16-bit integer on return, and store the high byte in <code>X</code>.
+The compiler will depend on the promoted value in some cases (e.g. implicit conversion to <code>int</code>),
+and failure to return the high byte in <code>X</code> will cause unexpected errors.
+This problem does not apply to the <code>sreg</code> pseudo-register, which is only
+used if the return type is 32-bit.</p>
+<p>If the function has a void return type, the compiler will not depend on the result
+of <code>A/X/sreg</code>, so these may be clobbered by the function.</p>
+<p>The C-stack pointer <code>sp</code> must be restored by the function to its value before the
+function call prologue. It may pop all of its parameters from the C-stack
+(e.g. using the <code>runtime</code> function <code>popa</code>),
+or it could adjust <code>sp</code> directly.
+If the function is variadic, the <code>Y</code> register contains the number of bytes
+pushed to the stack on entry, which may be added to <code>sp</code> to restore its
+original state.</p>
+<p>The internal pseudo-register <code>regbank</code> must not be changed by the function.</p>
+<h4 id="asm-from-c-3-2">11.3.2. Clobbered state</h4>
+<p>The <code>Y</code> register may be clobbered by the function.
+The compiler will not depend on its state after a function call.</p>
+<p>The <code>A/X/sreg</code> registers may be clobbered if any of them
+are not used by the return value (see above).</p>
+<p>Many of the internal pseudo-registers used by cc65 are available for
+free use by any function called by C, and do not need to be preserved.
+Note that if another C function is called from your assembly function,
+it may clobber any of these itself:</p>
+<ul>
+<li>
+<p><code>tmp1 .. tmp4</code></p>
+</li>
+<li>
+<p><code>ptr1 .. ptr4</code></p>
+</li>
+<li>
+<p><code>regsave</code></p>
+</li>
+<li>
+<p><code>sreg</code> (if unused by return)</p>
+</li>
+</ul>
+<h2 id="sect-11">12. Copyright</h2>
+<p>This is the original compiler copyright:</p>
+<pre class="verb">--------------------------------------------------------------------------
+  -*- Mode: Text -*-
+
+     This is the copyright notice for RA65, LINK65, LIBR65, and other
+  Atari 8-bit programs.  Said programs are Copyright 1989, by John R.
+  Dunning.  All rights reserved, with the following exceptions:
+
+      Anyone may copy or redistribute these programs, provided that:
+
+  1:  You don't charge anything for the copy.  It is permissable to
+      charge a nominal fee for media, etc.
+
+  2:  All source code and documentation for the programs is made
+      available as part of the distribution.
+
+  3:  This copyright notice is preserved verbatim, and included in
+      the distribution.
+
+      You are allowed to modify these programs, and redistribute the
+  modified versions, provided that the modifications are clearly noted.
+
+      There is NO WARRANTY with this software, it comes as is, and is
+  distributed in the hope that it may be useful.
+
+      This copyright notice applies to any program which contains
+  this text, or the refers to this file.
+
+      This copyright notice is based on the one published by the Free
+  Software Foundation, sometimes known as the GNU project.  The idea
+  is the same as theirs, ie the software is free, and is intended to
+  stay that way.  Everybody has the right to copy, modify, and re-
+  distribute this software.  Nobody has the right to prevent anyone
+  else from copying, modifying or redistributing it.
+
+--------------------------------------------------------------------------</pre>
+<p>Small parts of the compiler (parts of the preprocessor and main parser) are
+still covered by this copyright. The main portion is covered by the usual
+cc65 license, which reads:</p>
+<p>This software is provided 'as-is', without any expressed or implied
+warranty.  In no event will the authors be held liable for any damages
+arising from the use of this software.</p>
+<p>Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:</p>
+<ol>
+<li>
+<p>The origin of this software must not be misrepresented; you must not
+        claim that you wrote the original software. If you use this software
+        in a product, an acknowledgment in the product documentation would be
+        appreciated but is not required.</p>
+</li>
+<li>
+<p>Altered source versions must be plainly marked as such, and must not
+        be misrepresented as being the original software.</p>
+</li>
+<li>
+<p>This notice may not be removed or altered from any source
+        distribution.</p>
+</li>
+</ol></article></main><footer class="site-foot">lynxcc documentation &mdash; a fork of cc65 focused on the Atari Lynx target.</footer>
+<script src="doc.js"></script>
+</body></html>

@@ -36,8 +36,6 @@
 #define TGI_YRES        102
 #define TGI_COLORCOUNT  16
 #define TGI_PAGECOUNT   2
-#define TGI_FONTWIDTH   8
-#define TGI_FONTHEIGHT  8
 
 /* The old query functions become zero-cost macros */
 #define tgi_getxres()           TGI_XRES
@@ -72,11 +70,6 @@ void tgi_init (void);
 ** defaulted to white: code that drew after init without an explicit
 ** tgi_setcolor must now set its color first.) The hardware is fixed, so
 ** this cannot fail.
-*/
-
-void tgi_done (void);
-/* End graphics mode. (There is no text mode on the Lynx; this only resets
-** the internal mode flag.)
 */
 
 void tgi_clear (void);

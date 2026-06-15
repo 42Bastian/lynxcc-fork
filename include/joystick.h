@@ -10,7 +10,7 @@
 /* present, and joy_read() reports every input the console has in a single  */
 /* call: d-pad, A, B, Option 1, Option 2 (low byte) and Pause (bit 8).      */
 /*                                                                           */
-/* The JOY_*_MASK values and test macros live in <lynx.h> (via target.h).   */
+/* The JOY_*_MASK values and test macros live in <lynx.h>.                  */
 /*                                                                           */
 /* Behavior notes (changes from the old driver API):                        */
 /*  - Option 1/2 are no longer masked out of the low byte, and Pause is     */
@@ -31,7 +31,7 @@
 
 
 
-#include <target.h>
+#include <lynx.h>
 
 
 

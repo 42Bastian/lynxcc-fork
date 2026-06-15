@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Using GNU Make with cc65</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head><body>
+<div class="topbar"><a class="brand" href="index.html">lynxcc</a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><a href="cc65.html">cc65</a><a href="ca65.html">ca65</a><a href="ld65.html">ld65</a><a href="cl65.html">cl65</a><a href="library.html">Library</a><a href="funcref.html">Functions</a><a href="tgi.html">TGI</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>Using GNU Make with cc65</h1><p class="author"><a href="mailto:ol.sc@web.de">Oliver Schmidt</a></p></header><div class="abstract">How to build your program using the GNU Make utility.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl1"><a href="#sect-2">2. What is GNU Make?</a></li>
+<li class="lvl1"><a href="#sect-3">3. A sample Makefile</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. Invoking the sample Makefile</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. Understanding the sample Makefile</a></li>
+<li class="lvl2"><a href="#sect-3-3">3.3. Invoking the sample Makefile on Windows</a></li>
+<li class="lvl1"><a href="#sect-4">4. Target-specific Variable Values</a></li>
+</ul></nav><h2 id="sect-1">1. Overview</h2>
+<p>This document describes how to build your programs using the cc65 development
+tools and the GNU Make utility.</p>
+<p>The cc65 development package doesn't come with a make utility. However this is
+no issue because GNU Make works very nicely with cc65.</p>
+<h2 id="sect-2">2. What is GNU Make?</h2>
+<p>GNU Make is a both very powerful and very popular make utility. It might even
+be called the de facto standard for make utilities. For more information see
+the GNU Make home page:</p>
+<p><a href="http://www.gnu.org/software/make/">http://www.gnu.org/software/make/</a></p>
+<p>The cc65 development package is available as binaries for several host systems
+and can easily built for quite some additional systems. The very same is true
+for GNU Make so a cc65-based project coming with a GNU Make Makefile can easily
+be built by any cc65 developer no matter what host system is used.</p>
+<p>Because of the strong alignment of the cc65 compiler with the ISO C standard it
+is very well feasible to compile a single C code base both with the cc65
+compiler and other C compilers like for example GCC. GNU Make turns out to be
+very well suited to build projects for several target systems using multiple
+compilers as it isn't tied to any C compiler.</p>
+<h2 id="sect-3">3. A sample Makefile</h2>
+<p>This Makefile is a fully functional sample for compiling several C sources
+(here <code>foo.c</code> and <code>bar.c</code>) and link the resulting object files into an
+executable program (here <code>foobar</code>):</p>
+<pre class="verb">SOURCES = foo.c bar.c
+
+PROGRAM = foobar
+
+ifdef CC65_TARGET
+CC      = cl65
+CFLAGS  = -t $(CC65_TARGET) --create-dep $(&lt;:.c=.d) -O
+LDFLAGS = -t $(CC65_TARGET) -m $(PROGRAM).map
+else
+CC      = gcc
+CFLAGS  = -MMD -MP -O
+LDFLAGS = -Wl,-Map,$(PROGRAM).map
+endif
+
+########################################
+
+.SUFFIXES:
+.PHONY: all clean
+all: $(PROGRAM)
+
+ifneq ($(MAKECMDGOALS),clean)
+-include $(SOURCES:.c=.d)
+endif
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) -o $@ $&lt;
+
+$(PROGRAM): $(SOURCES:.c=.o)
+	$(CC) $(LDFLAGS) -o $@ $^
+
+clean:
+	$(RM) $(SOURCES:.c=.o) $(SOURCES:.c=.d) $(PROGRAM) $(PROGRAM).map</pre>
+<p><strong>Important:</strong> When using the sample Makefile above via copy &amp; paste it is
+important to make sure that command lines (lines 26, 29 and 32) start
+with a tab character (ASCII code 9).</p>
+<h3 id="sect-3-1">3.1. Invoking the sample Makefile</h3>
+<p>Without any specific configuration the sample Makefile will compile and link
+using GCC. In order to rather use cc65 the variable <code>CC65_TARGET</code> needs to be
+defined. This may by done as an environment variable or simply as part of the
+Makefile. However to quickly switch between compilers and/or cc65 targets it is
+best done on the GNU Make command line like this:</p>
+<pre class="verb">make CC65_TARGET=lynx</pre>
+<h3 id="sect-3-2">3.2. Understanding the sample Makefile</h3>
+<p>Most parts of the sample Makefile follow the guidelines in the
+<a href="http://www.gnu.org/software/make/manual/make.html">GNU Make Manual</a>
+that can be searched online for background information. The automatic generation of
+dependency however rather works as described by the GNU Make maintainer Paul D. Smith in
+<a href="http://make.paulandlesley.org/autodep.html#advanced">"Advanced Auto-Dependencies"</a>.
+Fortunately both GCC and cc65 directly support this method in the meantime.</p>
+<h3 id="sect-3-3">3.3. Invoking the sample Makefile on Windows</h3>
+<p>The recommended way to use GNU Make on Windows is to install it as part of a
+Cygwin environment. For more information see the Cygwin home page:</p>
+<p><a href="http://www.cygwin.com/">http://www.cygwin.com/</a></p>
+<p>If however installing Cygwin shouldn't be an option for one or the other reason
+then the sample Makefile may be invoked from the Windows Command Prompt (cmd.exe)
+by downloading the following programs:</p>
+<ul>
+<li>
+<p><a href="http://gnuwin32.sourceforge.net/packages/make.htm">make.exe</a></p>
+</li>
+<li>
+<p><a href="http://gnuwin32.sourceforge.net/packages/coreutils.htm">rm.exe</a></p>
+</li>
+</ul>
+<h2 id="sect-4">4. Target-specific Variable Values</h2>
+<p>The very limited resources of the cc65 target machines now and then require
+manual optimization of the build process by compiling individual source files
+with different compiler options. GNU Make offers
+<a href="http://www.gnu.org/software/make/manual/html_node/Target_002dspecific.html">Target-specific Variable Values</a>
+perfectly suited for doing so. For example placing the code of the two modules
+<code>foo</code> and <code>bar</code> in the segment <code>FOOBAR</code> can be achieved with this
+target-specific variable definition:</p>
+<pre class="verb">foo.o bar.o: CFLAGS += --code-name FOOBAR</pre></article></main><footer class="site-foot">lynxcc documentation &mdash; a fork of cc65 focused on the Atari Lynx target.</footer>
+<script src="doc.js"></script>
+</body></html>

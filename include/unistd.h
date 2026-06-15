@@ -55,7 +55,7 @@
 typedef unsigned size_t;
 #endif
 
-/* We need off_t if sys/types is not included */
+/* off_t is defined here (the Lynx port has no <sys/types.h>) */
 #ifndef _HAVE_off_t
 #define _HAVE_off_t
 typedef long int off_t;

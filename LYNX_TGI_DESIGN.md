@@ -52,7 +52,6 @@ smart linking finally applies. No header, no vectors, no install step, no module
 | Function | Implementation notes |
 |---|---|
 | `tgi_init()` | Absorbs old INSTALL+INIT+kernel `tgi_init`: enable VBL timer IRQ, set collision buffer regs ($A058), reset text defaults, set draw/view page 0, default palette, color black (changed from the old driver's white; see §2.8). Cannot fail (fixed hardware) → returns `void`, no error path. |
-| `tgi_done()` | Unchanged semantics; keeps the 1-byte `_tgi_gmode` guard. |
 | `tgi_clear()` | The cls sprite + shared `draw_sprite` core. Clears in the current draw colour; see §2.8. |
 | `tgi_clearrows(first, count)` | Lynx extension: clear a horizontal band of rows in the current draw colour. See §2.8. |
 | `tgi_sprite(scb)` | **Promoted from `tgi_ioctl(0,·)` to a real `__fastcall__` function**: `sta/stx` SCB pointer → `draw_sprite`. This is the hot call (once per frame per chain in `breakout.c`); drops the C ioctl wrapper + vector + cmp-chain (~40 cycles/call). |
@@ -82,8 +81,6 @@ Resolution and capabilities are compile-time facts. `tgi.h` gains:
 #define TGI_YRES        102
 #define TGI_COLORCOUNT  16
 #define TGI_PAGECOUNT   2
-#define TGI_FONTWIDTH   8
-#define TGI_FONTHEIGHT  8
 ```
 
 `tgi_getxres()`, `tgi_getyres()`, `tgi_getmaxx()`, `tgi_getmaxy()`, `tgi_getcolorcount()`,
@@ -91,6 +88,12 @@ Resolution and capabilities are compile-time facts. `tgi.h` gains:
 for free, zero code). Their kernel wrapper files and the RAM mirror variables are deleted.
 `tgi_getaspectratio`/`tgi_setaspectratio` are deleted outright — their only consumers were
 the circle/ellipse emulations.
+
+There is deliberately no `TGI_FONTWIDTH`/`TGI_FONTHEIGHT` constant. Multiple fonts of
+differing dimensions are selectable at run time (`TGI_FONT_BITMAP` 8×8, `TGI_FONT_COMPACT`
+5×5 at 6-px pitch, and the proportional font with per-glyph widths), so a single fixed cell
+size would be meaningless. Code that needs text extents calls `tgi_gettextwidth` /
+`tgi_gettextheight`, which account for the active font and the current text scale.
 
 ### 2.3 Text path
 
@@ -163,7 +166,7 @@ per-driver `ERROR` byte are deleted (~250 bytes incl. message strings).
 ```
 libsrc/lynx/tgi/
   tgi-core.s      draw_sprite, DRAWINDEX, DRAWPAGE/VIEWPAGE vars   (always linked)
-  tgi-init.s      tgi_init, tgi_done, _tgi_gmode
+  tgi-init.s      tgi_init
   tgi-clear.s     tgi_clear, tgi_clearrows + shared cls sprite
   tgi-sprite.s    tgi_sprite
   tgi-page.s      setviewpage, setdrawpage, flip, busy, updatedisplay, irq (.interruptor)
@@ -275,7 +278,7 @@ samples (add `tgi_setcolor(COLOR_WHITE)` where the white default was assumed).
 ## 3. Deletions
 
 **`libsrc/tgi/` (entire directory eventually):** `tgi-kernel.s`, `tgi_load.s`,
-`tgi_unload.s`, `tgi_init.s`, `tgi_done.s` (reimplemented in lynx tree), `tgi_ioctl.s`,
+`tgi_unload.s`, `tgi_init.s` (reimplemented in lynx tree), `tgi_done.s`, `tgi_ioctl.s`,
 `tgi_bar.s`, `tgi_circle.s`, `tgi_ellipse.s`, `tgi_arc.c`, `tgi_pieslice.c`,
 `tgi_line.s`, `tgi_lineto.s`, `tgi_clippedline.s`, `tgi_outcode.s`, `tgi_linepop.s`,
 `tgi_setpixel.s`, `tgi_getpixel.s`, `tgi_curtoxy.s`, `tgi_popxy.s`, `tgi_popxy2.s`,
@@ -415,7 +418,7 @@ must obey explicitly, not by accident:
 ## 8. Implementation order
 
 Each step shippable: (1) split the driver into the §2.6 modules with direct C entry
-symbols, keep old kernel temporarily delegating; (2) rewrite `tgi_init`/`tgi_done`,
+symbols, keep old kernel temporarily delegating; (2) rewrite `tgi_init`,
 promote the six ioctl functions, switch `lynx.h` macros to declarations; (3) delete the
 kernel, loader, vector-font, primitive, and error files; rewrite `tgi.h` with constants;
 (4) Makefile/`DRVTYPES` cleanup, samples, `.map`-based size report.

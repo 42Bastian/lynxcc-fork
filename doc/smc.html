@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ca65 Macros for Self Modifying Code</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head><body>
+<div class="topbar"><a class="brand" href="index.html">lynxcc</a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><a href="cc65.html">cc65</a><a href="ca65.html">ca65</a><a href="ld65.html">ld65</a><a href="cl65.html">cl65</a><a href="library.html">Library</a><a href="funcref.html">Functions</a><a href="tgi.html">TGI</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>ca65 Macros for Self Modifying Code</h1><p class="author">Christian Krüger</p></header><div class="abstract">The 'smc.inc' macro package for ca65 eases the use, increases the safeness and
+self-explanation of 'self-modifying-code' (SMC).</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl1"><a href="#sect-2">2. Usage</a></li>
+<li class="lvl2"><a href="#sect-2-1">2.1. Argument placeholders</a></li>
+<li class="lvl2"><a href="#sect-2-2">2.2. Accessing opcodes</a></li>
+<li class="lvl2"><a href="#sect-2-3">2.3. Accessing arguments</a></li>
+<li class="lvl2"><a href="#sect-2-4">2.4. Operational macros</a></li>
+<li class="lvl2"><a href="#sect-2-5">2.5. Scope macros</a></li>
+<li class="lvl1"><a href="#sect-3">3. A complex example</a></li>
+</ul></nav><h2 id="sect-1">1. Overview</h2>
+<p>When reading assembler sources, self modifying code is often hard to identify
+and applying it needs a lot of discipline.</p>
+<p>Since the cacheless 6502 is a thankful target of such kind of code, the macro
+package will not only reduce this complexness, but also document the use. The
+resulting source is more self-explanatory and so easier to maintain.</p>
+<p>While for general purposes SMC is not a desired form for implementations, it
+can be quite useful for a small range of scenarios. Normally SMC will be
+introduced when optimizing code in respect to:</p>
+<ul>
+<li>
+<p>speed and/or</p>
+</li>
+<li>
+<p>size.</p>
+</li>
+</ul>
+<p>Please mind that SMC can only be applied for code in RAM, which means that a
+general purpose library with SMC excludes ROM targets!</p>
+<p>The ca65 SMC macro package consists of two files:</p>
+<ul>
+<li>
+<p><code>smc.inc</code></p>
+</li>
+<li>
+<p><code>opcodes.inc</code></p>
+</li>
+</ul>
+<p>The latter is only needed if you also plan to modify opcodes and not only data
+within your code.</p>
+<h2 id="sect-2">2. Usage</h2>
+<p>The use of the macros is quite simple:</p>
+<p>Original:</p>
+<pre class="verb">    PHA
+    JSR SUBROUTINE
+    PLA</pre>
+<p>By applying SMC, the speed will now be increased by once cycle:</p>
+<p>SMC:</p>
+<pre class="verb">    SMC_StoreValue RestoreAccu
+    JSR SUBROUTINE
+SMC RestoreAccu, { LDA #SMC_Value }</pre>
+<p>The first line stores the value of the accu into the '<code>RestoreAccu</code>'
+labeled SMC target.</p>
+<p>Please note:</p>
+<ol>
+<li>
+<p>for all SMC store or transfer operations, a second argument can be
+        given. This determines the register for the operation:
+        '<code>SMC_StoreValue Label, y</code>' will store the value of the
+        Y-register.</p>
+<p>If the second argument is missing, the accu will be used automatically.</p>
+</li>
+<li>
+<p>The label targets a 'special SMC namespace'. It fits only to
+        destinations which are introduced with the macro '<code>SMC</code>'. A
+        normal label '<code>RestoreAccu</code>' wouldn't match and could even
+        coexist (even if you should abstain from doing so).</p>
+</li>
+<li>
+<p>The macro '<code>SMC_StoreValue</code>' takes care, that the store
+        operation will occur on the value-position of a SMC-instruction. As
+        you will see, other macros influence other instruction part positions.
+        There is no consistency check, if the targeted SMC instruction acually
+        contains a value. Storing a 'value' on an immplied SMC instruction
+        would corrupt the following memory cell!</p>
+</li>
+</ol>
+<p>The second line needs no further explanation, this is just a placeholder for
+some code in the example.</p>
+<p>The third line is the code line which is about to be modified. It has to start
+with the '<code>SMC</code>' macro and must be labeled, so that the modification
+can be designated. Then the unmodified code is given in curly braces.</p>
+<p>Please note the usage of the value placeholder 'SMC_Value'. Using such a
+placeholder has two advantages:</p>
+<ol>
+<li>
+<p>The code is better documented. It is clearly visible that the given
+       value is about to be changed.</p>
+</li>
+<li>
+<p>When examining an (initial) disassembly (e.g. in a debugger), these
+       placegolders can be better identified: They are fixed and, you may
+       notice that below, quite eye catching defined.</p>
+</li>
+</ol>
+<h3 id="sect-2-1">2.1. Argument placeholders</h3>
+<p>There are four kinds of placeholders:</p>
+<dl>
+<a id="Address placeholder"></a>
+<dt><code>SMC_AbsAdr</code></dt>
+<dd>
+<p>Used to indicate an address. The value is '<code>$FADE</code>'.</p>
+<p>Example: <code>STA SMC_AbsAdr</code></p>
+<a id="Zero-Page-Address placeholder"></a>
+</dd>
+<dt><code>SMC_ZpAdr</code></dt>
+<dd>
+<p>Used to indicate a zero-page-address. The value is '<code>$00</code>'.</p>
+<p>Example: <code>LDA SMC_ZpAdr</code></p>
+<a id="Opcode placeholder"></a>
+</dd>
+<dt><code>SMC_Opcode</code></dt>
+<dd>
+<p>Used to indicate an instruction. The value is '<code>NOP</code>'.</p>
+<p>Example: <code>SMC_Opcode</code></p>
+<a id="Immediate value placeholder"></a>
+</dd>
+<dt><code>SMC_Value</code></dt>
+<dd>
+<p>Used to indicate a value. The value is '<code>$42</code>'.</p>
+<p>Example: <code>LDX #SMC_Value</code></p>
+</dd>
+</dl>
+<p>Attention: Often code is modified after the initial use - where using the
+placeholders does not makes sense. Please mind also, that in very variable
+expressions (e.g. opcode and argument is about to be changed), placeholders
+can lead to unidentifyable code for a debugger/disassembler:</p>
+<p><code>SMC Example, { SMC_Opcode SMC_AbsAdr } </code></p>
+<p>Since the opcode is '<code>NOP</code>', the value '<code>$DE</code>' from '<code>$FADE</code>' will
+interpreted as opcode in a disassembler too. This breaks the correct
+disassembly, because '<code>$DE</code>' is interpreted as '<code>DEC abx</code>'. Establishing
+a valid placeholder instruction may be better:</p>
+<p><code>SMC Example, { sta SMC_AbsAdr }     ; Note: Opcode will be modified too!</code></p>
+<h3 id="sect-2-2">2.2. Accessing opcodes</h3>
+<p>Some macros are designed to access the instruction of a code line. To increase
+readability, please use the opcodes as defined in the '<code>opcodes.inc</code>'
+file.</p>
+<dl>
+<a id="Transfer opcode"></a>
+<dt><code>SMC_TransferOpcode label, opcode (, register)</code></dt>
+<dd>
+<p>Loads and store an opcode to given SMC instruction.</p>
+<p>Example:</p>
+<pre class="verb">SMC SumRegister, { LDA #10 }
+    JSR OUTPUT
+    SMC_TransferOpcode SumRegister, OPC_ADC_imm, x</pre>
+<p>The macro above will load the opcode '<code>ADC #</code>' into the x - register
+and stores it at the place of the '<code>LDA #</code>'.</p>
+<a id="Load opcode"></a>
+</dd>
+<dt><code>SMC_LoadOpcode label (, register)</code></dt>
+<dd>
+<p>Loads the opcode of a SMC line to the given register.</p>
+<p>Example:</p>
+<pre class="verb">SMC ShiftOrNothing, { LSL }
+    SMC_LoadOpcode ShiftOrNothing, y
+    CPY #OPC_NOP
+    BEQ Exit</pre>
+<a id="Store opcode"></a>
+</dd>
+<dt><code>SMC_StoreOpcode label (, register)</code></dt>
+<dd>
+<p>Stores the value of the given register at the opcode place of a SMC line.</p>
+<p>Example:</p>
+<pre class="verb">SetBoldMode:
+    LDA #OPC_INX
+    SMC_StoreOpcode AdaptCharWidth
+    SMC_StoreOpcode AdaptUnderlineWidth
+    RTS
+    ...
+SMC AdaptCharWidth, { NOP }
+    ...
+SMC AdaptUnderlineWidth, { NOP }</pre>
+</dd>
+</dl>
+<h3 id="sect-2-3">2.3. Accessing arguments</h3>
+<p>These marcos are determined to get, set and change arguments of instructions:</p>
+<dl>
+<a id="Change branch"></a>
+<dt><code>SMC_ChangeBranch label, destination (, register)</code></dt>
+<dd>
+<p>Used to modify the destination of a branch instruction. If the address offset
+  exceeds the supported range of 8-bit of the 6502, a error will be thrown.</p>
+<p>Example:</p>
+<pre class="verb">Disable Handler:
+    SMC_ChangeBranch BranchToHandler, Exit
+    RTS
+    ...
+    LDA warning
+SMC BranchToHandler, { BNE Handler }
+Exit:
+    RTS</pre>
+<a id="Transfer value"></a>
+</dd>
+<dt><code>SMC_TransferValue label, value (, register)</code></dt>
+<dd>
+<p>Changes the value of a SMC line.</p>
+<p>Example:</p>
+<pre class="verb">ClearDefault:
+    SMC_TransferValue LoadDefault, 0
+    RTS
+    ...
+SMC LoadDefault, { LDX #25 }</pre>
+<a id="Load value"></a>
+</dd>
+<dt><code>SMC_LoadValue label (, register)</code></dt>
+<dd>
+<p>Retreives the value of a SMC line.</p>
+<p>Example:</p>
+<pre class="verb">ShowDefault:
+    SMC_LoadValue LoadDefault
+    JSR PrintValue
+    RTS
+    ...
+SMC LoadDefault, { LDX #25 }</pre>
+<a id="Store value"></a>
+</dd>
+<dt><code>SMC_StoreValue label (, register)</code></dt>
+<dd>
+<p>Stores the value in the register to given SMC line.</p>
+<p>Example:</p>
+<pre class="verb">InitCounters:
+    LDY #0
+    SMC_StoreValue GetI, y
+    SMC_StoreValue GetJ, y
+    SMC_StoreValue GetK, y
+    ...
+SMC GetI, { LDX #SMC_Value      }
+    ...
+SMC GetJ, { LDX #SMC_Value      }
+    ...
+SMC GetK, { LDX #SMC_Value      }</pre>
+<a id="Transfer low-byte"></a>
+</dd>
+<dt><code>SMC_TransferLowByte label, value (, register)</code></dt>
+<dd>
+<p>Does the same as '<code>SMC_TransferValue</code>' but should be used for
+  low-bytes of addresses for better readability.</p>
+<p>Example:</p>
+<pre class="verb">ActivateSecondDataSet:
+    SMC_TransferLowByte LoadData, $40
+        RTS
+    ...
+SMC LoadData, { LDA $2000 }</pre>
+<a id="Load low-byte"></a>
+</dd>
+<dt><code>SMC_LoadLowByte label (, register)</code></dt>
+<dd>
+<p>Does the same as '<code>SMC_LoadValue</code>' but should be used for low-bytes
+  of addresses for better readability.</p>
+<p>Example:</p>
+<pre class="verb">IsSecondDataSetActive:
+        SMC_LoadLowByte LoadData, y
+        CPY #$40
+        BNE NotActive
+    ...
+SMC LoadData, { LDA $2000 }</pre>
+<a id="Store low-byte"></a>
+</dd>
+<dt><code>SMC_StoreLowByte label (, register)</code></dt>
+<dd>
+<p>Does the same as '<code>SMC_StoreValue</code>' but should be used for low-bytes
+  of addresses for better readability.</p>
+<p>Example:</p>
+<pre class="verb">InitStructureBaseAddresses:
+    LDX #0
+    SMC_StoreLowByte GetPlayerGraphic, x
+    SMC_StoreLowByte GetObjectGraphic, x
+    SMC_StoreLowByte StoreCollisionData, x
+    RTS
+    ...
+SMC GetPlayerGraphic, { LDX $2000 }
+    ...
+SMC GetObjectGraphic, { LDA $2100,x }
+    ...
+SMC StoreCollisionData, { STY $2200 }</pre>
+<a id="Transfer high-byte"></a>
+</dd>
+<dt><code>SMC_TransferHighByte label, value (, register)</code></dt>
+<dd>
+<p>Loads and stores the given value via the named register to the high-byte
+  address portion of an SMC-instruction.</p>
+<p>Example:</p>
+<pre class="verb">PlaySFX:
+SMC GetVolume { LDA $3200,x }
+    STA SoundOut
+    INX
+    BNE PlaySFX
+    ...
+PlayOtherSound:
+    SMC_TransferHighByte GetVolume, $34</pre>
+<a id="Load high-byte"></a>
+</dd>
+<dt><code>SMC_LoadHighByte label (, register)</code></dt>
+<dd>
+<p>Loads the high-byte part of an SMC-instruction address to the given register.</p>
+<p>Example:</p>
+<pre class="verb">PlaySFX:
+SMC GetVolume { LDA $3200,x }
+    ...
+    SMC_LoadHighByte GetVolume
+    cmp #$34
+    beq OtherSoundPlaying
+    ...</pre>
+<a id="Store high-byte"></a>
+</dd>
+<dt><code>SMC_StoreHighByte label (, register)</code></dt>
+<dd>
+<p>Stores the high-byte address part of an SMC-instruction from the given
+  register.</p>
+<p>Example:</p>
+<pre class="verb">SetupLevel2:
+    LDX #(&gt;Level2Base)
+    SMC_StoreHighByte GetLevelData, x
+    SMC_StoreHighByte GetScreenData, x
+    SMC_StoreHighByte GetSoundData, x
+    RTS
+    ...
+SMC GetLevelData, { LDA Level1Base+Data }
+    ...
+SMC GetScreenData, { LDA Level1Base+Screen, x }
+    ...
+SMC GetSoundData, { LDA Level1Base+Sound, y }</pre>
+<a id="Transfer single address"></a>
+</dd>
+<dt><code>SMC_TransferAddressSingle label, address (, register)</code></dt>
+<dd>
+<p>Transfers the contents of the given address via the given register to the
+  designated SMC instruction.</p>
+<p>Example:</p>
+<pre class="verb">PrintHello:
+    SMC_TransferAddressSingle GetChar, #HelloMsg
+    ...
+    LDX #0
+NextChar:
+SMC GetChar, { LDA  SMC_AbsAdr, x }
+    BEQ leave
+    JSR CharOut
+    INX
+    BNE NextChar</pre>
+<a id="Transfer address"></a>
+</dd>
+<dt><code>SMC_TransferAddress label, address</code></dt>
+<dd>
+<p>Loads contents of given address to A/X and stores the result to SMC
+  instruction. Allows reuse of register contents by using
+  '<code>SMC_StoreAddress</code>' for multiple SMC instruction modifications.</p>
+<p>Example:</p>
+<pre class="verb">    SMC_TransferAddress JumpTo, #CloseChannel
+    ...
+SMC JumpTo, { JMP OpenChannel }</pre>
+<a id="Store address"></a>
+</dd>
+<dt><code>SMC_StoreAddress label</code></dt>
+<dd>
+<p>Stores the address value in a/x to a SMC instruction address position.</p>
+<p>Example:</p>
+<pre class="verb">    SMC_StoreAddress GetData
+    ...
+SMC GetData, { LDA SMC_AbsAdr }</pre>
+</dd>
+</dl>
+<h3 id="sect-2-4">2.4. Operational macros</h3>
+<p>These marcos are determined to let read/modify/write opcodes work on parts of
+SMC instructions.</p>
+<dl>
+<a id="Operate on value"></a>
+<dt><code>SMC_OperateOnValue opcode, label</code></dt>
+<dd>
+<p>Let given opcode work on the value part of a SMC instruction.</p>
+<p>Example:</p>
+<pre class="verb">    SMC_OperateOnValue ASL, LoadMask    ; shift mask to left
+    ...
+SMC LoadMask, { LDA #$20 }</pre>
+<a id="Operate on low-byte"></a>
+</dd>
+<dt><code>SMC_OperateOnLowByte opcode, label</code></dt>
+<dd>
+<p>Same as '<code>SMC_OperateOnValue</code>' but renamed for better readability when
+  accessing low-bytes of address.</p>
+<p>Example:</p>
+<pre class="verb">    SMC_OperateOnLowByte DEC, AccessData
+    ...
+SMC AccessData, { LDX Data }</pre>
+<a id="Operate on high-byte"></a>
+</dd>
+<dt><code>SMC_OperateOnHighByte opcode, label</code></dt>
+<dd>
+<p>Let the given opcode work on the high-byte part on a SMC-instruction.</p>
+<p>Example:</p>
+<pre class="verb">NextPage:
+    SMC_OperateOnHighByte INC, GetPageData
+    ...
+SMC GetPageData, { LDA SourceData, X }</pre>
+</dd>
+</dl>
+<h3 id="sect-2-5">2.5. Scope macros</h3>
+<p>These marcos are determined to export and import SMC labels out of the current
+file scope. Please handle with care! If you cannot abstain from leaving the
+file scope, you should at least document the exported SMC lines very well. On
+import side no checking is available if the SMC line is correct accessed (e.g.
+invalid access to the value of an implied instruction)!</p>
+<dl>
+<a id="Export SMC line under given name"></a>
+<dt><code>SMC_Export alias, label</code></dt>
+<dd>
+<p>SMC label will be exported under given alias.</p>
+<p>Example:</p>
+<pre class="verb">.proc GetValue
+SMC LoadValue, { LDA #12 }
+    rts
+.endproc
+
+SMC_Export GetValueLoader, GetValue::LoadValue</pre>
+<a id="Import SMC alias"></a>
+</dd>
+<dt><code>SMC_Import alias</code></dt>
+<dd>
+<p>SMC line is made accessible under given alias.</p>
+<p>Example:</p>
+<pre class="verb">SMC_Import GetValueLoader
+    ...
+    SMC_TransferValue GetValueLoader, #47
+    ...</pre>
+</dd>
+</dl>
+<h2 id="sect-3">3. A complex example</h2>
+<p>Let's have a look on a quite sophisticated example for the usage of SMC. It
+not only modifies code, but also the modification of the code is modified -
+allowing reuse of some instructions.</p>
+<dl>
+<dt>The code is from my 'memset()'implementation:</dt>
+<dd>
+<pre class="verb"> 1:     ...
+ 2:     SMC_StoreAddress StoreAccuFirstSection
+ 3:
+ 4: StoreToFirstSection:
+ 5:     SMC StoreAccuFirstSection, { sta SMC_AbsAdr, Y }
+ 6:             ...
+ 7: RestoreCodeBranchBaseAdr:
+ 8:     SMC FirstIncHighByte, { SMC_OperateOnHighByte inc, StoreAccuFirstSection }              ; code will be overwritten to 'beq RestoreCode' (*)
+ 9:     ...
+10:     SMC_TransferOpcode FirstIncHighByte, OPC_BEQ , x                                        ; change code marked above with (*)
+11:     SMC_TransferValue FirstIncHighByte, #(restoreCode - RestoreCodeBranchBaseAdr-2), x      ; set relative address to 'RestoreCode'
+12:     ...
+13: restoreCode:
+14:     SMC_TransferOpcode FirstIncHighByte, OPC_INC_abs , x                                    ; restore original code...
+15:     SMC_TransferValue FirstIncHighByte, #(&lt;(StoreToFirstSection+2)), x                      ; (second byte of inc contained low-byte of address)
+16:             ...</pre>
+</dd>
+<dt>Some explanation:</dt>
+<dd>
+<p>Line 2: The register pair A/X contains an address, which is stored on the
+address location of a SMC line called 'StoreAccuFirstSection'. According to
+cc65's calling convention, the low-byte is in accu while the high-byte is in
+the X-register.</p>
+<p>Line 5: The (modified) address is accessed.</p>
+<p>Line 8: We have a line here, which is about to be modified (it begins with
+SMC), but itself modifies code. Please note: Contrary to the rest of SMC-line
+modifying macros, the 'OperateOn'-macros just expand their given arguments
+into a single instruction line. These can be changed of course too.</p>
+<p>Line 10,11: These lines construct a branch operation for line 8: The
+X-register will be used to change it from 'inc StoreAccuFirstSection+2'
+(high-byte operation) to 'beq restoreCode'. Please note: To calculate the
+relaive branch offset, we introduced a second label
+('RestoreCodeBranchBaseAdr') for to calculate it. Some could also use the
+internal name of the SMC label, but you should abstain to do so - it may be
+changed in the future...</p>
+<p>Line 14,15: The original code from line 8 is reestablished.</p>
+</dd>
+</dl></article></main><footer class="site-foot">lynxcc documentation &mdash; a fork of cc65 focused on the Atari Lynx target.</footer>
+<script src="doc.js"></script>
+</body></html>

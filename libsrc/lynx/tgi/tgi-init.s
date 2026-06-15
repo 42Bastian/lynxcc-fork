@@ -1,8 +1,7 @@
 ;
-; Lynx static TGI: tgi_init, tgi_done.
+; Lynx static TGI: tgi_init.
 ;
 ; void tgi_init (void);
-; void tgi_done (void);
 ;
 ; tgi_init absorbs the old INSTALL+INIT driver entries and the kernel's
 ; tgi_init: it enables the VBL timer interrupt, sets up the collision
@@ -19,8 +18,8 @@
 ;
 ; Note on re-init: tgi-page.s statically initializes its view-page shadow
 ; and swap state to the page-0 defaults. A program that swaps pages and
-; then calls tgi_done/tgi_init again should not assume a pending swap
-; survives the re-init.
+; then calls tgi_init again should not assume a pending swap survives the
+; re-init.
 ;
 
         .include        "lynx.inc"
@@ -31,13 +30,7 @@
         .import         tgi_drawpage
 
         .export         _tgi_init
-        .export         _tgi_done
-        .export         _tgi_gmode
         .export         tgi_defpalette
-
-.bss
-
-_tgi_gmode:     .res    1       ; Flag: graphics mode active
 
 .rodata
 
@@ -134,17 +127,4 @@ _tgi_init:
 ; Draw in black (pen 0) - tgi_clear fills with the draw color (sec. 2.8).
 
         stz     tgi_drawindex
-
-; Remember that graphics mode is active.
-
-        lda     #1
-        sta     _tgi_gmode
-        rts
-
-;-----------------------------------------------------------------------------
-; tgi_done: There is no text mode to return to on the Lynx; just reset the
-; mode flag.
-
-_tgi_done:
-        stz     _tgi_gmode
         rts

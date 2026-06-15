@@ -1,66 +1,28 @@
-ifneq ($(shell echo),)
-  CMD_EXE = 1
-endif
+#
+# Makefile for the cc65 documentation (Atari Lynx tree).
+#
+# The documentation is now maintained directly as modern HTML in this
+# directory (converted from the original LinuxDoc SGML).  There is no longer a
+# generation step, so the build targets operate on the committed *.html files
+# and the shared doc.css / doc.js assets.
+#
 
-.PHONY: all mostlyclean clean install zip doc html info
-
-.SUFFIXES:
+.PHONY: all mostlyclean clean doc html info install zip
 
 htmldir = $(PREFIX)/share/doc/cc65$(DESTPACKAGE_SUFFIX)/html
-infodir = $(PREFIX)/share/info
-
-ifdef CMD_EXE
-
-doc clean install zip:
-
-else # CMD_EXE
-
-SGMLS := $(wildcard *.sgml)
-
-../html/coding.html ../html/index.html: \
-TOC_LEVEL = 0
-
-TOC_LEVEL = 2
 
 INSTALL = install
 
-doc: html info
+HTML = $(wildcard *.html)
+ASSETS = doc.css doc.js
 
-html: $(addprefix ../html/,$(SGMLS:.sgml=.html) doc.css doc.png)
-
-info: $(addprefix ../info/,$(SGMLS:.sgml=.info))
-
-../html ../info:
-	@mkdir $@
-
-../html/%.html: %.sgml header.html | ../html
-	@cd ../html && linuxdoc -B html -s 0 -T $(TOC_LEVEL) -H ../doc/header.html ../doc/$<
-
-../html/doc.%: doc.% | ../html
-	cp $< ../html
-
-../info/%.info: %.sgml | ../info
-	@cd ../info && linuxdoc -B info ../doc/$<
-
-clean:
-	$(RM) -r ../html ../info
+# Nothing to generate any more: the HTML ships as source.
+all mostlyclean clean doc html info:
 
 install:
 	$(if $(PREFIX),,$(error variable "PREFIX" must be set))
-ifeq ($(wildcard ../html),../html)
 	$(INSTALL) -d $(DESTDIR)$(htmldir)
-	$(INSTALL) -m0644 ../html/*.* $(DESTDIR)$(htmldir)
-endif
-ifeq ($(wildcard ../info),../info)
-	$(INSTALL) -d $(DESTDIR)$(infodir)
-	$(INSTALL) -m0644 ../info/*.* $(DESTDIR)$(infodir)
-endif
+	$(INSTALL) -m0644 $(HTML) $(ASSETS) $(DESTDIR)$(htmldir)
 
 zip:
-ifneq "$(wildcard ../html)" ""
-	@cd .. && zip cc65 html/*.*
-endif
-
-endif # CMD_EXE
-
-all mostlyclean:
+	@zip -j cc65-doc.zip $(HTML) $(ASSETS)

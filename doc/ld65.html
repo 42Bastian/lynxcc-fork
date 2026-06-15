@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ld65 Users Guide</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head><body>
+<div class="topbar"><a class="brand" href="index.html">lynxcc</a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><a href="cc65.html">cc65</a><a href="ca65.html">ca65</a><a href="ld65.html" class="active">ld65</a><a href="cl65.html">cl65</a><a href="library.html">Library</a><a href="funcref.html">Functions</a><a href="tgi.html">TGI</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>ld65 Users Guide</h1><p class="author"><a href="mailto:uz@cc65.org">Ullrich von Bassewitz</a></p></header><div class="abstract">The ld65 linker combines object files into an executable file. ld65 is highly
+configurable and uses configuration files for high flexibility.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl1"><a href="#sect-2">2. Usage</a></li>
+<li class="lvl2"><a href="#sect-2-1">2.1. Command-line option overview</a></li>
+<li class="lvl2"><a href="#sect-2-2">2.2. Command-line options in detail</a></li>
+<li class="lvl1"><a href="#sect-3">3. Search paths</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. Library search path</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. Object file search path</a></li>
+<li class="lvl2"><a href="#sect-3-3">3.3. Config file search path</a></li>
+<li class="lvl1"><a href="#sect-4">4. Detailed workings</a></li>
+<li class="lvl1"><a href="#config-files">5. Configuration files</a></li>
+<li class="lvl2"><a href="#sect-5-1">5.1. Memory areas</a></li>
+<li class="lvl2"><a href="#sect-5-2">5.2. Segments</a></li>
+<li class="lvl2"><a href="#sect-5-3">5.3. Output files</a></li>
+<li class="lvl2"><a href="#sect-5-4">5.4. OVERWRITE segments</a></li>
+<li class="lvl2"><a href="#sect-5-5">5.5. LOAD and RUN addresses (ROMable code)</a></li>
+<li class="lvl2"><a href="#sect-5-6">5.6. Other MEMORY area attributes</a></li>
+<li class="lvl2"><a href="#sect-5-7">5.7. Other SEGMENT attributes</a></li>
+<li class="lvl2"><a href="#sect-5-8">5.8. The FILES section</a></li>
+<li class="lvl2"><a href="#FORMAT">5.9. The FORMAT section</a></li>
+<li class="lvl2"><a href="#FEATURES">5.10. The FEATURES section</a></li>
+<li class="lvl2"><a href="#SYMBOLS">5.11. The SYMBOLS section</a></li>
+<li class="lvl1"><a href="#sect-6">6. Special segments</a></li>
+<li class="lvl2"><a href="#sect-6-1">6.1. ONCE</a></li>
+<li class="lvl2"><a href="#sect-6-2">6.2. LOWCODE</a></li>
+<li class="lvl2"><a href="#sect-6-3">6.3. STARTUP</a></li>
+<li class="lvl2"><a href="#sect-6-4">6.4. ZPSAVE</a></li>
+<li class="lvl1"><a href="#sect-7">7. Copyright</a></li>
+</ul></nav><h2 id="sect-1">1. Overview</h2>
+<p>The ld65 linker combines several object modules created by the ca65
+assembler, producing an executable file. The object modules may be read
+from a library created by the ar65 archiver (this is somewhat faster and
+more convenient). The linker was designed to be as flexible as possible.
+It complements the features that are built into the ca65 macroassembler:</p>
+<ul>
+<li>
+<p>Accept any number of segments to form an executable module.</p>
+</li>
+<li>
+<p>Resolve arbitrary expressions stored in the object files.</p>
+</li>
+<li>
+<p>In case of errors, use the meta information stored in the object files
+        to produce helpful error messages. In case of undefined symbols,
+        expression range errors, or symbol type mismatches, ld65 is able to
+        tell you the exact location in the original assembler source, where
+        the symbol was referenced.</p>
+</li>
+<li>
+<p>Flexible output. The output of ld65 is highly configurable by a config
+        file. Some more-common platforms are supported by default configurations
+        that may be activated by naming the target system. The output
+        generation was designed with different output formats in mind, so
+        adding other formats shouldn't be a great problem.</p>
+</li>
+</ul>
+<h2 id="sect-2">2. Usage</h2>
+<h3 id="sect-2-1">2.1. Command-line option overview</h3>
+<p>The linker is called as follows:</p>
+<pre class="verb">---------------------------------------------------------------------------
+Usage: ld65 [options] module ...
+Short options:
+  -(                    Start a library group
+  -)                    End a library group
+  -C name               Use linker config file
+  -D sym=val            Define a symbol
+  -L path               Specify a library search path
+  -Ln name              Create a VICE label file
+  -S addr               Set the default start address
+  -V                    Print the linker version
+  -h                    Help (this text)
+  -m name               Create a map file
+  -o name               Name the default output file
+  -t sys                Set the target system
+  -u sym                Force an import of symbol 'sym'
+  -v                    Verbose mode
+  -vm                   Verbose map file
+
+Long options:
+  --allow-multiple-definition   Allow multiple definitions
+  --cfg-path path               Specify a config file search path
+  --config name                 Use linker config file
+  --dbgfile name                Generate debug information
+  --define sym=val              Define a symbol
+  --end-group                   End a library group
+  --force-import sym            Force an import of symbol 'sym'
+  --help                        Help (this text)
+  --large-alignment             Don't warn about large alignments
+  --lib file                    Link this library
+  --lib-path path               Specify a library search path
+  --mapfile name                Create a map file
+  --module-id id                Specify a module id
+  --obj file                    Link this object file
+  --obj-path path               Specify an object file search path
+  --start-addr addr             Set the default start address
+  --start-group                 Start a library group
+  --target sys                  Set the target system
+  --version                     Print the linker version
+---------------------------------------------------------------------------</pre>
+<h3 id="sect-2-2">2.2. Command-line options in detail</h3>
+<p>Here is a description of all of the command-line options:</p>
+<dl>
+<dt><code>--allow-multiple-definition</code></dt>
+<dd>
+<p>Normally when a global symbol is defined multiple times, ld65 will
+  issue an error and not create the output file. This option lets it
+  silently ignore this fact and continue. The first definition of a
+  symbol will be used.</p>
+<a id="option--start-group"></a>
+</dd>
+<dt><code>-(, --start-group</code></dt>
+<dd>
+<p>Start a library group. The libraries specified within a group are searched
+  multiple times to resolve crossreferences within the libraries. Normally,
+  crossreferences are resolved only within a library, that is the library is
+  searched multiple times. Libraries specified later on the command line
+  cannot reference otherwise unreferenced symbols in libraries specified
+  earlier, because the linker has already handled them. Library groups are
+  a solution for this problem, because the linker will search repeatedly
+  through all libraries specified in the group, until all possible open
+  symbol references have been satisfied.</p>
+</dd>
+<dt><code>-), --end-group</code></dt>
+<dd>
+<p>End a library group. See the explanation of the <code><a href="#option--start-group">--start-group</a></code> option.</p>
+</dd>
+<dt><code>-h, --help</code></dt>
+<dd>
+<p>Print the short option summary shown above.</p>
+<a id="option-m"></a>
+</dd>
+<dt><code>-m name, --mapfile name</code></dt>
+<dd>
+<p>This option (which needs an argument that will used as a filename for
+  the generated map file) will cause the linker to generate a map file.
+  The map file does contain a detailed overview over the modules used, the
+  sizes for the different segments, and a table containing exported
+  symbols.</p>
+<a id="option-o"></a>
+</dd>
+<dt><code>-o name</code></dt>
+<dd>
+<p>The -o switch is used to give the name of the default output file.
+  Depending on your output configuration, this name <em>might not</em> be used as the
+  name for the output file. However, for the default configurations, this
+  name is used for the output file name.</p>
+<a id="option-t"></a>
+</dd>
+<dt><code>-t sys, --target sys</code></dt>
+<dd>
+<p>The argument for the -t switch is the name of the target system. Since this
+  switch will activate a default configuration, it may not be used together
+  with the <code><a href="#option-C">-C</a></code> option. The following target
+  systems are currently supported:</p>
+<ul>
+<li>
+<p>none</p>
+</li>
+<li>
+<p>module</p>
+</li>
+<li>
+<p>lynx</p>
+</li>
+</ul>
+<p>Other upstream cc65 target names are still recognized, but their default
+  configurations and libraries have been removed from this tree, so only the
+  targets listed above are usable. For the Lynx, additional configurations
+  are provided as files: <code>lynx-bll.cfg</code> (BLL download-compatible
+  binaries), <code>lynx-coll.cfg</code> (reserves a collision-detection buffer) and
+  <code>lynx-uploader.cfg</code>.</p>
+</dd>
+<dt><code>-u sym[:addrsize], --force-import sym[:addrsize]</code></dt>
+<dd>
+<p>Force an import of a symbol. While object files are always linked to the
+  output file, regardless if there are any references, object modules from
+  libraries get only linked in if an import can be satisfied by this module.
+  The <code>--force-import</code> option may be used to add a reference to a symbol and
+  as a result force linkage of the module that exports the identifier.</p>
+<p>The name of the symbol may optionally be followed by a colon and an address-size
+  specifier. If no address size is specified, the default address size
+  for the target machine is used.</p>
+<p>Please note that the symbol name needs to have the internal representation,
+  meaning you have to prepend an underscore for C identifiers.</p>
+<a id="option-v"></a>
+</dd>
+<dt><code>-v, --verbose</code></dt>
+<dd>
+<p>Using the -v option, you may enable more output that may help you to
+  locate problems. If an undefined symbol is encountered, -v causes the
+  linker to print a detailed list of the references (that is, source file
+  and line) for this symbol.</p>
+</dd>
+<dt><code>-vm</code></dt>
+<dd>
+<p>Must be used in conjunction with <code><a href="#option-m">-m</a></code>
+  (generate map file). Normally the map file will not include empty segments
+  and sections, or unreferenced symbols. Using this option, you can force the
+  linker to include all that information into the map file.  Also, it will
+  include a second <code>Exports</code> list.  The first list is sorted by name;
+  the second one is sorted by value.</p>
+<a id="option-C"></a>
+</dd>
+<dt><code>-C</code></dt>
+<dd>
+<p>This gives the name of an output config file to use. See section 4 for more
+  information about config files. -C may not be used together with <code><a href="#option-t">-t</a></code>.</p>
+<a id="option-D"></a>
+</dd>
+<dt><code>-D sym=value, --define sym=value</code></dt>
+<dd>
+<p>This option allows to define an external symbol on the command line. Value
+  may start with a '$' sign or with <code>0x</code> for hexadecimal values,
+  otherwise a leading zero denotes octal values. See also <a href="#SYMBOLS">the SYMBOLS section</a> in the configuration file.</p>
+<a id="option--lib-path"></a>
+</dd>
+<dt><code>-L path, --lib-path path</code></dt>
+<dd>
+<p>Specify a library search path. This option may be used more than once. It
+  adds a directory to the search path for library files. Libraries specified
+  without a path are searched in the current directory, in the list of
+  directories specified using <code>--lib-path</code>, in directories given by
+  environment variables, and in a built-in default directory.</p>
+</dd>
+<dt><code>-Ln</code></dt>
+<dd>
+<p>This option allows you to create a file that contains all global labels,
+  in VICE label-file format. Some emulators and debugging tools understand
+  this format and can use it to show symbolic names in their monitors.</p>
+<a id="option-S"></a>
+</dd>
+<dt><code>-S addr, --start-addr addr</code></dt>
+<dd>
+<p>Using -S you may define the default starting address. If and how this
+  address is used depends on the config file in use. For the default
+  configurations, only the "none" system honors an explicit start address,
+  the other default configs provide their own.</p>
+</dd>
+<dt><code>-V, --version</code></dt>
+<dd>
+<p>This option prints the version number of the linker. If you send any
+  suggestions or bugfixes, please include this number.</p>
+<a id="option--cfg-path"></a>
+</dd>
+<dt><code>--cfg-path path</code></dt>
+<dd>
+<p>Specify a config file search path. This option may be used more than once.
+  It adds a directory to the search path for config files. A config file given
+  with the <code><a href="#option-C">-C</a></code> option that has no path in
+  its name is searched in the current directory, in the list of directories
+  specified using <code>--cfg-path</code>, in directories given by environment variables,
+  and in a built-in default directory.</p>
+<a id="option--dbgfile"></a>
+</dd>
+<dt><code>--dbgfile name</code></dt>
+<dd>
+<p>Specify an output file for debug information. Available information will be
+  written to this file. Using the <code>-g</code> option for the compiler and assembler
+  will increase the amount of information available. Please note that debug
+  information generation is currently being developed, so the format of the
+  file and its contents are subject to change without further notice.</p>
+<a id="option--large-alignment"></a>
+</dd>
+<dt><code>--large-alignment</code></dt>
+<dd>
+<p>Disable warnings about a large combined alignment. See the discussion of the
+  <code>.ALIGN</code> directive in the ca65 Users Guide for further information.</p>
+</dd>
+<dt><code>--lib file</code></dt>
+<dd>
+<p>Links a library to the output. Use this command-line option instead of just
+  naming the library file, if the linker is not able to determine the file
+  type because of an unusual extension.</p>
+</dd>
+<dt><code>--obj file</code></dt>
+<dd>
+<p>Links an object file to the output. Use this command-line option instead
+  of just naming the object file, if the linker is not able to determine the
+  file type because of an unusual extension.</p>
+<a id="option--obj-path"></a>
+</dd>
+<dt><code>--obj-path path</code></dt>
+<dd>
+<p>Specify an object file search path. This option may be used more than once.
+  It adds a directory to the search path for object files. An object file
+  passed to the linker that has no path in its name is searched in the current
+  directory, in the list of directories specified using <code>--obj-path</code>, in
+  directories given by environment variables, and in a built-in default directory.</p>
+</dd>
+</dl>
+<h2 id="sect-3">3. Search paths</h2>
+<p>Starting with version 2.10, there are now several search-path lists for files needed
+by the linker: one for libraries, one for object files, and one for config
+files.</p>
+<h3 id="sect-3-1">3.1. Library search path</h3>
+<p>The library search-path list contains in this order:</p>
+<ol>
+<li>
+<p>The current directory.</p>
+</li>
+<li>
+<p>Any directory added with the <code><a href="#option--lib-path">--lib-path</a></code> option on the command line.</p>
+</li>
+<li>
+<p>The value of the environment variable <code>LD65_LIB</code> if it is defined.</p>
+</li>
+<li>
+<p>A subdirectory named <code>lib</code> of the directory defined in the environment
+      variable <code>CC65_HOME</code>, if it is defined.</p>
+</li>
+<li>
+<p>An optionally compiled-in library path.</p>
+</li>
+</ol>
+<h3 id="sect-3-2">3.2. Object file search path</h3>
+<p>The object file search-path list contains in this order:</p>
+<ol>
+<li>
+<p>The current directory.</p>
+</li>
+<li>
+<p>Any directory added with the <code><a href="#option--obj-path">--obj-path</a></code> option on the command line.</p>
+</li>
+<li>
+<p>The value of the environment variable <code>LD65_OBJ</code> if it is defined.</p>
+</li>
+<li>
+<p>A subdirectory named <code>obj</code> of the directory defined in the environment
+      variable <code>CC65_HOME</code>, if it is defined.</p>
+</li>
+<li>
+<p>An optionally compiled-in directory.</p>
+</li>
+</ol>
+<h3 id="sect-3-3">3.3. Config file search path</h3>
+<p>The config file search-path list contains in this order:</p>
+<ol>
+<li>
+<p>The current directory.</p>
+</li>
+<li>
+<p>Any directory added with the <code><a href="#option--cfg-path">--cfg-path</a></code> option on the command line.</p>
+</li>
+<li>
+<p>The value of the environment variable <code>LD65_CFG</code> if it is defined.</p>
+</li>
+<li>
+<p>A subdirectory named <code>cfg</code> of the directory defined in the environment
+      variable <code>CC65_HOME</code>, if it is defined.</p>
+</li>
+<li>
+<p>An optionally compiled-in directory.</p>
+</li>
+</ol>
+<h2 id="sect-4">4. Detailed workings</h2>
+<p>The linker does several things when combining object modules:</p>
+<p>First, the command line is parsed from left to right. For each object file
+encountered (object files are recognized by a magic word in the header, so
+the linker does not care about the name), imported and exported
+identifiers are read from the file and inserted in a table. If a library
+name is given (libraries are also recognized by a magic word, there are no
+special naming conventions), all modules in the library are checked if an
+export from this module would satisfy an import from other modules. All
+modules where this is the case are marked. If duplicate identifiers are
+found, the linker issues warnings.</p>
+<p>That procedure (parsing and reading from left to right) does mean that a
+library may only satisfy references for object modules (given directly or from
+a library) named <em>before</em> that library. With the command line</p>
+<pre class="verb">        ld65 crt0.o clib.lib test.o</pre>
+<p>the module <code>test.o</code> must not contain references to modules in the library
+<code>clib.lib</code>.  But, if it does, you have to change the order of the modules
+on the command line:</p>
+<pre class="verb">        ld65 crt0.o test.o clib.lib</pre>
+<p>Step two is, to read the configuration file, and assign start addresses
+for the segments and define any linker symbols (see <a href="#config-files">Configuration files</a>).</p>
+<p>After that, the linker is ready to produce an output file. Before doing that,
+it checks its data for consistency. That is, it checks for unresolved
+externals (if the output format is not relocatable) and for symbol type
+mismatches (for example a zero-page symbol is imported by a module as an absolute
+symbol).</p>
+<p>Step four is, to write the actual target files. In this step, the linker will
+resolve any expressions contained in the segment data. Circular references are
+also detected in this step (a symbol may have a circular reference that goes
+unnoticed if the symbol is not used).</p>
+<p>Step five is to output a map file with a detailed list of all modules,
+segments and symbols encountered.</p>
+<p>And, last step, if you give the <code><a href="#option-v">-v</a></code> switch
+twice, you get a dump of the segment data. However, this may be quite
+unreadable if you're not a developer. :-)</p>
+<h2 id="config-files">5. Configuration files</h2>
+<p>Configuration files are used to describe the layout of the output file(s). Two
+major topics are covered in a config file: The memory layout of the target
+architecture, and the assignment of segments to memory areas. In addition,
+several other attributes may be specified.</p>
+<p>Case is ignored for keywords, that is, section or attribute names, but it is
+<em>not</em> ignored for names and strings.</p>
+<h3 id="sect-5-1">5.1. Memory areas</h3>
+<p>Memory areas are specified in a <code>MEMORY</code> section. Let's have a look at an
+example (this one describes the usable memory layout of an imaginary 6502
+machine):</p>
+<pre class="verb">        MEMORY {
+            RAM1:  start = $0800, size = $9800;
+            ROM1:  start = $A000, size = $2000;
+            RAM2:  start = $C000, size = $1000;
+            ROM2:  start = $E000, size = $2000;
+        }</pre>
+<p>As you can see, there are two RAM areas and two ROM areas. The names
+(before the colon) are arbitrary names that must start with a letter, with
+the remaining characters being letters or digits. The names of the memory
+areas are used when assigning segments. As mentioned above, case is
+significant for those names.</p>
+<p>The syntax above is used in all sections of the config file. The name
+(<code>ROM1</code> etc.) is said to be an identifier, the remaining tokens up to the
+semicolon specify attributes for this identifier. You may use the equal sign
+to assign values to attributes, and you may use a comma to separate
+attributes, you may also leave both out. But you <em>must</em> use a semicolon to
+mark the end of the attributes for one identifier. The section above may also
+have looked like this:</p>
+<pre class="verb">        # Start of memory section
+        MEMORY
+        {
+            RAM1:
+                start $0800
+                size $9800;
+            ROM1:
+                start $A000
+                size $2000;
+            RAM2:
+                start $C000
+                size $1000;
+            ROM2:
+                start $E000
+                size $2000;
+        }</pre>
+<p>There are of course more attributes for a memory section than just start and
+size. Start and size are mandatory attributes, that means, each memory area
+defined <em>must</em> have these attributes given (the linker will check that). I
+will cover other attributes later. As you may have noticed, I've used a
+comment in the example above. Comments start with a hash mark ('#'), the
+remainder of the line is ignored if this character is found.</p>
+<h3 id="sect-5-2">5.2. Segments</h3>
+<p>Let's assume you have written a program for the machine above, and you would
+like to run it. For testing purposes, it should run in the <code>RAM</code> area. So
+we will start to assign segments to memory sections in the <code>SEGMENTS</code>
+section:</p>
+<pre class="verb">        SEGMENTS {
+            CODE:   load = RAM1, type = ro;
+            RODATA: load = RAM1, type = ro;
+            DATA:   load = RAM1, type = rw;
+            BSS:    load = RAM1, type = bss, define = yes;
+        }</pre>
+<p>What we are doing here is telling the linker, that all segments go into the
+<code>RAM1</code> memory area in the order specified in the <code>SEGMENTS</code> section. So
+the linker will first write the <code>CODE</code> segment, then the <code>RODATA</code>
+segment, then the <code>DATA</code> segment - but it will not write the <code>BSS</code>
+segment. Why? Here enters the segment type: For each segment specified, you may also
+specify a segment attribute. There are five possible segment attributes:</p>
+<pre class="verb">        ro          means readonly
+        rw          means read/write
+        bss         means that this is an uninitialized segment
+        zp          a zeropage segment
+        overwrite   a segment that overwrites (parts of) another one</pre>
+<p>So, because we specified that the segment with the name BSS is of type bss,
+the linker knows that this is uninitialized data, and will not write it to an
+output file. This is an important point: For the assembler, the <code>BSS</code>
+segment has no special meaning. You specify, which segments have the bss
+attribute when linking. This approach is much more flexible than having one
+fixed bss segment, and is a result of the design decision to supporting an
+arbitrary segment count.</p>
+<p>If you specify "<code>type = bss</code>" for a segment, the linker will make sure that
+this segment does only contain uninitialized data (that is, zeroes), and issue
+a warning if this is not the case.</p>
+<p>For a <code>bss</code> type segment to be useful, it must be cleared somehow by your
+program (this happens usually in the startup code - for example the startup
+code for cc65-generated programs takes care about that). But how does your
+code know, where the segment starts, and how big it is? The linker is able to
+give that information, but you must request it. This is, what we're doing with
+the "<code>define = yes</code>" attribute in the <code>BSS</code> definitions. For each
+segment, where this attribute is true, the linker will export three symbols.</p>
+<pre class="verb">        __NAME_LOAD__   This is set to the address where the
+                        segment is loaded.
+        __NAME_RUN__    This is set to the run address of the
+                        segment. We will cover run addresses
+                        later.
+        __NAME_SIZE__   This is set to the segment size.</pre>
+<p>Replace <code>NAME</code> by the name of the segment, in the example above, this would
+be <code>BSS</code>. These symbols may be accessed by your code when imported using
+the <code>.IMPORT</code> directive.</p>
+<p>Now, as we've configured the linker to write the first three segments and
+create symbols for the last one, there's only one question left: Where does
+the linker put the data? It would be very convenient to have the data in a
+file, wouldn't it?</p>
+<h3 id="sect-5-3">5.3. Output files</h3>
+<p>We don't have any files specified above, and indeed, this is not needed in a
+simple configuration like the one above. There is an additional attribute
+"file" that may be specified for a memory area, that gives a file name to
+write the area data into. If there is no file name given, the linker will
+assign the default file name. This is "a.out" or the one given with the
+<code><a href="#option-o">-o</a></code> option on the command line. Since the
+default behaviour is OK for our purposes, I did not use the attribute in the
+example above. Let's have a look at it now.</p>
+<p>The "file" attribute (the keyword may also be written as "FILE" if you like
+that better) takes a string enclosed in double quotes ('"') that specifies the
+file, where the data is written. You may specify the same file several times,
+in that case the data for all memory areas having this file name is written
+into this file, in the order of the memory areas defined in the <code>MEMORY</code>
+section. Let's specify some file names in the <code>MEMORY</code> section used above:</p>
+<pre class="verb">        MEMORY {
+            RAM1:  start = $0800, size = $9800, file = %O;
+            ROM1:  start = $A000, size = $2000, file = "rom1.bin";
+            RAM2:  start = $C000, size = $1000, file = %O;
+            ROM2:  start = $E000, size = $2000, file = "rom2.bin";
+        }</pre>
+<p>The <code>%O</code> used here is a way to specify the default behaviour explicitly:
+<code>%O</code> is replaced by a string (including the quotes) that contains the
+default output name, that is, "a.out" or the name specified with the <code><a href="#option-o">-o</a></code> option on the command line. Into this file, the
+linker will first write any segments that go into <code>RAM1</code>, and will append
+then the segments for <code>RAM2</code>, because the memory areas are given in this
+order. So, for the RAM areas, nothing has really changed.</p>
+<p>We've not used the ROM areas, but we will do that below, so we give the file
+names here. Segments that go into <code>ROM1</code> will be written to a file named
+"rom1.bin", and segments that go into <code>ROM2</code> will be written to a file
+named "rom2.bin". The name given on the command line is ignored in both cases.</p>
+<p>Assigning an empty file name for a memory area will discard the data written
+to it. This is useful, if the memory area has segments assigned that are empty
+(for example because they are of type bss). In that case, the linker will
+create an empty output file. This may be suppressed by assigning an empty file
+name to that memory area.</p>
+<p>The <code>%O</code> sequence is also allowed inside a string. So using</p>
+<pre class="verb">        MEMORY {
+            ROM1:  start = $A000, size = $2000, file = "%O-1.bin";
+            ROM2:  start = $E000, size = $2000, file = "%O-2.bin";
+        }</pre>
+<p>would write two files that start with the name of the output file specified on
+the command line, with "-1.bin" and "-2.bin" appended respectively. Because
+'%' is used as an escape char, the sequence "%%" has to be used if a single
+percent sign is required.</p>
+<h3 id="sect-5-4">5.4. OVERWRITE segments</h3>
+<p>There are situations when you may wish to overwrite some part (or parts) of a
+segment with another one. Perhaps you are modifying an OS ROM that has its
+public subroutines at fixed, well-known addresses, and you want to prevent them
+from shifting to other locations in memory if your changed code takes less
+space. Or you are updating a block of code available in binary-only form with
+fixes that are scattered in various places. Generally, whenever you want to
+minimize disturbance to an existing code brought on by your updates, OVERWRITE
+segments are worth considering.</p>
+<p>Here is an example:</p>
+<pre class="verb">MEMORY {
+    RAM: file = "", start = $6000, size = $2000, type=rw;
+    ROM: file = %O, start = $8000, size = $8000, type=ro;
+}</pre>
+<p>Nothing unusual so far, just two memory blocks - one RAM, one ROM. Now let's
+look at the segment configuration:</p>
+<pre class="verb">SEGMENTS {
+    RAM:       load = RAM, type = bss;
+    ORIGINAL:  load = ROM, type = ro;
+    FASTCOPY:  load = ROM, start=$9000, type = overwrite;
+    JMPPATCH1: load = ROM, start=$f7e8, type = overwrite;
+    DEBUG:     load = ROM, start=$8000, type = overwrite;
+    VERSION:   load = ROM, start=$e5b7, type = overwrite;
+}</pre>
+<p>Segment named ORIGINAL contains the original code, disassembled or provided in
+a binary form (i.e. using <code>.INCBIN</code> directive; see the <code>ca65</code> assembler
+document).  Subsequent four segments will be relocated to addresses specified
+by their "start" attributes ("offset" can also be used) and then will overwrite
+whatever was at these locations in the ORIGINAL segment. In the end, resulting
+binary output file will thus contain original data with the exception of four
+sequences starting at $9000, $f7e8, $8000 and $e5b7, which will sport code from
+their respective segments. How long these sequences will be depends on the
+lengths of corresponding segments - they can even overlap, so think what you're
+doing.</p>
+<p>Finally, note that OVERWRITE segments should be the final segments loaded to a
+particular memory area, and that they need at least one of "start" or "offset"
+attributes specified.</p>
+<h3 id="sect-5-5">5.5. LOAD and RUN addresses (ROMable code)</h3>
+<p>Let us look now at a more complex example. Say, you've successfully tested
+your new "Super Operating System" (SOS for short) for a 6502 machine, and you
+will now go and replace the ROMs by your own code. When doing that, you
+face a new problem: If the code runs in RAM, we need not to care about
+read/write data. But now, if the code is in ROM, we must care about it.
+Remember the default segments (you may of course specify your own):</p>
+<pre class="verb">        CODE            read-only code
+        RODATA          read-only data
+        DATA            read/write data
+        BSS             uninitialized data, read/write</pre>
+<p>Since <code>BSS</code> is not initialized, we must not care about it now, but what
+about <code>DATA</code>? <code>DATA</code> contains initialized data, that is, data that was
+explicitly assigned a value. And your program will rely on these values on
+startup. Since there's no way to remember the contents of the data segment,
+other than storing it into one of the ROMs, we have to put it there. But
+unfortunately, ROM is not writable, so we have to copy it into RAM before
+running the actual code.</p>
+<p>The linker won't copy the data from ROM into RAM for you (this must be done by
+the startup code of your program), but it has some features that will help you
+in this process.</p>
+<p>First, you may not only specify a "<code>load</code>" attribute for a segment, but
+also a "<code>run</code>" attribute. The "<code>load</code>" attribute is mandatory, and, if
+you don't specify a "<code>run</code>" attribute, the linker assumes that load area
+and run area are the same. We will use this feature for our data area:</p>
+<pre class="verb">        SEGMENTS {
+            CODE:   load = ROM1, type = ro;
+            RODATA: load = ROM2, type = ro;
+            DATA:   load = ROM2, run = RAM2, type = rw, define = yes;
+            BSS:    load = RAM2, type = bss, define = yes;
+        }</pre>
+<p>Let's have a closer look at this <code>SEGMENTS</code> section. We specify that the
+<code>CODE</code> segment goes into <code>ROM1</code> (the one at $A000). The readonly data
+goes into <code>ROM2</code>. Read/write data will be loaded into <code>ROM2</code> but is run
+in <code>RAM2</code>. That means that all references to labels in the <code>DATA</code>
+segment are relocated to be in <code>RAM2</code>, but the segment is written to
+<code>ROM2</code>. All your startup code has to do is, to copy the data from its
+location in <code>ROM2</code> to the final location in <code>RAM2</code>.</p>
+<p>So, how do you know, where the data is located? This is the second point,
+where you get help from the linker. Remember the "<code>define</code>" attribute?
+Since we have set this attribute to true, the linker will define three
+external symbols for the data segment that may be accessed from your code:</p>
+<pre class="verb">        __DATA_LOAD__   This is set to the address where the segment
+                        is loaded, in this case, it is an address in
+                        ROM2.
+        __DATA_RUN__    This is set to the run address of the segment,
+                        in this case, it is an address in RAM2.
+        __DATA_SIZE__   This is set to the segment size.</pre>
+<p>So, what your startup code must do, is to copy <code>__DATA_SIZE__</code> bytes from
+<code>__DATA_LOAD__</code> to <code>__DATA_RUN__</code> before any other routines are called.
+All references to labels in the <code>DATA</code> segment are relocated to <code>RAM2</code>
+by the linker, so things will work properly.</p>
+<p>There's a library subroutine called <code>copydata</code> (in a module named
+<code>copydata.s</code>) that might be used to do actual copying. Be sure to have a
+look at it's inner workings before using it!</p>
+<h3 id="sect-5-6">5.6. Other MEMORY area attributes</h3>
+<p>There are some other attributes not covered above. Before starting the
+reference section, I will discuss the remaining things here.</p>
+<p>You may request symbols definitions also for memory areas. This may be
+useful for things like a software stack, or an I/O area.</p>
+<pre class="verb">        MEMORY {
+            STACK:  start = $C000, size = $1000, define = yes;
+        }</pre>
+<p>This will define some external symbols that may be used in your code when
+imported using the <code>.IMPORT</code> directive:</p>
+<pre class="verb">        __STACK_START__         This is set to the start of the memory
+                                area, $C000 in this example.
+        __STACK_SIZE__          The size of the area, here $1000.
+        __STACK_LAST__          This is NOT the same as START+SIZE.
+                                Instead, it is defined as the first
+                                address that is not used by data. If we
+                                don't define any segments for this area,
+                                the value will be the same as START.
+        __STACK_FILEOFFS__      The binary offset in the output file. This
+                                is not defined for relocatable output file
+                                formats (o65).</pre>
+<p>A memory section may also have a type. Valid types are</p>
+<pre class="verb">        ro      for readonly memory
+        rw      for read/write memory.</pre>
+<p>The linker will assure, that no segment marked as read/write or bss is put
+into a memory area that is marked as readonly.</p>
+<p>Unused memory in a memory area may be filled. Use the "<code>fill = yes</code>"
+attribute to request this. The default value to fill unused space is zero. If
+you don't like this, you may specify a byte value that is used to fill these
+areas with the "<code>fillval</code>" attribute. If there is no "<code>fillval</code>"
+attribute for the segment, the "<code>fillval</code>" attribute of the memory area (or
+its default) is used instead. This means that the value may also be used to
+fill unfilled areas generated by the assembler's <code>.ALIGN</code> and <code>.RES</code>
+directives.</p>
+<p>The symbol <code>%S</code> may be used to access the default start address (that is,
+the one defined in <a href="#FEATURES">the FEATURES section</a>, or the
+value given on the command line with the <code><a href="#option-S">-S</a></code>
+option).</p>
+<p>To support systems with banked memory, a special attribute named <code>bank</code> is
+available. The attribute value is an arbitrary 32-bit integer. The assembler
+has a builtin function named <code>.BANK</code> which may be used with an argument
+that has a segment reference (for example a symbol). The result of this
+function is the value of the bank attribute for the run memory area of the
+segment.</p>
+<h3 id="sect-5-7">5.7. Other SEGMENT attributes</h3>
+<p>Segments may be aligned to some memory boundary. Specify "<code>align = num</code>" to
+request this feature. To align all segments on a page boundary, use</p>
+<pre class="verb">        SEGMENTS {
+            CODE:   load = ROM1, type = ro, align = $100;
+            RODATA: load = ROM2, type = ro, align = $100;
+            DATA:   load = ROM2, run = RAM2, type = rw, define = yes,
+                    align = $100;
+            BSS:    load = RAM2, type = bss, define = yes, align = $100;
+        }</pre>
+<p>If an alignment is requested, the linker will add enough space to the output
+file, so that the new segment starts at an address that is dividable by the
+given number without a remainder. All addresses are adjusted accordingly. To
+fill the unused space, bytes of zero are used, or, if the memory area has a
+"<code>fillval</code>" attribute, that value. Alignment is always needed, if you have
+used the <code>.ALIGN</code> command in the assembler. The alignment of a segment
+must be equal or greater than the alignment used in the <code>.ALIGN</code> command.
+The linker will check that, and issue a warning, if the alignment of a segment
+is lower than the alignment requested in an <code>.ALIGN</code> command of one of the
+modules making up this segment.</p>
+<p>For a given segment you may also specify a fixed offset into a memory area or
+a fixed start address. Use this if you want the code to run at a specific
+address (a prominent case is the interrupt vector table which must go at
+address $FFFA). Only one of <code>ALIGN</code> or <code>OFFSET</code> or <code>START</code> may be
+specified. If the directive creates empty space, it will be filled with zero,
+of with the value specified with the "<code>fillval</code>" attribute if one is given.
+The linker will warn you if it is not possible to put the code at the
+specified offset (this may happen if other segments in this area are too
+large). Here's an example:</p>
+<pre class="verb">        SEGMENTS {
+            VECTORS: load = ROM2, type = ro, start = $FFFA;
+        }</pre>
+<p>or (for the segment definitions from above)</p>
+<pre class="verb">        SEGMENTS {
+            VECTORS: load = ROM2, type = ro, offset = $1FFA;
+        }</pre>
+<p>The "<code>align</code>", "<code>start</code>" and "<code>offset</code>" attributes change placement
+of the segment in the run memory area, because this is what is usually
+desired. If load and run memory areas are equal (which is the case if only the
+load memory area has been specified), the attributes will also work. There is
+also an "<code>align_load</code>" attribute that may be used to align the start of the
+segment in the load memory area, in case different load and run areas have
+been specified. There are no special attributes to set start or offset for
+just the load memory area.</p>
+<p>A "<code>fillval</code>" attribute may not only be specified for a memory area, but
+also for a segment. The value must be an integer between 0 and 255. It is used
+as the fill value for space reserved by the assembler's <code>.ALIGN</code> and <code>.RES</code>
+commands. It is also used as the fill value for space between sections (part of a
+segment that comes from one object file) caused by alignment, but not for
+space that preceeds the first section.</p>
+<p>To suppress the warning, the linker issues if it encounters a segment that is
+not found in any of the input files, use "<code>optional=yes</code>" as an additional
+segment attribute. Be careful when using this attribute, because a missing
+segment may be a sign of a problem, and if you're suppressing the warning,
+there is no one left to tell you about it.</p>
+<h3 id="sect-5-8">5.8. The FILES section</h3>
+<p>The <code>FILES</code> section is used to support other formats than straight binary
+(which is the default, so binary output files do not need an explicit entry
+in the <code>FILES</code> section).</p>
+<p>The <code>FILES</code> section lists output files and as only attribute the format of
+each output file. Assigning binary format to the default output file would
+look like this:</p>
+<pre class="verb">        FILES {
+            %O: format = bin;
+        }</pre>
+<p>There are two other available formats, one is the o65 format specified by Andre
+Fachat (see the <a href="http://www.6502.org/users/andre/o65/fileformat.html">6502 binary relocation format specification</a>). It is defined like this:</p>
+<pre class="verb">        FILES {
+            %O: format = o65;
+        }</pre>
+<p>The other format available is the Atari (xex) segmented file format, this is
+the standard format used by Atari DOS 2.0 and upward file managers in the Atari
+8-bit computers, and it is defined like this:</p>
+<pre class="verb">        FILES {
+            %O: format = atari;
+        }</pre>
+<p>In the Atari segmented file format, the linker will write each <code>MEMORY</code> area
+as a new segment, including a header with the start and end address.</p>
+<p>The necessary o65 or Atari attributes are defined in a special section labeled
+<a href="#FORMAT">FORMAT</a>.</p>
+<h3 id="FORMAT">5.9. The FORMAT section</h3>
+<p>The <code>FORMAT</code> section is used to describe file formats. The default (binary)
+format has currently no attributes, so, while it may be listed in this
+section, the attribute list is empty. The second supported format,
+<a href="http://www.6502.org/users/andre/o65/fileformat.html">o65</a>,
+has several attributes that may be defined here.</p>
+<pre class="verb">    FORMATS {
+        o65: os = lunix, version = 0, type = small,
+             import = LUNIXKERNEL,
+             export = _main;
+    }</pre>
+<p>The Atari file format has two attributes:</p>
+<dl>
+<dt><code>RUNAD = symbol</code></dt>
+<dd>
+<p>Specify a symbol as the run address of the binary, the loader will call this
+  address after all the file is loaded in memory. If the attribute is omitted,
+  no run address is included in the file.</p>
+</dd>
+<dt><code>INITAD = memory_area : symbol</code></dt>
+<dd>
+<p>Specify a symbol as the initialization address for the given memory area.
+  The binary loader will call this address just after the memory area is loaded
+  into memory, before continuing loading the rest of the file.</p>
+</dd>
+</dl>
+<pre class="verb">    FORMATS {
+        atari: runad = _start;
+    }</pre>
+<h3 id="FEATURES">5.10. The FEATURES section</h3>
+<p>In addition to the <code>MEMORY</code> and <code>SEGMENTS</code> sections described above, the
+linker has features that may be enabled by an additional section labeled
+<code>FEATURES</code>.</p>
+<h4 id="sect-5-10-1">5.10.1. The CONDES feature</h4>
+<p><code>CONDES</code> is used to tell the linker to emit module constructor/destructor
+tables.</p>
+<pre class="verb">        FEATURES {
+            CONDES: segment = RODATA,
+                    type = constructor,
+                    label = __CONSTRUCTOR_TABLE__,
+                    count = __CONSTRUCTOR_COUNT__;
+        }</pre>
+<p>The <code>CONDES</code> feature has several attributes:</p>
+<dl>
+<dt><code>segment</code></dt>
+<dd>
+<p>This attribute tells the linker into which segment the table should be
+  placed. If the segment does not exist, it is created.</p>
+</dd>
+<dt><code>type</code></dt>
+<dd>
+<p>Describes the type of the routines to place in the table. Type may be one of
+  the predefined types <code>constructor</code>, <code>destructor</code>, <code>interruptor</code>, or
+  a numeric value between 0 and 6.</p>
+</dd>
+<dt><code>label</code></dt>
+<dd>
+<p>This specifies the label to use for the table. The label points to the start
+  of the table in memory and may be used from within user-written code.</p>
+</dd>
+<dt><code>count</code></dt>
+<dd>
+<p>This is an optional attribute. If specified, an additional symbol is defined
+  by the linker using the given name. The value of this symbol is the number
+  of entries (<em>not</em> bytes) in the table. While this attribute is optional,
+  it is often useful to define it.</p>
+</dd>
+<dt><code>order</code></dt>
+<dd>
+<p>An optional attribute that takes one of the keywords <code>increasing</code> or
+  <code>decreasing</code> as an argument. Specifies the sorting order of the entries
+  within the table. The default is <code>increasing</code>, which means that the
+  entries are sorted with increasing priority (the first entry has the lowest
+  priority). "Priority" is the priority specified when declaring a symbol as
+  <code>.CONDES</code> with the assembler, higher values mean higher priority. You may
+  change this behaviour by specifying <code>decreasing</code> as the argument, the
+  order of entries is reversed in this case.</p>
+<p>Please note that the order of entries with equal priority is undefined.</p>
+</dd>
+<dt><code>import</code></dt>
+<dd>
+<p>This attribute defines a valid symbol name, that is added as an import
+  to the modules defining a constructor/destructor of the given type.
+  This can be used to force linkage of a module if this module exports the
+  requested symbol.</p>
+</dd>
+</dl>
+<p>Without specifying the <code>CONDES</code> feature, the linker will not create any
+tables, even if there are <code>condes</code> entries in the object files.</p>
+<p>For more information see the <code>.CONDES</code> command in the <a href="ca65.html">ca65 manual</a>.</p>
+<h4 id="sect-5-10-2">5.10.2. The STARTADDRESS feature</h4>
+<p><code>STARTADDRESS</code> is used to set the default value for the start address,
+which can be referenced by the <code>%S</code> symbol. The builtin default for the
+linker is $200.</p>
+<pre class="verb">        FEATURES {
+            # Default start address is $1000
+            STARTADDRESS:       default = $1000;
+        }</pre>
+<p>Please note that order is important: The default start address must be defined
+<em>before</em> the <code>%S</code> symbol is used in the config file. This does usually
+mean, that the <code>FEATURES</code> section has to go to the top of the config file.</p>
+<h3 id="SYMBOLS">5.11. The SYMBOLS section</h3>
+<p>The configuration file may also be used to define symbols used in the link
+stage or to force symbols imports. This is done in the SYMBOLS section. The
+symbol name is followed by a colon and symbol attributes.</p>
+<p>The following symbol attributes are supported:</p>
+<dl>
+<dt><code>addrsize</code></dt>
+<dd>
+<p>The <code>addrsize</code> attribute specifies the address size of the symbol and
+  may be one of</p>
+<ul>
+<li>
+<p><code>zp</code>, <code>zeropage</code> or <code>direct</code></p>
+</li>
+<li>
+<p><code>abs</code>, <code>absolute</code> or <code>near</code></p>
+</li>
+<li>
+<p><code>far</code></p>
+</li>
+<li>
+<p><code>long</code> or <code>dword</code>.</p>
+</li>
+</ul>
+<p>Without this attribute, the default address size is <code>abs</code>.</p>
+</dd>
+<dt><code>type</code></dt>
+<dd>
+<p>This attribute is mandatory. Its value is one of <code>export</code>, <code>import</code> or
+  <code>weak</code>. <code>export</code> means that the symbol is defined and exported from
+  the linker config. <code>import</code> means that an import is generated for this
+  symbol, eventually forcing a module that exports this symbol to be included
+  in the output. <code>weak</code> is similar as <code>export</code>. However, the symbol is
+  only defined if it is not defined elsewhere.</p>
+</dd>
+<dt><code>value</code></dt>
+<dd>
+<p>This must only be given for symbols of type <code>export</code> or <code>weak</code>. It
+  defines the value of the symbol and may be an expression.</p>
+</dd>
+</dl>
+<p>The following example defines the stack size for an application, but allows
+the programmer to override the value by specifying <code>--define
+__STACKSIZE__=xxx</code> on the command line.</p>
+<pre class="verb">        SYMBOLS {
+            # Define the stack size for the application
+            __STACKSIZE__:  type = weak, value = $800;
+        }</pre>
+<h2 id="sect-6">6. Special segments</h2>
+<p>The builtin config files do contain segments that have a special meaning for
+the compiler and the libraries that come with it. If you replace the builtin
+config files, you will need the following information.</p>
+<h3 id="sect-6-1">6.1. ONCE</h3>
+<p>The ONCE segment is used for initialization code run only once before
+execution reaches main() - provided that the program runs in RAM. You
+may for example add the ONCE segment to the heap in really memory
+constrained systems.</p>
+<h3 id="sect-6-2">6.2. LOWCODE</h3>
+<p>For the LOWCODE segment, it is guaranteed that it won't be banked out, so it
+is reachable at any time by interrupt handlers or similar.</p>
+<h3 id="sect-6-3">6.3. STARTUP</h3>
+<p>This segment contains the startup code which initializes the C software stack
+and the libraries. It is placed in its own segment because it needs to be
+loaded at the lowest possible program address on several platforms.</p>
+<h3 id="sect-6-4">6.4. ZPSAVE</h3>
+<p>The ZPSAVE segment contains the original values of the zeropage locations used
+by the ZEROPAGE segment. It is placed in its own segment because it must not be
+initialized.</p>
+<h2 id="sect-7">7. Copyright</h2>
+<p>ld65 (and all cc65 binutils) are (C) Copyright 1998-2005 Ullrich von
+Bassewitz. For usage of the binaries and/or sources the following
+conditions do apply:</p>
+<p>This software is provided 'as-is', without any expressed or implied
+warranty.  In no event will the authors be held liable for any damages
+arising from the use of this software.</p>
+<p>Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:</p>
+<ol>
+<li>
+<p>The origin of this software must not be misrepresented; you must not
+        claim that you wrote the original software. If you use this software
+        in a product, an acknowledgment in the product documentation would be
+        appreciated but is not required.</p>
+</li>
+<li>
+<p>Altered source versions must be plainly marked as such, and must not
+        be misrepresented as being the original software.</p>
+</li>
+<li>
+<p>This notice may not be removed or altered from any source
+        distribution.</p>
+</li>
+</ol></article></main><footer class="site-foot">lynxcc documentation &mdash; a fork of cc65 focused on the Atari Lynx target.</footer>
+<script src="doc.js"></script>
+</body></html>

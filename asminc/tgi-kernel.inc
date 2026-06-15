@@ -21,8 +21,6 @@ TGI_XRES        = 160
 TGI_YRES        = 102
 TGI_COLORCOUNT  = 16
 TGI_PAGECOUNT   = 2
-TGI_FONTWIDTH   = 8
-TGI_FONTHEIGHT  = 8
 
 ;------------------------------------------------------------------------------
 ; Frame buffer and collision buffer addresses. These are coupled to the

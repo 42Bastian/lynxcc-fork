@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cc65 Compiler Intro</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head><body>
+<div class="topbar"><a class="brand" href="index.html">lynxcc</a><nav class="nav"><a href="index.html">Home</a><a href="intro.html" class="active">Intro</a><a href="cc65.html">cc65</a><a href="ca65.html">ca65</a><a href="ld65.html">ld65</a><a href="cl65.html">cl65</a><a href="library.html">Library</a><a href="funcref.html">Functions</a><a href="tgi.html">TGI</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>cc65 Compiler Intro</h1><p class="author"><a href="mailto:uz@cc65.org">Ullrich von Bassewitz</a>,<br> <a href="mailto:cbmnut@hushmail.com">CbmNut</a>,<br> <a href="mailto:greg.king5@verizon.net">Greg King</a>,<br> <a href="mailto:stephan.muehlstrasser@web.de">Stephan Mühlstrasser</a></p></header><div class="abstract">How to use the cc65 C language system -- an introduction.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl2"><a href="#sect-1-1">1.1. Before we start</a></li>
+<li class="lvl2"><a href="#sect-1-2">1.2. The sample modules</a></li>
+<li class="lvl2"><a href="#sect-1-3">1.3. Translation phases</a></li>
+<li class="lvl1"><a href="#sect-2">2. The compiler</a></li>
+<li class="lvl1"><a href="#sect-3">3. The assembler</a></li>
+<li class="lvl1"><a href="#sect-4">4. The linker</a></li>
+<li class="lvl1"><a href="#using-cl65">5. The easy way (using the cl65 utility)</a></li>
+<li class="lvl1"><a href="#sect-6">6. Running The Executable</a></li>
+<li class="lvl2"><a href="#sect-6-1">6.1. Emulators</a></li>
+</ul></nav><h2 id="sect-1">1. Overview</h2>
+<p>This is a short intro of how to use the compiler and the bin-utils. It contains
+a step-by-step example of how to build a complete application from one C and
+one assembly modules. This file does <em>not</em> contain a complete reference for
+the tools used in the process. There are separate files describing those tools,
+in detail (see <a href="index.html">index.html</a>).</p>
+<p>I do assume that you have built or installed the compiler and the Atari Lynx
+target files (the only target supported by this tree). If the tools cannot
+find the include files, libraries or linker configs, set the environment
+variables <code>CC65_INC</code>, <code>LD65_LIB</code> and <code>LD65_CFG</code> as described below.</p>
+<p><em>Note:</em> There is a much simpler way to compile this example, by using the
+<strong>cl65</strong> compile-and-link utility. However, it makes sense to understand how
+the separate steps work. How to do the example with the <strong>cl65</strong> utility is
+described <a href="#using-cl65">later</a>.</p>
+<h3 id="sect-1-1">1.1. Before we start</h3>
+<p>Create the two small sample modules from the next section in a working
+directory (a complete Lynx sample is also available in the
+"<code>samples</code>" directory of the source tree). If you encounter problems
+with missing include files and/or libraries, please check the environment variables
+<code>CC65_INC</code>, <code>LD65_LIB</code> and <code>LD65_CFG</code>. They should point to the
+<code>include</code>, <code>lib</code> and <code>cfg</code> subdirectories of the directory, where you
+installed cc65.</p>
+<h3 id="sect-1-2">1.2. The sample modules</h3>
+<p>To explain the development flow, I will use the following example modules:</p>
+<p>hello.c:</p>
+<pre class="code">        #include &lt;stdio.h&gt;
+        #include &lt;stdlib.h&gt;
+
+        extern const char text[];       /* In text.s */
+
+        int main (void)
+        {
+            printf ("%s\n", text);
+            return EXIT_SUCCESS;
+        }</pre>
+<p>text.s:</p>
+<pre class="code">        .export _text
+        _text:  .asciiz "Hello world!"</pre>
+<h3 id="sect-1-3">1.3. Translation phases</h3>
+<p>We assume that the target file should be named "hello", and the target system
+is the Atari Lynx.</p>
+<pre class="verb">    +---------+
+    | hello.c |
+    +---------+
+         |
+        cc65
+         \/
+    +---------+       +---------+       +----------+
+    | hello.s |       | text.s  |       | crt0.o   |
+    +---------+       +---------+       +----------+
+         |                 |                 |
+        ca65              ca65              ar65
+         \/                \/                \/
+    +---------+       +---------+       +----------+
+    | hello.o |       | text.o  |       | lynx.lib |
+    +---------+       +---------+       +----------+
+         |                    \          /
+         |                     \        /
+         |                      \      /
+         +-----------------------&gt;ld65&lt;
+                                   \/
+                                 hello</pre>
+<p><code>crt0.o</code> (the startup code) and <code>lynx.lib</code> (the Lynx version of the
+runtime and C library) are built from this tree. Actually, the
+startup code is contained in the library, so you won't need to care about it.</p>
+<h2 id="sect-2">2. The compiler</h2>
+<p>The compiler translates one C source into one assembly source, for each
+invocation. It does <em>not</em> create object files directly, and it is <em>not</em>
+able to translate more than one file per run.</p>
+<p>In the example above, we would use the following command line, to translate
+<code>hello.c</code> into <code>hello.s</code>:</p>
+<pre class="verb">        cc65 -O -t lynx hello.c</pre>
+<p>The <code>-O</code> switch tells the compiler to do an additional optimizer run, which
+is usually a good idea, since it makes the code smaller. If you don't care
+about the size, but want to have slightly faster code, use <code>-Oi</code> to inline
+some runtime functions.</p>
+<p>The <code>-t</code> switch is followed by the target system name.</p>
+<p>If the compiler does not complain about errors in our "hello world" program, we
+will have a file named "<code>hello.s</code>", in our directory, that contains the
+assembly source for the <strong>hello</strong> module.</p>
+<p>For more information about the compiler, see <a href="cc65.html">cc65.html</a>.</p>
+<h2 id="sect-3">3. The assembler</h2>
+<p>The assembler translates one assembly source into an object file, for each
+invocation. The assembler is <em>not</em> able to translate more than one source
+file per run.</p>
+<p>Let's translate the "hello.s" and "text.s" files from our example:</p>
+<pre class="verb">        ca65 hello.s
+        ca65 -t lynx text.s</pre>
+<p>The <code>-t</code> switch is needed when translating the <code>text.s</code> file, so the
+text is converted from the input character-set (usually ISO-8859-1) into the
+target character-set (ASCII, in this example) by the assembler. The
+compiler-generated file <code>hello.s</code> does not contain any character constants,
+so specification of a target is not necessary (it wouldn't do any harm,
+however).</p>
+<p>If the assembler does not complain, we should now have two object files (named
+<code>hello.o</code> and <code>text.o</code>) in the current directory.</p>
+<p>For more information about the assembler, see <a href="ca65.html">ca65.html</a>.</p>
+<h2 id="sect-4">4. The linker</h2>
+<p>The linker combines several object and library files into one output file.
+<strong>ld65</strong> is very configurable, but fortunately has built-in configurations,
+so we don't need to mess with configuration files, here.</p>
+<p>The compiler uses small functions to do things that cannot be done inline
+without a big impact on code size. Those runtime functions, together with the
+C library, are in an object-file archive named after the system, in this case,
+"<code>lynx.lib</code>". We have to specify that file on the command line, so that the
+linker can resolve those functions.</p>
+<p>Let's link our files to get the final executable:</p>
+<pre class="verb">        ld65 -o hello -t lynx hello.o text.o lynx.lib</pre>
+<p>The argument after <code>-o</code> specifies the name of the output file, the argument
+after <code>-t</code> gives the target system. The following arguments are object
+files or libraries. Since the target library resolves imports in <code>hello.o</code>
+and <code>text.o</code>, it must be specified <em>after</em> those files.</p>
+<p>After a successful linker run, we have a file named "<code>hello</code>", a bootable
+Lynx cart image!</p>
+<p>For more information about the linker, see <a href="ld65.html">ld65.html</a>.</p>
+<h2 id="using-cl65">5. The easy way (using the cl65 utility)</h2>
+<p>The <strong>cl65</strong> utility is able to do all of the steps described above, in just
+one command line, and it has defaults for some options that are very
+well-suited for our example.</p>
+<p>To compile both files into one executable, enter:</p>
+<pre class="verb">        cl65 -O hello.c text.s</pre>
+<p>The <strong>cl65</strong> utility knows how to translate C files into object files (it will
+call the compiler, and then the assembler). It does know also how to create
+object files from assembly files (it will call only the assembler, for that).
+It knows how to build an executable (it will pass all object files to the
+linker). And finally, it has the Lynx as its default target, and will supply
+the correct startup file and runtime library names to the linker, so you don't
+have to care about that.</p>
+<p>The one-liner above should give you a Lynx cart image named "<code>hello</code>" in
+the current directory.</p>
+<p>For more information about the compile &amp; link utility, see <a href="cl65.html">cl65.html</a>.</p>
+<h2 id="sect-6">6. Running The Executable</h2>
+<p>The Lynx has no operating system or text screen: the linker output is a
+bootable cart image, and text output requires the TGI graphics driver.
+The <code>printf</code> in the tutorial above therefore produces no visible
+output on the Lynx - it demonstrates the build mechanics only. For a
+program that actually displays text on the Lynx screen, see the Hello
+World example in the <a href="lynx.html">Lynx-specific
+documentation</a>, which uses TGI. By convention, give the output file a
+<code>.lnx</code> extension:</p>
+<pre class="verb">cl65 -O -t lynx -o hello.lnx hello.c text.s</pre>
+<h3 id="sect-6-1">6.1. Emulators</h3>
+<dl>
+<dt>GearLynx</dt>
+<dd>
+<p>A very accurate, cross-platform Lynx emulator written in C++ for Windows,
+  macOS, Linux, BSD and RetroArch. It includes an embedded MCP server for
+  debugging and tooling, which makes it a strong choice for inspecting the
+  code the compiler generates. Available at
+  <a href="https://github.com/drhelius/Gearlynx">https://github.com/drhelius/Gearlynx</a>.</p>
+</dd>
+<dt>Holani</dt>
+<dd>
+<p>A newer Lynx emulator written in Rust that runs on Linux, macOS and Windows.
+  A GTK frontend and a LibRetro core are also available. Available at
+  <a href="https://github.com/LLeny/holani">https://github.com/LLeny/holani</a>.</p>
+</dd>
+<dt>Handy</dt>
+<dd>
+<p>The classic Atari Lynx emulator that most later emulators are based on, and
+  the simplest way to get cart images running. Open the <code>.lnx</code> file
+  from the File menu. Available at
+  <a href="http://handy.sourceforge.net/">http://handy.sourceforge.net/</a>.</p>
+</dd>
+<dt>Felix</dt>
+<dd>
+<p>A newer emulator project with enhanced features such as instruction tracing.
+  It is in early development and currently runs on Windows only. Available at
+  <a href="https://github.com/laoo/Felix">https://github.com/laoo/Felix</a>.</p>
+</dd>
+<dt>Mednafen</dt>
+<dd>
+<p>Available at <a href="https://mednafen.github.io/">https://mednafen.github.io/</a>:
+  a multi-system emulator with an accurate, cycle-counting Lynx core and a
+  built-in debugger - useful for profiling the code the compiler generates.
+  Run the cart image with:</p>
+<pre class="verb">mednafen hello.lnx</pre>
+</dd>
+</dl>
+<p>On real hardware, the cart image can be run from a flash/SD cartridge, or
+uploaded over ComLynx using a BLL-compatible loader (link with
+<code>-C lynx-bll.cfg</code> to produce a BLL download-compatible binary).</p></article></main><footer class="site-foot">lynxcc documentation &mdash; a fork of cc65 focused on the Atari Lynx target.</footer>
+<script src="doc.js"></script>
+</body></html>
