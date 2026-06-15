@@ -24,7 +24,7 @@ tosaddax:
         tay                     ; 9
         txa                     ; 11
         inc     sp              ; 16
-        beq     hidadd1         ; 18 / 19
+        beq     hiadd1          ; 18 / 19
         adc     (sp)            ; 23
         tax                     ; 25
         tya                     ; 27
