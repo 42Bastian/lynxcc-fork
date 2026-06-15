@@ -20,26 +20,37 @@ tosaddax:
 
 .if (.cpu .bitand ::CPU_ISET_65SC02)
 
-        adc     (sp)            ; (7)
-        tay                     ; (9)
-        inc     sp              ; (14)
-        bne     hiadd           ; (17)
-        inc     sp+1            ; (-1+5)
-hiadd:  txa                     ; (19)
-        adc     (sp)            ; (24)
-        tax                     ; (26)
-        inc     sp              ; (31)
-        bne     done            ; (34)
-        inc     sp+1            ; (-1+5)
-done:   tya                     ; (36)
+        adc     (sp)            ; 7
+        tay                     ; 9
+        txa                     ; 11
+        inc     sp              ; 16
+        beq     hiadd1          ; 18 / 19
+        adc     (sp)            ; 23
+        tax                     ; 25
+        tya                     ; 27
+        inc     sp              ; 32
+        beq     hiadd2          ; 34 / 35
 
-.else        
+        rts
+
+hiadd2:
+        inc     sp+1            ; 40
+        rts
+
+hiadd1:
+        inc     sp+1            ; 40
+        adc     (sp)            ; 45
+        tax                     ; 47
+        tya                     ; 49
+        inc     sp              ; 54   no check needed!
+
+.else
 
         ldy     #0              ; (4)
         adc     (sp),y          ; (9) lo byte
         iny                     ; (11)
         sta     tmp1            ; (14) save it
-        txa                     ; (16) 
+        txa                     ; (16)
         adc     (sp),y          ; (21) hi byte
         tax                     ; (23)
         clc                     ; (25)
@@ -51,4 +62,4 @@ done:   tya                     ; (36)
 L1:     lda     tmp1            ; (39) restore low byte
 
 .endif
-        rts                     ; (6502: 45 cycles, 26 bytes <-> 65SC02: 42 cycles, 22 bytes )
+        rts                     ; (6502: 45 cycles, 26 bytes <-> 65SC02: best case 34cycles
