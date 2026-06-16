@@ -1,0 +1,46 @@
+name: Deploy docs to GitHub Pages
+
+# Publishes the hand-written HTML in doc/ straight to GitHub Pages.
+# The upload-pages-artifact action ships the folder as-is, so Jekyll never
+# runs (no _config.yml / SCSS processing) and the existing doc.css theme and
+# light/dark toggle are served unchanged.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'doc/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; don't cancel an in-progress run.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload doc/ as the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: doc
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
