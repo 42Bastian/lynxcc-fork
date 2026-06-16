@@ -58,6 +58,11 @@ unsigned Opt65C02BitOps (CodeSeg* S);
 unsigned Opt65C02Stores (CodeSeg* S);
 /* Use STZ where possible */
 
+unsigned Opt65C02StackOps (CodeSeg* S);
+/* Speed-biased: inline the jsr incsp1/incsp2 C-stack drops when the cycle-cost
+** model shows the inline body is faster than the call (section 2.7).
+*/
+
 
 
 /* End of coptc02.h */

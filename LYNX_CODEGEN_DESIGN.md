@@ -20,7 +20,14 @@ as one operation in `hie_internal` and lowered through `g_suzymuldiv` to
 `tossuzy[u]muldivax` in `libsrc/lynx/suzymuldiv.s`; the 32-bit product is divided
 in place (no 16-bit truncation of the intermediate, one fewer readback/reload).
 Verified 0 mismatches vs a 32-bit C reference over 201k operand triples (corners +
-randoms + exhaustive small), signed and unsigned. §2.7 cycle-cost model — not implemented.
+randoms + exhaustive small), signed and unsigned. §2.7 cycle-cost model — done: a
+per-opcode/per-addressing-mode 65SC02 cycle table in `opcodes.c` (`Cycles` field +
+`GetInsnCycles`), a `CE_GetCycles` code-entry helper, and both consumers wired in — a
+"not slower" guard on the `Opt65C02BitOps` peephole, and a speed-biased `Opt65C02StackOps`
+pass (gated at `CodeSizeFactor > 100`) that inlines `jsr incsp1`/`jsr incsp2`. The model was
+validated at 0 mismatches over 150 instruction/mode pairs against an authoritative 65C02
+timing reference; both inlined sites in the sample corpus emit byte-for-byte the runtime
+bodies and assemble clean.
 
 ## 1. Background
 
@@ -443,17 +450,43 @@ the fused operator, over a corner table that includes divisors `1`/`127`/`255` (
 software `/`/`%`. A host model of the exact byte stores validated 0 mismatches over all 176
 narrow-path corner pairs (unsigned and signed div/mod). Pending: on-emulator/hardware run.
 
-### 2.7 Infrastructure: a cycle-cost model
+### 2.7 Infrastructure: a cycle-cost model — IMPLEMENTED
 
-Add a per-opcode, per-addressing-mode cycle table to `opcodes.c` alongside size, plus a
-`CE_GetCycles()` helper. Two consumers:
+A per-opcode, per-addressing-mode cycle table now lives in `opcodes.c` alongside size: the
+`OPCDesc` struct carries a `Cycles` field (non-zero = fixed cost for single-encoding insns
+such as branches, stack ops, transfers and `jmp`/`jsr`/`rts`/`rti`/`brk`; zero = derive from
+the addressing mode), and `GetInsnCycles(OPC, AM)` returns the 65SC02 cost. For the
+memory-operand opcodes it classifies by timing group — store, read-modify-write (the
+shift/rotate and `inc`/`dec`-memory ops, plus `trb`/`tsb`), or plain read/load/ALU — using the
+existing `OF_STORE`/`OF_NOIMP` flags. `CE_GetCycles(CodeEntry*)` wraps it for the optimizer.
 
-1. New/extended peepholes can require "not slower" instead of guessing.
-2. A speed-biased pass group activated when `CodeSizeFactor > 100` chooses faster variants
-   where size/speed genuinely diverge (rare on Lynx, but e.g. inlined `incsp2` vs `jsr`).
+The figure is the **guaranteed minimum**: data-dependent penalties the compiler cannot know
+statically are excluded by design, so that the cost of a fixed instruction is itself fixed.
+Specifically a *taken* conditional branch costs +1 and a page-crossing indexed/indirect-indexed
+access costs +1; neither is modelled. Always-paid transfers (`bra`, `jmp`, `jsr`, and the long
+conditional `j*` pseudo-insns, costed as inverse-branch + `jmp` = 5) are costed at their real
+value. The model was validated at **0 mismatches over 150 instruction/mode pairs** against an
+authoritative 65C02 timing reference.
+
+Both consumers are wired in:
+
+1. **"Not slower" guard.** `Opt65C02BitOps` (which rewrites `lda/and|ora #imm/sta` into
+   `lda #imm` + `trb`/`tsb`) now compares `CE_GetCycles` of the matched triple against the
+   replacement and only fires when the replacement is no slower, instead of assuming it.
+2. **Speed-biased pass.** `Opt65C02StackOps` (new, registered with a `CodeSizeFactor` of 101
+   so it runs only when the segment factor exceeds 100 — i.e. `-Oi` / `--codesize >100`)
+   inlines `jsr incsp1` and `jsr incsp2`, the tiny C-stack-drop leaf routines whose `jsr`+`rts`
+   overhead (12 cycles) dwarfs their body. It emits byte-for-byte the bodies of
+   `libsrc/runtime/incsp1.s` / `incsp2.s` (so correctness follows from the shipping runtime),
+   and only when the cycle model confirms the inline body beats the call: incsp1 19→7 cyc
+   (+3 bytes), incsp2 26→17 cyc (+11 bytes). Such bare drops are rare in cc65 output (most
+   cleanup goes through `popax`/`addysp`/callee-cleanup), exactly the size/speed divergence the
+   design anticipated; the two sites in the sample corpus were inlined correctly and the rest
+   of each file is byte-identical bar label renumbering.
 
 This is the only proposal that touches shared compiler infrastructure; everything else is
-additive and CPU-gated.
+additive and CPU-gated. (The `Cycles` field and `GetInsnCycles` are target-neutral; only the
+`Opt65C02StackOps` consumer is 65C02-gated, since it emits `bra`.)
 
 ## 3. What deliberately stays out of scope
 
@@ -472,6 +505,7 @@ ABI changes would break every existing object file and driver.
 | Direct codegen (§2.3) | general | 1–3% on unoptimized builds |
 | SMC runtime (§2.5) | block copy/fill loops | measured 8–12% on memcpy/memset n ≥ 256 |
 | Suzy hardware math (§2.6) | int multiply/divide/modulo | 3–8× on those operations |
+| Speed-biased stack inline (§2.7) | bare `incsp1`/`incsp2` drops at `-Oi` | 12/9 cyc per site (rare; 2 sites in corpus), +14 bytes total |
 
 ## 5. Verification plan
 
@@ -491,7 +525,17 @@ ABI changes would break every existing object file and driver.
 
 Each step is independently shippable: (1) runtime fast paths — done, (2) `Opt65C02SaveRegs`
 + `Opt65C02Ind` ordering fix — done, reverted (no measurable effect), (3) direct codegen
-for `(zp)` and `STZ` — done, (4) jump-table switches — done, (5) cycle model — open,
-(6) SMC runtime variants — done, (7) Suzy hardware multiply/divide (§2.6) — done
-(parser + codegen + five lynx.lib routines; simulator-verified). Remaining: (5) the
-cycle-cost model (§2.7).
+for `(zp)` and `STZ` — done, (4) jump-table switches — done, (5) cycle model — done
+(`opcodes.c` table + `GetInsnCycles`/`CE_GetCycles`, the `Opt65C02BitOps` not-slower guard
+and the `Opt65C02StackOps` speed-biased inline pass; model validated 0/150, both consumers
+host-tested), (6) SMC runtime variants — done, (7) Suzy hardware multiply/divide (§2.6) —
+done (parser + codegen + five lynx.lib routines; simulator-verified). All seven steps are
+now implemented.
+
+Cycle-model verification used the existing tooling: a standalone harness links the real
+`opcodes.o` and checks `GetInsnCycles` for every legal instruction/mode pair against a
+hand-encoded authoritative reference (0/150); the speed pass was A/B'd with
+`--disable-opt Opt65C02StackOps` to isolate its effect, the transformed `.s` re-assembled
+clean with `ca65`, and a label-canonicalised diff confirmed only the intended sites change.
+On-emulator (Handy/Mednafen) cycle-count confirmation of the inlined drops remains pending,
+as for the other runtime changes.

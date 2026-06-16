@@ -150,6 +150,25 @@ unsigned Opt65C02BitOps (CodeSeg* S)
             char Buf[32];
             CodeEntry* X;
 
+            /* Cycle-cost model guard (section 2.7, consumer 1): only perform
+            ** the rewrite if the replacement (lda #imm + trb/tsb) is no slower
+            ** than the original load/modify/store triple. On the 65SC02 it is
+            ** always strictly faster, but checking instead of assuming keeps the
+            ** transform correct should the timing model or the matched pattern
+            ** ever change.
+            */
+            opc_t NewMemOp = (L[1]->OPC == OP65_AND)? OP65_TRB : OP65_TSB;
+            unsigned OldCycles = CE_GetCycles (L[0]) +
+                                 CE_GetCycles (L[1]) +
+                                 CE_GetCycles (L[2]);
+            unsigned NewCycles = GetInsnCycles (OP65_LDA, AM65_IMM) +
+                                 GetInsnCycles (NewMemOp, L[0]->AM);
+            if (NewCycles > OldCycles) {
+                /* Would be slower - leave it alone */
+                ++I;
+                continue;
+            }
+
             /* Use TRB for AND and TSB for ORA */
             if (L[1]->OPC == OP65_AND) {
 
@@ -223,6 +242,137 @@ unsigned Opt65C02Stores (CodeSeg* S)
 
             /* We had changes */
             ++Changes;
+        }
+
+        /* Next entry */
+        ++I;
+
+    }
+
+    /* Return the number of changes made */
+    return Changes;
+}
+
+
+
+unsigned Opt65C02StackOps (CodeSeg* S)
+/* Speed-biased pass (section 2.7, consumer 2): inline the "jsr incsp1" and
+** "jsr incsp2" C-stack drops. These are tiny leaf routines, so the call and
+** return overhead (jsr + rts = 12 cycles) dwarfs the body. On a speed-biased
+** build (this pass is gated on CodeSizeFactor > 100) inlining the exact runtime
+** body is a clear win at the cost of a handful of bytes - a case where size and
+** speed genuinely diverge. The cycle-cost model decides: the rewrite only fires
+** when the modelled inline body is faster than the modelled call. The emitted
+** instructions are byte-for-byte the bodies of libsrc/runtime/incsp1.s and
+** incsp2.s (minus the call/return), so correctness follows from the runtime.
+*/
+{
+    unsigned Changes = 0;
+    unsigned I;
+
+    /* Modelled cost of the calls (jsr + leaf body + rts) versus the inline
+    ** bodies on their fall-through paths. Computed from the cycle model so the
+    ** decision tracks the table rather than hand-copied numbers.
+    */
+    unsigned Jsr   = GetInsnCycles (OP65_JSR, AM65_ABS);
+    unsigned Rts   = GetInsnCycles (OP65_RTS, AM65_IMP);
+    unsigned IncZp = GetInsnCycles (OP65_INC, AM65_ZP);
+    unsigned Bne   = GetInsnCycles (OP65_BNE, AM65_BRA);
+    unsigned Beq   = GetInsnCycles (OP65_BEQ, AM65_BRA);
+    unsigned Bra   = GetInsnCycles (OP65_BRA, AM65_BRA);
+
+    /* incsp1: call = jsr + (inc sp + bne + rts); inline = inc sp + bne */
+    unsigned Call1   = Jsr + IncZp + Bne + Rts;
+    unsigned Inline1 = IncZp + Bne;
+    /* incsp2: call = jsr + (inc + beq + inc + beq + rts);
+    ** inline = inc + beq + inc + beq + bra
+    */
+    unsigned Call2   = Jsr + IncZp + Beq + IncZp + Beq + Rts;
+    unsigned Inline2 = IncZp + Beq + IncZp + Beq + Bra;
+
+    /* Walk over the entries */
+    I = 0;
+    while (I < CS_GetEntryCount (S)) {
+
+        CodeEntry* E = CS_GetEntry (S, I);
+        CodeEntry* P = CS_GetNextEntry (S, I);
+        CodeEntry* X;
+        CodeLabel* L;
+
+        /* We need a following instruction to act as the branch target. */
+        if (P != 0 && CE_IsCallTo (E, "incsp1") && Inline1 < Call1) {
+
+            /* inc sp */
+            X = NewCodeEntry (OP65_INC, AM65_ZP, "sp", 0, E->LI);
+            CS_InsertEntry (S, X, I+1);
+
+            /* bne L (skip the high-byte carry) */
+            L = CS_GenLabel (S, P);
+            X = NewCodeEntry (OP65_BNE, AM65_BRA, L->Name, L, E->LI);
+            CS_InsertEntry (S, X, I+2);
+
+            /* inc sp+1 */
+            X = NewCodeEntry (OP65_INC, AM65_ZP, "sp+1", 0, E->LI);
+            CS_InsertEntry (S, X, I+3);
+
+            /* Delete the call; its labels move forward onto the inc sp */
+            CS_DelEntry (S, I);
+
+            I += 2;             /* skip the generated body (plus loop ++I) */
+            ++Changes;
+
+        } else if (P != 0 && CE_IsCallTo (E, "incsp2") && Inline2 < Call2) {
+
+            /* Emit the exact incsp2.s body. The two carry targets and the
+            ** continuation are created bottom-up so every branch target exists
+            ** before the branch that references it; each insert goes to I+1, so
+            ** the later-in-memory entry must be inserted first.
+            **
+            **      inc sp / beq @L1 / inc sp / beq @L2 / bra L
+            ** @L1: inc sp
+            ** @L2: inc sp+1
+            ** L:   <next insn>
+            */
+            CodeLabel* LA;      /* @L1 */
+            CodeLabel* LB;      /* @L2 */
+
+            /* @L2: inc sp+1 */
+            X = NewCodeEntry (OP65_INC, AM65_ZP, "sp+1", 0, E->LI);
+            CS_InsertEntry (S, X, I+1);
+            LB = CS_GenLabel (S, X);
+
+            /* @L1: inc sp */
+            X = NewCodeEntry (OP65_INC, AM65_ZP, "sp", 0, E->LI);
+            CS_InsertEntry (S, X, I+1);
+            LA = CS_GenLabel (S, X);
+
+            /* bra L */
+            L = CS_GenLabel (S, P);
+            X = NewCodeEntry (OP65_BRA, AM65_BRA, L->Name, L, E->LI);
+            CS_InsertEntry (S, X, I+1);
+
+            /* beq @L2 */
+            X = NewCodeEntry (OP65_BEQ, AM65_BRA, LB->Name, LB, E->LI);
+            CS_InsertEntry (S, X, I+1);
+
+            /* inc sp */
+            X = NewCodeEntry (OP65_INC, AM65_ZP, "sp", 0, E->LI);
+            CS_InsertEntry (S, X, I+1);
+
+            /* beq @L1 */
+            X = NewCodeEntry (OP65_BEQ, AM65_BRA, LA->Name, LA, E->LI);
+            CS_InsertEntry (S, X, I+1);
+
+            /* inc sp */
+            X = NewCodeEntry (OP65_INC, AM65_ZP, "sp", 0, E->LI);
+            CS_InsertEntry (S, X, I+1);
+
+            /* Delete the call; its labels move forward onto the first inc sp */
+            CS_DelEntry (S, I);
+
+            I += 6;             /* skip the generated body (plus loop ++I) */
+            ++Changes;
+
         }
 
         /* Next entry */

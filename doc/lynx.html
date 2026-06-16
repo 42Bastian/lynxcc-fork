@@ -330,9 +330,19 @@ stock cc65 2.19. The full design, measurements, and verification plan are in
   <code>&lt;suzymath.h&gt;</code>; see <a href="funcref.html#sect-4">How the
   Suzy math functions work</a> in the function reference.</p>
 </dd>
+<dt>Cycle-cost model</dt>
+<dd>
+<p>The optimizer carries a per-instruction 65SC02 cycle model alongside the
+  existing size model, so passes can prefer the faster of two encodings instead
+  of guessing. At a speed-biased setting (<code>-Oi</code>, or
+  <code>--codesize</code> above 100) the small <code>incsp1</code>/<code>incsp2</code>
+  C-stack drops are inlined when the model shows the inline body beats the
+  <code>jsr</code>/<code>rts</code> call overhead, trading a few bytes for speed.
+  At the default size setting nothing changes. This is rarely triggered in
+  practice and is purely an internal optimization; see the design document,
+  section 2.7.</p>
+</dd>
 </dl>
-<p>Planned but not yet implemented: a cycle-cost model for the optimizer (see the
-design document, section 2.7).</p>
 <h2 id="sect-8">8. Limitations</h2>
 <h2 id="sect-9">9. Cart access</h2>
 <p>At this point in time there is no support for the cart filesystem yet. I have

@@ -186,6 +186,7 @@ typedef struct {
     opc_t           OPC;                /* Opcode */
     char            Mnemo[9];           /* Mnemonic */
     unsigned char   Size;               /* Size, 0 = check addressing mode */
+    unsigned char   Cycles;             /* Cycle cost, 0 = check addressing mode */
     unsigned short  Use;                /* Registers used by this insn */
     unsigned short  Chg;                /* Registers changed by this insn */
     unsigned short  Info;               /* Additional information */
@@ -209,6 +210,17 @@ const OPCDesc* FindOP65 (const char* OPC);
 
 unsigned GetInsnSize (opc_t OPC, am_t AM);
 /* Return the size of the given instruction */
+
+unsigned GetInsnCycles (opc_t OPC, am_t AM);
+/* Return the execution time of the given instruction in CPU cycles, modelled
+** for the 65SC02 core used by the Lynx (see LYNX_CODEGEN_DESIGN.md section 2.7).
+** The figure is the guaranteed minimum: data-dependent penalties that the
+** compiler cannot know statically (a taken conditional branch costs +1, and an
+** indexed or indirect-indexed access that crosses a page boundary costs +1) are
+** deliberately excluded so that the cost of a fixed instruction is itself fixed.
+** Unconditional control transfers that always pay (bra, jmp, jsr, the long
+** conditional j* pseudo-insns) are costed at their real value.
+*/
 
 #if defined(HAVE_INLINE)
 INLINE const OPCDesc* GetOPCDesc (opc_t OPC)

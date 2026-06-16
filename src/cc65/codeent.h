@@ -108,6 +108,11 @@ void CE_ReplaceOPC (CodeEntry* E, opc_t OPC);
 ** Size, Use and Chg, but it will NOT update any arguments or labels.
 */
 
+unsigned CE_GetCycles (const CodeEntry* E);
+/* Return the modelled execution time of the code entry in CPU cycles (65SC02
+** model, see GetInsnCycles in opcodes.c and LYNX_CODEGEN_DESIGN.md section 2.7).
+*/
+
 int CodeEntriesAreEqual (const CodeEntry* E1, const CodeEntry* E2);
 /* Check if both code entries are equal */
 

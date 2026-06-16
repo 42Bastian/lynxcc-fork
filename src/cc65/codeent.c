@@ -303,6 +303,17 @@ void CE_ReplaceOPC (CodeEntry* E, opc_t OPC)
 
 
 
+unsigned CE_GetCycles (const CodeEntry* E)
+/* Return the modelled execution time of the code entry in CPU cycles. See
+** GetInsnCycles in opcodes.c for the 65SC02 timing model and its assumptions
+** (LYNX_CODEGEN_DESIGN.md section 2.7).
+*/
+{
+    return GetInsnCycles (E->OPC, E->AM);
+}
+
+
+
 int CodeEntriesAreEqual (const CodeEntry* E1, const CodeEntry* E2)
 /* Check if both code entries are equal */
 {

@@ -38,7 +38,13 @@ Implemented so far:
   combination in `expr.c` and hardware generators in `codegen.c`; verified
   against C semantics on 3144 operand pairs in a 65C02+Suzy simulator. Note:
   source using these operators is fork-specific — other compilers reject it.
+- **Cycle-cost model** (§2.7): a per-instruction 65SC02 cycle table in the
+  optimizer (`GetInsnCycles`/`CE_GetCycles`) alongside the size model, validated
+  0/150 against an authoritative reference. It backs a "not slower" guard on the
+  `trb`/`tsb` peephole and a speed-biased pass (`-Oi` / `--codesize` > 100) that
+  inlines the small `incsp1`/`incsp2` stack drops when the model shows the inline
+  body beats the call. Default `-O` output is unchanged.
 
 Explored and reverted: additional 65C02 peephole passes (§2.2) — the patterns
-do not occur in compiler output, zero diffs on a 48-file corpus. Designed but
-not yet implemented: a cycle-cost model (§2.7).
+do not occur in compiler output, zero diffs on a 48-file corpus. All seven
+design steps (§2.1–§2.7) are now implemented.

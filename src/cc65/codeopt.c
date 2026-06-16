@@ -754,6 +754,7 @@ struct OptFunc {
 static OptFunc DOpt65C02BitOps  = { Opt65C02BitOps,  "Opt65C02BitOps",   66, 0, 0, 0, 0, 0 };
 static OptFunc DOpt65C02Ind     = { Opt65C02Ind,     "Opt65C02Ind",     100, 0, 0, 0, 0, 0 };
 static OptFunc DOpt65C02Stores  = { Opt65C02Stores,  "Opt65C02Stores",  100, 0, 0, 0, 0, 0 };
+static OptFunc DOpt65C02StackOps= { Opt65C02StackOps, "Opt65C02StackOps",101, 0, 0, 0, 0, 0 };
 static OptFunc DOptAdd1         = { OptAdd1,         "OptAdd1",         125, 0, 0, 0, 0, 0 };
 static OptFunc DOptAdd2         = { OptAdd2,         "OptAdd2",         200, 0, 0, 0, 0, 0 };
 static OptFunc DOptAdd3         = { OptAdd3,         "OptAdd3",          65, 0, 0, 0, 0, 0 };
@@ -855,6 +856,7 @@ static OptFunc DOptUnusedStores = { OptUnusedStores, "OptUnusedStores",   0, 0, 
 static OptFunc* OptFuncs[] = {
     &DOpt65C02BitOps,
     &DOpt65C02Ind,
+    &DOpt65C02StackOps,
     &DOpt65C02Stores,
     &DOptAdd1,
     &DOptAdd2,
@@ -1405,6 +1407,10 @@ static unsigned RunOptGroup5 (CodeSeg* S)
         Changes += RunOptFunc (S, &DOpt65C02BitOps, 1);
         Changes += RunOptFunc (S, &DOpt65C02Ind, 1);
         Changes += RunOptFunc (S, &DOpt65C02Stores, 1);
+        /* Speed-biased: only runs when CodeSizeFactor > 100 (gated by the
+        ** descriptor's factor of 101). Inlines small C-stack drops.
+        */
+        Changes += RunOptFunc (S, &DOpt65C02StackOps, 1);
         if (Changes) {
             /* The 65C02 replacement codes do often make the use of a register
             ** value unnecessary, so if we have changes, run another load
