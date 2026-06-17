@@ -344,6 +344,31 @@ stock cc65 2.19. The full design, measurements, and verification plan are in
 </dd>
 </dl>
 <h2 id="sect-8">8. Limitations</h2>
+<dl>
+<dt>No Rockwell bit instructions (<code>RMBx/SMBx/BBRx/BBSx</code>)</dt>
+<dd>
+<p>The compiler and runtime never emit the Rockwell single-bit instructions,
+  even though <code>--cpu&nbsp;65c02</code> would assemble them. They are not
+  portable across the Lynx hardware family: the original Lynx (Lynx I) uses a
+  <strong>65SC02</strong> core that omits them &mdash; the opcodes decode as
+  NOP-like no-ops, so code relying on them silently misbehaves &mdash; whereas
+  the later <strong>Lynx II</strong> Mikey revision implements the full Rockwell
+  bit set and executes them as intended. Using them would mean either dropping
+  Lynx I support or carrying two execution paths (runtime CPU detection plus
+  duplicated, separately tested runtime routines and peepholes).</p>
+<p>The payoff does not justify that cost. The instructions only help single-bit
+  set/clear and test-and-branch on <em>zero-page</em> bytes, a thin slice of the
+  instruction mix, and most C variables are not in zero page. Where the pattern
+  does occur, the <code>TRB</code>/<code>TSB</code>, <code>STZ</code> and
+  <code>BIT</code> instructions available on the shared 65SC02 baseline (and
+  already used by the optimizer) capture the realistic benefit; the only thing
+  they cannot replicate is the fused test-and-branch of <code>BBRx/BBSx</code>,
+  worth roughly 2&ndash;3 cycles and 3 bytes per site &mdash; a sub-1&ndash;2&nbsp;percent
+  whole-program effect. A single 65SC02 build that runs unmodified on both Lynx
+  I and Lynx II is worth more than that margin. See
+  <code>LYNX_CODEGEN_DESIGN.md</code> section 3 for the full rationale.</p>
+</dd>
+</dl>
 <h2 id="sect-9">9. Cart access</h2>
 <p>At this point in time there is no support for the cart filesystem yet. I have
 a <code>lynx-cart-demo</code> example project that uses an interrupt driven display,
