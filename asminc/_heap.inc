@@ -18,10 +18,10 @@
 .endstruct
 
 ; Struct usedblock
-; See notes above
+; The raw block is always (user pointer - HEAP_ADMIN_SPACE); the word below the
+; user pointer is the raw block size. No separate start back-pointer.
 .struct usedblock
         size    .word
-        start   .addr
 .endstruct
 
 HEAP_MIN_BLOCKSIZE  = .sizeof (freeblock)   ; Minimum size of an allocated block

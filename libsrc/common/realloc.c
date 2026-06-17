@@ -65,12 +65,11 @@ void* __fastcall__ realloc (void* block, register size_t size)
         size = sizeof (struct freeblock);
     }
 
-    /* The word below the user block contains a pointer to the start of the
-    ** raw memory block. The first word of this raw memory block is the full
-    ** size of the block. Get a pointer to the real block, get the old block
-    ** size.
+    /* The raw memory block starts HEAP_ADMIN_SPACE bytes below the user block,
+    ** and its first word is the full size of the block. Get a pointer to the
+    ** real block, get the old block size.
     */
-    b = (((struct usedblock*) block) - 1)->start;
+    b = ((struct usedblock*) block) - 1;
     oldsize = b->size;
 
     /* Is the block at the current heap top? */
@@ -81,7 +80,6 @@ void* __fastcall__ realloc (void* block, register size_t size)
             /* Ok, there's space enough */
             _heapptr = (unsigned*) newhptr;
             b->size = size;
-            b->start = b;
             return block;
         }
     }

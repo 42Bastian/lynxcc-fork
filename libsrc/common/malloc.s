@@ -316,21 +316,15 @@ FillSizeAndRet:
         ldy     #usedblock::size        ; p->size = size;
         lda     ptr1                    ; Low byte of block size
         sta     (ptr2),y
-        iny                             ; Points to freeblock::size+1
+        iny                             ; Points to usedblock::size+1
         lda     ptr1+1
         sta     (ptr2),y
 
+; Return the user pointer, which points behind the struct usedblock. The
+; block-used-in-full path jumps here directly: its size word is already set.
+
 RetUserPtr:
-        ldy     #usedblock::start       ; p->start = p
-        lda     ptr2
-        sta     (ptr2),y
-        iny
-        lda     ptr2+1
-        sta     (ptr2),y
-
-; Return the user pointer, which points behind the struct usedblock
-
-        lda     ptr2                    ; return ++p;
+        lda     ptr2                    ; return p + HEAP_ADMIN_SPACE;
         ldx     ptr2+1
         add     #HEAP_ADMIN_SPACE
         bcc     @L9

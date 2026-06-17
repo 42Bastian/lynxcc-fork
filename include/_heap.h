@@ -12,14 +12,14 @@
 
 
 
-/* Structure that preceeds a user block in most cases.
-** The aligned_malloc function may generate blocks where the start pointer
-** and size are splitted to handle a memory hole that is needed for
-** alignment.
+/* Structure that preceeds a user block.
+** The user pointer returned by malloc() points HEAP_ADMIN_SPACE bytes above
+** this header, so the raw block is always exactly
+** (user_ptr - HEAP_ADMIN_SPACE). There is no separate start back-pointer:
+** the word immediately below the user pointer is the raw block size.
 */
 struct usedblock {
     unsigned            size;
-    struct usedblock*   start;
 };
 
 /* Space needed for administering used blocks */

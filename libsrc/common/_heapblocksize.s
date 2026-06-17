@@ -12,64 +12,34 @@
         .include        "_heap.inc"
 
         .macpack        generic
-        .macpack        cpu
 
 ;-----------------------------------------------------------------------------
 ; Code
 
 __heapblocksize:
 
-; Below the user data is a pointer that points to the start of the real
-; (raw) memory block. The first word of this block is the size. To access
-; the raw block pointer, we will decrement the high byte of the pointer,
-; the pointer is then at offset 254/255.
+; The raw block is HEAP_ADMIN_SPACE bytes below the user pointer, and its first
+; word is the raw block size. Decrement the high byte of the pointer so the size
+; word is reachable at offset 254/255 (user-2/user-1), and read it.
 
         sta     ptr1
         dex
-        stx     ptr1+1
-        ldy     #$FE
+        stx     ptr1+1          ; ptr1 = user - 256
+        ldy     #$FE            ; Offset 254 -> user-2: raw size low
         lda     (ptr1),y
-        sta     ptr2            ; Place the raw block pointer into ptr2
-        iny
+        sta     ptr2
+        iny                     ; Offset 255 -> user-1: raw size high
         lda     (ptr1),y
         sta     ptr2+1
 
-; Load the size from the raw block
-
-        ldy     #usedblock::size+1
-        lda     (ptr2),y
-        tax
-.if (.cpu .bitand CPU_ISET_65SC02)
-        lda     (ptr2)
-.else
-        dey
-        lda     (ptr2),y
-.endif
-
-; Correct the raw block size so that is shows the user visible portion. To
-; do that, we must decrease the size by the amount of unused memory, which is
-; the difference between the user space pointer and the raw memory block
-; pointer. Since we have decremented the user space pointer by 256, we will
-; have to correct the result.
+; Return the user-visible size, which is the raw size minus the admin header.
 ;
-;       return size - (ptr1 + 256 - ptr2)
-;       return size - ptr1 - 256 + ptr2
+;       return size - HEAP_ADMIN_SPACE
 
-        dex                     ; - 256
-        add     ptr2
-        pha
-        txa
-        adc     ptr2+1
-        tax
-        pla
-        sub     ptr1
-        pha
-        txa
-        sbc     ptr1+1
-        tax
-        pla
-
-; Done
-
-        rts
+        lda     ptr2
+        sub     #HEAP_ADMIN_SPACE
+        ldx     ptr2+1
+        bcs     @L1
+        dex
+@L1:    rts
 

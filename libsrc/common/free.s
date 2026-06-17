@@ -78,29 +78,29 @@ _free:  sta     ptr2
         bne     @L1                     ; Jump if no
         rts                             ; Bail out if yes
 
-; There's a pointer below the user space that points to the real start of the
-; raw block. We will decrement the high pointer byte and use an offset of 254
-; to save some code. The first word of the raw block is the total size of the
-; block. Remember the block size in ptr1.
+; The raw block starts HEAP_ADMIN_SPACE bytes below the user pointer, and its
+; first word is the total size of the block. We decrement the high pointer byte
+; and use an offset of 254 to reach user-2 cheaply: that word is the size, and
+; user-2 is also the raw block start. Remember the size in ptr1, point ptr2 at
+; the raw block.
 
-@L1:    dec     ptr2+1                  ; Decrement high pointer byte
-        ldy     #$FF
-        lda     (ptr2),y                ; High byte of real block address
-        tax
-        dey
-        lda     (ptr2),y
-        stx     ptr2+1
-        sta     ptr2                    ; Set ptr2 to start of real block
-
-        ldy     #usedblock::size+1
-        lda     (ptr2),y                ; High byte of size
-        sta     ptr1+1                  ; Save it
-        dey
-        lda     (ptr2),y
+@L1:    dec     ptr2+1                  ; Decrement high pointer byte (-256)
+        ldy     #$FE                    ; Offset 254 reaches user-2
+        lda     (ptr2),y                ; Low byte of raw block size
         sta     ptr1
+        iny                             ; Offset 255 reaches user-1
+        lda     (ptr2),y                ; High byte of raw block size
+        sta     ptr1+1
+
+        lda     ptr2                    ; ptr2 = user - 2 (raw block start)
+        add     #$FE
+        sta     ptr2
+        bcc     @L2
+        inc     ptr2+1
 
 ; Check if the block is on top of the heap
 
+@L2:    lda     ptr1
         add     ptr2
         tay
         lda     ptr2+1
