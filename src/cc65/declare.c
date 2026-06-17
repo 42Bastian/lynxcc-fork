@@ -1096,6 +1096,30 @@ static void ParseTypeSpec (DeclSpec* D, long Default, TypeCode Qualifiers)
                 NextToken ();
                 TypeCopy (D->Type, Entry->Type);
                 break;
+            } else if (NextTok.Tok == TOK_IDENT ||
+                       (Entry == 0 && NextTok.Tok == TOK_STAR)) {
+                /* An identifier that is not a known type is sitting in type
+                ** specifier position and is either immediately followed by
+                ** another identifier (e.g. "time_t foo") or names nothing at
+                ** all and is followed by '*' (e.g. "time_t *foo"). Neither form
+                ** can be a valid expression, so this is almost certainly an
+                ** undeclared type name (a missing typedef or #include). Report
+                ** that directly instead of falling through to an implicit int,
+                ** which would mis-parse the type name as the declared object and
+                ** emit a cascade of confusing follow-on errors.
+                **
+                ** The "names nothing" guard on the '*' case keeps a genuine
+                ** multiplication statement such as "a * b;" (where 'a' is a
+                ** declared value) parsing as an expression.
+                */
+                Error ("Unknown type name '%s'", CurTok.Ident);
+                /* Consume the bogus type name and assume int so we can keep
+                ** parsing the declarator that follows.
+                */
+                NextToken ();
+                D->Type[0].C = T_INT;
+                D->Type[1].C = T_END;
+                break;
             }
             /* FALL THROUGH */
 

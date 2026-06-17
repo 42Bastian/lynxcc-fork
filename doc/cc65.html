@@ -47,7 +47,18 @@ improvements.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl2"><a href="#asm-from-c-1">11.1. Calling conventions</a></li>
 <li class="lvl2"><a href="#asm-from-c-2">11.2. Prologue, before the function call</a></li>
 <li class="lvl2"><a href="#asm-from-c-3">11.3. Epilogue, after the function call</a></li>
-<li class="lvl1"><a href="#sect-11">12. Copyright</a></li>
+<li class="lvl1"><a href="#diagnostics">12. Compiler diagnostics</a></li>
+<li class="lvl2"><a href="#diag-format">12.1. Reading a diagnostic</a></li>
+<li class="lvl2"><a href="#diag-lexical">12.2. Lexical, character and string constants</a></li>
+<li class="lvl2"><a href="#diag-preproc">12.3. Preprocessor directives</a></li>
+<li class="lvl2"><a href="#diag-decl">12.4. Declarations, types and initializers</a></li>
+<li class="lvl2"><a href="#diag-expr">12.5. Expressions and operators</a></li>
+<li class="lvl2"><a href="#diag-stmt">12.6. Statements and control flow</a></li>
+<li class="lvl2"><a href="#diag-sym">12.7. Symbols, functions and scope</a></li>
+<li class="lvl2"><a href="#diag-pragma">12.8. #pragma, segments and wrapped-call</a></li>
+<li class="lvl2"><a href="#diag-asm">12.9. Inline assembler and code generation</a></li>
+<li class="lvl2"><a href="#diag-fatal">12.10. Fatal errors</a></li>
+<li class="lvl1"><a href="#sect-11">13. Copyright</a></li>
 </ul></nav><h2 id="sect-1">1. Overview</h2>
 <p>cc65 was originally a C compiler for the Atari 8-bit machines written by
 John R. Dunning. In prior releases I've described the compiler by listing
@@ -589,6 +600,17 @@ and the one defined by the ISO standard:</p>
 <p>The <code>volatile</code> keyword has almost no effect. That is not as bad
         as it sounds, since the 6502 has so few registers that it isn't
         possible to keep values in registers anyway.</p>
+</li>
+<li>
+<p>Using an undeclared type name in a declaration (for example
+        <code>time_t x;</code> when no <code>typedef</code> for <code>time_t</code>
+        is in scope, typically a missing <code>#include</code>) is reported as
+        <code>Unknown type name 'time_t'</code>. The ISO rule that an omitted type
+        defaults to <code>int</code> was removed in C99; this compiler still
+        accepts a genuine implicit <code>int</code> (warning under C99 and later),
+        but an unknown identifier sitting in type position followed by another
+        identifier, or by <code>*</code>, is diagnosed as a bad type name instead
+        of being silently treated as <code>int</code>.</p>
 </li>
 </ul>
 <p>There may be some more minor differences I'm currently not aware of. The
@@ -1446,7 +1468,261 @@ it may clobber any of these itself:</p>
 <p><code>sreg</code> (if unused by return)</p>
 </li>
 </ul>
-<h2 id="sect-11">12. Copyright</h2>
+<h2 id="diagnostics">12. Compiler diagnostics</h2>
+<p>The compiler reports problems as messages of the form <code>file(line): <em>severity</em>: message</code>, where <em>severity</em> is <code>Warning</code>, <code>Error</code> or <code>Fatal</code>. Warnings do not stop translation and can be tuned individually (see <code><a href="#option-W">-W</a></code> and <code><a href="#option-list-warnings">--list-warnings</a></code>); errors let parsing continue so that several can be found in one run, but no output file is produced; a fatal error aborts the compiler at once. Compilation also stops with <code>Too many errors</code> once the error count gets too high.</p>
+<p>The tables below list the error and fatal-error messages the compiler can produce, grouped by the stage that emits them. Text such as <code>%s</code>, <code>%u</code> or <code>%02X</code> is filled in with the offending name or value at runtime. (Warnings are not listed here; use <code>--list-warnings</code> for the current set.) Messages that begin with <code>ASM code error</code> or report an internal inconsistency usually indicate a compiler bug rather than a mistake in your program.</p>
+<h3 id="diag-format">12.1. Reading a diagnostic</h3>
+<p>For example, a header that uses a type the compiler does not know about:</p>
+<pre class="verb">    src/Avl.h(48): Error: Unknown type name 'time_t'</pre>
+<p>names the file and line, the severity, and the specific problem - here, a <code>time_t</code> with no <code>typedef</code> or <code>#include</code> in scope.</p>
+<h3 id="diag-lexical">12.2. Lexical, character and string constants</h3>
+<p>Reported while reading source characters, numbers and constants.</p>
+<div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
+<tr><td><code>Invalid input character with code %02X</code></td><td>A byte that is not legal C source was found in the input file.</td></tr>
+<tr><td><code>Unexpected newline</code></td><td>A line ended in the middle of a token, e.g. an unterminated character constant.</td></tr>
+<tr><td><code>Numeric constant contains digits beyond the radix</code></td><td>A digit is too large for the constant's base (e.g. an 8 or 9 in an octal number).</td></tr>
+<tr><td><code>Floating constant exponent has no digits</code></td><td>The exponent of a floating-point constant (after e/E) is missing its digits.</td></tr>
+<tr><td><code>Illegal escaped character: 0x%02X</code></td><td>An unknown backslash escape sequence was used in a string or character constant.</td></tr>
+<tr><td><code>\x used with no following hex digits</code></td><td>A \x escape was not followed by any hexadecimal digits.</td></tr>
+<tr><td><code>Hex character constant out of range</code></td><td>A \x escape evaluates to a value too large for the character type.</td></tr>
+<tr><td><code>Octal character constant out of range</code></td><td>A \nnn octal escape evaluates to a value too large for the character type.</td></tr>
+<tr><td><code>'\'' expected</code></td><td>A closing single quote was expected to terminate a character constant.</td></tr>
+<tr><td><code>Character constant out of range</code></td><td>A character constant does not fit the target character type.</td></tr>
+<tr><td><code>Illegal character constant 0x%02X</code></td><td>A character constant contains a value that cannot be represented.</td></tr>
+<tr><td><code>Invalid hexadecimal number</code></td><td>A malformed hexadecimal number was scanned.</td></tr>
+<tr><td><code>Invalid hexadecimal digit: '%c'</code></td><td>A character that is not a valid hexadecimal digit was used where one was required.</td></tr>
+<tr><td><code>Unexpected end of string</code></td><td>The end of a string was reached while more input was expected.</td></tr>
+</table></div>
+<h3 id="diag-preproc">12.3. Preprocessor directives</h3>
+<p>Reported by the preprocessor for #include, conditionals, macros and #error/#warning.</p>
+<div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
+<tr><td><code>#error: %s</code></td><td>A user #error directive was reached; the text is taken from the directive.</td></tr>
+<tr><td><code>#include expects \"FILENAME\" or &lt;FILENAME&gt;</code></td><td>An #include directive was not followed by a quoted or angle-bracketed file name.</td></tr>
+<tr><td><code>'#' is not followed by a macro parameter</code></td><td>In a function-like macro, the # stringize operator must be followed by a parameter name.</td></tr>
+<tr><td><code>'#endif' expected</code></td><td>A conditional block (#if/#ifdef/...) was left open at end of file.</td></tr>
+<tr><td><code>')' expected</code></td><td>A closing parenthesis is missing (macro argument list or pragma/expression).</td></tr>
+<tr><td><code>'...' expected</code></td><td>A variadic macro parameter list is malformed; '...' was expected.</td></tr>
+<tr><td><code>'\"' or '&lt;' expected</code></td><td>A computed #include did not expand to a valid "FILENAME" or &lt;FILENAME&gt; form.</td></tr>
+<tr><td><code>Duplicate #else</code></td><td>More than one #else was found in a single conditional block.</td></tr>
+<tr><td><code>Duplicate #else/#elif</code></td><td>An #else or #elif appeared after an #else in the same conditional block.</td></tr>
+<tr><td><code>End-of-file reached in comment starting at line %u</code></td><td>A /* comment was never closed before end of file.</td></tr>
+<tr><td><code>Identifier expected</code></td><td>An identifier was required here (declarator, macro name, label, etc.) but not found.</td></tr>
+<tr><td><code>Invalid #error directive</code></td><td>The #error directive is malformed.</td></tr>
+<tr><td><code>Invalid #warning directive</code></td><td>The #warning directive is malformed.</td></tr>
+<tr><td><code>Macro argument count mismatch</code></td><td>A function-like macro was invoked with the wrong number of arguments.</td></tr>
+<tr><td><code>Macro redefinition is not identical</code></td><td>A macro was redefined with a different body than its previous definition.</td></tr>
+<tr><td><code>Preprocessor directive expected</code></td><td>A '#' was not followed by a valid preprocessor directive.</td></tr>
+<tr><td><code>Too many nested #if clauses</code></td><td>The conditional-inclusion nesting limit was exceeded.</td></tr>
+<tr><td><code>Unexpected #elif</code></td><td>An #elif was found without a matching #if.</td></tr>
+<tr><td><code>Unexpected '#else'</code></td><td>An #else was found without a matching #if.</td></tr>
+<tr><td><code>Unexpected '#endif'</code></td><td>An #endif was found without a matching #if.</td></tr>
+<tr><td><code>Unterminated argument list invoking macro '%s'</code></td><td>End of file was reached inside a macro call's argument list.</td></tr>
+</table></div>
+<h3 id="diag-decl">12.4. Declarations, types and initializers</h3>
+<p>Reported while parsing declarations, type specifiers, qualifiers, struct/union/enum and initializers.</p>
+<div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
+<tr><td><code>Unknown type name '%s'</code></td><td>An undeclared identifier was used where a type name was expected (typically a missing typedef or #include).</td></tr>
+<tr><td><code>Type expected</code></td><td>A type specifier was required here but none was found.</td></tr>
+<tr><td><code>Identifier expected for argument %u</code></td><td>An __asm__ argument that must be an identifier was something else.</td></tr>
+<tr><td><code>Illegal type</code></td><td>The type produced by the declaration or expression is not valid here.</td></tr>
+<tr><td><code>Illegal type in initialization</code></td><td>The initializer's type is not compatible with the object being initialized.</td></tr>
+<tr><td><code>Illegal type %04lX</code></td><td>Internal type code that is not valid in this context.</td></tr>
+<tr><td><code>Illegal type for variable '%s'</code></td><td>The named variable was declared with a type it cannot have (e.g. a function type).</td></tr>
+<tr><td><code>Illegal storage class</code></td><td>The storage-class specifier (auto/register/static/extern/typedef) is not allowed here.</td></tr>
+<tr><td><code>Invalid address size</code></td><td>An address-size qualifier resolved to an invalid value.</td></tr>
+<tr><td><code>Size of data type is unknown</code></td><td>The size of a type is needed but the type is incomplete.</td></tr>
+<tr><td><code>Invalid size in declaration (0x%06X)</code></td><td>The declared object is larger than the target supports.</td></tr>
+<tr><td><code>Size of '%s' is invalid (0x%06X)</code></td><td>The named object is larger than the target supports.</td></tr>
+<tr><td><code>Size of array '%s' is invalid</code></td><td>The named array has a zero or otherwise invalid element count.</td></tr>
+<tr><td><code>Size of array is invalid</code></td><td>An array has a zero or otherwise invalid element count.</td></tr>
+<tr><td><code>Cannot initialize variables with incomplete type</code></td><td>An object of incomplete type (e.g. an array of unknown size) cannot be initialized.</td></tr>
+<tr><td><code>Constant initializer expected</code></td><td>A static/global initializer must be a constant expression.</td></tr>
+<tr><td><code>Non constant initializer</code></td><td>A static/global object was initialized with a non-constant value.</td></tr>
+<tr><td><code>Non constant initializers</code></td><td>One or more static/global initializers are not constant expressions.</td></tr>
+<tr><td><code>Too many initializers</code></td><td>More initializers were supplied than the aggregate has elements.</td></tr>
+<tr><td><code>'{' expected</code></td><td>An opening brace was expected (e.g. to begin an initializer or block).</td></tr>
+<tr><td><code>'}' expected</code></td><td>A closing brace was expected to end an initializer or aggregate.</td></tr>
+<tr><td><code>Bit-field has invalid type</code></td><td>A bit-field was declared with a type that may not be used for bit-fields.</td></tr>
+<tr><td><code>Negative width in bit-field</code></td><td>A bit-field was declared with a negative width.</td></tr>
+<tr><td><code>Zero width for named bit-field</code></td><td>A named bit-field was declared with width zero (only unnamed zero-width fields are allowed).</td></tr>
+<tr><td><code>Width of bit-field exceeds its type</code></td><td>The bit-field width is larger than the underlying type can hold.</td></tr>
+<tr><td><code>Flexible array member cannot be first struct field</code></td><td>A flexible array member must be preceded by at least one named member.</td></tr>
+<tr><td><code>Flexible array member must be last field</code></td><td>A flexible array member may only appear as the final struct member.</td></tr>
+<tr><td><code>Address size qualifier mismatch</code></td><td>Conflicting address-size qualifiers were applied.</td></tr>
+<tr><td><code>Cannot specify more than one address size qualifier</code></td><td>Only one of the address-size qualifiers may be given.</td></tr>
+<tr><td><code>Cannot specify more than one calling convention qualifier</code></td><td>Only one calling-convention qualifier may be given.</td></tr>
+<tr><td><code>Cannot take the address of a register variable</code></td><td>Objects with register storage class have no address.</td></tr>
+<tr><td><code>Functions are not allowed to return arrays</code></td><td>A function's return type may not be an array.</td></tr>
+<tr><td><code>Functions are not allowed to return functions</code></td><td>A function's return type may not be a function.</td></tr>
+<tr><td><code>function definition has qualified void return type</code></td><td>A function returning void may not have a qualified void return type.</td></tr>
+<tr><td><code>Function's and pointer's calling conventions are different</code></td><td>A function pointer was assigned a function with an incompatible calling convention.</td></tr>
+<tr><td><code>Not pointer to a function; can't use a calling convention</code></td><td>A calling-convention qualifier was applied to something that is not a function pointer.</td></tr>
+<tr><td><code>Invalid '__cdecl__' qualifier</code></td><td>The __cdecl__ qualifier was used in an invalid position.</td></tr>
+<tr><td><code>Invalid '__far__' qualifier</code></td><td>The __far__ qualifier was used in an invalid position.</td></tr>
+<tr><td><code>Invalid '__fastcall__' qualifier</code></td><td>The __fastcall__ qualifier was used in an invalid position.</td></tr>
+<tr><td><code>Invalid '__near__' qualifier</code></td><td>The __near__ qualifier was used in an invalid position.</td></tr>
+<tr><td><code>Invalid qualifiers for array</code></td><td>Type qualifiers were applied to an array in a way the standard does not allow.</td></tr>
+<tr><td><code>Variadic functions cannot be __fastcall__</code></td><td>A function with a variable argument list cannot use the __fastcall__ convention.</td></tr>
+<tr><td><code>Variadic-function pointers cannot be __fastcall__</code></td><td>A pointer to a variadic function cannot use the __fastcall__ convention.</td></tr>
+<tr><td><code>Redefinition for parameter '%s'</code></td><td>The same parameter name was declared twice in one function.</td></tr>
+<tr><td><code>Symbol '%s' is already different kind</code></td><td>The name is already declared as a different kind of entity (e.g. tag vs. variable).</td></tr>
+<tr><td><code>Unknown identifier: '%s'</code></td><td>An identifier was referenced that has not been declared.</td></tr>
+<tr><td><code>Cannot convert from 'void' to something else</code></td><td>A void value cannot be converted to another type.</td></tr>
+<tr><td><code>Incompatible pointer types at '%s'</code></td><td>Two pointer types in this expression are not compatible.</td></tr>
+<tr><td><code>Pointer types differ in type qualifiers</code></td><td>Two pointer types differ only in qualifiers but the conversion drops or adds them illegally.</td></tr>
+<tr><td><code>Cannot initialize externals</code></td><td>An object declared extern may not carry an initializer here.</td></tr>
+<tr><td><code>Cannot initialize flexible array members of storage class 'register'</code></td><td>A register object may not have an initialized flexible array member.</td></tr>
+<tr><td><code>Variable '%s' has unknown size</code></td><td>The named variable's type has no known size, so storage cannot be allocated.</td></tr>
+<tr><td><code>Body for function '%s' has already been defined</code></td><td>A function with a body was defined more than once.</td></tr>
+<tr><td><code>Global variable '%s' has already been defined</code></td><td>A global object was defined more than once.</td></tr>
+<tr><td><code>Global variable '%s' already was defined in the '%s' segment.</code></td><td>A global object was placed in conflicting segments by repeated definitions.</td></tr>
+<tr><td><code>__asm__ is not allowed here</code></td><td>An __asm__ statement appeared in a context where it is not permitted.</td></tr>
+<tr><td><code>Attribute name expected</code></td><td>A __attribute__ specifier was not followed by an attribute name.</td></tr>
+<tr><td><code>Illegal attribute: '%s'</code></td><td>An unrecognized attribute name was used.</td></tr>
+<tr><td><code>Attributes must be specified in the first declaration</code></td><td>Attributes have to appear on the first declaration of a symbol.</td></tr>
+<tr><td><code>Too many type specifiers</code></td><td>More type specifiers were combined than is legal (e.g. long long long).</td></tr>
+</table></div>
+<h3 id="diag-expr">12.5. Expressions and operators</h3>
+<p>Reported while type-checking expressions, operators, calls and lvalues.</p>
+<div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
+<tr><td><code>Expression expected</code></td><td>An expression was required here but none was found.</td></tr>
+<tr><td><code>Constant expression expected</code></td><td>A constant expression is required in this context.</td></tr>
+<tr><td><code>Constant integer expression expected</code></td><td>A constant integer expression is required in this context.</td></tr>
+<tr><td><code>Integer expression expected</code></td><td>An expression of integer type is required here.</td></tr>
+<tr><td><code>Constant integer expected</code></td><td>A constant integer value is required here.</td></tr>
+<tr><td><code>Boolean expression expected</code></td><td>A scalar/boolean expression is required (e.g. in a condition).</td></tr>
+<tr><td><code>Preprocessor expression expected</code></td><td>A constant expression was required in a preprocessor conditional.</td></tr>
+<tr><td><code>Argument must have integer type</code></td><td>A built-in or operator required an integer argument.</td></tr>
+<tr><td><code>Array subscript is not an integer</code></td><td>An array index expression is not of integer type.</td></tr>
+<tr><td><code>Subscripted value is neither array nor pointer</code></td><td>Subscripting was applied to something that is not an array or pointer.</td></tr>
+<tr><td><code>Cannot subscript</code></td><td>The operand cannot be subscripted with [].</td></tr>
+<tr><td><code>Struct expected</code></td><td>A struct or union value was required here.</td></tr>
+<tr><td><code>Struct pointer expected</code></td><td>A pointer to a struct or union was required (e.g. before -&gt;).</td></tr>
+<tr><td><code>Struct/union has no field named '%s'</code></td><td>The named member does not exist in the struct or union.</td></tr>
+<tr><td><code>Cannot take address of bit-field</code></td><td>Bit-fields have no address, so &amp; cannot be applied.</td></tr>
+<tr><td><code>Illegal indirection</code></td><td>The * operator was applied to a non-pointer value.</td></tr>
+<tr><td><code>Illegal address</code></td><td>The &amp; operator was applied to something that has no address.</td></tr>
+<tr><td><code>Illegal function call</code></td><td>A call was attempted on something that is not callable.</td></tr>
+<tr><td><code>Call to undefined function '%s'</code></td><td>A function was called that has not been declared.</td></tr>
+<tr><td><code>Too few arguments in function call</code></td><td>Fewer arguments were passed than the function declares.</td></tr>
+<tr><td><code>Too many arguments in function call</code></td><td>More arguments were passed than the function declares.</td></tr>
+<tr><td><code>Argument expected after comma</code></td><td>A trailing comma in an argument list was not followed by an argument.</td></tr>
+<tr><td><code>Variable identifier expected</code></td><td>A modifiable variable was expected at this position.</td></tr>
+<tr><td><code>Invalid lvalue</code></td><td>The operand is not a modifiable lvalue.</td></tr>
+<tr><td><code>Invalid lvalue in assignment</code></td><td>The left side of an assignment is not a modifiable lvalue.</td></tr>
+<tr><td><code>Assignment to const</code></td><td>An object declared const cannot be assigned to.</td></tr>
+<tr><td><code>Increment of read-only variable</code></td><td>++ cannot be applied to a const/read-only object.</td></tr>
+<tr><td><code>Decrement of read-only variable</code></td><td>-- cannot be applied to a const/read-only object.</td></tr>
+<tr><td><code>Incompatible types</code></td><td>The operand types are not compatible for this operation.</td></tr>
+<tr><td><code>Incompatible pointer types</code></td><td>Two pointer operands point to incompatible types.</td></tr>
+<tr><td><code>Invalid left operand type</code></td><td>The left operand has a type not allowed for this operator.</td></tr>
+<tr><td><code>Invalid left operand for binary operator '-'</code></td><td>The left operand of '-' has an invalid type.</td></tr>
+<tr><td><code>Invalid operands for binary operator '+'</code></td><td>The operand types are not valid for '+'.</td></tr>
+<tr><td><code>Invalid operands for binary operator '-'</code></td><td>The operand types are not valid for '-'.</td></tr>
+<tr><td><code>Invalid right operand for binary operator '-'</code></td><td>The right operand of '-' has an invalid type.</td></tr>
+<tr><td><code>Invalid right operand for binary operator '%s'</code></td><td>The right operand of the named binary operator has an invalid type.</td></tr>
+<tr><td><code>Invalid left operand for relational operator</code></td><td>The left operand of a relational operator has an invalid type.</td></tr>
+<tr><td><code>Invalid right operand for relational operator</code></td><td>The right operand of a relational operator has an invalid type.</td></tr>
+<tr><td><code>Division by zero</code></td><td>A constant division by zero was detected.</td></tr>
+<tr><td><code>Modulo operation with zero</code></td><td>A constant modulo by zero was detected.</td></tr>
+<tr><td><code>Computed gotos are a C extension, not supported with this --standard</code></td><td>The &amp;&amp;label / goto *expr extension is disabled under the selected standard.</td></tr>
+</table></div>
+<h3 id="diag-stmt">12.6. Statements and control flow</h3>
+<p>Reported while parsing statements, loops, switch and goto.</p>
+<div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
+<tr><td><code>';' expected</code></td><td>A semicolon was expected to end a statement or declaration.</td></tr>
+<tr><td><code>',' expected</code></td><td>A comma was expected to separate items in a list.</td></tr>
+<tr><td><code>'break' statement not within loop or switch</code></td><td>A break appeared outside any loop or switch.</td></tr>
+<tr><td><code>'continue' statement not within a loop</code></td><td>A continue appeared outside any loop.</td></tr>
+<tr><td><code>Function '%s' must return a value</code></td><td>Control reached the end of a non-void function without returning a value.</td></tr>
+<tr><td><code>Returning a value in function with return type void</code></td><td>A value was returned from a function declared void.</td></tr>
+<tr><td><code>Label at end of compound statement</code></td><td>A label has no statement following it before the closing brace.</td></tr>
+<tr><td><code>'default' label not within a switch statement</code></td><td>A default label appeared outside any switch.</td></tr>
+<tr><td><code>Case label not within a switch statement</code></td><td>A case label appeared outside any switch.</td></tr>
+<tr><td><code>Multiple default labels in one switch</code></td><td>A switch statement has more than one default label.</td></tr>
+<tr><td><code>Duplicate case label</code></td><td>Two case labels in the same switch have the same value.</td></tr>
+<tr><td><code>Range error</code></td><td>A case label value is outside the range of the switch quantity's type.</td></tr>
+<tr><td><code>Switch quantity is not an integer</code></td><td>The controlling expression of a switch must have integer type.</td></tr>
+<tr><td><code>Array name expected</code></td><td>A computed-goto label table operand must be an array.</td></tr>
+<tr><td><code>Expected a static array</code></td><td>The computed-goto label table must be a static array.</td></tr>
+<tr><td><code>Label name expected</code></td><td>A label name was expected (goto or label table).</td></tr>
+<tr><td><code>Only arrays with &lt;= 127 labels are supported, got %lu</code></td><td>A computed-goto label table exceeds the 127-entry limit.</td></tr>
+<tr><td><code>Only simple expressions are supported for computed goto</code></td><td>The computed-goto target expression is too complex.</td></tr>
+</table></div>
+<h3 id="diag-sym">12.7. Symbols, functions and scope</h3>
+<p>Reported for undefined, conflicting or duplicated symbols, labels and function definitions.</p>
+<div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
+<tr><td><code>Undefined symbol: '%s'</code></td><td>A symbol was used that is not defined in scope.</td></tr>
+<tr><td><code>Undefined symbol '%s' for argument %u</code></td><td>An __asm__ argument refers to an undefined symbol.</td></tr>
+<tr><td><code>Undefined label: '%s'</code></td><td>A goto refers to a label that is never defined in the function.</td></tr>
+<tr><td><code>Label '%s' is defined more than once</code></td><td>The same label name was defined twice in one function.</td></tr>
+<tr><td><code>Conflicting types for '%s'</code></td><td>A symbol was redeclared with a type incompatible with its previous declaration.</td></tr>
+<tr><td><code>Multiple definition for '%s'</code></td><td>A symbol was defined more than once.</td></tr>
+<tr><td><code>'main' must always return an int</code></td><td>The main function must be declared to return int.</td></tr>
+<tr><td><code>'main' cannot be declared as __fastcall__</code></td><td>The main function may not use the __fastcall__ calling convention.</td></tr>
+<tr><td><code>Parameter name omitted</code></td><td>A function definition's parameter list is missing a name for a parameter.</td></tr>
+<tr><td><code>Duplicate macro parameter: '%s'</code></td><td>A function-like macro lists the same parameter name twice.</td></tr>
+<tr><td><code>Too many local variables</code></td><td>A function declares more local variables than the compiler can handle.</td></tr>
+</table></div>
+<h3 id="diag-pragma">12.8. #pragma, segments and wrapped-call</h3>
+<p>Reported for malformed #pragma directives and segment / wrapped-call name stacks.</p>
+<div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
+<tr><td><code>'(' expected</code></td><td>A pragma argument list must begin with an opening parenthesis.</td></tr>
+<tr><td><code>Invalid pragma</code></td><td>An unknown #pragma name was used.</td></tr>
+<tr><td><code>Invalid pragma argument</code></td><td>A #pragma argument is of the wrong form.</td></tr>
+<tr><td><code>Comma expected</code></td><td>A comma was expected between #pragma arguments.</td></tr>
+<tr><td><code>Pragma argument must be one of 'on', 'off', 'true' or 'false'</code></td><td>A boolean #pragma needs one of these keywords.</td></tr>
+<tr><td><code>Pragma argument out of bounds (%ld-%ld)</code></td><td>A numeric #pragma argument is outside its allowed range.</td></tr>
+<tr><td><code>Pragma expects a warning name as first argument</code></td><td>#pragma warn must name a warning first.</td></tr>
+<tr><td><code>Push or pop required</code></td><td>A stacked #pragma needs a push or pop action.</td></tr>
+<tr><td><code>Cannot pop, stack is empty</code></td><td>A #pragma pop was issued with nothing on the stack.</td></tr>
+<tr><td><code>Cannot push: stack overflow</code></td><td>Too many nested #pragma push operations.</td></tr>
+<tr><td><code>Character code out of range</code></td><td>A #pragma charmap code is outside the valid range.</td></tr>
+<tr><td><code>Character index out of range</code></td><td>A #pragma charmap index is outside the valid range.</td></tr>
+<tr><td><code>Identifier must be between 0-255</code></td><td>A #pragma charmap identifier must fit in a byte.</td></tr>
+<tr><td><code>Illegal segment name: '%s'</code></td><td>A segment-name #pragma was given an invalid name.</td></tr>
+<tr><td><code>String literal expected</code></td><td>A string literal was required (e.g. a #pragma segment name or __asm__ text).</td></tr>
+<tr><td><code>Unexpected input following pragma directive</code></td><td>Extra tokens followed a complete #pragma.</td></tr>
+<tr><td><code>Value required for wrapped-call identifier</code></td><td>#pragma wrapped-call needs a value for its identifier.</td></tr>
+<tr><td><code>Wrapped-call target does not exist or is not a function</code></td><td>The #pragma wrapped-call target must be an existing function.</td></tr>
+<tr><td><code>Segment name stack is empty</code></td><td>A segment-name pop was issued with nothing on the stack.</td></tr>
+<tr><td><code>Segment name stack overflow</code></td><td>Too many nested segment-name pushes.</td></tr>
+<tr><td><code>WrappedCall stack is empty</code></td><td>A wrapped-call pop was issued with nothing on the stack.</td></tr>
+<tr><td><code>WrappedCall stack overflow</code></td><td>Too many nested wrapped-call pushes.</td></tr>
+</table></div>
+<h3 id="diag-asm">12.9. Inline assembler and code generation</h3>
+<p>Reported for __asm__ statements and the assembly the compiler emits.</p>
+<div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
+<tr><td><code>Error in __asm__ format specifier %u</code></td><td>An __asm__ format string has a malformed % specifier.</td></tr>
+<tr><td><code>Range error in argument %u</code></td><td>An __asm__ argument value is outside the range the specifier allows.</td></tr>
+<tr><td><code>Type of argument %u differs from format specifier</code></td><td>An __asm__ argument's type does not match its format specifier.</td></tr>
+<tr><td><code>Argument %u has no fixed stack offset</code></td><td>An __asm__ argument does not have a stable stack address.</td></tr>
+<tr><td><code>Code generation messed up: StackPtr is %d, should be %d</code></td><td>Internal consistency check: the tracked stack pointer is wrong (compiler bug).</td></tr>
+<tr><td><code>ASM code error: %s is not a valid mnemonic</code></td><td>The inline/generated assembly uses an unknown mnemonic.</td></tr>
+<tr><td><code>ASM code error: syntax error</code></td><td>The inline/generated assembly could not be parsed.</td></tr>
+<tr><td><code>ASM code error: ')' expected</code></td><td>A closing parenthesis is missing in an assembly operand.</td></tr>
+<tr><td><code>ASM code error: 'X' expected</code></td><td>The assembly operand expected the X register.</td></tr>
+<tr><td><code>ASM code error: 'Y' expected</code></td><td>The assembly operand expected the Y register.</td></tr>
+<tr><td><code>ASM code error: Cannot use local label '%s' in subroutine call</code></td><td>A local label may not be the target of a JSR/JMP in this context.</td></tr>
+<tr><td><code>ASM code error: Pseudo instruction '%s' not supported</code></td><td>An unsupported assembler pseudo-instruction was used inline.</td></tr>
+<tr><td><code>ASM label '%s' is already defined</code></td><td>The same assembly label was defined twice.</td></tr>
+<tr><td><code>Structs of this size are not supported</code></td><td>Struct assignment for this size cannot be generated.</td></tr>
+</table></div>
+<h3 id="diag-fatal">12.10. Fatal errors</h3>
+<p>Fatal errors abort compilation immediately. The first group are I/O failures; the rest are unrecoverable limits or unsupported features.</p>
+<div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
+<tr><td><code>Too many errors</code></td><td>Compilation was aborted after too many errors were reported.</td></tr>
+<tr><td><code>Cannot open input file '%s': %s</code></td><td>The compiler could not open the named source file.</td></tr>
+<tr><td><code>Cannot open dependency file '%s': %s</code></td><td>The compiler could not open the make-dependency output file.</td></tr>
+<tr><td><code>Cannot stat '%s': %s</code></td><td>The compiler could not stat the named file.</td></tr>
+<tr><td><code>Cannot write to dependeny file (disk full?)</code></td><td>Writing the dependency file failed, possibly out of disk space.</td></tr>
+<tr><td><code>Cannot open output file '%s': %s</code></td><td>The compiler could not create the assembly output file.</td></tr>
+<tr><td><code>Cannot open debug output file '%s': %s</code></td><td>The compiler could not create the optimizer-debug output file.</td></tr>
+<tr><td><code>Cannot write to output file (disk full?)</code></td><td>Writing the assembly output failed, possibly out of disk space.</td></tr>
+<tr><td><code>Floating point type is currently unsupported</code></td><td>The float/double types are not implemented for this target.</td></tr>
+<tr><td><code>Can't redeclare enum constant '%s' as global variable</code></td><td>An enum constant name was reused as a global variable.</td></tr>
+</table></div>
+<h2 id="sect-11">13. Copyright</h2>
 <p>This is the original compiler copyright:</p>
 <pre class="verb">--------------------------------------------------------------------------
   -*- Mode: Text -*-
