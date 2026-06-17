@@ -37,7 +37,9 @@ The Lynx CPU is a **65SC02** core inside Mikey, clocked at 16 MHz / 4 ≈ 4 MHz.
 models this: `src/common/target.c:211` maps the lynx target to `CPU_65SC02`.
 
 The 65SC02 is the 65C02 instruction set *without* the Rockwell bit instructions
-(`RMBx/SMBx/BBRx/BBSx`). Available extensions over the NMOS 6502:
+(`RMBx/SMBx/BBRx/BBSx`). Lynx I omits them; the later Lynx II Mikey implements them, so they
+are not portable across the hardware family and stay unused — see §3 for the full rationale.
+Available extensions over the NMOS 6502:
 
 | Instruction | Effect | Saving vs 6502 idiom |
 |---|---|---|
@@ -490,8 +492,28 @@ additive and CPU-gated. (The `Cycles` field and `GetInsnCycles` are target-neutr
 
 ## 3. What deliberately stays out of scope
 
-No `RMB/SMB/BBR/BBS` — the 65SC02 lacks them; emitting them would crash on hardware even
-though `--cpu 65c02` would assemble. No use of `WAI/STP` (WDC-only). No changes to the
+**No `RMB/SMB/BBR/BBS` (Rockwell bit instructions).** These are not portable across the
+Lynx hardware family: the original Lynx (Lynx I) carries a **65SC02** core that omits them —
+the opcodes decode as NOP-like no-ops, so any code relying on them silently does the wrong
+thing — whereas the later **Lynx II** Mikey revision implements the full Rockwell bit set and
+executes them as intended. Supporting them would therefore force one of two bad outcomes:
+either drop Lynx I compatibility entirely, or carry **two execution paths** — runtime CPU
+detection plus duplicated runtime routines and peepholes, each with its own `.if`-gated
+variant to assemble, test, and keep in sync (exactly the kind of dual-path burden
+`CLAUDE.md` warns against, since every such symbol then needs parallel documentation too).
+
+That cost is not justified by the payoff. The Rockwell ops only help a thin slice of the
+instruction mix — single-bit set/clear (`SMBx`/`RMBx`) and test-and-branch (`BBSx`/`BBRx`)
+on **zero-page** bytes — and most cc65 C variables do not live in zero page. Where the
+pattern does occur on the shared 65SC02 baseline, the available `TRB`/`TSB`, `STZ` and `BIT`
+instructions (already exploited by `Opt65C02BitOps`/`Opt65C02Stores`, §1.2) capture the
+realistic portion of the benefit. The only thing they cannot replicate is the fused
+test-and-branch of `BBRx/BBSx`, which saves ~2–3 cycles and 3 bytes per site over
+`LDA/AND/branch` — a sub-1–2% whole-program effect even in bit-flag-heavy code, dwarfed by
+the runtime-call and software-stack costs the other sections target. A single 65SC02
+baseline that runs unmodified on both Lynx I and Lynx II is worth far more than that margin.
+
+No use of `WAI/STP` (WDC-only). No changes to the
 calling convention or zero-page layout — `extzp.s` already allocates Lynx zero page, and
 ABI changes would break every existing object file and driver.
 
