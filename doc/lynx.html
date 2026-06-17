@@ -20,6 +20,7 @@ cc65 C compiler.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-7">7. Platform specific header files</a></li>
 <li class="lvl2"><a href="#sect-7-1">7.1. Lynx specific functions</a></li>
 <li class="lvl2"><a href="#sect-7-2">7.2. Hardware access</a></li>
+<li class="lvl2"><a href="#sect-7-3">7.3. Constants and macros</a></li>
 <li class="lvl1"><a href="#sect-8">8. Device support</a></li>
 <li class="lvl2"><a href="#sect-8-1">8.1. Graphics (TGI)</a></li>
 <li class="lvl2"><a href="#sect-8-2">8.2. Joypad input</a></li>
@@ -559,29 +560,34 @@ of POSIX or ISO&nbsp;C.</li>
 <h2 id="sect-7">7. Platform specific header files</h2>
 <p>Programs containing Lynx specific code may use the <code>lynx.h</code> header file.</p>
 <h3 id="sect-7-1">7.1. Lynx specific functions</h3>
-<ul>
-<li>
-<p>lynx_eeprom_erase</p>
-</li>
-<li>
-<p>lynx_eeprom_read</p>
-</li>
-<li>
-<p>lynx_eeprom_write</p>
-</li>
-<li>
-<p>lynx_eeread</p>
-</li>
-<li>
-<p>lynx_eewrite</p>
-</li>
-<li>
-<p>lynx_exec</p>
-</li>
-<li>
-<p>lynx_load</p>
-</li>
-</ul>
+<p>These are declared in <code>lynx.h</code> and described in full in the
+<a href="funcref.html">function reference</a>:</p>
+<dl>
+<dt>Cartridge access</dt>
+<dd>
+<p><a href="funcref.html#openn">openn</a>,
+<a href="funcref.html#lynx_load">lynx_load</a>,
+<a href="funcref.html#lynx_exec">lynx_exec</a> (see also <a href="#sect-11">section&nbsp;11</a>).</p>
+</dd>
+<dt>EEPROM (cart save data)</dt>
+<dd>
+<p>The size-selectable read/write family &mdash; pick the variant matching the
+chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024):
+<a href="funcref.html#lynx_eeread_93c46">lynx_eeread_93c46</a>&thinsp;/&thinsp;<a href="funcref.html#lynx_eeread_93c66">_93c66</a>&thinsp;/&thinsp;<a href="funcref.html#lynx_eeread_93c86">_93c86</a>
+and
+<a href="funcref.html#lynx_eewrite_93c46">lynx_eewrite_93c46</a>&thinsp;/&thinsp;<a href="funcref.html#lynx_eewrite_93c66">_93c66</a>&thinsp;/&thinsp;<a href="funcref.html#lynx_eewrite_93c86">_93c86</a>.</p>
+</dd>
+<dt>Sound</dt>
+<dd>
+<p><a href="funcref.html#lynx_snd_init">lynx_snd_init</a>,
+<a href="funcref.html#lynx_snd_play">lynx_snd_play</a>,
+<a href="funcref.html#lynx_snd_stop">lynx_snd_stop</a>,
+<a href="funcref.html#lynx_snd_stop_channel">lynx_snd_stop_channel</a>,
+<a href="funcref.html#lynx_snd_pause">lynx_snd_pause</a>,
+<a href="funcref.html#lynx_snd_continue">lynx_snd_continue</a>,
+<a href="funcref.html#lynx_snd_active">lynx_snd_active</a>.</p>
+</dd>
+</dl>
 <h3 id="sect-7-2">7.2. Hardware access</h3>
 <p>The following pseudo variables declared in the <code>lynx.h</code> header file do
 allow access to hardware located in the address space. Some variables are
@@ -599,7 +605,50 @@ structures, accessing the struct fields will access the chip registers.</p>
   header file located in the include directory for the declaration of the
   structure.</p>
 </dd>
+<dt><code>_MIKEY_TIMERS</code></dt>
+<dd>
+<p>All eight Mikey timers as an array (<code>mikey_timers[8]</code>) based at
+  <code>$FD00</code>, for code that walks the timers generically.</p>
+</dd>
+<dt><code>_HBL_TIMER</code>, <code>_VBL_TIMER</code>, <code>_UART_TIMER</code></dt>
+<dd>
+<p>Individual Mikey timers as single <code>_mikey_timer</code> structures: timer&nbsp;0
+  &mdash; the horizontal-blank timer &mdash; at <code>$FD00</code>, timer&nbsp;2 &mdash; the
+  vertical-blank timer &mdash; at <code>$FD08</code>, and timer&nbsp;4 &mdash; the UART baud
+  timer &mdash; at <code>$FD14</code>.</p>
+</dd>
+<dt><code>_VIDDMA</code></dt>
+<dd>
+<p>The display-control / video-DMA word (<code>dispctl</code>) at <code>$FD92</code>.</p>
+</dd>
 </dl>
+<h3 id="sect-7-3">7.3. Constants and macros</h3>
+<p><code>lynx.h</code> also defines the palette-index colour constants. They number
+the 16 entries of the default palette loaded by <code><a href="tgi.html">tgi_init</a></code>:</p>
+<pre class="verb">COLOR_BLACK      0x00   COLOR_YELLOW      0x08
+COLOR_RED        0x01   COLOR_LIGHTGREEN  0x09
+COLOR_PINK       0x02   COLOR_GREEN       0x0A
+COLOR_LIGHTGREY  0x03   COLOR_DARKBROWN   0x0B
+COLOR_GREY       0x04   COLOR_VIOLET      0x0C
+COLOR_DARKGREY   0x05   COLOR_BLUE        0x0D
+COLOR_BROWN      0x06   COLOR_LIGHTBLUE   0x0E
+COLOR_PEACH      0x07   COLOR_WHITE       0x0F</pre>
+<p>A matching set of <code>TGI_COLOR_*</code> aliases (for example
+<code>TGI_COLOR_WHITE</code>) is provided for use with the TGI functions; each
+<code>TGI_COLOR_x</code> is simply equal to the corresponding <code>COLOR_x</code>.</p>
+<p>The joypad bit masks describe the value returned by
+<code><a href="#sect-8-2">joy_read()</a></code>. The low byte is the raw hardware
+register; the Pause switch (a Mikey-side button) is reported in bit&nbsp;8:</p>
+<pre class="verb">JOY_UP_MASK     0x80    JOY_OPT1_MASK    0x08
+JOY_DOWN_MASK   0x40    JOY_OPT2_MASK    0x04
+JOY_LEFT_MASK   0x20    JOY_BTN_1_MASK   0x01
+JOY_RIGHT_MASK  0x10    JOY_BTN_2_MASK   0x02
+                        JOY_PAUSE_MASK   0x100</pre>
+<p><code>JOY_BTN_A_MASK</code> and <code>JOY_BTN_B_MASK</code> are aliases for
+<code>JOY_BTN_1_MASK</code> and <code>JOY_BTN_2_MASK</code>. The convenience macros
+<code>JOY_BTN_A(v)</code>, <code>JOY_BTN_B(v)</code>, <code>JOY_OPT1(v)</code>,
+<code>JOY_OPT2(v)</code> and <code>JOY_PAUSE(v)</code> test the matching bit in a
+<code>joy_read()</code> result.</p>
 <h2 id="sect-8">8. Device support</h2>
 <p>This tree has no loadable drivers at all. Graphics, joypad input and ComLynx
 serial are each provided as a static, smart-linked library, described below.</p>
@@ -807,12 +856,205 @@ stock cc65 2.19. The full design, measurements, and verification plan are in
 </dd>
 </dl>
 <h2 id="sect-11">11. Cart access</h2>
-<p>At this point in time there is no support for the cart filesystem yet. I have
-a <code>lynx-cart-demo</code> example project that uses an interrupt driven display,
-has support for the cart filesystem and an abcmusic sound module.</p>
-<p>At some point in time these may be folded into the tree as supported APIs. For
-the time being you can create less portable applications using these Lynx
-specific modules in <code>lynx-cart-demo</code>.</p>
+<p>The cart is read-only ROM, and the files on it are addressed by
+<em>number</em> rather than by name. Each file is described by an 8-byte
+<em>directory entry</em>: entry&nbsp;0 is the boot executable that the loader runs
+at start-up, entry&nbsp;1 is the next file appended after it, and so on. There is
+no hierarchical filesystem and there are no file names &mdash; the entry number
+is the whole &ldquo;path&rdquo;.</p>
+<p>Because of that the runtime does <strong>not</strong> provide the POSIX
+<code>open()</code>/<code>fopen()</code> layer or any <code>write()</code> /
+<code>creat()</code> path: there is nothing to parse a name into and nothing to
+write to. The supported, numbered, read-only API is:</p>
+<dl>
+<dt><code>void __fastcall__ openn (int fileno)</code></dt>
+<dd>Locate directory entry <code>fileno</code> and position the cart at its first
+byte, ready for <code>read()</code>/<code>lseek()</code>. Declared in
+<code>&lt;lynx.h&gt;</code>. This primitive replaced the former
+<code>open(const&nbsp;char&nbsp;*name,&nbsp;&hellip;)</code> wrapper: because files
+are just numbers, that wrapper did nothing but run a string such as
+<code>"3"</code> back through <code>atoi()</code> to recover the integer&nbsp;3
+&mdash; pure overhead now that the entry number is passed directly.</dd>
+<dt><code>int __fastcall__ read (int fd, void *buf, unsigned count)</code></dt>
+<dd>Copy <code>count</code> bytes from the current cart position into
+<code>buf</code>. The <code>fd</code> is ignored; reading past the end of a file
+simply continues into the bytes of the next one.</dd>
+<dt><code>off_t __fastcall__ lseek (int fd, off_t offset, int whence)</code></dt>
+<dd>Re-position within the cart. Only <code>SEEK_SET</code> is implemented.</dd>
+<dt><code>void __fastcall__ lynx_load (int fileno)</code></dt>
+<dd>Open a file and read it straight to the RAM address recorded in its directory
+entry.</dd>
+<dt><code>void __fastcall__ lynx_exec (int fileno)</code></dt>
+<dd>Like <code>lynx_load()</code>, then jump to the loaded code &mdash; handy for
+&ldquo;compilation&rdquo; carts that chain several small programs.</dd>
+</dl>
+<p><strong>Saving data.</strong> Since the cart itself cannot be written,
+persistent state (high scores, options) is kept in the cart's serial EEPROM. See
+the size-selectable
+<code>lynx_eeread_93c46</code>/<code>_93c66</code>/<code>_93c86</code> and
+<code>lynx_eewrite_*</code> family in <code>&lt;lynx.h&gt;</code>.</p>
+<p><strong>Bank&nbsp;0 only.</strong> The block reader drives the cart through the
+<code>CART0</code> read strobe, so only bank&nbsp;0 is accessible. The
+<code>EXEHDR</code> header still records a <code>__BANK1BLOCKSIZE__</code> and the
+config reserves the symbol, but the runtime has no bank&nbsp;1 reader yet; a
+second bank would need an additional strobe path before its files could be
+opened.</p>
+<p><strong>Layout of the cart image.</strong> Every cc65 cart carries at least a
+one-entry directory so the boot loader can find the program. The linker writes
+four regions in order: the <code>EXEHDR</code> header (a 64-byte <code>LYNX</code>
+block holding the block sizes, cart name and manufacturer &mdash; metadata for
+emulators such as Handy and Mednafen, stripped from a physical ROM), the
+<code>BOOTLDR</code> boot loader, the <code>DIRECTORY</code>, and finally the
+program in <code>MAIN</code>. The directory begins at
+<code>__STARTOFDIRECTORY__</code> (<code>$00CB</code>) and the cart is read in
+blocks of <code>__BANK0BLOCKSIZE__</code> (<code>$0400</code>&nbsp;=&nbsp;1&nbsp;KB
+by default; see the cart sizes in <a href="#sect-3">section&nbsp;3</a>).</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 320" style="width:100%;height:auto;max-width:700px" role="img" aria-label="Layout of a default single-file Lynx cart image">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="26">Default cart image &mdash; one file, one directory entry</text>
+  </g>
+  <!-- cc65 segment labels -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10.5" fill="var(--ink-faint)" text-anchor="end">
+    <text x="242" y="69">EXEHDR</text>
+    <text x="242" y="119">BOOTLDR</text>
+    <text x="242" y="167">DIRECTORY</text>
+    <text x="242" y="246">MAIN</text>
+  </g>
+  <!-- blocks -->
+  <rect x="250" y="44"  width="220" height="42"  fill="var(--panel)" stroke="var(--border)"/>
+  <rect x="250" y="86"  width="220" height="58"  fill="var(--panel)" stroke="var(--border)"/>
+  <rect x="250" y="144" width="220" height="38"  fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="250" y="182" width="220" height="118" fill="var(--panel)" stroke="var(--border)"/>
+  <!-- inside labels -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="61" font-size="12">LYNX header</text>
+    <text x="360" y="76" font-size="9.5" fill="var(--ink-soft)">64 B &middot; emulator metadata</text>
+    <text x="360" y="110" font-size="12">Boot loader</text>
+    <text x="360" y="125" font-size="9.5" fill="var(--ink-soft)">&asymp; 203 B &middot; runs at $0200</text>
+    <text x="360" y="167" font-size="11.5">Directory &mdash; 1 entry (8 B)</text>
+    <text x="360" y="226" font-size="12">File 0 &mdash; your program</text>
+    <text x="360" y="242" font-size="9.5" fill="var(--ink-soft)">STARTUP &middot; CODE &middot; RODATA &middot; DATA &middot; BSS</text>
+    <text x="360" y="258" font-size="9.5" fill="var(--ink-soft)">copied to $0200 and run</text>
+  </g>
+  <!-- right annotations -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-soft)" text-anchor="start">
+    <text x="486" y="68">stripped from a physical ROM</text>
+    <text x="486" y="166" fill="var(--accent)">__STARTOFDIRECTORY__ = $00CB</text>
+    <text x="486" y="246">read in 1&nbsp;KB blocks</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The image cc65 produces today: header, boot loader, a one-entry directory and the single executable. Heights are not to scale.</figcaption>
+</figure>
+<p>A cart that ships extra data &mdash; graphics, levels, music &mdash; simply
+appends those files after the executable and gives the directory one entry per
+file. Each entry records where its file starts (block number plus offset) and how
+big it is, so <code>openn()</code> can seek straight to it. Only file&nbsp;0 (the
+program) corresponds to a cc65 <code>MAIN</code> segment; the rest are raw blobs
+appended at link time.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 380" style="width:100%;height:auto;max-width:700px" role="img" aria-label="Layout of a Lynx cart image carrying several files">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="26">Cart image with several files &mdash; one directory entry each</text>
+  </g>
+  <!-- segment labels -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10.5" fill="var(--ink-faint)" text-anchor="end">
+    <text x="202" y="63">EXEHDR</text>
+    <text x="202" y="98">BOOTLDR</text>
+    <text x="202" y="163">DIRECTORY</text>
+    <text x="202" y="240">MAIN</text>
+  </g>
+  <!-- header / boot -->
+  <rect x="210" y="44"  width="200" height="30" fill="var(--panel)" stroke="var(--border)"/>
+  <rect x="210" y="74"  width="200" height="40" fill="var(--panel)" stroke="var(--border)"/>
+  <!-- directory (3 entries) -->
+  <rect x="210" y="120" width="200" height="78" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <line x1="210" y1="146" x2="410" y2="146" stroke="var(--accent)" stroke-opacity="0.5"/>
+  <line x1="210" y1="172" x2="410" y2="172" stroke="var(--accent)" stroke-opacity="0.5"/>
+  <!-- files -->
+  <rect x="210" y="214" width="200" height="44" fill="var(--panel)" stroke="var(--border)"/>
+  <rect x="210" y="262" width="200" height="44" fill="var(--panel)" stroke="var(--border)"/>
+  <rect x="210" y="310" width="200" height="44" fill="var(--panel)" stroke="var(--border)"/>
+  <!-- inside labels -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" fill="var(--ink)" text-anchor="middle">
+    <text x="310" y="63" font-size="10.5">LYNX header</text>
+    <text x="310" y="98" font-size="10.5">Boot loader</text>
+    <text x="310" y="138" font-size="10.5">entry 0</text>
+    <text x="310" y="164" font-size="10.5">entry 1</text>
+    <text x="310" y="190" font-size="10.5">entry 2</text>
+    <text x="310" y="232" font-size="11">File 0 &mdash; program</text>
+    <text x="310" y="247" font-size="9.5" fill="var(--ink-soft)">boot executable</text>
+    <text x="310" y="288" font-size="11">File 1 &mdash; graphics</text>
+    <text x="310" y="336" font-size="11">File 2 &mdash; music</text>
+  </g>
+  <!-- arrows: each entry points to its file -->
+  <g fill="none" stroke="var(--accent)" stroke-width="1.5">
+    <path d="M410,133 C474,133 474,236 414,236"/>
+    <path d="M410,159 C492,159 492,284 414,284"/>
+    <path d="M410,185 C510,185 510,332 414,332"/>
+  </g>
+  <g fill="var(--accent)">
+    <polygon points="414,231 414,241 405,236"/>
+    <polygon points="414,279 414,289 405,284"/>
+    <polygon points="414,327 414,337 405,332"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-soft)" text-anchor="start">
+    <text x="470" y="110">each entry locates</text>
+    <text x="470" y="124">one file's bytes</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">With several files the directory gains one entry per file; each entry points at the file's start block and offset further down the cart.</figcaption>
+</figure>
+<p>The 8-byte directory entry mirrors the in-RAM <code>struct dirent</code> for
+the Lynx in <code>&lt;dirent.h&gt;</code> (exposed as the zero-page
+<code>FileEntry</code>), so reading 8 bytes from the directory fills exactly the
+fields the loader needs:</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 170" style="width:100%;height:auto;max-width:700px" role="img" aria-label="The eight-byte Lynx directory entry, field by field">
+  <!-- byte-range captions -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="108" y="48">byte 0</text>
+    <text x="216" y="48">bytes 1&ndash;2</text>
+    <text x="324" y="48">byte 3</text>
+    <text x="432" y="48">bytes 4&ndash;5</text>
+    <text x="576" y="48">bytes 6&ndash;7</text>
+  </g>
+  <!-- cells -->
+  <rect x="72"  y="58" width="72"  height="48" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="144" y="58" width="144" height="48" fill="var(--panel)" stroke="var(--border)"/>
+  <rect x="288" y="58" width="72"  height="48" fill="var(--panel)" stroke="var(--border)"/>
+  <rect x="360" y="58" width="144" height="48" fill="var(--panel)" stroke="var(--border)"/>
+  <rect x="504" y="58" width="144" height="48" fill="var(--panel)" stroke="var(--border)"/>
+  <!-- field names -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" fill="var(--ink)" text-anchor="middle">
+    <text x="108" y="84" font-size="11">start block</text>
+    <text x="216" y="84" font-size="11">block offset</text>
+    <text x="324" y="84" font-size="11">flag</text>
+    <text x="432" y="84" font-size="11">load address</text>
+    <text x="576" y="84" font-size="11">length</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink-soft)" text-anchor="middle">
+    <text x="108" y="99">1 B</text>
+    <text x="216" y="99">2 B</text>
+    <text x="324" y="99">1 B</text>
+    <text x="432" y="99">2 B</text>
+    <text x="576" y="99">2 B</text>
+  </g>
+  <!-- per-field hints -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink-soft)" text-anchor="middle">
+    <text x="108" y="128">&times; 1&nbsp;KB block</text>
+    <text x="216" y="128">within the block</text>
+    <text x="324" y="128">$88 for entry 0</text>
+    <text x="432" y="128">RAM destination</text>
+    <text x="576" y="128">bytes to read</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The on-cart directory entry, matching <code>struct dirent</code> (<code>d_blocks</code>, <code>d_offset</code>, <code>d_type</code>, <code>d_address</code>, <code>d_size</code>).</figcaption>
+</figure>
+<p>A richer, named or hierarchical filesystem is intentionally not provided: the
+cart is a fixed ROM laid down at link time, so numbered entries already cover
+everything the format needs and avoid the code cost of name tables, directory
+enumeration and a write path.</p>
 <h2 id="sect-12">12. License</h2>
 <p>This software is provided 'as-is', without any expressed or implied
 warranty.  In no event will the authors be held liable for any damages

@@ -148,7 +148,7 @@ void lynx_snd_stop (void);
 /* Stop sound on all channels */
 
 void __fastcall__ lynx_snd_stop_channel (unsigned char channel);
-/* Stop sound on all channels */
+/* Stop sound on the given channel */
 
 unsigned char lynx_snd_active(void);
 /* Show which channels are active */
@@ -160,6 +160,20 @@ unsigned char lynx_snd_active(void);
 /*****************************************************************************/
 
 
+
+/* The cart is ROM and its files are addressed by number, not by name: entry 0
+** is the boot executable, entry 1 the next file appended after it, and so on.
+** Access is therefore read-only and numbered - there is no POSIX open()/fopen()
+** layer and no write()/creat() path. Persistent game data belongs in the EEPROM
+** (see the lynx_eeread_93cNN / lynx_eewrite_93cNN family below). Only bank 0
+** is read.
+*/
+
+void __fastcall__ openn (int fileno);
+/* Open the numbered directory entry and position the cart at its first byte so
+** that read() and lseek() can stream it. The first entry is fileno=0. This is
+** the low-level primitive behind lynx_load()/lynx_exec().
+*/
 
 void __fastcall__ lynx_load (int fileno);
 /* Load a file into ram. The first entry is fileno=0. */
@@ -175,20 +189,26 @@ void __fastcall__ lynx_exec (int fileno);
 
 
 
-unsigned __fastcall__ lynx_eeprom_read (unsigned char cell);
-/* Read a 16 bit word from the given address */
+/* Size-selectable read/write family. Pick the variant matching the EEPROM chip
+** fitted to the cart: 93C46 = 64 words, 93C66 = 256 words, 93C86 = 1024 words.
+*/
+unsigned __fastcall__ lynx_eeread_93c46 (unsigned char cell);
+/* Read a 16 bit word from a 93C46 (cell 0..63) */
 
-unsigned __fastcall__ lynx_eeprom_write (unsigned char cell, unsigned val);
-/* Write the word at the given address */
+unsigned __fastcall__ lynx_eeread_93c66 (unsigned addr);
+/* Read a 16 bit word from a 93C66 (addr 0..255) */
 
-void __fastcall__ lynx_eeprom_erase (unsigned char cell);
-/* Clear the word at the given address */
+unsigned __fastcall__ lynx_eeread_93c86 (unsigned addr);
+/* Read a 16 bit word from a 93C86 (addr 0..1023) */
 
-unsigned __fastcall__ lynx_eeread (unsigned cell);
-/* Read a 16 bit word from the given address 93C46 93C66 or 93C86*/
+void __fastcall__ lynx_eewrite_93c46 (unsigned addr, unsigned val);
+/* Write the word at the given address of a 93C46 */
 
-unsigned __fastcall__ lynx_eewrite (unsigned cell, unsigned val);
-/* Write the word at the given address 93C46 93C66 or 93C86*/
+void __fastcall__ lynx_eewrite_93c66 (unsigned addr, unsigned val);
+/* Write the word at the given address of a 93C66 */
+
+void __fastcall__ lynx_eewrite_93c86 (unsigned addr, unsigned val);
+/* Write the word at the given address of a 93C86 */
 
 
 

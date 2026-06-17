@@ -1,83 +1,40 @@
 ;
 ; Karri Kaksonen, 2010
 ;
-; This function reads the directory entry for file "name".
+; openn() positions the cart at the start of a numbered directory entry so
+; that read()/lseek() can stream its bytes into RAM.
 ;
-; The name is actually plain ASCII string starting from
-; "0", "1", up to "4095" which is the largest file number we can handle.
+; Files on a Lynx cart are addressed purely by number: entry 0 is the boot
+; executable, entry 1 the next file appended after it, and so on. There are
+; therefore no file names to parse - the file number IS the handle - so the
+; old POSIX-style open(const char *name,...) wrapper that ran the name through
+; atoi() has been removed. Use openn() directly, or the lynx_load()/lynx_exec()
+; convenience calls built on top of it.
 ;
-; open() does not take part in what kind of cart we have. If it is RAM
-; you may also be able to write into it. Therefore we allow both reads
-; and writes in this routine.
+; The cart is ROM, so access is read-only; there is no write()/O_CREAT path.
+; Persistent game data lives in the EEPROM instead (see the lynx_eeread_93cNN /
+; lynx_eewrite_93cNN family in <lynx.h>). Only bank 0 (the CART0 read strobe)
+; is supported.
 ;
-; int open(const char *name, int flags, ...)
+; void __fastcall__ openn (int fileno);
 ;
-; As helper functions we also provide.
-; void openn(int fileno)
-;
-        .importzp       sreg, tmp3
-        .macpack        longbranch
-        .import         _atoi
+        .importzp       sreg
         .import         _read
         .import         _lseek
-        .import         addysp,popax,pushax,decsp6,pusha0,pusheax,ldaxysp
+        .import         pushax,decsp6,pusha0,pusheax,ldaxysp
         .import         aslax3,axlong,tosaddeax,steaxysp,stax0sp,incsp8
-        .import         ldax0sp
         .import         lynxskip0, lynxblock
         .importzp       _FileEntry
         .importzp       _FileStartBlock
         .importzp       _FileCurrBlock
         .importzp       _FileBlockOffset
         .import         __STARTOFDIRECTORY__
-        .export         _open
         .export         _openn
-
-        .include        "errno.inc"
-        .include        "fcntl.inc"
 
 .segment        "DATA"
 
 _startofdirectory:
         .dword  __STARTOFDIRECTORY__
-
-; ---------------------------------------------------------------
-; int __near__ open (__near__ const unsigned char*, int)
-; ---------------------------------------------------------------
-
-.segment        "CODE"
-
-.proc   _open
-
-.segment        "CODE"
-
-        dey
-        dey
-        dey
-        dey
-        beq     parmok
-        jsr     addysp
-
-parmok: jsr     popax
-        sta     tmp3
-        and     #(O_RDWR | O_CREAT)
-        cmp     #O_RDONLY
-        beq     flagsok
-        cmp     #(O_WRONLY | O_CREAT)
-        beq     flagsok
-        jsr     popax
-        lda     #EINVAL
-        jmp     __directerrno
-
-flagsok:
-        jsr     popax
-        jsr     _atoi
-        jsr     _openn
-        ldx     #$00
-        lda     #$01
-        stx     __oserror
-        rts
-
-.endproc
 
 ; ---------------------------------------------------------------
 ; void __near__ __fastcall__ openn (int)
@@ -133,4 +90,3 @@ flagsok:
         jmp     incsp8
 
 .endproc
-

@@ -7,7 +7,7 @@
 /*                                                                           */
 /*                                                                           */
 /* (C) 1998-2004 Ullrich von Bassewitz                                       */
-/*               Römerstraße 52                                              */
+/*               Rï¿½merstraï¿½e 52                                              */
 /*               D-70794 Filderstadt                                         */
 /* EMail:        uz@cc65.org                                                 */
 /*                                                                           */
@@ -62,6 +62,11 @@
 
 
 /* Functions */
+/* NOTE: open() and creat() are NOT implemented by the Atari Lynx runtime.
+** The cart is ROM and its files are addressed by number, so there is nothing
+** to parse a name into and nothing to create. Use openn() from <lynx.h> for
+** numbered, read-only cart access (read()/lseek() then operate on it).
+*/
 int open (const char* name, int flags, ...);    /* May take a mode argument */
 int __fastcall__ close (int fd);
 int __fastcall__ creat (const char* name, unsigned mode);
