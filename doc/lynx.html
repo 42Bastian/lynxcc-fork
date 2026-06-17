@@ -11,17 +11,20 @@ cc65 C compiler.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-2">2. Building your first Hello World application</a></li>
 <li class="lvl1"><a href="#sect-3">3. Binary format</a></li>
 <li class="lvl1"><a href="#sect-4">4. Memory layout</a></li>
-<li class="lvl1"><a href="#sect-5">5. Platform specific header files</a></li>
-<li class="lvl2"><a href="#sect-5-1">5.1. Lynx specific functions</a></li>
-<li class="lvl2"><a href="#sect-5-2">5.2. Hardware access</a></li>
-<li class="lvl1"><a href="#sect-6">6. Device support</a></li>
-<li class="lvl2"><a href="#sect-6-1">6.1. Graphics (TGI)</a></li>
-<li class="lvl2"><a href="#sect-6-2">6.2. Joypad input</a></li>
-<li class="lvl2"><a href="#sect-6-3">6.3. ComLynx serial</a></li>
-<li class="lvl1"><a href="#sect-7">7. Lynx-specific code-generation optimizations</a></li>
-<li class="lvl1"><a href="#sect-8">8. Limitations</a></li>
-<li class="lvl1"><a href="#sect-9">9. Cart access</a></li>
-<li class="lvl1"><a href="#sect-10">10. License</a></li>
+<li class="lvl1"><a href="#sect-5">5. The C runtime stack and stack-overflow checking</a></li>
+<li class="lvl2"><a href="#sect-5-1">5.1. Setting the stack size</a></li>
+<li class="lvl2"><a href="#sect-5-2">5.2. Enabling stack-overflow checking</a></li>
+<li class="lvl1"><a href="#sect-6">6. Platform specific header files</a></li>
+<li class="lvl2"><a href="#sect-6-1">6.1. Lynx specific functions</a></li>
+<li class="lvl2"><a href="#sect-6-2">6.2. Hardware access</a></li>
+<li class="lvl1"><a href="#sect-7">7. Device support</a></li>
+<li class="lvl2"><a href="#sect-7-1">7.1. Graphics (TGI)</a></li>
+<li class="lvl2"><a href="#sect-7-2">7.2. Joypad input</a></li>
+<li class="lvl2"><a href="#sect-7-3">7.3. ComLynx serial</a></li>
+<li class="lvl1"><a href="#sect-8">8. Lynx-specific code-generation optimizations</a></li>
+<li class="lvl1"><a href="#sect-9">9. Limitations</a></li>
+<li class="lvl1"><a href="#sect-10">10. Cart access</a></li>
+<li class="lvl1"><a href="#sect-11">11. License</a></li>
 </ul></nav><h2 id="sect-1">1. Overview</h2>
 <p>This file contains an overview of the Atari Lynx runtime system as it comes
 with the cc65 C compiler. It describes the memory layout, Lynx specific header
@@ -88,6 +91,113 @@ kernal enabled, which gives a usable memory range of $200 - $C037.</p>
   C038 - E017 Screen buffer 1
   E018 - FFF7 Screen buffer 0
   FFF8 - FFFF Hardware vectors</pre>
+<p>The same map is shown below. With the default config (<code>lynx.cfg</code>)
+the program, heap and C&nbsp;stack share the RAM below the screen buffers; the
+<code>__STACKSIZE__</code> reservation (1&nbsp;KB by default) sits at the very top
+of that area, just under the first screen buffer:</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 430" style="width:100%;height:auto;max-width:700px" role="img" aria-label="Default Atari Lynx memory map">
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10.5" fill="var(--ink-faint)" text-anchor="end">
+    <text x="162" y="44" dominant-baseline="middle">$FFFF</text>
+    <text x="162" y="66" dominant-baseline="middle">$FFF7</text>
+    <text x="162" y="108" dominant-baseline="middle">$E017</text>
+    <text x="162" y="150" dominant-baseline="middle">$C037</text>
+    <text x="162" y="206" dominant-baseline="middle">$BC38</text>
+    <text x="162" y="334" dominant-baseline="middle">$0200</text>
+    <text x="162" y="368" dominant-baseline="middle">$0100</text>
+    <text x="162" y="402" dominant-baseline="middle">$0000</text>
+  </g>
+  <g stroke="var(--border)">
+    <rect x="176" y="44"  width="400" height="22" fill="var(--panel)"/>
+    <rect x="176" y="66"  width="400" height="42" fill="var(--panel)"/>
+    <rect x="176" y="108" width="400" height="42" fill="var(--panel)"/>
+    <rect x="176" y="150" width="400" height="56" fill="var(--panel)"/>
+    <rect x="176" y="206" width="400" height="44" fill="var(--panel)" stroke-dasharray="4 3"/>
+    <rect x="176" y="250" width="400" height="84" fill="var(--panel)"/>
+    <rect x="176" y="334" width="400" height="34" fill="var(--panel)"/>
+    <rect x="176" y="368" width="400" height="34" fill="var(--panel)"/>
+  </g>
+  <g>
+    <rect x="170" y="44"  width="6" height="22" fill="var(--ink-faint)"/>
+    <rect x="170" y="66"  width="6" height="42" fill="var(--accent-2)"/>
+    <rect x="170" y="108" width="6" height="42" fill="var(--accent-2)"/>
+    <rect x="170" y="150" width="6" height="56" fill="var(--accent)"/>
+    <rect x="170" y="250" width="6" height="84" fill="var(--link)"/>
+    <rect x="170" y="334" width="6" height="34" fill="var(--ink-soft)"/>
+    <rect x="170" y="368" width="6" height="34" fill="var(--ink-soft)"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" fill="var(--ink)" font-size="12.5">
+    <text x="188" y="55"  dominant-baseline="middle">Hardware vectors</text>
+    <text x="188" y="87"  dominant-baseline="middle">Screen buffer 0</text>
+    <text x="188" y="129" dominant-baseline="middle">Screen buffer 1</text>
+    <text x="188" y="172" dominant-baseline="middle">C runtime stack <tspan fill="var(--accent)" font-weight="600">grows ↓</tspan></text>
+    <text x="188" y="228" dominant-baseline="middle">free RAM — heap <tspan fill="var(--accent-2)" font-weight="600">grows ↑</tspan></text>
+    <text x="188" y="285" dominant-baseline="middle">Program code &amp; data</text>
+    <text x="188" y="351" dominant-baseline="middle">6502 hardware stack</text>
+    <text x="188" y="385" dominant-baseline="middle">Zero page</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" fill="var(--ink-soft)" font-size="10">
+    <text x="188" y="189" dominant-baseline="middle">__STACKSIZE__ = $0400 (1 KB)</text>
+    <text x="188" y="301" dominant-baseline="middle">STARTUP · CODE · RODATA · DATA · BSS  (MAIN segment)</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Default memory layout (<code>lynx.cfg</code>) — regions not to scale.</figcaption>
+</figure>
+<p>When collision detection is enabled (<code>lynx-coll.cfg</code>) a 2&nbsp;KB
+collision buffer is carved out below the screen buffers, so the usable program
+area and the top of the C&nbsp;stack move down to <code>$A057</code>:</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 470" style="width:100%;height:auto;max-width:700px" role="img" aria-label="Atari Lynx memory map with collision detection enabled">
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10.5" fill="var(--ink-faint)" text-anchor="end">
+    <text x="162" y="44"  dominant-baseline="middle">$FFFF</text>
+    <text x="162" y="66"  dominant-baseline="middle">$FFF7</text>
+    <text x="162" y="108" dominant-baseline="middle">$E017</text>
+    <text x="162" y="150" dominant-baseline="middle">$C037</text>
+    <text x="162" y="192" dominant-baseline="middle">$A057</text>
+    <text x="162" y="248" dominant-baseline="middle">$9C58</text>
+    <text x="162" y="376" dominant-baseline="middle">$0200</text>
+    <text x="162" y="410" dominant-baseline="middle">$0100</text>
+    <text x="162" y="444" dominant-baseline="middle">$0000</text>
+  </g>
+  <g stroke="var(--border)">
+    <rect x="176" y="44"  width="400" height="22" fill="var(--panel)"/>
+    <rect x="176" y="66"  width="400" height="42" fill="var(--panel)"/>
+    <rect x="176" y="108" width="400" height="42" fill="var(--panel)"/>
+    <rect x="176" y="150" width="400" height="42" fill="var(--panel)"/>
+    <rect x="176" y="192" width="400" height="56" fill="var(--panel)"/>
+    <rect x="176" y="248" width="400" height="44" fill="var(--panel)" stroke-dasharray="4 3"/>
+    <rect x="176" y="292" width="400" height="84" fill="var(--panel)"/>
+    <rect x="176" y="376" width="400" height="34" fill="var(--panel)"/>
+    <rect x="176" y="410" width="400" height="34" fill="var(--panel)"/>
+  </g>
+  <g>
+    <rect x="170" y="44"  width="6" height="22" fill="var(--ink-faint)"/>
+    <rect x="170" y="66"  width="6" height="42" fill="var(--accent-2)"/>
+    <rect x="170" y="108" width="6" height="42" fill="var(--accent-2)"/>
+    <rect x="170" y="150" width="6" height="42" fill="var(--ink-faint)"/>
+    <rect x="170" y="192" width="6" height="56" fill="var(--accent)"/>
+    <rect x="170" y="292" width="6" height="84" fill="var(--link)"/>
+    <rect x="170" y="376" width="6" height="34" fill="var(--ink-soft)"/>
+    <rect x="170" y="410" width="6" height="34" fill="var(--ink-soft)"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" fill="var(--ink)" font-size="12.5">
+    <text x="188" y="55"  dominant-baseline="middle">Hardware vectors</text>
+    <text x="188" y="87"  dominant-baseline="middle">Screen buffer 0</text>
+    <text x="188" y="129" dominant-baseline="middle">Screen buffer 1</text>
+    <text x="188" y="171" dominant-baseline="middle">Collision buffer</text>
+    <text x="188" y="214" dominant-baseline="middle">C runtime stack <tspan fill="var(--accent)" font-weight="600">grows ↓</tspan></text>
+    <text x="188" y="270" dominant-baseline="middle">free RAM — heap <tspan fill="var(--accent-2)" font-weight="600">grows ↑</tspan></text>
+    <text x="188" y="327" dominant-baseline="middle">Program code &amp; data</text>
+    <text x="188" y="393" dominant-baseline="middle">6502 hardware stack</text>
+    <text x="188" y="427" dominant-baseline="middle">Zero page</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" fill="var(--ink-soft)" font-size="10">
+    <text x="188" y="231" dominant-baseline="middle">__STACKSIZE__ = $0400 (1 KB)</text>
+    <text x="188" y="343" dominant-baseline="middle">STARTUP · CODE · RODATA · DATA · BSS  (MAIN segment)</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Layout with collision detection (<code>lynx-coll.cfg</code>) — regions not to scale.</figcaption>
+</figure>
 <dl>
 <dt>Text screen</dt>
 <dd>
@@ -119,9 +229,139 @@ kernal enabled, which gives a usable memory range of $200 - $C037.</p>
   double buffered screens are at $C038 and $E018.</p>
 </dd>
 </dl>
-<h2 id="sect-5">5. Platform specific header files</h2>
+<h2 id="sect-5">5. The C runtime stack and stack-overflow checking</h2>
+<p>cc65 programs use two independent stacks. The <strong>6502 hardware
+stack</strong> lives in page&nbsp;1 (<code>$0100&ndash;$01FF</code>, a fixed
+256&nbsp;bytes) and holds subroutine return addresses and interrupt state. The
+<strong>C software stack</strong> &mdash; also called the parameter stack &mdash;
+holds function parameters and local variables; it is addressed through the
+zero-page pointer <code>sp</code> and grows <em>downwards</em> from the top of the
+<code>MAIN</code> memory area. The amount of RAM reserved for it is the link-time
+symbol <code>__STACKSIZE__</code>, which defaults to <code>$0400</code>
+(1&nbsp;KB).</p>
+<h3 id="sect-5-1">5.1. Setting the stack size</h3>
+<p>All four Lynx configs (<code>lynx.cfg</code>, <code>lynx-bll.cfg</code>,
+<code>lynx-coll.cfg</code> and <code>lynx-uploader.cfg</code>) reserve the stack
+the same way. They declare a <em>weak</em> symbol and then shrink the
+<code>MAIN</code> region by exactly that amount, for example in
+<code>lynx.cfg</code>:</p>
+<pre class="verb">SYMBOLS {
+    __STACKSIZE__: type = weak, value = $0400; # 1k stack
+}
+MEMORY {
+    MAIN: file = %O, define = yes, start = $0200, size = $BE38 - __STACKSIZE__;
+}</pre>
+<p>The startup code (<code>crt0.s</code>) then sets the initial stack pointer to
+the top of that reservation:</p>
+<pre class="verb">sp = __MAIN_START__ + __MAIN_SIZE__ + __STACKSIZE__</pre>
+<p>so the stack occupies the top <code>__STACKSIZE__</code> bytes of
+<code>MAIN</code> and grows down toward your code, data and heap. Because the
+symbol is <code>weak</code>, the default can be overridden at link time without
+editing the config &mdash; for example to grow it to 2&nbsp;KB for a
+recursion-heavy program:</p>
+<pre class="verb">cl65 -t lynx -Wl --define,__STACKSIZE__=$0800 -o game.lnx main.c</pre>
+<p>Every byte handed to the stack is a byte taken from code, data and heap, so
+the goal is to pick the smallest value that still survives the deepest call
+nesting and the largest local arrays your program uses. There is no automatic
+overflow protection at this size &mdash; if the stack grows past its reservation
+it silently collides with the top of <code>BSS</code>/heap &mdash; unless you
+enable stack-overflow checking, described next.</p>
+<h3 id="sect-5-2">5.2. Enabling stack-overflow checking</h3>
+<p>The compiler can instrument every function with a call to a small checking
+routine (<code>stkchk</code>/<code>cstkchk</code> in the runtime library). This is
+<strong>off by default</strong>. Turn it on for a whole build with the compiler
+option:</p>
+<pre class="verb">cl65 -t lynx --check-stack -o game.lnx main.c
+cc65 -t lynx --check-stack main.c          # compiler invoked directly</pre>
+<p>or enable it only around specific code with the
+<code><a href="cc65.html#pragma-check-stack">#pragma check-stack</a></code>, which
+understands <code>push</code>/<code>pop</code>:</p>
+<pre class="verb">#pragma check-stack (push, on)
+/* deeply-recursive or stack-heavy functions here */
+#pragma check-stack (pop)</pre>
+<p>With checking enabled the compiler emits a <code>jsr stkchk</code> at every
+function entry (the hardware-stack check) and, for functions that allocate
+locals, a <code>jsr cstkchk</code> after the locals are reserved (the C-stack
+check). Each routine works against a <em>safety margin</em> rather than the exact
+limit: <code>cstkchk</code> treats the bottom <strong>256&nbsp;bytes</strong> of
+the C stack as a reserved zone and aborts once <code>sp</code> descends into it,
+and <code>stkchk</code> aborts when fewer than <strong>12&nbsp;bytes</strong> of
+the hardware stack remain. So with checking on, the <em>effective</em> usable C
+stack is about <code>__STACKSIZE__&nbsp;&minus;&nbsp;256</code> bytes:</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 350" style="width:100%;height:auto;max-width:700px" role="img" aria-label="Stack safety zones with checking enabled">
+  <defs>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="var(--accent)" stroke-width="2"/>
+    </pattern>
+  </defs>
+  <!-- titles -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)" text-anchor="middle">
+    <text x="255" y="34">C software stack</text>
+    <text x="575" y="34">6502 hardware stack (page $0100)</text>
+  </g>
+  <!-- left: C stack -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10.5" fill="var(--ink-faint)" text-anchor="end">
+    <text x="142" y="60"  dominant-baseline="middle">$C037</text>
+    <text x="142" y="270" dominant-baseline="middle">$BD38</text>
+    <text x="142" y="300" dominant-baseline="middle">$BC38</text>
+  </g>
+  <rect x="150" y="60" width="210" height="210" fill="var(--panel)" stroke="var(--border)"/>
+  <rect x="150" y="270" width="210" height="30" fill="var(--accent)" fill-opacity="0.12" stroke="var(--border)"/>
+  <rect x="150" y="270" width="210" height="30" fill="url(#hatch)" stroke="var(--accent)"/>
+  <line x1="150" y1="270" x2="360" y2="270" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" fill="var(--ink)" font-size="12" text-anchor="middle">
+    <text x="255" y="158">usable C stack</text>
+    <text x="255" y="176" font-size="10.5" fill="var(--ink-soft)">&asymp; 768 B ($300)</text>
+    <text x="255" y="120" font-size="10.5" fill="var(--accent)" font-weight="600">SP grows ↓</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-soft)" text-anchor="start">
+    <text x="370" y="58">$C037 = initial SP</text>
+    <text x="370" y="270">low-water mark</text>
+    <text x="370" y="285" fill="var(--accent)">256-byte safety zone</text>
+    <text x="370" y="299" font-style="italic">cstkchk aborts here</text>
+  </g>
+  <!-- right: HW stack -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10.5" fill="var(--ink-faint)" text-anchor="end">
+    <text x="512" y="60"  dominant-baseline="middle">$01FF</text>
+    <text x="512" y="300" dominant-baseline="middle">$0100</text>
+  </g>
+  <rect x="520" y="60" width="120" height="226" fill="var(--panel)" stroke="var(--border)"/>
+  <rect x="520" y="286" width="120" height="14" fill="var(--accent)" fill-opacity="0.12" stroke="var(--border)"/>
+  <rect x="520" y="286" width="120" height="14" fill="url(#hatch)" stroke="var(--accent)"/>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10.5" fill="var(--ink-soft)" text-anchor="middle">
+    <text x="580" y="170">256 bytes total</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-soft)" text-anchor="start">
+    <text x="650" y="289" fill="var(--accent)">12-byte</text>
+    <text x="650" y="301">reserve</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Stack-overflow checking reserves a 256-byte safety zone at the bottom of the C stack and 12 bytes of the hardware stack — heights not to scale.</figcaption>
+</figure>
+<p>If either check trips, the routine resets <code>sp</code> to its initial value
+and calls <code>_exit(4)</code>, so the program aborts. The Lynx has no console,
+so there is no diagnostic message &mdash; the program simply stops &mdash; which
+makes this primarily a development-time aid.</p>
+<p><strong>Overhead.</strong> The instrumentation is cheap per call but it is paid
+on <em>every</em> call, including hot loops and recursion. Each call site costs
+3&nbsp;bytes for the <code>jsr</code>, and the routines themselves run in roughly
+18&nbsp;cycles (hardware-stack check) and 21&nbsp;cycles (C-stack check) on the
+normal no-overflow path &mdash; about 40&nbsp;cycles for a function that gets both.
+There is also a one-time cost of well under 100&nbsp;bytes: the routine is linked
+once, plus 4&nbsp;bytes of state and a start-up constructor that records the
+initial stack pointer. Because of the per-call tax, enable checking while
+debugging and stack-tuning, then build the release without it.</p>
+<p>A practical way to size <code>__STACKSIZE__</code>: build with
+<code>--check-stack</code> and a deliberately generous stack, exercise the deepest
+call paths, and tighten the value until checking no longer aborts &mdash; leaving
+the 256-byte safety margin as headroom. See
+<code><a href="cc65.html#pragma-check-stack">#pragma check-stack</a></code> in the
+cc65 manual and the <code>__STACKSIZE__</code> notes in the
+<a href="ld65.html">ld65 manual</a> for more detail.</p>
+<h2 id="sect-6">6. Platform specific header files</h2>
 <p>Programs containing Lynx specific code may use the <code>lynx.h</code> header file.</p>
-<h3 id="sect-5-1">5.1. Lynx specific functions</h3>
+<h3 id="sect-6-1">6.1. Lynx specific functions</h3>
 <ul>
 <li>
 <p>lynx_eeprom_erase</p>
@@ -145,7 +385,7 @@ kernal enabled, which gives a usable memory range of $200 - $C037.</p>
 <p>lynx_load</p>
 </li>
 </ul>
-<h3 id="sect-5-2">5.2. Hardware access</h3>
+<h3 id="sect-6-2">6.2. Hardware access</h3>
 <p>The following pseudo variables declared in the <code>lynx.h</code> header file do
 allow access to hardware located in the address space. Some variables are
 structures, accessing the struct fields will access the chip registers.</p>
@@ -163,10 +403,10 @@ structures, accessing the struct fields will access the chip registers.</p>
   structure.</p>
 </dd>
 </dl>
-<h2 id="sect-6">6. Device support</h2>
+<h2 id="sect-7">7. Device support</h2>
 <p>This tree has no loadable drivers at all. Graphics, joypad input and ComLynx
 serial are each provided as a static, smart-linked library, described below.</p>
-<h3 id="sect-6-1">6.1. Graphics (TGI)</h3>
+<h3 id="sect-7-1">7.1. Graphics (TGI)</h3>
 <p>TGI on the Lynx is a direct-call static library, not a loadable driver:
   there is exactly one display mode (160×102 in 16 colors) and all
   drawing is done by the Suzy sprite engine. No tgi_install() call is
@@ -193,7 +433,7 @@ serial are each provided as a static, smart-linked library, described below.</p>
   the sprite structure by default.</p>
 <p>In order to reserve memory for the collision detection buffer you need to
   specify lynx-coll.cfg as the configuration file to the linker.</p>
-<h3 id="sect-6-2">6.2. Joypad input</h3>
+<h3 id="sect-7-2">7.2. Joypad input</h3>
 <p>There is no loadable joystick driver: input support is a static library
 function (see <code>LYNX_JOY_SER_DESIGN.md</code>). <code>joy_read()</code> returns all
 nine inputs in one call: d-pad, A, B, Opt 1 and Opt 2 in the low byte and
@@ -203,7 +443,7 @@ the application: <code>pressed = now &amp; ~prev</code>.</p>
 <p>The extended memory (em), mouse, conio and dbg APIs have been removed
 entirely: the Lynx has a flat 64 KB address space, no pointing device and
 no text mode.</p>
-<h3 id="sect-6-3">6.3. ComLynx serial</h3>
+<h3 id="sect-7-3">7.3. ComLynx serial</h3>
 <p>There is no loadable serial driver either: the ComLynx code is a static,
 smart-linked library (<code>ser_open</code>, <code>ser_close</code>, <code>ser_get</code>,
 <code>ser_put</code>, <code>ser_status</code>). Both directions are interrupt driven
@@ -279,7 +519,7 @@ against the macros.</p>
 <p>We have no handshaking available. Even software handshake is impossible
   as ComLynx has only one wire for the data.</p>
 <p>Both transmit and receive are interrupt driven.</p>
-<h2 id="sect-7">7. Lynx-specific code-generation optimizations</h2>
+<h2 id="sect-8">8. Lynx-specific code-generation optimizations</h2>
 <p>This tree contains a set of 65SC02/Lynx code-generation improvements over
 stock cc65 2.19. The full design, measurements, and verification plan are in
 <code>LYNX_CODEGEN_DESIGN.md</code> at the root of the source tree. Summary:</p>
@@ -343,7 +583,7 @@ stock cc65 2.19. The full design, measurements, and verification plan are in
   section 2.7.</p>
 </dd>
 </dl>
-<h2 id="sect-8">8. Limitations</h2>
+<h2 id="sect-9">9. Limitations</h2>
 <dl>
 <dt>No Rockwell bit instructions (<code>RMBx/SMBx/BBRx/BBSx</code>)</dt>
 <dd>
@@ -369,14 +609,14 @@ stock cc65 2.19. The full design, measurements, and verification plan are in
   <code>LYNX_CODEGEN_DESIGN.md</code> section 3 for the full rationale.</p>
 </dd>
 </dl>
-<h2 id="sect-9">9. Cart access</h2>
+<h2 id="sect-10">10. Cart access</h2>
 <p>At this point in time there is no support for the cart filesystem yet. I have
 a <code>lynx-cart-demo</code> example project that uses an interrupt driven display,
 has support for the cart filesystem and an abcmusic sound module.</p>
 <p>At some point in time these may be folded into the tree as supported APIs. For
 the time being you can create less portable applications using these Lynx
 specific modules in <code>lynx-cart-demo</code>.</p>
-<h2 id="sect-10">10. License</h2>
+<h2 id="sect-11">11. License</h2>
 <p>This software is provided 'as-is', without any expressed or implied
 warranty.  In no event will the authors be held liable for any damages
 arising from the use of this software.</p>
