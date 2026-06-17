@@ -66,7 +66,6 @@
 #include "output.h"
 #include "scanner.h"
 #include "segments.h"
-#include "standard.h"
 
 
 
@@ -131,7 +130,6 @@ static void Usage (void)
             "  --register-vars\t\tEnable register variables\n"
             "  --rodata-name seg\t\tSet the name of the RODATA segment\n"
             "  --signed-chars\t\tDefault characters are signed\n"
-            "  --standard std\t\tLanguage standard (c89, c99, cc65)\n"
             "  --static-locals\t\tMake local variables static\n"
             "  --target sys\t\t\tSet the target system\n"
             "  --verbose\t\t\tIncrease verbosity\n"
@@ -737,22 +735,6 @@ static void OptSignedChars (const char* Opt attribute ((unused)),
 
 
 
-static void OptStandard (const char* Opt, const char* Arg)
-/* Handle the --standard option */
-{
-    /* Find the standard from the given name */
-    standard_t Std = FindStandard (Arg);
-    if (Std == STD_UNKNOWN) {
-        AbEnd ("Invalid argument for %s: '%s'", Opt, Arg);
-    } else if (IS_Get (&Standard) != STD_UNKNOWN) {
-        AbEnd ("Option %s given more than once", Opt);
-    } else {
-        IS_Set (&Standard, Std);
-    }
-}
-
-
-
 static void OptStaticLocals (const char* Opt attribute ((unused)),
                              const char* Arg attribute ((unused)))
 /* Place local variables in static storage */
@@ -877,7 +859,6 @@ int main (int argc, char* argv[])
         { "--register-vars",        0,      OptRegisterVars         },
         { "--rodata-name",          1,      OptRodataName           },
         { "--signed-chars",         0,      OptSignedChars          },
-        { "--standard",             1,      OptStandard             },
         { "--static-locals",        0,      OptStaticLocals         },
         { "--target",               1,      OptTarget               },
         { "--verbose",              0,      OptVerbose              },
@@ -1052,11 +1033,6 @@ int main (int argc, char* argv[])
     /* If no memory model was given, use the default */
     if (MemoryModel == MMODEL_UNKNOWN) {
         SetMemoryModel (MMODEL_NEAR);
-    }
-
-    /* If no language standard was given, use the default one */
-    if (IS_Get (&Standard) == STD_UNKNOWN) {
-        IS_Set (&Standard, STD_DEFAULT);
     }
 
     /* Go! */

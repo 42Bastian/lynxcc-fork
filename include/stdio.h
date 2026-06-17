@@ -129,10 +129,8 @@ int __fastcall__ vscanf (const char* format, va_list ap);
 int __fastcall__ vsscanf (const char* s, const char* format, va_list ap);
 int __fastcall__ vfscanf (FILE* f, const char* format, va_list ap);
 
-#if __CC65_STD__ == __CC65_STD_CC65__
 FILE* __fastcall__ fdopen (int fd, const char* mode);   /* Unix */
 int __fastcall__ fileno (FILE* f);                      /* Unix */
-#endif
 void __fastcall__ _poserror (const char* msg);          /* cc65 */
 
 /* Masking macros for some functions */

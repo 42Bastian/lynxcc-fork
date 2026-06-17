@@ -138,7 +138,6 @@ Long options:
   --register-vars               Enable register variables
   --rodata-name seg             Set the name of the RODATA segment
   --signed-chars                Default characters are signed
-  --standard std                Language standard (c89, c99, cc65)
   --static-locals               Make local variables static
   --target sys                  Set the target system
   --verbose                     Increase verbosity
@@ -356,38 +355,7 @@ Long options:
   almost any load operation), this will make the code larger and slower. A
   better way is to declare characters explicitly as "signed" if needed. You
   can also use <code><a href="#pragma-signed-chars">#pragma signed-chars</a></code> for better control of this option.</p>
-<a id="option--standard"></a>
 </dd>
-<dt><code>--standard std</code></dt>
-<dd>
-<p>This option allows to set the language standard supported. The argument is
-  one of</p>
-<dl>
-<dt>c89</dt>
-<dd>
-<p>This disables anything that is illegal in C89/C90. Among those things
-      are <code>//</code> comments and the non-standard keywords without
-      underscores. Please note that cc65 is not a fully C89 compliant compiler
-      despite this option. A few more things (like floats) are missing.</p>
-</dd>
-<dt>c99</dt>
-<dd>
-<p>This enables a few features from the C99 standard. With this option,
-      <code>//</code> comments are allowed. It will also cause warnings and even
-      errors in a few situations that are allowed with <code>--standard c89</code>.
-      For example, a call to a function without a prototype is an error in
-      this mode.</p>
-</dd>
-<dt>cc65</dt>
-<dd>
-<p>This is the default mode. It is like c99 mode, but additional features
-      are enabled. Among these are "void data", non-standard keywords without
-      the underlines, unnamed function parameters and the requirement for
-      main() to return an int.</p>
-</dd>
-</dl>
-<p>Please note that the compiler does not support the C99 standard and never
-  will. c99 mode is actually c89 mode with a few selected C99 extensions.</p>
 <a id="option-t"></a>
 <dt><code>-t target, --target target</code></dt>
 <dd>
@@ -576,9 +544,8 @@ assembler.</p>
 <h2 id="sect-4">4. Differences to the ISO standard</h2>
 <p>Apart from the things listed below, the compiler does support additional
 keywords, has several functions in the standard headers with names outside the
-reserved namespace and a few syntax extensions. All these can be disabled with
-the <code><a href="#option--standard">--standard</a></code> command line
-option. Its use for maximum standards compatibility is advised.</p>
+reserved namespace and a few syntax extensions. As this is a Lynx-only fork,
+these cc65 extensions are always enabled and cannot be turned off.</p>
 <p>Here is a list of differences between the language, the compiler accepts,
 and the one defined by the ISO standard:</p>
 <ul>
@@ -605,9 +572,8 @@ and the one defined by the ISO standard:</p>
 <p>Using an undeclared type name in a declaration (for example
         <code>time_t x;</code> when no <code>typedef</code> for <code>time_t</code>
         is in scope, typically a missing <code>#include</code>) is reported as
-        <code>Unknown type name 'time_t'</code>. The ISO rule that an omitted type
-        defaults to <code>int</code> was removed in C99; this compiler still
-        accepts a genuine implicit <code>int</code> (warning under C99 and later),
+        <code>Unknown type name 'time_t'</code>. This compiler still
+        accepts a genuine implicit <code>int</code> (with a warning),
         but an unknown identifier sitting in type position followed by another
         identifier, or by <code>*</code>, is diagnosed as a bad type name instead
         of being silently treated as <code>int</code>.</p>
@@ -645,8 +611,7 @@ mind, you should be able to write fairly portable code.</p>
 <p>An example is</p>
 <pre class="verb">        void __fastcall__ f (unsigned char c)
         </pre>
-<p>The first form of the fastcall keyword is in the user namespace and can
-        therefore be disabled with the <code><a href="#option--standard">--standard</a></code> command line option.</p>
+<p>The first form of the fastcall keyword is in the user namespace.</p>
 <p>For functions that are <code>fastcall</code>, the rightmost parameter is not
         pushed on the stack but left in the primary register when the function
         is called. That significantly reduces the cost of calling those functions.</p>
@@ -663,8 +628,7 @@ mind, you should be able to write fairly portable code.</p>
 <p>An example is</p>
 <pre class="verb">        int* __cdecl__ f (unsigned char c)
         </pre>
-<p>The first form of the cdecl keyword is in the user namespace;
-        and therefore, can be disabled with the <code><a href="#option--standard">--standard</a></code> command-line option.</p>
+<p>The first form of the cdecl keyword is in the user namespace.</p>
 <p>For functions that are <code>cdecl</code>, the rightmost parameter is pushed
         onto the stack before the function is called. That increases the cost
         of calling those functions, especially when they are called from many
@@ -759,8 +723,7 @@ mind, you should be able to write fairly portable code.</p>
         used in the goto must be a simple variable or a constant.</p>
 </li>
 <li>
-<p>Binary literals, a C++14 feature and a GCC C extension, are accepted.
-        They can be disabled with the <code><a href="#option--standard">--standard</a></code> option.</p>
+<p>Binary literals, a C++14 feature and a GCC C extension, are accepted.</p>
 <pre class="verb">        unsigned char foo = 0b101; // sets it to 5
         </pre>
 </li>
@@ -773,21 +736,6 @@ mind, you should be able to write fairly portable code.</p>
 <p>This macro is always defined. Its value is the version number of the
   compiler in hex.  For example, version 2.14 of the compiler has this macro
   defined as <code>0x02E0</code>.</p>
-</dd>
-<dt><code>__CC65_STD__</code></dt>
-<dd>
-<p>This macro is defined to one of the following depending on the <code><a href="#option--standard">--standard</a></code> command line option:</p>
-<ul>
-<li>
-<p><code>__CC65_STD_C89__</code></p>
-</li>
-<li>
-<p><code>__CC65_STD_C99__</code></p>
-</li>
-<li>
-<p><code>__CC65_STD_CC65__</code></p>
-</li>
-</ul>
 </dd>
 <dt><code>__DATE__</code></dt>
 <dd>
@@ -1113,7 +1061,7 @@ syntax is</p>
 <pre class="verb">        asm [optional volatile] (&lt;string literal&gt;[, optional parameters]) ;</pre>
 <p>or</p>
 <pre class="verb">        __asm__ [optional volatile] (&lt;string literal&gt;[, optional parameters]) ;</pre>
-<p>The first form is in the user namespace; and, is disabled by <code><a href="#option--standard">--standard</a></code> if the argument is not <code>cc65</code>.</p>
+<p>The first form is in the user namespace.</p>
 <p>The <code>asm</code> statement can be used only inside a function.  Please note that
 the result of an inline assembler expression is always of type <code>void</code>.</p>
 <p>The contents of the string literal are preparsed by the compiler; and, inserted
@@ -1377,9 +1325,9 @@ assembly functions from C. It was originally written by
 the <code>--all-cdecl</code> command line option. If a convention is specified in
 the function's declaration, that convention will be used instead.
 Variadic functions will always use <code>cdecl</code> convention.</p>
-<p>If the <code>--standard</code> command line option is used,
-the <code>cdecl</code> and <code>fastcall</code> keywords will not be available.
-The standard compliant variations <code>__cdecl__</code> and <code>__fastcall__</code> are always available.</p>
+<p>The <code>cdecl</code> and <code>fastcall</code> keywords (and their standard
+compliant variations <code>__cdecl__</code> and <code>__fastcall__</code>) are
+always available.</p>
 <p>If a function has a prototype, parameters are pushed to the C-stack as their respective types
 (i.e. a <code>char</code> parameter will push 1 byte), but if a function has no prototype, default
 promotions will apply. This means that with no prototype, <code>char</code> will be promoted
@@ -1625,7 +1573,6 @@ it may clobber any of these itself:</p>
 <tr><td><code>Invalid right operand for relational operator</code></td><td>The right operand of a relational operator has an invalid type.</td></tr>
 <tr><td><code>Division by zero</code></td><td>A constant division by zero was detected.</td></tr>
 <tr><td><code>Modulo operation with zero</code></td><td>A constant modulo by zero was detected.</td></tr>
-<tr><td><code>Computed gotos are a C extension, not supported with this --standard</code></td><td>The &amp;&amp;label / goto *expr extension is disabled under the selected standard.</td></tr>
 </table></div>
 <h3 id="diag-stmt">12.6. Statements and control flow</h3>
 <p>Reported while parsing statements, loops, switch and goto.</p>

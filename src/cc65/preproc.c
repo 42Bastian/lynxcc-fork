@@ -57,7 +57,6 @@
 #include "macrotab.h"
 #include "preproc.h"
 #include "scanner.h"
-#include "standard.h"
 
 
 
@@ -484,7 +483,7 @@ static void ReadMacroArgs (MacroExp* E)
                 SB_AppendChar (&Arg, ' ');
             }
             OldStyleComment ();
-        } else if (IS_Get (&Standard) >= STD_C99 && CurC == '/' && NextC == '/') {
+        } else if (CurC == '/' && NextC == '/') {
             if (SB_NotEmpty (&Arg)) {
                 SB_AppendChar (&Arg, ' ');
             }
@@ -740,16 +739,12 @@ static void DefineMacro (void)
     ident       Ident;
     Macro*      M;
     Macro*      Existing;
-    int         C89;
 
     /* Read the macro name */
     SkipWhitespace (0);
     if (!MacName (Ident)) {
         return;
     }
-
-    /* Remember if we're in C89 mode */
-    C89 = (IS_Get (&Standard) == STD_C89);
 
     /* Get an existing macro definition with this name */
     Existing = FindMacro (Ident);
@@ -775,10 +770,8 @@ static void DefineMacro (void)
                 break;
             }
 
-            /* The next token must be either an identifier, or - if not in
-            ** C89 mode - the ellipsis.
-            */
-            if (!C89 && CurC == '.') {
+            /* The next token must be either an identifier or the ellipsis. */
+            if (CurC == '.') {
                 /* Ellipsis */
                 NextChar ();
                 if (CurC != '.' || NextC != '.') {
@@ -801,8 +794,10 @@ static void DefineMacro (void)
                     return;
                 }
 
-                /* __VA_ARGS__ is only allowed in C89 mode */
-                if (!C89 && strcmp (Ident, "__VA_ARGS__") == 0) {
+                /* __VA_ARGS__ may only appear in the expansion of a variadic
+                ** macro.
+                */
+                if (strcmp (Ident, "__VA_ARGS__") == 0) {
                     PPWarning ("'__VA_ARGS__' can only appear in the expansion "
                                "of a C99 variadic macro");
                 }
@@ -920,7 +915,7 @@ static unsigned Pass1 (StrBuf* Source, StrBuf* Target)
                 SB_AppendChar (Target, ' ');
             }
             OldStyleComment ();
-        } else if (IS_Get (&Standard) >= STD_C99 && CurC == '/' && NextC == '/') {
+        } else if (CurC == '/' && NextC == '/') {
             if (!IsSpace (SB_LookAtLast (Target))) {
                 SB_AppendChar (Target, ' ');
             }
@@ -1363,16 +1358,9 @@ void Preprocess (void)
                         break;
 
                     case PP_WARNING:
-                        /* #warning is a non standard extension */
-                        if (IS_Get (&Standard) > STD_C99) {
-                            if (!Skip) {
-                                DoWarning ();
-                            }
-                        } else {
-                            if (!Skip) {
-                                PPError ("Preprocessor directive expected");
-                            }
-                            ClearLine ();
+                        /* #warning is a cc65 extension */
+                        if (!Skip) {
+                            DoWarning ();
                         }
                         break;
 

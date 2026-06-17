@@ -824,7 +824,6 @@ static void Usage (void)
             "  --register-vars\t\tEnable register variables\n"
             "  --rodata-name seg\t\tSet the name of the RODATA segment\n"
             "  --signed-chars\t\tDefault characters are signed\n"
-            "  --standard std\t\tLanguage standard (c89, c99, cc65)\n"
             "  --start-addr addr\t\tSet the default start address\n"
             "  --static-locals\t\tMake local variables static\n"
             "  --target sys\t\t\tSet the target system\n"
@@ -1257,14 +1256,6 @@ static void OptSignedChars (const char* Opt attribute ((unused)),
 
 
 
-static void OptStandard (const char* Opt attribute ((unused)), const char* Arg)
-/* Set the language standard */
-{
-    CmdAddArg2 (&CC65, "--standard", Arg);
-}
-
-
-
 static void OptStartAddr (const char* Opt attribute ((unused)), const char* Arg)
 /* Set the default start address */
 {
@@ -1382,7 +1373,6 @@ int main (int argc, char* argv [])
         { "--register-vars",     0, OptRegisterVars   },
         { "--rodata-name",       1, OptRodataName     },
         { "--signed-chars",      0, OptSignedChars    },
-        { "--standard",          1, OptStandard       },
         { "--start-addr",        1, OptStartAddr      },
         { "--static-locals",     0, OptStaticLocals   },
         { "--target",            1, OptTarget         },

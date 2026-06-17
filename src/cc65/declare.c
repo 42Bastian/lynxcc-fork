@@ -56,7 +56,6 @@
 #include "litpool.h"
 #include "pragma.h"
 #include "scanner.h"
-#include "standard.h"
 #include "symtab.h"
 #include "wrappedcall.h"
 #include "typeconv.h"
@@ -655,10 +654,10 @@ static SymEntry* ParseUnionDecl (const char* Name)
 
             /* Check for fields without a name */
             if (Decl.Ident[0] == '\0') {
-                /* In cc65 mode, we allow anonymous structs/unions within
-                ** a union.
+                /* As a cc65 extension, we allow anonymous structs/unions
+                ** within a union.
                 */
-                if (IS_Get (&Standard) >= STD_CC65 && IsClassStruct (Decl.Type)) {
+                if (IsClassStruct (Decl.Type)) {
                     /* This is an anonymous struct or union. Copy the fields
                     ** into the current level.
                     */
@@ -809,10 +808,10 @@ static SymEntry* ParseStructDecl (const char* Name)
             /* Check for fields without names */
             if (Decl.Ident[0] == '\0') {
                 if (FieldWidth < 0) {
-                    /* In cc65 mode, we allow anonymous structs/unions within
-                    ** a struct.
+                    /* As a cc65 extension, we allow anonymous structs/unions
+                    ** within a struct.
                     */
-                    if (IS_Get (&Standard) >= STD_CC65 && IsClassStruct (Decl.Type)) {
+                    if (IsClassStruct (Decl.Type)) {
 
                         /* This is an anonymous struct or union. Copy the
                         ** fields into the current level.
@@ -1655,12 +1654,10 @@ void ParseDecl (const DeclSpec* Spec, Declaration* D, declmode_t Mode)
         /* Warn about an implicit int return in the function */
         if ((Spec->Flags & DS_DEF_TYPE) != 0 &&
             RetType[0].C == T_INT && RetType[1].C == T_END) {
-            /* Function has an implicit int return. Output a warning if we don't
-            ** have the C89 standard enabled explicitly.
+            /* Function has an implicit int return, which is an obsolete
+            ** feature.
             */
-            if (IS_Get (&Standard) >= STD_C99) {
-                Warning ("Implicit 'int' return type is an obsolete feature");
-            }
+            Warning ("Implicit 'int' return type is an obsolete feature");
             GetFuncDesc (D->Type)->Flags |= FD_OLDSTYLE_INTRET;
         }
 
@@ -1671,10 +1668,8 @@ void ParseDecl (const DeclSpec* Spec, Declaration* D, declmode_t Mode)
     */
     if ((D->StorageClass & SC_FUNC) != SC_FUNC &&
         (D->StorageClass & SC_TYPEMASK) != SC_TYPEDEF) {
-        /* If the standard was not set explicitly to C89, print a warning
-        ** for variables with implicit int type.
-        */
-        if ((Spec->Flags & DS_DEF_TYPE) != 0 && IS_Get (&Standard) >= STD_C99) {
+        /* Print a warning for variables with implicit int type. */
+        if ((Spec->Flags & DS_DEF_TYPE) != 0) {
             Warning ("Implicit 'int' is an obsolete feature");
         }
     }
@@ -2265,11 +2260,8 @@ static unsigned ParseInitInternal (Type* T, int AllowFlexibleMembers)
             return ParseStructInit (T, AllowFlexibleMembers);
 
         case T_VOID:
-            if (IS_Get (&Standard) == STD_CC65) {
-                /* Special cc65 extension in non-ANSI mode */
-                return ParseVoidInit (T);
-            }
-            /* FALLTHROUGH */
+            /* Special cc65 extension */
+            return ParseVoidInit (T);
 
         default:
             Error ("Illegal type");
@@ -2283,10 +2275,10 @@ static unsigned ParseInitInternal (Type* T, int AllowFlexibleMembers)
 unsigned ParseInit (Type* T)
 /* Parse initialization of variables. Return the number of data bytes. */
 {
-    /* Parse the initialization. Flexible array members can only be initialized
-    ** in cc65 mode.
+    /* Parse the initialization. Flexible array members may be initialized as
+    ** a cc65 extension.
     */
-    unsigned Size = ParseInitInternal (T, IS_Get (&Standard) == STD_CC65);
+    unsigned Size = ParseInitInternal (T, 1);
 
     /* The initialization may not generate code on global level, because code
     ** outside function scope will never get executed.

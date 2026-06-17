@@ -67,17 +67,13 @@ int __fastcall__ ispunct (int c);
 int __fastcall__ isspace (int c);
 int __fastcall__ isupper (int c);
 int __fastcall__ isxdigit (int c);
-#if __CC65_STD__ >= __CC65_STD_C99__
 int __fastcall__ isblank (int c);       /* New in C99 */
-#endif
 
 int __fastcall__ toupper (int c);       /* Always external */
 int __fastcall__ tolower (int c);       /* Always external */
 
-#if __CC65_STD__ >= __CC65_STD_CC65__
 unsigned char __fastcall__ toascii (unsigned char c);
 /* Convert a target-specific character to ASCII. */
-#endif
 
 /* End of ctype.h */
 #endif

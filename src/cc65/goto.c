@@ -43,7 +43,6 @@
 #include "expr.h"
 #include "loadexpr.h"
 #include "scanner.h"
-#include "standard.h"
 #include "symtab.h"
 #include "goto.h"
 
@@ -73,7 +72,7 @@ void GotoStatement (void)
         /* Eat the label name */
         NextToken ();
 
-    } else if (CurTok.Tok == TOK_STAR && IS_Get (&Standard) >= STD_CC65) {
+    } else if (CurTok.Tok == TOK_STAR) {
         SymEntry *arr, *idx, *cur;
         SymTable *tab;
         ExprDesc desc;

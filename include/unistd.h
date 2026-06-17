@@ -90,9 +90,7 @@ unsigned __fastcall__ sleep (unsigned seconds);
 int __fastcall__ getopt (int argc, char* const* argv, const char* optstring);
 
 /* Non standard: */
-#if __CC65_STD__ == __CC65_STD_CC65__
 int __fastcall__ exec (const char* progname, const char* cmdline);
-#endif
 
 
 

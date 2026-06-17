@@ -48,7 +48,6 @@
 #include "locals.h"
 #include "scanner.h"
 #include "stackptr.h"
-#include "standard.h"
 #include "stmt.h"
 #include "symtab.h"
 #include "function.h"
@@ -378,7 +377,6 @@ static void F_EmitDebugInfo (void)
 void NewFunc (SymEntry* Func)
 /* Parse argument declarations and function body. */
 {
-    int         C99MainFunc = 0;/* Flag for C99 main function returning int */
     SymEntry*   Param;
 
     /* Get the function descriptor from the function entry */
@@ -389,13 +387,6 @@ void NewFunc (SymEntry* Func)
 
     /* Reenter the lexical level */
     ReenterFunctionLevel (D);
-
-    /* Check if the function header contains unnamed parameters. These are
-    ** only allowed in cc65 mode.
-    */
-    if ((D->Flags & FD_UNNAMED_PARAMS) != 0 && (IS_Get (&Standard) != STD_CC65)) {
-        Error ("Parameter name omitted");
-    }
 
     /* Declare two special functions symbols: __fixargs__ and __argsize__.
     ** The latter is different depending on the type of the function (variadic
@@ -425,13 +416,6 @@ void NewFunc (SymEntry* Func)
             Error ("'main' cannot be declared as __fastcall__");
         }
 
-        /* If cc65 extensions aren't enabled, don't allow a main function that
-        ** doesn't return an int.
-        */
-        if (IS_Get (&Standard) != STD_CC65 && CurrentFunc->ReturnType[0].C != T_INT) {
-            Error ("'main' must always return an int");
-        }
-
         /* Add a forced import of a symbol that is contained in the startup
         ** code. This will force the startup code to be linked in.
         */
@@ -448,13 +432,6 @@ void NewFunc (SymEntry* Func)
             Func->Type->C |= T_QUAL_CDECL;
         }
 
-        /* Determine if this is a main function in a C99 environment that
-        ** returns an int.
-        */
-        if (IsTypeInt (F_GetReturnType (CurrentFunc)) &&
-            IS_Get (&Standard) == STD_C99) {
-            C99MainFunc = 1;
-        }
     }
 
     /* Allocate code and data segments for this function */
@@ -540,21 +517,11 @@ void NewFunc (SymEntry* Func)
         Statement (0);
     }
 
-    /* If this is not a void function, and not the main function in a C99
-    ** environment returning int, output a warning if we didn't see a return
-    ** statement.
+    /* If this is not a void function, output a warning if we didn't see a
+    ** return statement.
     */
-    if (!F_HasVoidReturn (CurrentFunc) && !F_HasReturn (CurrentFunc) && !C99MainFunc) {
+    if (!F_HasVoidReturn (CurrentFunc) && !F_HasReturn (CurrentFunc)) {
         Warning ("Control reaches end of non-void function");
-    }
-
-    /* If this is the main function in a C99 environment returning an int, let
-    ** it always return zero. Note: Actual return statements jump to the return
-    ** label defined below.
-    ** The code is removed by the optimizer if unused.
-    */
-    if (C99MainFunc) {
-        g_getimmed (CF_INT | CF_CONST, 0, 0);
     }
 
     /* Output the function exit code label */

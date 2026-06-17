@@ -71,7 +71,6 @@ void* __fastcall__ memset (void* s, int c, size_t count);
 void* __fastcall__ _bzero (void* ptr, size_t n);
 
 /* Non standard: */
-#if __CC65_STD__ == __CC65_STD_CC65__
 void __fastcall__ bzero (void* ptr, size_t n);                /* BSD */
 char* __fastcall__ strdup (const char* s);                    /* SYSV/BSD */
 int __fastcall__ stricmp (const char* s1, const char* s2);    /* DOS/Windows */
@@ -83,7 +82,6 @@ char* __fastcall__ strlower (char* s);
 char* __fastcall__ strupr (char* s);
 char* __fastcall__ strupper (char* s);
 char* __fastcall__ strqtok (char* s1, const char* s2);
-#endif
 
 const char* __fastcall__ _stroserror (unsigned char errcode);
 /* Map an operating system error number to an error message. */

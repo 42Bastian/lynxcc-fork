@@ -32,7 +32,6 @@
 #include "scanner.h"
 #include "shiftexpr.h"
 #include "stackptr.h"
-#include "standard.h"
 #include "stdfunc.h"
 #include "symtab.h"
 #include "typecmp.h"
@@ -722,8 +721,8 @@ static void Primary (ExprDesc* E)
     switch (CurTok.Tok) {
 
         case TOK_BOOL_AND:
-            /* A computed goto label address */
-            if (IS_Get (&Standard) >= STD_CC65) {
+            /* A computed goto label address (a cc65 extension) */
+            {
                 SymEntry* Entry;
                 NextToken ();
                 Entry = AddLabelSym (CurTok.Ident, SC_REF | SC_GOTO_IND);
@@ -732,9 +731,6 @@ static void Primary (ExprDesc* E)
                 E->Name = Entry->V.L.Label;
                 E->Type = PointerTo (type_void);
                 NextToken ();
-            } else {
-                Error ("Computed gotos are a C extension, not supported with this --standard");
-                ED_MakeConstAbsInt (E, 1);
             }
             break;
 
@@ -826,17 +822,12 @@ static void Primary (ExprDesc* E)
 
                 /* IDENT is either an auto-declared function or an undefined variable. */
                 if (CurTok.Tok == TOK_LPAREN) {
-                    /* C99 doesn't allow calls to undefined functions, so
-                    ** generate an error and otherwise a warning. Declare a
-                    ** function returning int. For that purpose, prepare a
-                    ** function signature for a function having an empty param
-                    ** list and returning int.
+                    /* Calls to undefined functions are not allowed. Generate
+                    ** an error and declare a function returning int. For that
+                    ** purpose, prepare a function signature for a function
+                    ** having an empty param list and returning int.
                     */
-                    if (IS_Get (&Standard) >= STD_C99) {
-                        Error ("Call to undefined function '%s'", Ident);
-                    } else {
-                        Warning ("Call to undefined function '%s'", Ident);
-                    }
+                    Error ("Call to undefined function '%s'", Ident);
                     Sym = AddGlobalSym (Ident, GetImplicitFuncType(), SC_EXTERN | SC_REF | SC_FUNC);
                     E->Type  = Sym->Type;
                     E->Flags = E_LOC_GLOBAL | E_RTYPE_RVAL;

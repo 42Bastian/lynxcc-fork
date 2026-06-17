@@ -48,16 +48,12 @@ typedef unsigned size_t;
 #define EXIT_SUCCESS    0
 #define EXIT_FAILURE    1
 
-#if __CC65_STD__ == __CC65_STD_CC65__
-
 /* Those non-standard cc65 exit constants definitions are in addition
 ** to the EXIT_SUCCESS and EXIT_FAILURE constants, which should not be
-** redefined 
-*/ 
+** redefined
+*/
 #define EXIT_ASSERT 2
 #define EXIT_ABORT 3
-
-#endif
 
 
 /* Return type of the div function */
@@ -120,13 +116,11 @@ int __fastcall__ system (const char* s);
 
 /* Non-ANSI functions */
 void __fastcall__ _swap (void* p, void* q, size_t size);
-#if __CC65_STD__ == __CC65_STD_CC65__
 char* __fastcall__ itoa (int val, char* buf, int radix);
 char* __fastcall__ utoa (unsigned val, char* buf, int radix);
 char* __fastcall__ ltoa (long val, char* buf, int radix);
 char* __fastcall__ ultoa (unsigned long val, char* buf, int radix);
 int __fastcall__ putenv (char* s);
-#endif
 
 
 
