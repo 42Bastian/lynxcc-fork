@@ -37,28 +37,29 @@ improvements.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl2"><a href="#pragma-wrapped-call">7.18. #pragma wrapped-call (push, &lt;name&gt;, &lt;identifier&gt;)</a></li>
 <li class="lvl2"><a href="#pragma-writable-strings">7.19. #pragma writable-strings ([push,] on|off)</a></li>
 <li class="lvl2"><a href="#sect-7-20">7.20. #pragma zpsym (&lt;name&gt;)</a></li>
-<li class="lvl1"><a href="#register-vars">8. Register variables</a></li>
-<li class="lvl1"><a href="#inline-asm">9. Inline assembler</a></li>
-<li class="lvl1"><a href="#operators">10. The C language: operators</a></li>
-<li class="lvl2"><a href="#operators-standard">10.1. Standard operators</a></li>
-<li class="lvl2"><a href="#operators-bitwise">10.2. Bitwise operators</a></li>
-<li class="lvl2"><a href="#operators-suzy">10.3. Suzy hardware operators</a></li>
-<li class="lvl1"><a href="#asm-from-c">11. Calling assembly functions from C</a></li>
-<li class="lvl2"><a href="#asm-from-c-1">11.1. Calling conventions</a></li>
-<li class="lvl2"><a href="#asm-from-c-2">11.2. Prologue, before the function call</a></li>
-<li class="lvl2"><a href="#asm-from-c-3">11.3. Epilogue, after the function call</a></li>
-<li class="lvl1"><a href="#diagnostics">12. Compiler diagnostics</a></li>
-<li class="lvl2"><a href="#diag-format">12.1. Reading a diagnostic</a></li>
-<li class="lvl2"><a href="#diag-lexical">12.2. Lexical, character and string constants</a></li>
-<li class="lvl2"><a href="#diag-preproc">12.3. Preprocessor directives</a></li>
-<li class="lvl2"><a href="#diag-decl">12.4. Declarations, types and initializers</a></li>
-<li class="lvl2"><a href="#diag-expr">12.5. Expressions and operators</a></li>
-<li class="lvl2"><a href="#diag-stmt">12.6. Statements and control flow</a></li>
-<li class="lvl2"><a href="#diag-sym">12.7. Symbols, functions and scope</a></li>
-<li class="lvl2"><a href="#diag-pragma">12.8. #pragma, segments and wrapped-call</a></li>
-<li class="lvl2"><a href="#diag-asm">12.9. Inline assembler and code generation</a></li>
-<li class="lvl2"><a href="#diag-fatal">12.10. Fatal errors</a></li>
-<li class="lvl1"><a href="#sect-11">13. Copyright</a></li>
+<li class="lvl1"><a href="#var-storage">8. Variable storage and lifetime</a></li>
+<li class="lvl1"><a href="#register-vars">9. Register variables</a></li>
+<li class="lvl1"><a href="#inline-asm">10. Inline assembler</a></li>
+<li class="lvl1"><a href="#operators">11. The C language: operators</a></li>
+<li class="lvl2"><a href="#operators-standard">11.1. Standard operators</a></li>
+<li class="lvl2"><a href="#operators-bitwise">11.2. Bitwise operators</a></li>
+<li class="lvl2"><a href="#operators-suzy">11.3. Suzy hardware operators</a></li>
+<li class="lvl1"><a href="#asm-from-c">12. Calling assembly functions from C</a></li>
+<li class="lvl2"><a href="#asm-from-c-1">12.1. Calling conventions</a></li>
+<li class="lvl2"><a href="#asm-from-c-2">12.2. Prologue, before the function call</a></li>
+<li class="lvl2"><a href="#asm-from-c-3">12.3. Epilogue, after the function call</a></li>
+<li class="lvl1"><a href="#diagnostics">13. Compiler diagnostics</a></li>
+<li class="lvl2"><a href="#diag-format">13.1. Reading a diagnostic</a></li>
+<li class="lvl2"><a href="#diag-lexical">13.2. Lexical, character and string constants</a></li>
+<li class="lvl2"><a href="#diag-preproc">13.3. Preprocessor directives</a></li>
+<li class="lvl2"><a href="#diag-decl">13.4. Declarations, types and initializers</a></li>
+<li class="lvl2"><a href="#diag-expr">13.5. Expressions and operators</a></li>
+<li class="lvl2"><a href="#diag-stmt">13.6. Statements and control flow</a></li>
+<li class="lvl2"><a href="#diag-sym">13.7. Symbols, functions and scope</a></li>
+<li class="lvl2"><a href="#diag-pragma">13.8. #pragma, segments and wrapped-call</a></li>
+<li class="lvl2"><a href="#diag-asm">13.9. Inline assembler and code generation</a></li>
+<li class="lvl2"><a href="#diag-fatal">13.10. Fatal errors</a></li>
+<li class="lvl1"><a href="#sect-11">14. Copyright</a></li>
 </ul></nav><h2 id="sect-1">1. Overview</h2>
 <p>cc65 was originally a C compiler for the Atari 8-bit machines written by
 John R. Dunning. In prior releases I've described the compiler by listing
@@ -1023,7 +1024,22 @@ void somefunc2(int, char *);
 <pre class="verb">        extern int foo;
         #pragma zpsym ("foo");  /* foo is in the zeropage */
   </pre>
-<h2 id="register-vars">8. Register variables</h2>
+<h2 id="var-storage">8. Variable storage and lifetime</h2>
+<p>Where the compiler places a variable depends on its storage class and scope, not on its type. There are three kinds of storage: the software C stack, the static segments (BSS, DATA and RODATA), and zero page register space. The heap used by <code>malloc</code> and friends is never used for variables the compiler allocates itself.</p>
+<p>Variables declared <code>auto</code> &mdash; the default for any local declared inside a function &mdash; live on the cc65 software stack. This is a separate, downward-growing stack addressed through a zero page pointer; it is not the 6502 hardware stack, which the runtime uses only for return addresses and scratch. Each call allocates the locals on entry and releases them on exit, so their lifetime is exactly one invocation and their address is relative to the current stack pointer rather than fixed. Because this allocate-and-release happens every time a block is entered, declaring locals in nested blocks rather than at the top of the function costs extra code and time.</p>
+<p>Variables with static storage duration &mdash; everything declared at file scope, plus any local declared <code>static</code> &mdash; are given a fixed address by the linker and exist for the whole run of the program. The segment is chosen by the initialization, not by the type: an uninitialized variable goes into BSS, which is reserved as a block and cleared to zero at startup; a variable with a non-<code>const</code> initializer goes into DATA, which holds its initial-value image; and a variable whose elements are <code>const</code> goes into RODATA. An uninitialized global is treated as a tentative definition, so repeating a declaration such as <code>int i;</code> in one module reserves space only once.</p>
+<p>The only thing that distinguishes a plain global from a <code>static</code> one is linkage, not storage. A plain global has external linkage: its label is exported, so the linker and other modules can see it. A <code>static</code> global, and likewise a <code>static</code> local, has internal linkage: nothing is exported and the label is private to the module. Both are stored identically in BSS, DATA or RODATA. A <code>static</code> local and a <code>static</code> global are therefore stored the same way; scope only changes where the name is visible in the C source.</p>
+<p>Variables declared <code>register</code> are a special case covered in the next section: they occupy a small amount of zero page space rather than any of the above. The table below summarises the common cases.</p>
+<div class="table-wrap"><table class="grid">
+<thead><tr><th>Declaration</th><th>Stored in</th><th>Addressing</th><th>Linkage</th><th>Lifetime</th></tr></thead>
+<tbody>
+<tr><td>auto local</td><td>software C stack</td><td>stack-pointer relative</td><td>none</td><td>one function call</td></tr>
+<tr><td><code>static</code> local</td><td>BSS / DATA / RODATA</td><td>fixed address</td><td>internal (module-local)</td><td>whole program</td></tr>
+<tr><td><code>static</code> global</td><td>BSS / DATA / RODATA</td><td>fixed address</td><td>internal (module-local)</td><td>whole program</td></tr>
+<tr><td>plain global</td><td>BSS / DATA / RODATA</td><td>fixed address</td><td>external (exported)</td><td>whole program</td></tr>
+</tbody></table></div>
+<p>Within the static cases the segment follows the initializer: uninitialized goes to BSS (zeroed at startup), a non-<code>const</code> initializer goes to DATA, and <code>const</code> data goes to RODATA.</p>
+<h2 id="register-vars">9. Register variables</h2>
 <p>The runtime for all supported platforms has 6 bytes of zero page space
 available for register variables (this could be increased, but I think it's a
 good value). So you can declare register variables up to a total size of 6 per
@@ -1055,7 +1071,7 @@ disabled, all variables declared as <code>register</code> are actually auto vari
 <p>Please take care when using register variables: While they are helpful and can
 lead to a tremendous speedup when used correctly, improper usage will cause
 bloated code and a slowdown.</p>
-<h2 id="inline-asm">9. Inline assembler</h2>
+<h2 id="inline-asm">10. Inline assembler</h2>
 <p>The compiler allows to insert assembler statements into the output file. The
 syntax is</p>
 <pre class="verb">        asm [optional volatile] (&lt;string literal&gt;[, optional parameters]) ;</pre>
@@ -1181,7 +1197,7 @@ a future version. Instead, use the format specifiers from the table above:</p>
 <pre class="verb">        __asm__ ("lda %v", foo);        /* OK */
         ...
         __asm__ ("jsr %v", bar);        /* OK */</pre>
-<h2 id="operators">10. The C language: operators</h2>
+<h2 id="operators">11. The C language: operators</h2>
 <p>cc65 accepts the full set of C operators. This section summarises how they
 behave on the Lynx target, where the native integer types are 8, 16 and 32 bits
 wide (<code>char</code> is 8 bits, <code>int</code> is 16 bits and <code>long</code>
@@ -1190,7 +1206,7 @@ is 32 bits) and there is no floating-point type &mdash; the <code>float</code> a
 top of the standard operators this fork adds three hardware operators
 (<code>!*</code>, <code>!/</code>, <code>!%</code>) that route multiplication and
 division through the Suzy math unit.</p>
-<h3 id="operators-standard">10.1. Standard operators</h3>
+<h3 id="operators-standard">11.1. Standard operators</h3>
 <p>All of the usual C operators are available and follow the standard precedence,
 associativity and promotion rules:</p>
 <ul>
@@ -1234,7 +1250,7 @@ associativity and promotion rules:</p>
         pointed-to type using the software multiply.</p>
 </li>
 </ul>
-<h3 id="operators-bitwise">10.2. Bitwise operators</h3>
+<h3 id="operators-bitwise">11.2. Bitwise operators</h3>
 <p>The bitwise operators work on the integer types in their natural width &mdash;
 8 bits for <code>char</code>, 16 for <code>int</code>, 32 for <code>long</code>
 &mdash; after the usual integer promotions:</p>
@@ -1252,7 +1268,7 @@ cheap while shifting by a large or runtime count is correspondingly more
 expensive. Each operator has a matching compound-assignment form
 (<code>&amp;=</code>, <code>|=</code>, <code>^=</code>, <code>&lt;&lt;=</code>,
 <code>&gt;&gt;=</code>).</p>
-<h3 id="operators-suzy">10.3. Suzy hardware operators</h3>
+<h3 id="operators-suzy">11.3. Suzy hardware operators</h3>
 <p>This fork adds three multiplicative operators that are specific to the Lynx and
 are rejected by any other compiler: <code>!*</code>, <code>!/</code> and
 <code>!%</code>. They are written exactly like their standard counterparts
@@ -1306,11 +1322,11 @@ several times faster than the software loops.</p>
 </ul>
 <p>For the full hardware contract and the runtime entry points, see
 <code>LYNX_CODEGEN_DESIGN.md</code> &sect;2.6 in the source tree.</p>
-<h2 id="asm-from-c">11. Calling assembly functions from C</h2>
+<h2 id="asm-from-c">12. Calling assembly functions from C</h2>
 <p>This section covers the internal details of cc65 code generation needed to call
 assembly functions from C. It was originally written by
 <a href="mailto:bbbradsmith@users.noreply.github.com">Brad Smith</a>.</p>
-<h3 id="asm-from-c-1">11.1. Calling conventions</h3>
+<h3 id="asm-from-c-1">12.1. Calling conventions</h3>
 <p>There are two calling conventions used in cc65:</p>
 <ul>
 <li>
@@ -1333,7 +1349,7 @@ always available.</p>
 promotions will apply. This means that with no prototype, <code>char</code> will be promoted
 to <code>int</code> and be pushed as 2 bytes. "K &amp; R"-style forward declarations may be used,
 but they will function the same as if no prototype was used.</p>
-<h3 id="asm-from-c-2">11.2. Prologue, before the function call</h3>
+<h3 id="asm-from-c-2">12.2. Prologue, before the function call</h3>
 <p>If the function is declared as fastcall, the rightmost argument will be loaded into
 the <code>A/X/sreg</code> registers:</p>
 <ul>
@@ -1374,7 +1390,7 @@ void cdecl foo(unsigned bar, unsigned char baz);
     tax             ; High byte now in X
     dey             ; Offset of low byte of bar
     lda     (sp),y  ; Low byte now in A</pre>
-<h3 id="asm-from-c-3">11.3. Epilogue, after the function call</h3>
+<h3 id="asm-from-c-3">12.3. Epilogue, after the function call</h3>
 <h4 id="asm-from-c-3-1">11.3.1. Return requirements</h4>
 <p>If the function has a return value, it will appear in the <code>A/X/sreg</code> registers.</p>
 <p>Functions with an 8-bit return value (<code>char</code> or <code>unsigned char</code>) are expected
@@ -1416,14 +1432,14 @@ it may clobber any of these itself:</p>
 <p><code>sreg</code> (if unused by return)</p>
 </li>
 </ul>
-<h2 id="diagnostics">12. Compiler diagnostics</h2>
+<h2 id="diagnostics">13. Compiler diagnostics</h2>
 <p>The compiler reports problems as messages of the form <code>file(line): <em>severity</em>: message</code>, where <em>severity</em> is <code>Warning</code>, <code>Error</code> or <code>Fatal</code>. Warnings do not stop translation and can be tuned individually (see <code><a href="#option-W">-W</a></code> and <code><a href="#option-list-warnings">--list-warnings</a></code>); errors let parsing continue so that several can be found in one run, but no output file is produced; a fatal error aborts the compiler at once. Compilation also stops with <code>Too many errors</code> once the error count gets too high.</p>
 <p>The tables below list the error and fatal-error messages the compiler can produce, grouped by the stage that emits them. Text such as <code>%s</code>, <code>%u</code> or <code>%02X</code> is filled in with the offending name or value at runtime. (Warnings are not listed here; use <code>--list-warnings</code> for the current set.) Messages that begin with <code>ASM code error</code> or report an internal inconsistency usually indicate a compiler bug rather than a mistake in your program.</p>
-<h3 id="diag-format">12.1. Reading a diagnostic</h3>
+<h3 id="diag-format">13.1. Reading a diagnostic</h3>
 <p>For example, a header that uses a type the compiler does not know about:</p>
 <pre class="verb">    src/Avl.h(48): Error: Unknown type name 'time_t'</pre>
 <p>names the file and line, the severity, and the specific problem - here, a <code>time_t</code> with no <code>typedef</code> or <code>#include</code> in scope.</p>
-<h3 id="diag-lexical">12.2. Lexical, character and string constants</h3>
+<h3 id="diag-lexical">13.2. Lexical, character and string constants</h3>
 <p>Reported while reading source characters, numbers and constants.</p>
 <div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
 <tr><td><code>Invalid input character with code %02X</code></td><td>A byte that is not legal C source was found in the input file.</td></tr>
@@ -1441,7 +1457,7 @@ it may clobber any of these itself:</p>
 <tr><td><code>Invalid hexadecimal digit: '%c'</code></td><td>A character that is not a valid hexadecimal digit was used where one was required.</td></tr>
 <tr><td><code>Unexpected end of string</code></td><td>The end of a string was reached while more input was expected.</td></tr>
 </table></div>
-<h3 id="diag-preproc">12.3. Preprocessor directives</h3>
+<h3 id="diag-preproc">13.3. Preprocessor directives</h3>
 <p>Reported by the preprocessor for #include, conditionals, macros and #error/#warning.</p>
 <div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
 <tr><td><code>#error: %s</code></td><td>A user #error directive was reached; the text is taken from the directive.</td></tr>
@@ -1466,7 +1482,7 @@ it may clobber any of these itself:</p>
 <tr><td><code>Unexpected '#endif'</code></td><td>An #endif was found without a matching #if.</td></tr>
 <tr><td><code>Unterminated argument list invoking macro '%s'</code></td><td>End of file was reached inside a macro call's argument list.</td></tr>
 </table></div>
-<h3 id="diag-decl">12.4. Declarations, types and initializers</h3>
+<h3 id="diag-decl">13.4. Declarations, types and initializers</h3>
 <p>Reported while parsing declarations, type specifiers, qualifiers, struct/union/enum and initializers.</p>
 <div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
 <tr><td><code>Unknown type name '%s'</code></td><td>An undeclared identifier was used where a type name was expected (typically a missing typedef or #include).</td></tr>
@@ -1530,7 +1546,7 @@ it may clobber any of these itself:</p>
 <tr><td><code>Attributes must be specified in the first declaration</code></td><td>Attributes have to appear on the first declaration of a symbol.</td></tr>
 <tr><td><code>Too many type specifiers</code></td><td>More type specifiers were combined than is legal (e.g. long long long).</td></tr>
 </table></div>
-<h3 id="diag-expr">12.5. Expressions and operators</h3>
+<h3 id="diag-expr">13.5. Expressions and operators</h3>
 <p>Reported while type-checking expressions, operators, calls and lvalues.</p>
 <div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
 <tr><td><code>Expression expected</code></td><td>An expression was required here but none was found.</td></tr>
@@ -1574,7 +1590,7 @@ it may clobber any of these itself:</p>
 <tr><td><code>Division by zero</code></td><td>A constant division by zero was detected.</td></tr>
 <tr><td><code>Modulo operation with zero</code></td><td>A constant modulo by zero was detected.</td></tr>
 </table></div>
-<h3 id="diag-stmt">12.6. Statements and control flow</h3>
+<h3 id="diag-stmt">13.6. Statements and control flow</h3>
 <p>Reported while parsing statements, loops, switch and goto.</p>
 <div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
 <tr><td><code>';' expected</code></td><td>A semicolon was expected to end a statement or declaration.</td></tr>
@@ -1596,7 +1612,7 @@ it may clobber any of these itself:</p>
 <tr><td><code>Only arrays with &lt;= 127 labels are supported, got %lu</code></td><td>A computed-goto label table exceeds the 127-entry limit.</td></tr>
 <tr><td><code>Only simple expressions are supported for computed goto</code></td><td>The computed-goto target expression is too complex.</td></tr>
 </table></div>
-<h3 id="diag-sym">12.7. Symbols, functions and scope</h3>
+<h3 id="diag-sym">13.7. Symbols, functions and scope</h3>
 <p>Reported for undefined, conflicting or duplicated symbols, labels and function definitions.</p>
 <div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
 <tr><td><code>Undefined symbol: '%s'</code></td><td>A symbol was used that is not defined in scope.</td></tr>
@@ -1611,7 +1627,7 @@ it may clobber any of these itself:</p>
 <tr><td><code>Duplicate macro parameter: '%s'</code></td><td>A function-like macro lists the same parameter name twice.</td></tr>
 <tr><td><code>Too many local variables</code></td><td>A function declares more local variables than the compiler can handle.</td></tr>
 </table></div>
-<h3 id="diag-pragma">12.8. #pragma, segments and wrapped-call</h3>
+<h3 id="diag-pragma">13.8. #pragma, segments and wrapped-call</h3>
 <p>Reported for malformed #pragma directives and segment / wrapped-call name stacks.</p>
 <div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
 <tr><td><code>'(' expected</code></td><td>A pragma argument list must begin with an opening parenthesis.</td></tr>
@@ -1637,7 +1653,7 @@ it may clobber any of these itself:</p>
 <tr><td><code>WrappedCall stack is empty</code></td><td>A wrapped-call pop was issued with nothing on the stack.</td></tr>
 <tr><td><code>WrappedCall stack overflow</code></td><td>Too many nested wrapped-call pushes.</td></tr>
 </table></div>
-<h3 id="diag-asm">12.9. Inline assembler and code generation</h3>
+<h3 id="diag-asm">13.9. Inline assembler and code generation</h3>
 <p>Reported for __asm__ statements and the assembly the compiler emits.</p>
 <div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
 <tr><td><code>Error in __asm__ format specifier %u</code></td><td>An __asm__ format string has a malformed % specifier.</td></tr>
@@ -1655,7 +1671,7 @@ it may clobber any of these itself:</p>
 <tr><td><code>ASM label '%s' is already defined</code></td><td>The same assembly label was defined twice.</td></tr>
 <tr><td><code>Structs of this size are not supported</code></td><td>Struct assignment for this size cannot be generated.</td></tr>
 </table></div>
-<h3 id="diag-fatal">12.10. Fatal errors</h3>
+<h3 id="diag-fatal">13.10. Fatal errors</h3>
 <p>Fatal errors abort compilation immediately. The first group are I/O failures; the rest are unrecoverable limits or unsupported features.</p>
 <div class="table-wrap"><table class="grid"><tr><th>Message</th><th>Meaning</th></tr>
 <tr><td><code>Too many errors</code></td><td>Compilation was aborted after too many errors were reported.</td></tr>
@@ -1669,7 +1685,7 @@ it may clobber any of these itself:</p>
 <tr><td><code>Floating point type is currently unsupported</code></td><td>The float/double types are not implemented for this target.</td></tr>
 <tr><td><code>Can't redeclare enum constant '%s' as global variable</code></td><td>An enum constant name was reused as a global variable.</td></tr>
 </table></div>
-<h2 id="sect-11">13. Copyright</h2>
+<h2 id="sect-11">14. Copyright</h2>
 <p>This is the original compiler copyright:</p>
 <pre class="verb">--------------------------------------------------------------------------
   -*- Mode: Text -*-
