@@ -12,7 +12,7 @@
 **      (_heaporg / _heapptr / _heapend), the raw block-size word that lives
 **      immediately below every user pointer, and the free-list head
 **      (_heapfirst). These checks pin down the 2-byte-header layout
-**      (LYNX_HEAP_HEADER_DESIGN.md): the admin header is exactly
+**      (design/LYNX_HEAP_HEADER_DESIGN.md): the admin header is exactly
 **      HEAP_ADMIN_SPACE (2) bytes and the raw block is always (user - 2).
 **
 ** Each test sets result[i] = 1 (pass) or 0 (fail). The display shows a 3-wide

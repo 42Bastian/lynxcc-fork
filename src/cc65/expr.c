@@ -71,7 +71,7 @@ static GenDesc GenXOASGN = { TOK_XOR_ASSIGN,    GEN_NOPUSH,     g_xor };
 static GenDesc GenOASGN  = { TOK_OR_ASSIGN,     GEN_NOPUSH,     g_or  };
 
 /* Suzy hardware math generators for the fork-specific '!*', '!/' and '!%'
-** operators (see LYNX_CODEGEN_DESIGN.md 2.6). Same precedence, associativity
+** operators (see design/LYNX_CODEGEN_DESIGN.md 2.6). Same precedence, associativity
 ** and type rules as the standard multiplicative operators; only the code
 ** generators differ.
 */
@@ -1992,7 +1992,7 @@ static void hie_internal (const GenDesc* Ops,   /* List of generators */
         ** "QbertRoot" hardware joke abuses. Only the all-runtime 16-bit-int
         ** case is fused; if either factor is constant or long, or the following
         ** operator is not the Suzy '!/', we fall through to the standard
-        ** per-operator path, which stays correct. See LYNX_CODEGEN_DESIGN.md 2.6.
+        ** per-operator path, which stays correct. See design/LYNX_CODEGEN_DESIGN.md 2.6.
         */
         if (Gen->Func == g_suzymul && !lconst && !rconst &&
             SizeOf (Expr->Type) <= 2 && SizeOf (Expr2.Type) <= 2 &&

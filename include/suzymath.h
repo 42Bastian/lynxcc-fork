@@ -5,7 +5,7 @@
 /*       Asynchronous (non-blocking) Suzy hardware math for the Lynx         */
 /*                                                                           */
 /*                                                                           */
-/* cc65 Lynx fork. See LYNX_SUZY_ASYNC_MATH_DESIGN.md.                        */
+/* cc65 Lynx fork. See design/LYNX_SUZY_ASYNC_MATH_DESIGN.md.                */
 /*                                                                           */
 /* These intrinsics are the start/poll/harvest counterpart of the           */
 /* synchronous '!*'/'!/'/'!%' operators. A *_start call writes the operand   */

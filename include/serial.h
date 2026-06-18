@@ -5,9 +5,9 @@
 /*                  ComLynx serial communication (static)                    */
 /*                                                                           */
 /*                                                                           */
-/* Static, driver-less implementation for the Lynx-only cc65 tree           */
-/* (LYNX_JOY_SER_DESIGN.md). Interrupt driven with 256-byte ring buffers    */
-/* in each direction.                                                        */
+/* Static, driver-less implementation for the Lynx-only cc65 tree            */
+/* (design/LYNX_JOY_SER_DESIGN.md). Interrupt driven with 256-byte ring      */
+/* buffers in each direction.                                                */
 /*                                                                           */
 /* ComLynx facts worth knowing:                                              */
 /*  - The wire is open collector: every byte you transmit is also received  */

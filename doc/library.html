@@ -160,7 +160,7 @@ and the hardware itself is described by <code>&lt;_mikey.h&gt;</code> and
 <h2 id="sect-5">5. Reading the joypad - <code>joystick.h</code></h2>
 <p>The Lynx has exactly one joypad and it is always present, so this tree replaces
 the generic loadable joystick driver with a small static implementation
-(see <code>LYNX_JOY_SER_DESIGN.md</code>). There is nothing to install: a single
+(see <code>design/LYNX_JOY_SER_DESIGN.md</code>). There is nothing to install: a single
 call to <code>joy_read()</code> returns every input the console has &mdash; the
 d-pad, the <code>A</code> and <code>B</code> buttons, Option&nbsp;1, Option&nbsp;2
 (low byte) and Pause (bit&nbsp;8). The <code>JOY_*_MASK</code> test macros are

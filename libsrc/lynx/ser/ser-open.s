@@ -2,7 +2,7 @@
 ; unsigned char __fastcall__ ser_open (const struct ser_params* params);
 ; /* Set the port parameters and enable interrupts. */
 ;
-; (LYNX_JOY_SER_DESIGN.md section 3.1; baud/format logic from Karri
+; (design/LYNX_JOY_SER_DESIGN.md section 3.1; baud/format logic from Karri
 ; Kaksonen's lynx-comlynx driver, 17.09.2009.)
 ;
 ; The Lynx has only two correct serial data formats:

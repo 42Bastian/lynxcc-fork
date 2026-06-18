@@ -9,7 +9,7 @@ Upstream cc65 documentation: [cc65.github.io/doc](https://cc65.github.io/doc)
 
 ## Lynx code-generation improvements
 
-See [LYNX_CODEGEN_DESIGN.md](LYNX_CODEGEN_DESIGN.md) for the full design,
+See [LYNX_CODEGEN_DESIGN.md](design/LYNX_CODEGEN_DESIGN.md) for the full design,
 measurements, and verification plan.
 
 Implemented so far:

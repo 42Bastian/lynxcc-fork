@@ -19,7 +19,7 @@
 ;
 ; The C entry point is a direct alias for the drawing core: the SCB
 ; pointer arrives in A/X exactly as tgi_draw_sprite expects it. It lives
-; here (not in its own module, as LYNX_TGI_DESIGN.md 2.6 sketches)
+; here (not in its own module, as design/LYNX_TGI_DESIGN.md 2.6 sketches)
 ; because an exported symbol cannot alias an import, and a trampoline
 ; would put a jmp back on the hot path; the core is linked by every TGI
 ; program anyway.
@@ -45,8 +45,8 @@ tgi_drawindex:  .res    1       ; Current drawing pen (set white by tgi_init)
 ; buffer. Synchronous: busy-waits (sleeping) until the sprite engine is done,
 ; so on return - and therefore on entry to every TGI function - the engine
 ; is provably idle. This is the library-wide invariant that makes unguarded
-; Suzy SCB register access legal (spec ch. 3.1.1; LYNX_TGI_DESIGN.md sec. 5)
-; and that the Suzy math helpers rely on (LYNX_CODEGEN_DESIGN.md sec. 2.6).
+; Suzy SCB register access legal (spec ch. 3.1.1; design/LYNX_TGI_DESIGN.md sec. 5)
+; and that the Suzy math helpers rely on (design/LYNX_CODEGEN_DESIGN.md sec. 2.6).
 ;
 ; Suzy registers are written with plain STA only - never RMW opcodes
 ; (spec ch. 3.1.2).

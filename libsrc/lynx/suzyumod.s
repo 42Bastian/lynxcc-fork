@@ -17,7 +17,7 @@
 ; Divide-by-zero: the hardware quotient reads $FFFF, $FFFF*0 = 0, so
 ; n % 0 returns n. C behavior is undefined here, so that is acceptable.
 ;
-; Contracts (see suzymul.s / LYNX_CODEGEN_DESIGN.md 2.6): sprite engine
+; Contracts (see suzymul.s / design/LYNX_CODEGEN_DESIGN.md 2.6): sprite engine
 ; must be idle; NOT interrupt-safe; the SPRSYS unsafe-access bit may be set
 ; spuriously by any math operation (hardware bug).
 ;

@@ -4,10 +4,10 @@
 ;*                                                                          *
 ;*               ComLynx serial API constants (static library)              *
 ;*                                                                          *
-;* Static, driver-less serial support for the Lynx-only cc65 tree          *
-;* (LYNX_JOY_SER_DESIGN.md section 3). Constants only -- deliberately NO   *
-;* .global lists here: unreferenced imports pulled in via an include       *
-;* defeat ld65 smart linking (same rule as tgi-kernel.inc).                *
+;* Static, driver-less serial support for the Lynx-only cc65 tree           *
+;* (design/LYNX_JOY_SER_DESIGN.md section 3). Constants only --             *
+;* deliberately NO .global lists here: unreferenced imports pulled in via   *
+;* an include defeat ld65 smart linking (same rule as tgi-kernel.inc).      *
 ;*                                                                          *
 ;****************************************************************************
 

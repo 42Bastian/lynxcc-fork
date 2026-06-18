@@ -740,7 +740,7 @@ unsigned GetInsnSize (opc_t OPC, am_t AM)
 
 unsigned GetInsnCycles (opc_t OPC, am_t AM)
 /* Return the execution time of the given instruction in CPU cycles, modelled
-** for the 65SC02 core (see opcodes.h and LYNX_CODEGEN_DESIGN.md section 2.7).
+** for the 65SC02 core (see opcodes.h and design/LYNX_CODEGEN_DESIGN.md section 2.7).
 */
 {
     const OPCDesc* D = &OPCTable[OPC];

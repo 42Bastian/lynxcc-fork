@@ -1,7 +1,7 @@
 /*
 ** Minimal Atari Lynx sample for cc65.
 **
-** Shows the static TGI library (LYNX_TGI_DESIGN.md): no driver install,
+** Shows the static TGI library (design/LYNX_TGI_DESIGN.md): no driver install,
 ** just tgi_init(). A hardware-scaled sprite bounces around the screen,
 ** double buffered, with fractionally scaled text on top.
 **

@@ -1,6 +1,6 @@
 /*
 ** muldivtest.c - On-hardware correctness test for this fork's Suzy hardware
-** math operators (see LYNX_CODEGEN_DESIGN.md 2.6).
+** math operators (see design/LYNX_CODEGEN_DESIGN.md 2.6).
 **
 ** Six sweeps over a corner-value table, each comparing a Suzy hardware result
 ** against an independent software reference:

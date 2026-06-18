@@ -9,7 +9,7 @@
 /* (C) 2002-2013. This Lynx-only tree replaces the loadable-driver TGI       */
 /* with a direct-call static library: there is exactly one display mode      */
 /* (160x102x16) and all drawing is done by the Suzy sprite engine. See       */
-/* LYNX_TGI_DESIGN.md. Geometric primitives, vector fonts, the driver        */
+/* design/LYNX_TGI_DESIGN.md. Geometric primitives, vector fonts, the driver */
 /* loader and the error model are gone (clean API break).                    */
 /*                                                                           */
 /* This software is provided 'as-is', without any expressed or implied       */

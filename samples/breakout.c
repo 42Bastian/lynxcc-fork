@@ -2,7 +2,7 @@
 ** breakout.c - Single-file Breakout for the Atari Lynx.
 **
 ** Demonstrates this fork's Suzy hardware math operators !* !/ !%
-** (LYNX_CODEGEN_DESIGN.md section 2.6) in real game code: paddle
+** (design/LYNX_CODEGEN_DESIGN.md section 2.6) in real game code: paddle
 ** deflection, brick grid hit testing and score formatting all run
 ** on Suzy's 16x16 multiply and 32/16 divide instead of the software
 ** runtime loops.

@@ -16,7 +16,7 @@
 **      per column for the delta-distances and another for the slice
 **      height; the fork exposes Suzy's 16-bit divide as the C `!/`
 **      operator, used here in the main loop (never in IRQ, per
-**      LYNX_CODEGEN_DESIGN.md 2.6) so the math unit is never
+**      design/LYNX_CODEGEN_DESIGN.md 2.6) so the math unit is never
 **      contended.
 **
 **   3. The 16-entry 12-bit palette for cheap light/dark wall shading:

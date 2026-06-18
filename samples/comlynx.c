@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /*                                                                           */
-/* ComLynx loopback self-test (LYNX_JOY_SER_DESIGN.md section 8.2)           */
+/* ComLynx loopback self-test (design/LYNX_JOY_SER_DESIGN.md section 8.2)           */
 /*                                                                           */
 /* The ComLynx wire is open collector with Tx and Rx tied together, so       */
 /* every transmitted byte is also received by the sender. That makes a      */

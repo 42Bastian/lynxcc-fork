@@ -213,7 +213,7 @@ unsigned GetInsnSize (opc_t OPC, am_t AM);
 
 unsigned GetInsnCycles (opc_t OPC, am_t AM);
 /* Return the execution time of the given instruction in CPU cycles, modelled
-** for the 65SC02 core used by the Lynx (see LYNX_CODEGEN_DESIGN.md section 2.7).
+** for the 65SC02 core used by the Lynx (see design/LYNX_CODEGEN_DESIGN.md section 2.7).
 ** The figure is the guaranteed minimum: data-dependent penalties that the
 ** compiler cannot know statically (a taken conditional branch costs +1, and an
 ** indexed or indirect-indexed access that crosses a page boundary costs +1) are

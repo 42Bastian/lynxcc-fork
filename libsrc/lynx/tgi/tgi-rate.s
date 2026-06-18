@@ -5,7 +5,7 @@
 ;
 ; rate is 50, 60 or 75 (Hz). Returns 0 on success, nonzero for an
 ; invalid rate (the only fallible call left in the library - the error
-; model is gone, see LYNX_TGI_DESIGN.md sec. 2.5).
+; model is gone, see design/LYNX_TGI_DESIGN.md sec. 2.5).
 ;
 ; Only the timer backup registers are written, which is the safe subset
 ; of timer handling (spec ch. 3.3).

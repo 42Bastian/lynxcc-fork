@@ -18,7 +18,7 @@
 **      Square tone = feedback tap 0 (0x01); noise = a long tap set
 **      (0x3F). Volume envelopes run once per frame in the main loop.
 **
-** Suzy math contract (LYNX_CODEGEN_DESIGN.md section 2.6): all !* !/
+** Suzy math contract (design/LYNX_CODEGEN_DESIGN.md section 2.6): all !* !/
 ** !% sites are in the main loop, never in IRQ context, so the math
 ** unit is never contended. They lay out the invader grid, do the hit-
 ** test cell lookup, pace the march and format the score.

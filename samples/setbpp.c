@@ -9,7 +9,7 @@
 ** always renders 4bpp, so tgi_sprite/tgi_outtext output scans out
 ** garbled in 2bpp - the mode is a CPU-rendered framebuffer, and this
 ** program writes the buffer itself. The upper 4080 bytes of each page
-** are free for application use. See LYNX_TGI_DESIGN.md sec. 2.7; the
+** are free for application use. See design/LYNX_TGI_DESIGN.md sec. 2.7; the
 ** mode relies on a DISPCTL bit outside spec guarantees and is
 ** unverified on real hardware.
 **

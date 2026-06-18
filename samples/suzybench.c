@@ -2,7 +2,7 @@
 ** suzybench.c - Suzy hardware math accuracy + speed test for the Atari Lynx.
 **
 ** This fork adds the operators  !*  !/  !%  which route int multiply, divide
-** and modulo through Suzy's hardware math unit (see LYNX_CODEGEN_DESIGN.md
+** and modulo through Suzy's hardware math unit (see design/LYNX_CODEGEN_DESIGN.md
 ** section 2.6). This cart answers two questions about them:
 **
 **   1. Are they CORRECT?  Each Suzy result is compared against the stock

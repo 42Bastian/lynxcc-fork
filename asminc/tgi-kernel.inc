@@ -5,10 +5,10 @@
 ;*            Internal constants for the Lynx static TGI library             */
 ;*                                                                           */
 ;* The loadable-driver TGI kernel is gone. TGI on the Lynx is a direct-call  */
-;* static library; see LYNX_TGI_DESIGN.md for the rationale and layout.      */
-;* Modules import/export their shared symbols explicitly so that ld65's      */
-;* smart linking applies (no .global lists here; an unreferenced import in   */
-;* an include would force-link every module).                                */
+;* static library; see design/LYNX_TGI_DESIGN.md for the rationale and       */
+;* layout. Modules import/export their shared symbols explicitly so that     */
+;* ld65's smart linking applies (no .global lists here; an unreferenced      */
+;* import in an include would force-link every module).                      */
 ;*                                                                           */
 ;*****************************************************************************/
 
@@ -24,7 +24,7 @@ TGI_PAGECOUNT   = 2
 
 ;------------------------------------------------------------------------------
 ; Frame buffer and collision buffer addresses. These are coupled to the
-; memory map in cfg/lynx.cfg (see LYNX_TGI_DESIGN.md section 6): each page
+; memory map in cfg/lynx.cfg (see design/LYNX_TGI_DESIGN.md section 6): each page
 ; is 8160 bytes, the collision buffer sits at TGI_COLLBUF_ADDR. If the
 ; linker config changes, these must change with it.
 

@@ -5,10 +5,11 @@
 /*                    Read the Atari Lynx joypad inputs                      */
 /*                                                                           */
 /*                                                                           */
-/* Static, driver-less implementation for the Lynx-only cc65 tree           */
-/* (LYNX_JOY_SER_DESIGN.md). There is exactly one joypad, it is always      */
-/* present, and joy_read() reports every input the console has in a single  */
-/* call: d-pad, A, B, Option 1, Option 2 (low byte) and Pause (bit 8).      */
+/* Static, driver-less implementation for the Lynx-only cc65 tree            */
+/* (design/LYNX_JOY_SER_DESIGN.md). There is exactly one joypad, it is       */
+/* always present, and joy_read() reports every input the console has in a   */
+/* single call: d-pad, A, B, Option 1, Option 2 (low byte) and Pause (bit    */
+/* 8).                                                                       */
 /*                                                                           */
 /* The JOY_*_MASK values and test macros live in <lynx.h>.                  */
 /*                                                                           */

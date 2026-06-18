@@ -1,6 +1,6 @@
 /*
 ** suzyasyncbench.c - speed benchmark for this fork's ASYNCHRONOUS Suzy math
-** (see LYNX_SUZY_ASYNC_MATH_DESIGN.md and <suzymath.h>).
+** (see design/LYNX_SUZY_ASYNC_MATH_DESIGN.md and <suzymath.h>).
 **
 ** The async API only pays off when there is unrelated, non-Suzy CPU work to
 ** run in the shadow of a slow divide. It also costs one extra call per

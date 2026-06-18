@@ -11,7 +11,7 @@
 ; The VBL page-swap handler lives here as an .interruptor, so it enters
 ; the interrupt chain exactly when a program links this module - i.e.
 ; when it actually uses pages/double buffering. tgi_init does not
-; reference this module (LYNX_TGI_DESIGN.md sec. 2.4).
+; reference this module (design/LYNX_TGI_DESIGN.md sec. 2.4).
 ;
 ; tgi_flip is a 180-degree screen rotation (left-handed mode), not a page
 ; flip. tgi_busy reports a *pending swap request*, not sprite-engine
@@ -22,7 +22,7 @@
 ; buffer mode: Suzy always renders 4bpp, so sprite/text output scans out
 ; garbled in 2bpp - caller responsibility, by design unguarded. The mode
 ; uses a DISPCTL bit outside spec guarantees and is unverified on
-; hardware (LYNX_TGI_DESIGN.md sec. 2.7).
+; hardware (design/LYNX_TGI_DESIGN.md sec. 2.7).
 ;
 ; DISPCTL and SPRSYS are write-only/read-back-differently: all writes go
 ; through the __viddma/__sprsys shadows first (spec ch. 3.1.3).

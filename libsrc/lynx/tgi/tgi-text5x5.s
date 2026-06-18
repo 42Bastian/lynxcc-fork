@@ -18,7 +18,7 @@
 ;
 ; The font stores foreground as bit value 1 (5 ink bits in bits 7..3), so a
 ; glyph row ORs straight into a zero-initialised (= transparent) strip with
-; no inversion. See LYNX_TGI_FONT5X5_DESIGN.md sec. 3-5.
+; no inversion. See design/LYNX_TGI_FONT5X5_DESIGN.md sec. 3-5.
 ;
 
         .include        "zeropage.inc"

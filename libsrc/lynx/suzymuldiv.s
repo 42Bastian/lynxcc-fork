@@ -28,7 +28,7 @@
 ;             (sp)+0,1 = b low,high      (sp)+2,3 = a low,high
 ; Exit:   quotient low word in A/X; both stacked factors dropped (incsp4).
 ;
-; Contracts (see suzymul.s / LYNX_CODEGEN_DESIGN.md 2.6): the Suzy sprite
+; Contracts (see suzymul.s / design/LYNX_CODEGEN_DESIGN.md 2.6): the Suzy sprite
 ; engine must be idle (it shares the math unit); NOT interrupt-safe (the math
 ; registers are global hardware state with no safe save/restore); the SPRSYS
 ; unsafe-access bit may be set spuriously by any math operation (hardware bug).

@@ -8,13 +8,13 @@
 ; buffer, resets the display to a known state (4bpp, unflipped, page 0
 ; viewed and drawn), loads the default palette and selects black (pen 0)
 ; as the drawing color, so that tgi_init + tgi_clear yields a black screen
-; (LYNX_TGI_DESIGN.md sec. 2.8; the old driver defaulted to white).
+; (design/LYNX_TGI_DESIGN.md sec. 2.8; the old driver defaulted to white).
 ; The hardware is fixed, so it cannot fail and returns void.
 ;
 ; Text style and the collision-detection setting are owned by their own
 ; modules and statically initialized to their defaults there; tgi_init
 ; does not reference them, so a program that never uses text never links
-; the font (LYNX_TGI_DESIGN.md sec. 2.6).
+; the font (design/LYNX_TGI_DESIGN.md sec. 2.6).
 ;
 ; Note on re-init: tgi-page.s statically initializes its view-page shadow
 ; and swap state to the page-0 defaults. A program that swaps pages and

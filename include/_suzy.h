@@ -84,7 +84,7 @@
 /* SPRCTL1 $FC81 */
 /* Suzy pad-byte bug (spec ch. 6): PACKED lines whose last bit lands on bit 0  */
 /* of a byte need a trailing $00 pad byte (offset++). LITERAL lines never do.  */
-/* See LYNX_SPRITE_PADBYTE_DESIGN.md.                                          */
+/* See design/LYNX_SPRITE_PADBYTE_DESIGN.md.                                 */
 #define LITERAL          0x80
 #define PACKED           0x00
 #define ALGO3            0x40

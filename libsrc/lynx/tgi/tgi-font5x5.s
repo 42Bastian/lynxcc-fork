@@ -4,7 +4,7 @@
 ; 70 stored glyphs, 5 bytes each, one byte per pixel row. The 5 ink pixels
 ; occupy bits 7..3 (left-aligned); bit value 1 = foreground (opposite the 8x8
 ; font), so the builder ORs glyphs into a zero (= transparent) strip with no
-; inversion. See LYNX_TGI_FONT5X5_DESIGN.md sec. 3 & 5.
+; inversion. See design/LYNX_TGI_FONT5X5_DESIGN.md sec. 3 & 5.
 ;
 ; Table order is NOT a plain (ch-32): build5x5 folds lower-case a-z onto A-Z
 ; and splices the freed slots out, so the 26 duplicate a-z glyphs are not

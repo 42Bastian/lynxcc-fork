@@ -9,8 +9,11 @@ documents it before considering the task done:
 
 - `include/*.h` and `asminc/*.inc` doc comments
 - `doc/*.html` (TGI, fonts, function reference, samples, etc.)
-- `LYNX_TGI_DESIGN.md` and any other `*_DESIGN.md` source-of-truth docs
+- `design/LYNX_TGI_DESIGN.md` and any other `design/*_DESIGN.md` source-of-truth docs
 - relevant `README`/comments in `samples/`
+
+All `*_DESIGN.md` design documents live in the `design/` directory. New design
+docs go there too, and references to them from code/docs use the `design/` path.
 
 Removing or changing a symbol means grepping the whole tree for it and fixing
 docs, not just the code. If a symbol is intentionally absent, document *why* so

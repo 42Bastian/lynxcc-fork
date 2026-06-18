@@ -1,5 +1,5 @@
 ;
-; Static joypad read for the Atari Lynx (LYNX_JOY_SER_DESIGN.md section 2).
+; Static joypad read for the Atari Lynx (design/LYNX_JOY_SER_DESIGN.md section 2).
 ;
 ; unsigned __fastcall__ joy_read (unsigned char joystick);
 ;

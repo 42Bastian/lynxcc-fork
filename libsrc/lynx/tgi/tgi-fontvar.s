@@ -11,7 +11,7 @@
 ;   index  0..64 = ASCII  32..96   (space .. backtick)
 ;   index 65..68 = ASCII 123..126  ( { | } ~ )
 ;   index    69  = ASCII 127       ( DEL, blank )
-; The index math (fold + splice) lives in buildvar; see LYNX_TGI_FONTVAR_DESIGN.md.
+; The index math (fold + splice) lives in buildvar; see design/LYNX_TGI_FONTVAR_DESIGN.md.
 ;
 ; Recovered from img_help.bmp (EggSavier intro screen); glyphs absent from that
 ; art (K Q W X Z, digits, most punctuation) are designed to match.

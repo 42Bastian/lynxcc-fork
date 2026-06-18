@@ -1,7 +1,7 @@
 ;
 ; unsigned char ser_close (void);
 ; /* Close the port: disable serial interrupts, stop the baud timer, drop
-; ** buffered data. (LYNX_JOY_SER_DESIGN.md section 3.1 -- behavior fix:
+; ** buffered data. (design/LYNX_JOY_SER_DESIGN.md section 3.1 -- behavior fix:
 ; ** the old driver's CLOSE was a stub that returned OK without touching
 ; ** the hardware.)
 ; */

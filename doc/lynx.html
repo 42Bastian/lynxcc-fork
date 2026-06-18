@@ -395,7 +395,7 @@ always <code>(p&nbsp;&minus;&nbsp;2)</code> and the size word can be read direct
 from the two bytes below any valid pointer. When a block is freed and entered
 into the free list, those same bytes are reinterpreted as a six-byte list node
 (size, next, prev) &mdash; which is why the smallest possible block is 6&nbsp;bytes
-and a 1-byte request is rounded up to it. (See <code>LYNX_HEAP_HEADER_DESIGN.md</code>
+and a 1-byte request is rounded up to it. (See <code>design/LYNX_HEAP_HEADER_DESIGN.md</code>
 for the full layout rationale.)</p>
 
 <figure style="margin:1.2em 0;text-align:center">
@@ -660,7 +660,7 @@ static, smart-linked library, described below.</p>
 <p>TGI on the Lynx is a direct-call static library, not a loadable driver:
   there is exactly one display mode (160×102 in 16 colors) and all
   drawing is done by the Suzy sprite engine. No tgi_install() call is
-  needed; just call tgi_init(). See LYNX_TGI_DESIGN.md for the design.</p>
+  needed; just call tgi_init(). See design/LYNX_TGI_DESIGN.md for the design.</p>
 <p>The library is implemented as an interrupt driven dual buffering device.
   To use it as a single-buffer device set draw page and view page to the same
   value 0 or 1;</p>
@@ -685,7 +685,7 @@ static, smart-linked library, described below.</p>
   specify lynx-coll.cfg as the configuration file to the linker.</p>
 <h3 id="sect-8-2">8.2. Joypad input</h3>
 <p>There is no loadable joystick driver: input support is a static library
-function (see <code>LYNX_JOY_SER_DESIGN.md</code>). <code>joy_read()</code> returns all
+function (see <code>design/LYNX_JOY_SER_DESIGN.md</code>). <code>joy_read()</code> returns all
 nine inputs in one call: d-pad, A, B, Opt 1 and Opt 2 in the low byte and
 Pause in bit 8. No installation is required and there is nothing to fail;
 <code>joy_count()</code> is a compile-time constant 1. Edge detection is done in
@@ -816,7 +816,7 @@ and the directory format in full.</p>
 <h2 id="sect-9">9. Lynx-specific code-generation optimizations</h2>
 <p>This tree contains a set of 65SC02/Lynx code-generation improvements over
 stock cc65 2.19. The full design, measurements, and verification plan are in
-<code>LYNX_CODEGEN_DESIGN.md</code> at the root of the source tree. Summary:</p>
+<code>design/LYNX_CODEGEN_DESIGN.md</code> at the root of the source tree. Summary:</p>
 <dl>
 <dt>Runtime library fast paths</dt>
 <dd>
@@ -900,7 +900,7 @@ stock cc65 2.19. The full design, measurements, and verification plan are in
   worth roughly 2&ndash;3 cycles and 3 bytes per site &mdash; a sub-1&ndash;2&nbsp;percent
   whole-program effect. A single 65SC02 build that runs unmodified on both Lynx
   I and Lynx II is worth more than that margin. See
-  <code>LYNX_CODEGEN_DESIGN.md</code> section 3 for the full rationale.</p>
+  <code>design/LYNX_CODEGEN_DESIGN.md</code> section 3 for the full rationale.</p>
 </dd>
 </dl>
 <h2 id="sect-11">11. Cart access</h2>

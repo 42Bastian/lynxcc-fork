@@ -6,7 +6,7 @@
 ;
 ; Clears the whole draw page, or the rows [first, first+count), by drawing
 ; one hardware-scaled pen-fill sprite. Both fill with the CURRENT draw
-; color (tgi_setcolor), not a hard-wired pen (LYNX_TGI_DESIGN.md sec. 2.8).
+; color (tgi_setcolor), not a hard-wired pen (design/LYNX_TGI_DESIGN.md sec. 2.8).
 ; The color is written into both nibbles of the 1bpp pen table so the
 ; result does not depend on which pixel index the stretched source pixel
 ; carries.

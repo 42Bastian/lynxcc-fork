@@ -1,7 +1,7 @@
 /*
 ** fonttest.c - Demonstrates the compact 5x5 TGI font on the Atari Lynx.
 **
-** The compact font (TGI_FONT_COMPACT, see LYNX_TGI_FONT5X5_DESIGN.md) packs
+** The compact font (TGI_FONT_COMPACT, see design/LYNX_TGI_FONT5X5_DESIGN.md) packs
 ** glyphs at a 6-px pitch with a transparent background; the foreground is
 ** drawn in the current pen (tgi_setcolor). The whole screen is cleared to
 ** blue so the transparency is obvious - the text floats directly on blue

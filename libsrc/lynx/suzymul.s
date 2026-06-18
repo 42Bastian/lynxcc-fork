@@ -8,7 +8,7 @@
 ; returns only the low 16 bits of the product, which are identical for
 ; signed and unsigned operands.
 ;
-; Contracts (see LYNX_CODEGEN_DESIGN.md 2.6):
+; Contracts (see design/LYNX_CODEGEN_DESIGN.md 2.6):
 ;   - The Suzy sprite engine must be idle (it shares the math unit during
 ;     scaled sprite rendering). TGI draws synchronously, so this holds by
 ;     construction unless custom asynchronous sprite code is used.

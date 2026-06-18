@@ -1,7 +1,7 @@
 ;
 ; cc65 Lynx fork: ASYNCHRONOUS (non-blocking) Suzy hardware math.
 ;
-; See LYNX_SUZY_ASYNC_MATH_DESIGN.md. These are the start/poll/harvest
+; See design/LYNX_SUZY_ASYNC_MATH_DESIGN.md. These are the start/poll/harvest
 ; counterparts of the synchronous '!*'/'!/'/'!%' operator routines
 ; (suzymul.s / suzy?div.s / suzy?mod.s / suzymuldiv.s). A *_start routine
 ; writes the operand registers and the trigger register and returns WITHOUT
@@ -16,7 +16,7 @@
 ; which lines up exactly with how the operator routines already receive
 ; operands (rhs in A/X, lhs on the stack).
 ;
-; CONTRACTS (LYNX_CODEGEN_DESIGN.md 2.6, plus one new rule):
+; CONTRACTS (design/LYNX_CODEGEN_DESIGN.md 2.6, plus one new rule):
 ;   - Exactly ONE async operation may be in flight at a time (single math
 ;     unit, single shared state block below).
 ;   - Between a *_start and its *_result the overlapped code must touch NO

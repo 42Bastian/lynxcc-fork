@@ -1,6 +1,6 @@
 ;
 ; ComLynx serial core: buffers, state, and the serial IRQ handler.
-; (LYNX_JOY_SER_DESIGN.md section 3.3; IRQ logic from Karri Kaksonen's
+; (design/LYNX_JOY_SER_DESIGN.md section 3.3; IRQ logic from Karri Kaksonen's
 ; lynx-comlynx driver, 17.09.2009.)
 ;
 ; This module links whenever any ser function is used. The IRQ handler is

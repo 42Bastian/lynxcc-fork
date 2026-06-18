@@ -21,11 +21,11 @@
 ; sets tgi_pitch / tgi_fontheight, the per-font metrics read by the width
 ; and height queries. Programs that never call tgi_setfont(COMPACT) keep
 ; the default 8x8 path and do not link the compact builder or its font.
-; See LYNX_TGI_FONT5X5_DESIGN.md.
+; See design/LYNX_TGI_FONT5X5_DESIGN.md.
 ;
 ; Text scaling is a true 8.8 fixed point word per axis, stored straight
 ; into the text sprite's sx/sy fields - Suzy scales sprites natively in
-; 8.8, so fractional text scaling is free (LYNX_TGI_DESIGN.md sec. 2.3).
+; 8.8, so fractional text scaling is free (design/LYNX_TGI_DESIGN.md sec. 2.3).
 ; The font argument of tgi_settextstyle is ignored (use tgi_setfont). The
 ; text direction only affects how the cursor advances; glyphs are never
 ; rotated (pre-existing behavior).
@@ -34,7 +34,7 @@
 ; tgi_gettextheight = (tgi_fontheight * scaleh) >> 8, computed on Suzy's
 ; 16x16 multiply. Safe because all drawing is synchronous, so neither the
 ; sprite engine nor a competing math operation can be in flight (spec ch.
-; 3.1.1; LYNX_CODEGEN_DESIGN.md sec. 2.6); the math-working bit is polled
+; 3.1.1; design/LYNX_CODEGEN_DESIGN.md sec. 2.6); the math-working bit is polled
 ; before results are read.
 ;
 ; Derived from the lynx-160-102-16 TGI driver by Karri Kaksonen, 2004.
@@ -100,7 +100,7 @@ textdir:        .res    1       ; TGI_TEXT_HORIZONTAL is 0
 ; totally-literal 1bpp sprite (SPRCTL1 = LITERAL|REHV), where each line is
 ; delimited by its leading offset byte, not by a bit-position-sensitive
 ; end-of-packet detector, so no pad byte is ever required.
-; See LYNX_SPRITE_PADBYTE_DESIGN.md sec. 1.
+; See design/LYNX_SPRITE_PADBYTE_DESIGN.md sec. 1.
 
 text_bitmap:    .res    8*(1+20)+1
 

@@ -9,7 +9,7 @@
 ; Sets the builder dispatched by tgi_outtext plus the per-font metrics read
 ; by tgi_gettextwidth / tgi_gettextheight. Referencing this routine links
 ; both builders and both fonts; programs that only want the 8x8 font simply
-; never call it and keep the default. See LYNX_TGI_FONT5X5_DESIGN.md sec. 6.
+; never call it and keep the default. See design/LYNX_TGI_FONT5X5_DESIGN.md sec. 6.
 ;
 
         .import         build8x8
