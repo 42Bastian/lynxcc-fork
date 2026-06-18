@@ -18,22 +18,21 @@ the C functions available in the standard library.</div><nav class="toc"><h2>Con
 <li class="lvl2"><a href="#joystick.h">2.7. joystick.h</a></li>
 <li class="lvl2"><a href="#lynx.h">2.8. lynx.h</a></li>
 <li class="lvl2"><a href="#lz4.h">2.9. lz4.h</a></li>
-<li class="lvl2"><a href="#o65.h">2.10. o65.h</a></li>
-<li class="lvl2"><a href="#peekpoke.h">2.11. peekpoke.h</a></li>
-<li class="lvl2"><a href="#serial.h">2.12. serial.h</a></li>
-<li class="lvl2"><a href="#setjmp.h">2.13. setjmp.h</a></li>
-<li class="lvl2"><a href="#signal.h">2.14. signal.h</a></li>
-<li class="lvl2"><a href="#stdarg.h">2.15. stdarg.h</a></li>
-<li class="lvl2"><a href="#stdbool.h">2.16. stdbool.h</a></li>
-<li class="lvl2"><a href="#stddef.h">2.17. stddef.h</a></li>
-<li class="lvl2"><a href="#stdio.h">2.18. stdio.h</a></li>
-<li class="lvl2"><a href="#stdlib.h">2.19. stdlib.h</a></li>
-<li class="lvl2"><a href="#string.h">2.20. string.h</a></li>
-<li class="lvl2"><a href="#suzymath.h">2.21. suzymath.h</a></li>
-<li class="lvl2"><a href="#tgi.h">2.22. tgi.h</a></li>
-<li class="lvl2"><a href="#time.h">2.23. time.h</a></li>
-<li class="lvl2"><a href="#unistd.h">2.24. unistd.h</a></li>
-<li class="lvl2"><a href="#zlib.h">2.25. zlib.h</a></li>
+<li class="lvl2"><a href="#peekpoke.h">2.10. peekpoke.h</a></li>
+<li class="lvl2"><a href="#serial.h">2.11. serial.h</a></li>
+<li class="lvl2"><a href="#setjmp.h">2.12. setjmp.h</a></li>
+<li class="lvl2"><a href="#signal.h">2.13. signal.h</a></li>
+<li class="lvl2"><a href="#stdarg.h">2.14. stdarg.h</a></li>
+<li class="lvl2"><a href="#stdbool.h">2.15. stdbool.h</a></li>
+<li class="lvl2"><a href="#stddef.h">2.16. stddef.h</a></li>
+<li class="lvl2"><a href="#stdio.h">2.17. stdio.h</a></li>
+<li class="lvl2"><a href="#stdlib.h">2.18. stdlib.h</a></li>
+<li class="lvl2"><a href="#string.h">2.19. string.h</a></li>
+<li class="lvl2"><a href="#suzymath.h">2.20. suzymath.h</a></li>
+<li class="lvl2"><a href="#tgi.h">2.21. tgi.h</a></li>
+<li class="lvl2"><a href="#time.h">2.22. time.h</a></li>
+<li class="lvl2"><a href="#unistd.h">2.23. unistd.h</a></li>
+<li class="lvl2"><a href="#zlib.h">2.24. zlib.h</a></li>
 <li class="lvl1"><a href="#sect-3">3. Alphabetical function reference</a></li>
 <li class="lvl2"><a href="#_DE_ISDIR">3.1. _DE_ISDIR</a></li>
 <li class="lvl2"><a href="#_DE_ISLBL">3.2. _DE_ISLBL</a></li>
@@ -453,11 +452,7 @@ read-only cart access, then <code>read</code>/<code>lseek</code>.</p>
 <p><a href="#decompress_lz4">decompress_lz4</a></p>
 </li>
 </ul>
-<h3 id="o65.h">2.10. <code>o65.h</code></h3>
-<p>The <code>o65.h</code> header file contains structure and constant definitions that
-may be used when dealing with files in <a href="http://www.6502.org/users/andre/o65/fileformat.html">the o65 format</a>.
-It does not declare any functions.</p>
-<h3 id="peekpoke.h">2.11. <code>peekpoke.h</code></h3>
+<h3 id="peekpoke.h">2.10. <code>peekpoke.h</code></h3>
 <ul>
 <li>
 <p><a href="#PEEK">PEEK</a></p>
@@ -472,7 +467,7 @@ It does not declare any functions.</p>
 <p><a href="#POKEW">POKEW</a></p>
 </li>
 </ul>
-<h3 id="serial.h">2.12. <code>serial.h</code></h3>
+<h3 id="serial.h">2.11. <code>serial.h</code></h3>
 <p>This header file contains definitions for initializing serial
 communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 <ul>
@@ -492,7 +487,7 @@ communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 <p><a href="#ser_status">ser_status</a></p>
 </li>
 </ul>
-<h3 id="setjmp.h">2.13. <code>setjmp.h</code></h3>
+<h3 id="setjmp.h">2.12. <code>setjmp.h</code></h3>
 <ul>
 <li>
 <p><a href="#setjmp">setjmp</a></p>
@@ -501,7 +496,7 @@ communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 <p><a href="#longjmp">longjmp</a></p>
 </li>
 </ul>
-<h3 id="signal.h">2.14. <code>signal.h</code></h3>
+<h3 id="signal.h">2.13. <code>signal.h</code></h3>
 <ul>
 <li>
 <p><a href="#raise">raise</a></p>
@@ -510,17 +505,17 @@ communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 <p><a href="#signal">signal</a></p>
 </li>
 </ul>
-<h3 id="stdarg.h">2.15. <code>stdarg.h</code></h3>
+<h3 id="stdarg.h">2.14. <code>stdarg.h</code></h3>
 <p>(incomplete)</p>
-<h3 id="stdbool.h">2.16. <code>stdbool.h</code></h3>
+<h3 id="stdbool.h">2.15. <code>stdbool.h</code></h3>
 <p>(incomplete)</p>
-<h3 id="stddef.h">2.17. <code>stddef.h</code></h3>
+<h3 id="stddef.h">2.16. <code>stddef.h</code></h3>
 <ul>
 <li>
 <p><a href="#offsetof">offsetof</a></p>
 </li>
 </ul>
-<h3 id="stdio.h">2.18. <code>stdio.h</code></h3>
+<h3 id="stdio.h">2.17. <code>stdio.h</code></h3>
 <ul>
 <li>
 <p><a href="#snprintf">snprintf</a></p>
@@ -541,7 +536,7 @@ communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 <p><a href="#vsscanf">vsscanf</a></p>
 </li>
 </ul>
-<h3 id="stdlib.h">2.19. <code>stdlib.h</code></h3>
+<h3 id="stdlib.h">2.18. <code>stdlib.h</code></h3>
 <ul>
 <li>
 <p><a href="#_heapadd">_heapadd</a></p>
@@ -620,7 +615,7 @@ communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 </li>
 </ul>
 <p>(incomplete)</p>
-<h3 id="string.h">2.20. <code>string.h</code></h3>
+<h3 id="string.h">2.19. <code>string.h</code></h3>
 <ul>
 <li>
 <p><a href="#_stroserror">_stroserror</a></p>
@@ -725,7 +720,7 @@ communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 <p><a href="#strupr">strupr</a></p>
 </li>
 </ul>
-<h3 id="suzymath.h">2.21. <code>suzymath.h</code></h3>
+<h3 id="suzymath.h">2.20. <code>suzymath.h</code></h3>
 <p>Asynchronous (non-blocking) access to the Suzy hardware math unit: start a
 multiply, divide or modulo, run unrelated CPU work while Suzy computes, then
 harvest the result. These are the start/poll/harvest counterpart of the
@@ -784,7 +779,7 @@ harvest the result. These are the start/poll/harvest counterpart of the
 <p><a href="#suzy_muldiv_result">suzy_muldiv_result</a></p>
 </li>
 </ul>
-<h3 id="tgi.h">2.22. <code>tgi.h</code></h3>
+<h3 id="tgi.h">2.21. <code>tgi.h</code></h3>
 <p>Static <a href="tgi.html">Tiny Graphics Interface</a> for the Lynx: one fixed 160x102x16 display mode, Suzy sprite drawing, pages, palette and bitmap/compact-font text.</p>
 <ul>
 <li>
@@ -890,21 +885,21 @@ harvest the result. These are the start/poll/harvest counterpart of the
 <p><a href="#tgi_updatedisplay">tgi_updatedisplay</a></p>
 </li>
 </ul>
-<h3 id="time.h">2.23. <code>time.h</code></h3>
+<h3 id="time.h">2.22. <code>time.h</code></h3>
 <ul>
 <li>
 <p><a href="#clock">clock</a></p>
 </li>
 </ul>
 <p>(incomplete)</p>
-<h3 id="unistd.h">2.24. <code>unistd.h</code></h3>
+<h3 id="unistd.h">2.23. <code>unistd.h</code></h3>
 <ul>
 <li>
 <p><a href="#sleep">sleep</a></p>
 </li>
 </ul>
 <p>(incomplete)</p>
-<h3 id="zlib.h">2.25. <code>zlib.h</code></h3>
+<h3 id="zlib.h">2.24. <code>zlib.h</code></h3>
 <p>(incomplete)</p>
 <h2 id="sect-3">3. Alphabetical function reference</h2>
 <h3 id="_DE_ISDIR">3.1. _DE_ISDIR</h3>

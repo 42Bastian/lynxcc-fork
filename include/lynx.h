@@ -109,21 +109,6 @@
 #define JOY_OPT2(v)             ((v) & JOY_OPT2_MASK)
 #define JOY_PAUSE(v)            ((v) & JOY_PAUSE_MASK)
 
-/* No support for dynamically loadable drivers */
-#define DYN_DRV 0
-
-
-
-/*****************************************************************************/
-/*                                 Variables                                 */
-/*****************************************************************************/
-
-
-
-/* The addresses of the static drivers */
-extern void lynx_stdjoy_joy[];        /* Referred to by joy_static_stddrv[] */
-extern void lynx_comlynx_ser[];
-
 
 
 /*****************************************************************************/
