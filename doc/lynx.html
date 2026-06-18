@@ -25,6 +25,9 @@ cc65 C compiler.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl2"><a href="#sect-8-1">8.1. Graphics (TGI)</a></li>
 <li class="lvl2"><a href="#sect-8-2">8.2. Joypad input</a></li>
 <li class="lvl2"><a href="#sect-8-3">8.3. ComLynx serial</a></li>
+<li class="lvl2"><a href="#sect-8-4">8.4. Audio</a></li>
+<li class="lvl2"><a href="#sect-8-5">8.5. EEPROM (cart save data)</a></li>
+<li class="lvl2"><a href="#sect-8-6">8.6. Reading data from the cart</a></li>
 <li class="lvl1"><a href="#sect-9">9. Lynx-specific code-generation optimizations</a></li>
 <li class="lvl1"><a href="#sect-10">10. Limitations</a></li>
 <li class="lvl1"><a href="#sect-11">11. Cart access</a></li>
@@ -650,8 +653,9 @@ JOY_RIGHT_MASK  0x10    JOY_BTN_2_MASK   0x02
 <code>JOY_OPT2(v)</code> and <code>JOY_PAUSE(v)</code> test the matching bit in a
 <code>joy_read()</code> result.</p>
 <h2 id="sect-8">8. Device support</h2>
-<p>This tree has no loadable drivers at all. Graphics, joypad input and ComLynx
-serial are each provided as a static, smart-linked library, described below.</p>
+<p>This tree has no loadable drivers at all. Graphics, joypad input, ComLynx
+serial, audio, EEPROM cart save data and cart data reading are each provided as a
+static, smart-linked library, described below.</p>
 <h3 id="sect-8-1">8.1. Graphics (TGI)</h3>
 <p>TGI on the Lynx is a direct-call static library, not a loadable driver:
   there is exactly one display mode (160×102 in 16 colors) and all
@@ -765,6 +769,50 @@ against the macros.</p>
 <p>We have no handshaking available. Even software handshake is impossible
   as ComLynx has only one wire for the data.</p>
 <p>Both transmit and receive are interrupt driven.</p>
+<h3 id="sect-8-4">8.4. Audio</h3>
+<p>Sound is a small static library driving Mikey's four audio channels; there is
+nothing to install or that can fail to load. Call <code>lynx_snd_init()</code>
+once at startup &mdash; it sets up the channels and installs a vertical-blank
+interrupt handler that advances playback &mdash; then start a note-string tune on
+a channel (0&ndash;3) with <code>lynx_snd_play(channel, music)</code>; if the
+requested channel is busy a free one is chosen and the tune then plays
+automatically under the VBL interrupt. <code>lynx_snd_pause()</code> and
+<code>lynx_snd_continue()</code> suspend and resume every channel,
+<code>lynx_snd_stop()</code> silences all channels at once and
+<code>lynx_snd_stop_channel(channel)</code> silences just one, and
+<code>lynx_snd_active()</code> returns non-zero while any channel is still
+playing so a program can wait for a tune to finish. The functions are declared
+in <code>lynx.h</code>; see the
+<a href="funcref.html#lynx_snd_init">function reference</a> for the full set.</p>
+<h3 id="sect-8-5">8.5. EEPROM (cart save data)</h3>
+<p>Because the cart ROM cannot be written at run time, persistent state &mdash;
+high scores, options &mdash; is kept in the serial EEPROM chip fitted to the
+cart. Access is a static library of word-wide read/write calls; each EEPROM
+&ldquo;cell&rdquo; holds one 16-bit word. The calls come as a size-selectable
+family &mdash; pick the variant matching the chip on the cart:
+<code>lynx_eeread_93c46</code>&thinsp;/&thinsp;<code>lynx_eewrite_93c46</code> for
+the 93C46 (64 words, cell 0&ndash;63),
+<code>_93c66</code> for the 93C66 (256 words, 0&ndash;255) and
+<code>_93c86</code> for the 93C86 (1024 words, 0&ndash;1023). A read returns the
+word at the given cell; a write stores a word there. There is no separate erase
+call &mdash; to clear a word, just write the value you want. All six are
+<code>__fastcall__</code> functions declared in <code>lynx.h</code> and so need a
+prototype in scope; see the
+<a href="funcref.html#lynx_eeread_93c46">function reference</a>.</p>
+<h3 id="sect-8-6">8.6. Reading data from the cart</h3>
+<p>The cart is read-only ROM whose files are addressed by <em>number</em> rather
+than by name, and reading them is again a static library &mdash; no driver to
+install. The simplest path is the whole-file helpers in <code>lynx.h</code>:
+<code>lynx_load(fileno)</code> copies the entire numbered file into the RAM
+address recorded in its directory entry, and <code>lynx_exec(fileno)</code> does
+the same then jumps to that address (used by &ldquo;compilation&rdquo; carts that
+chain several small programs). For streaming or partial reads the lower-level
+block reader &mdash; <code>openn</code> to position the cart at a numbered file,
+<code>read</code> to copy bytes from the current position, and
+<code>lseek</code> (<code>SEEK_SET</code> only) to re-position &mdash; lets a
+program pull graphics, levels or music off the cart on demand. Only bank&nbsp;0
+is reachable; <a href="#sect-11">section&nbsp;11</a> covers the cart image layout
+and the directory format in full.</p>
 <h2 id="sect-9">9. Lynx-specific code-generation optimizations</h2>
 <p>This tree contains a set of 65SC02/Lynx code-generation improvements over
 stock cc65 2.19. The full design, measurements, and verification plan are in
