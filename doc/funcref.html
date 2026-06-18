@@ -26,13 +26,14 @@ the C functions available in the standard library.</div><nav class="toc"><h2>Con
 <li class="lvl2"><a href="#stdarg.h">2.15. stdarg.h</a></li>
 <li class="lvl2"><a href="#stdbool.h">2.16. stdbool.h</a></li>
 <li class="lvl2"><a href="#stddef.h">2.17. stddef.h</a></li>
-<li class="lvl2"><a href="#stdlib.h">2.18. stdlib.h</a></li>
-<li class="lvl2"><a href="#string.h">2.19. string.h</a></li>
-<li class="lvl2"><a href="#suzymath.h">2.20. suzymath.h</a></li>
-<li class="lvl2"><a href="#tgi.h">2.21. tgi.h</a></li>
-<li class="lvl2"><a href="#time.h">2.22. time.h</a></li>
-<li class="lvl2"><a href="#unistd.h">2.23. unistd.h</a></li>
-<li class="lvl2"><a href="#zlib.h">2.24. zlib.h</a></li>
+<li class="lvl2"><a href="#stdio.h">2.18. stdio.h</a></li>
+<li class="lvl2"><a href="#stdlib.h">2.19. stdlib.h</a></li>
+<li class="lvl2"><a href="#string.h">2.20. string.h</a></li>
+<li class="lvl2"><a href="#suzymath.h">2.21. suzymath.h</a></li>
+<li class="lvl2"><a href="#tgi.h">2.22. tgi.h</a></li>
+<li class="lvl2"><a href="#time.h">2.23. time.h</a></li>
+<li class="lvl2"><a href="#unistd.h">2.24. unistd.h</a></li>
+<li class="lvl2"><a href="#zlib.h">2.25. zlib.h</a></li>
 <li class="lvl1"><a href="#sect-3">3. Alphabetical function reference</a></li>
 <li class="lvl2"><a href="#_DE_ISDIR">3.1. _DE_ISDIR</a></li>
 <li class="lvl2"><a href="#_DE_ISLBL">3.2. _DE_ISLBL</a></li>
@@ -127,89 +128,95 @@ the C functions available in the standard library.</div><nav class="toc"><h2>Con
 <li class="lvl2"><a href="#setjmp">3.91. setjmp</a></li>
 <li class="lvl2"><a href="#signal">3.92. signal</a></li>
 <li class="lvl2"><a href="#sleep">3.93. sleep</a></li>
-<li class="lvl2"><a href="#srand">3.94. srand</a></li>
-<li class="lvl2"><a href="#strcasecmp">3.95. strcasecmp</a></li>
-<li class="lvl2"><a href="#strcat">3.96. strcat</a></li>
-<li class="lvl2"><a href="#strchr">3.97. strchr</a></li>
-<li class="lvl2"><a href="#strcmp">3.98. strcmp</a></li>
-<li class="lvl2"><a href="#strcoll">3.99. strcoll</a></li>
-<li class="lvl2"><a href="#strcpy">3.100. strcpy</a></li>
-<li class="lvl2"><a href="#strcspn">3.101. strcspn</a></li>
-<li class="lvl2"><a href="#strdup">3.102. strdup</a></li>
-<li class="lvl2"><a href="#strerror">3.103. strerror</a></li>
-<li class="lvl2"><a href="#stricmp">3.104. stricmp</a></li>
-<li class="lvl2"><a href="#strlen">3.105. strlen</a></li>
-<li class="lvl2"><a href="#strlower">3.106. strlower</a></li>
-<li class="lvl2"><a href="#strlwr">3.107. strlwr</a></li>
-<li class="lvl2"><a href="#strncasecmp">3.108. strncasecmp</a></li>
-<li class="lvl2"><a href="#strncat">3.109. strncat</a></li>
-<li class="lvl2"><a href="#strncmp">3.110. strncmp</a></li>
-<li class="lvl2"><a href="#strncpy">3.111. strncpy</a></li>
-<li class="lvl2"><a href="#strnicmp">3.112. strnicmp</a></li>
-<li class="lvl2"><a href="#strpbrk">3.113. strpbrk</a></li>
-<li class="lvl2"><a href="#strqtok">3.114. strqtok</a></li>
-<li class="lvl2"><a href="#strrchr">3.115. strrchr</a></li>
-<li class="lvl2"><a href="#strspn">3.116. strspn</a></li>
-<li class="lvl2"><a href="#strstr">3.117. strstr</a></li>
-<li class="lvl2"><a href="#strtok">3.118. strtok</a></li>
-<li class="lvl2"><a href="#strxfrm">3.119. strxfrm</a></li>
-<li class="lvl2"><a href="#strupper">3.120. strupper</a></li>
-<li class="lvl2"><a href="#strupr">3.121. strupr</a></li>
-<li class="lvl2"><a href="#suzy_div_result">3.122. suzy_div_result</a></li>
-<li class="lvl2"><a href="#suzy_div_start">3.123. suzy_div_start</a></li>
-<li class="lvl2"><a href="#suzy_math_busy">3.124. suzy_math_busy</a></li>
-<li class="lvl2"><a href="#suzy_mod_result">3.125. suzy_mod_result</a></li>
-<li class="lvl2"><a href="#suzy_mod_start">3.126. suzy_mod_start</a></li>
-<li class="lvl2"><a href="#suzy_mul_result">3.127. suzy_mul_result</a></li>
-<li class="lvl2"><a href="#suzy_mul_start">3.128. suzy_mul_start</a></li>
-<li class="lvl2"><a href="#suzy_muldiv_result">3.129. suzy_muldiv_result</a></li>
-<li class="lvl2"><a href="#suzy_muldiv_start">3.130. suzy_muldiv_start</a></li>
-<li class="lvl2"><a href="#suzy_udiv_result">3.131. suzy_udiv_result</a></li>
-<li class="lvl2"><a href="#suzy_udiv_start">3.132. suzy_udiv_start</a></li>
-<li class="lvl2"><a href="#suzy_umod_result">3.133. suzy_umod_result</a></li>
-<li class="lvl2"><a href="#suzy_umod_start">3.134. suzy_umod_start</a></li>
-<li class="lvl2"><a href="#suzy_umul_result">3.135. suzy_umul_result</a></li>
-<li class="lvl2"><a href="#suzy_umul_start">3.136. suzy_umul_start</a></li>
-<li class="lvl2"><a href="#suzy_umuldiv_result">3.137. suzy_umuldiv_result</a></li>
-<li class="lvl2"><a href="#suzy_umuldiv_start">3.138. suzy_umuldiv_start</a></li>
-<li class="lvl2"><a href="#tgi_busy">3.139. tgi_busy</a></li>
-<li class="lvl2"><a href="#tgi_clear">3.140. tgi_clear</a></li>
-<li class="lvl2"><a href="#tgi_clearrows">3.141. tgi_clearrows</a></li>
-<li class="lvl2"><a href="#tgi_flip">3.142. tgi_flip</a></li>
-<li class="lvl2"><a href="#tgi_getcolor">3.143. tgi_getcolor</a></li>
-<li class="lvl2"><a href="#tgi_getcolorcount">3.144. tgi_getcolorcount</a></li>
-<li class="lvl2"><a href="#tgi_getdefpalette">3.145. tgi_getdefpalette</a></li>
-<li class="lvl2"><a href="#tgi_getmaxcolor">3.146. tgi_getmaxcolor</a></li>
-<li class="lvl2"><a href="#tgi_getmaxx">3.147. tgi_getmaxx</a></li>
-<li class="lvl2"><a href="#tgi_getmaxy">3.148. tgi_getmaxy</a></li>
-<li class="lvl2"><a href="#tgi_getpagecount">3.149. tgi_getpagecount</a></li>
-<li class="lvl2"><a href="#tgi_getpalette">3.150. tgi_getpalette</a></li>
-<li class="lvl2"><a href="#tgi_gettextheight">3.151. tgi_gettextheight</a></li>
-<li class="lvl2"><a href="#tgi_gettextwidth">3.152. tgi_gettextwidth</a></li>
-<li class="lvl2"><a href="#tgi_getxres">3.153. tgi_getxres</a></li>
-<li class="lvl2"><a href="#tgi_getyres">3.154. tgi_getyres</a></li>
-<li class="lvl2"><a href="#tgi_gotoxy">3.155. tgi_gotoxy</a></li>
-<li class="lvl2"><a href="#tgi_init">3.156. tgi_init</a></li>
-<li class="lvl2"><a href="#tgi_outtext">3.157. tgi_outtext</a></li>
-<li class="lvl2"><a href="#tgi_outtextxy">3.158. tgi_outtextxy</a></li>
-<li class="lvl2"><a href="#tgi_setbgcolor">3.159. tgi_setbgcolor</a></li>
-<li class="lvl2"><a href="#tgi_setbpp">3.160. tgi_setbpp</a></li>
-<li class="lvl2"><a href="#tgi_setcollisiondetection">3.161. tgi_setcollisiondetection</a></li>
-<li class="lvl2"><a href="#tgi_setcolor">3.162. tgi_setcolor</a></li>
-<li class="lvl2"><a href="#tgi_setdrawpage">3.163. tgi_setdrawpage</a></li>
-<li class="lvl2"><a href="#tgi_setfont">3.164. tgi_setfont</a></li>
-<li class="lvl2"><a href="#tgi_setframerate">3.165. tgi_setframerate</a></li>
-<li class="lvl2"><a href="#tgi_setpalette">3.166. tgi_setpalette</a></li>
-<li class="lvl2"><a href="#tgi_settextdir">3.167. tgi_settextdir</a></li>
-<li class="lvl2"><a href="#tgi_settextscale">3.168. tgi_settextscale</a></li>
-<li class="lvl2"><a href="#tgi_settextstyle">3.169. tgi_settextstyle</a></li>
-<li class="lvl2"><a href="#tgi_setviewpage">3.170. tgi_setviewpage</a></li>
-<li class="lvl2"><a href="#tgi_sprite">3.171. tgi_sprite</a></li>
-<li class="lvl2"><a href="#tgi_updatedisplay">3.172. tgi_updatedisplay</a></li>
-<li class="lvl2"><a href="#tolower">3.173. tolower</a></li>
-<li class="lvl2"><a href="#toupper">3.174. toupper</a></li>
-<li class="lvl2"><a href="#ultoa">3.175. ultoa</a></li>
-<li class="lvl2"><a href="#utoa">3.176. utoa</a></li>
+<li class="lvl2"><a href="#snprintf">3.94. snprintf</a></li>
+<li class="lvl2"><a href="#sprintf">3.95. sprintf</a></li>
+<li class="lvl2"><a href="#srand">3.96. srand</a></li>
+<li class="lvl2"><a href="#sscanf">3.97. sscanf</a></li>
+<li class="lvl2"><a href="#strcasecmp">3.98. strcasecmp</a></li>
+<li class="lvl2"><a href="#strcat">3.99. strcat</a></li>
+<li class="lvl2"><a href="#strchr">3.100. strchr</a></li>
+<li class="lvl2"><a href="#strcmp">3.101. strcmp</a></li>
+<li class="lvl2"><a href="#strcoll">3.102. strcoll</a></li>
+<li class="lvl2"><a href="#strcpy">3.103. strcpy</a></li>
+<li class="lvl2"><a href="#strcspn">3.104. strcspn</a></li>
+<li class="lvl2"><a href="#strdup">3.105. strdup</a></li>
+<li class="lvl2"><a href="#strerror">3.106. strerror</a></li>
+<li class="lvl2"><a href="#stricmp">3.107. stricmp</a></li>
+<li class="lvl2"><a href="#strlen">3.108. strlen</a></li>
+<li class="lvl2"><a href="#strlower">3.109. strlower</a></li>
+<li class="lvl2"><a href="#strlwr">3.110. strlwr</a></li>
+<li class="lvl2"><a href="#strncasecmp">3.111. strncasecmp</a></li>
+<li class="lvl2"><a href="#strncat">3.112. strncat</a></li>
+<li class="lvl2"><a href="#strncmp">3.113. strncmp</a></li>
+<li class="lvl2"><a href="#strncpy">3.114. strncpy</a></li>
+<li class="lvl2"><a href="#strnicmp">3.115. strnicmp</a></li>
+<li class="lvl2"><a href="#strpbrk">3.116. strpbrk</a></li>
+<li class="lvl2"><a href="#strqtok">3.117. strqtok</a></li>
+<li class="lvl2"><a href="#strrchr">3.118. strrchr</a></li>
+<li class="lvl2"><a href="#strspn">3.119. strspn</a></li>
+<li class="lvl2"><a href="#strstr">3.120. strstr</a></li>
+<li class="lvl2"><a href="#strtok">3.121. strtok</a></li>
+<li class="lvl2"><a href="#strxfrm">3.122. strxfrm</a></li>
+<li class="lvl2"><a href="#strupper">3.123. strupper</a></li>
+<li class="lvl2"><a href="#strupr">3.124. strupr</a></li>
+<li class="lvl2"><a href="#suzy_div_result">3.125. suzy_div_result</a></li>
+<li class="lvl2"><a href="#suzy_div_start">3.126. suzy_div_start</a></li>
+<li class="lvl2"><a href="#suzy_math_busy">3.127. suzy_math_busy</a></li>
+<li class="lvl2"><a href="#suzy_mod_result">3.128. suzy_mod_result</a></li>
+<li class="lvl2"><a href="#suzy_mod_start">3.129. suzy_mod_start</a></li>
+<li class="lvl2"><a href="#suzy_mul_result">3.130. suzy_mul_result</a></li>
+<li class="lvl2"><a href="#suzy_mul_start">3.131. suzy_mul_start</a></li>
+<li class="lvl2"><a href="#suzy_muldiv_result">3.132. suzy_muldiv_result</a></li>
+<li class="lvl2"><a href="#suzy_muldiv_start">3.133. suzy_muldiv_start</a></li>
+<li class="lvl2"><a href="#suzy_udiv_result">3.134. suzy_udiv_result</a></li>
+<li class="lvl2"><a href="#suzy_udiv_start">3.135. suzy_udiv_start</a></li>
+<li class="lvl2"><a href="#suzy_umod_result">3.136. suzy_umod_result</a></li>
+<li class="lvl2"><a href="#suzy_umod_start">3.137. suzy_umod_start</a></li>
+<li class="lvl2"><a href="#suzy_umul_result">3.138. suzy_umul_result</a></li>
+<li class="lvl2"><a href="#suzy_umul_start">3.139. suzy_umul_start</a></li>
+<li class="lvl2"><a href="#suzy_umuldiv_result">3.140. suzy_umuldiv_result</a></li>
+<li class="lvl2"><a href="#suzy_umuldiv_start">3.141. suzy_umuldiv_start</a></li>
+<li class="lvl2"><a href="#tgi_busy">3.142. tgi_busy</a></li>
+<li class="lvl2"><a href="#tgi_clear">3.143. tgi_clear</a></li>
+<li class="lvl2"><a href="#tgi_clearrows">3.144. tgi_clearrows</a></li>
+<li class="lvl2"><a href="#tgi_flip">3.145. tgi_flip</a></li>
+<li class="lvl2"><a href="#tgi_getcolor">3.146. tgi_getcolor</a></li>
+<li class="lvl2"><a href="#tgi_getcolorcount">3.147. tgi_getcolorcount</a></li>
+<li class="lvl2"><a href="#tgi_getdefpalette">3.148. tgi_getdefpalette</a></li>
+<li class="lvl2"><a href="#tgi_getmaxcolor">3.149. tgi_getmaxcolor</a></li>
+<li class="lvl2"><a href="#tgi_getmaxx">3.150. tgi_getmaxx</a></li>
+<li class="lvl2"><a href="#tgi_getmaxy">3.151. tgi_getmaxy</a></li>
+<li class="lvl2"><a href="#tgi_getpagecount">3.152. tgi_getpagecount</a></li>
+<li class="lvl2"><a href="#tgi_getpalette">3.153. tgi_getpalette</a></li>
+<li class="lvl2"><a href="#tgi_gettextheight">3.154. tgi_gettextheight</a></li>
+<li class="lvl2"><a href="#tgi_gettextwidth">3.155. tgi_gettextwidth</a></li>
+<li class="lvl2"><a href="#tgi_getxres">3.156. tgi_getxres</a></li>
+<li class="lvl2"><a href="#tgi_getyres">3.157. tgi_getyres</a></li>
+<li class="lvl2"><a href="#tgi_gotoxy">3.158. tgi_gotoxy</a></li>
+<li class="lvl2"><a href="#tgi_init">3.159. tgi_init</a></li>
+<li class="lvl2"><a href="#tgi_outtext">3.160. tgi_outtext</a></li>
+<li class="lvl2"><a href="#tgi_outtextxy">3.161. tgi_outtextxy</a></li>
+<li class="lvl2"><a href="#tgi_setbgcolor">3.162. tgi_setbgcolor</a></li>
+<li class="lvl2"><a href="#tgi_setbpp">3.163. tgi_setbpp</a></li>
+<li class="lvl2"><a href="#tgi_setcollisiondetection">3.164. tgi_setcollisiondetection</a></li>
+<li class="lvl2"><a href="#tgi_setcolor">3.165. tgi_setcolor</a></li>
+<li class="lvl2"><a href="#tgi_setdrawpage">3.166. tgi_setdrawpage</a></li>
+<li class="lvl2"><a href="#tgi_setfont">3.167. tgi_setfont</a></li>
+<li class="lvl2"><a href="#tgi_setframerate">3.168. tgi_setframerate</a></li>
+<li class="lvl2"><a href="#tgi_setpalette">3.169. tgi_setpalette</a></li>
+<li class="lvl2"><a href="#tgi_settextdir">3.170. tgi_settextdir</a></li>
+<li class="lvl2"><a href="#tgi_settextscale">3.171. tgi_settextscale</a></li>
+<li class="lvl2"><a href="#tgi_settextstyle">3.172. tgi_settextstyle</a></li>
+<li class="lvl2"><a href="#tgi_setviewpage">3.173. tgi_setviewpage</a></li>
+<li class="lvl2"><a href="#tgi_sprite">3.174. tgi_sprite</a></li>
+<li class="lvl2"><a href="#tgi_updatedisplay">3.175. tgi_updatedisplay</a></li>
+<li class="lvl2"><a href="#tolower">3.176. tolower</a></li>
+<li class="lvl2"><a href="#toupper">3.177. toupper</a></li>
+<li class="lvl2"><a href="#ultoa">3.178. ultoa</a></li>
+<li class="lvl2"><a href="#utoa">3.179. utoa</a></li>
+<li class="lvl2"><a href="#vsnprintf">3.180. vsnprintf</a></li>
+<li class="lvl2"><a href="#vsprintf">3.181. vsprintf</a></li>
+<li class="lvl2"><a href="#vsscanf">3.182. vsscanf</a></li>
 <li class="lvl1"><a href="#sect-4">4. How the Suzy math functions work</a></li>
 <li class="lvl2"><a href="#suzymath-model">4.1. The hardware unit and the start / poll / harvest model</a></li>
 <li class="lvl2"><a href="#suzymath-divide">4.2. Why only the divide is worth overlapping</a></li>
@@ -513,7 +520,28 @@ communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 <p><a href="#offsetof">offsetof</a></p>
 </li>
 </ul>
-<h3 id="stdlib.h">2.18. <code>stdlib.h</code></h3>
+<h3 id="stdio.h">2.18. <code>stdio.h</code></h3>
+<ul>
+<li>
+<p><a href="#snprintf">snprintf</a></p>
+</li>
+<li>
+<p><a href="#sprintf">sprintf</a></p>
+</li>
+<li>
+<p><a href="#sscanf">sscanf</a></p>
+</li>
+<li>
+<p><a href="#vsnprintf">vsnprintf</a></p>
+</li>
+<li>
+<p><a href="#vsprintf">vsprintf</a></p>
+</li>
+<li>
+<p><a href="#vsscanf">vsscanf</a></p>
+</li>
+</ul>
+<h3 id="stdlib.h">2.19. <code>stdlib.h</code></h3>
 <ul>
 <li>
 <p><a href="#_heapadd">_heapadd</a></p>
@@ -592,7 +620,7 @@ communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 </li>
 </ul>
 <p>(incomplete)</p>
-<h3 id="string.h">2.19. <code>string.h</code></h3>
+<h3 id="string.h">2.20. <code>string.h</code></h3>
 <ul>
 <li>
 <p><a href="#_stroserror">_stroserror</a></p>
@@ -697,7 +725,7 @@ communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 <p><a href="#strupr">strupr</a></p>
 </li>
 </ul>
-<h3 id="suzymath.h">2.20. <code>suzymath.h</code></h3>
+<h3 id="suzymath.h">2.21. <code>suzymath.h</code></h3>
 <p>Asynchronous (non-blocking) access to the Suzy hardware math unit: start a
 multiply, divide or modulo, run unrelated CPU work while Suzy computes, then
 harvest the result. These are the start/poll/harvest counterpart of the
@@ -756,7 +784,7 @@ harvest the result. These are the start/poll/harvest counterpart of the
 <p><a href="#suzy_muldiv_result">suzy_muldiv_result</a></p>
 </li>
 </ul>
-<h3 id="tgi.h">2.21. <code>tgi.h</code></h3>
+<h3 id="tgi.h">2.22. <code>tgi.h</code></h3>
 <p>Static <a href="tgi.html">Tiny Graphics Interface</a> for the Lynx: one fixed 160x102x16 display mode, Suzy sprite drawing, pages, palette and bitmap/compact-font text.</p>
 <ul>
 <li>
@@ -862,21 +890,21 @@ harvest the result. These are the start/poll/harvest counterpart of the
 <p><a href="#tgi_updatedisplay">tgi_updatedisplay</a></p>
 </li>
 </ul>
-<h3 id="time.h">2.22. <code>time.h</code></h3>
+<h3 id="time.h">2.23. <code>time.h</code></h3>
 <ul>
 <li>
 <p><a href="#clock">clock</a></p>
 </li>
 </ul>
 <p>(incomplete)</p>
-<h3 id="unistd.h">2.23. <code>unistd.h</code></h3>
+<h3 id="unistd.h">2.24. <code>unistd.h</code></h3>
 <ul>
 <li>
 <p><a href="#sleep">sleep</a></p>
 </li>
 </ul>
 <p>(incomplete)</p>
-<h3 id="zlib.h">2.24. <code>zlib.h</code></h3>
+<h3 id="zlib.h">2.25. <code>zlib.h</code></h3>
 <p>(incomplete)</p>
 <h2 id="sect-3">3. Alphabetical function reference</h2>
 <h3 id="_DE_ISDIR">3.1. _DE_ISDIR</h3>
@@ -3257,7 +3285,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </li>
 <li>
 <p>The function is non standard, so it is not available in strict ANSI mode.
-You should probably use <code>sprintf</code> instead.</p>
+You should probably use <a href="#sprintf">sprintf</a> instead.</p>
 </li>
 <li>
 <p>The function is only available as fastcall function, so it may only be
@@ -3439,7 +3467,7 @@ using <code>radix</code> as the base.</p>
 </li>
 <li>
 <p>The function is non standard, so it is not available in strict ANSI mode.
-You should probably use <code>sprintf</code> instead.</p>
+You should probably use <a href="#sprintf">sprintf</a> instead.</p>
 </li>
 <li>
 <p>The function is only available as fastcall function, so it may only be
@@ -5375,7 +5403,106 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="srand">3.94. srand</h3>
+<h3 id="snprintf">3.94. snprintf</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Format data into a string buffer, with a size limit.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#stdio.h">stdio.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>int snprintf (char* buf, size_t size, const char* format, ...);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p><code>snprintf</code> formats its arguments according to <code>format</code> and writes the result into <code>buf</code>, storing at most <code>size</code> bytes including the terminating <code>'\0'</code>. The return value is the number of characters that <em>would</em> have been written had the buffer been unlimited, not counting the terminating <code>'\0'</code>; so a return value of <code>size</code> or greater indicates that the output was truncated.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The conversions <code>c d i n o p s u x X</code> are supported, together with flags, field width, precision and the <code>h l z t j L</code> length modifiers. Because cc65 has no floating-point support, the floating-point conversions (<code>e E f F g G a A</code>) are <em>not</em> available.</p>
+</li>
+<li>
+<p>If <code>size</code> is zero, nothing is written into <code>buf</code> (which may then be <code>NULL</code>), but the return value is still computed.</p>
+</li>
+<li>
+<p><code>size</code> must not exceed <code>INT_MAX</code>; a larger value sets <code>errno</code> to <code>ERANGE</code> and returns -1.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>ISO 9899</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#sprintf">sprintf</a>,
+<a href="#sscanf">sscanf</a>,
+<a href="#vsnprintf">vsnprintf</a>,
+<a href="#vsprintf">vsprintf</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="sprintf">3.95. sprintf</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Format data into a string buffer.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#stdio.h">stdio.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>int sprintf (char* buf, const char* format, ...);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p><code>sprintf</code> formats its arguments according to <code>format</code> and writes the result, terminated by a <code>'\0'</code>, into <code>buf</code>. It returns the number of characters written, not counting the terminating <code>'\0'</code>.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The conversions <code>c d i n o p s u x X</code> are supported, together with flags, field width, precision and the <code>h l z t j L</code> length modifiers. Because cc65 has no floating-point support, the floating-point conversions (<code>e E f F g G a A</code>) are <em>not</em> available.</p>
+</li>
+<li>
+<p>There are no provisions to prevent a buffer overflow: <code>buf</code> must be large enough to hold the formatted result. Use <a href="#snprintf">snprintf</a> if a bound is required.</p>
+</li>
+<li>
+<p>At most <code>INT_MAX</code> characters can be produced.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>ISO 9899</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#snprintf">snprintf</a>,
+<a href="#sscanf">sscanf</a>,
+<a href="#vsprintf">vsprintf</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="srand">3.96. srand</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5420,7 +5547,56 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strcasecmp">3.95. strcasecmp</h3>
+<h3 id="sscanf">3.97. sscanf</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Read formatted data from a string.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#stdio.h">stdio.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>int sscanf (const char* s, const char* format, ...);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p><code>sscanf</code> parses the string <code>s</code> according to <code>format</code> and stores the converted values through the pointer arguments that follow. It returns the number of input items successfully matched and assigned, or <code>EOF</code> if an input failure occurs before the first conversion.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The conversions <code>d i u o x X c s p n</code> and the <code>[</code> character-set scanset are supported, together with assignment suppression (<code>*</code>), a field width and the <code>h l z t j L</code> length modifiers.</p>
+</li>
+<li>
+<p>Because cc65 has no floating-point support, the floating-point conversions (<code>e E f F g G a A</code>) and the wide-character conversions (<code>S C</code>) are <em>not</em> implemented: they set <code>errno</code> to <code>ENOSYS</code> and return <code>EOF</code>.</p>
+</li>
+<li>
+<p>An invalid conversion specification sets <code>errno</code> to <code>EINVAL</code> and returns <code>EOF</code>.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>ISO 9899</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#snprintf">snprintf</a>,
+<a href="#sprintf">sprintf</a>,
+<a href="#vsscanf">vsscanf</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="strcasecmp">3.98. strcasecmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5472,7 +5648,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strcat">3.96. strcat</h3>
+<h3 id="strcat">3.99. strcat</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5523,7 +5699,7 @@ is undefined.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strchr">3.97. strchr</h3>
+<h3 id="strchr">3.100. strchr</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5569,7 +5745,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strcmp">3.98. strcmp</h3>
+<h3 id="strcmp">3.101. strcmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5618,7 +5794,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strcoll">3.99. strcoll</h3>
+<h3 id="strcoll">3.102. strcoll</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5667,7 +5843,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strcpy">3.100. strcpy</h3>
+<h3 id="strcpy">3.103. strcpy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5721,7 +5897,7 @@ strcpy (hello, "Hello world!\n");</pre>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strcspn">3.101. strcspn</h3>
+<h3 id="strcspn">3.104. strcspn</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5769,7 +5945,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strdup">3.102. strdup</h3>
+<h3 id="strdup">3.105. strdup</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5818,7 +5994,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strerror">3.103. strerror</h3>
+<h3 id="strerror">3.106. strerror</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5867,7 +6043,7 @@ string must not be modified by the caller!</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="stricmp">3.104. stricmp</h3>
+<h3 id="stricmp">3.107. stricmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5919,7 +6095,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strlen">3.105. strlen</h3>
+<h3 id="strlen">3.108. strlen</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5966,7 +6142,7 @@ function does not work correctly for strings with more than 255 characters.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strlower">3.106. strlower</h3>
+<h3 id="strlower">3.109. strlower</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6016,11 +6192,11 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strlwr">3.107. strlwr</h3>
+<h3 id="strlwr">3.110. strlwr</h3>
 <blockquote>
 <p>See <code>strlower</code>.</p>
 </blockquote>
-<h3 id="strncasecmp">3.108. strncasecmp</h3>
+<h3 id="strncasecmp">3.111. strncasecmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6072,7 +6248,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strncat">3.109. strncat</h3>
+<h3 id="strncat">3.112. strncat</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6123,7 +6299,7 @@ is undefined.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strncmp">3.110. strncmp</h3>
+<h3 id="strncmp">3.113. strncmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6173,7 +6349,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strncpy">3.111. strncpy</h3>
+<h3 id="strncpy">3.114. strncpy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6234,7 +6410,7 @@ strncpy (hello, "Hello world!\n", sizeof hello - 1)[5] = '\0';</pre>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strnicmp">3.112. strnicmp</h3>
+<h3 id="strnicmp">3.115. strnicmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6286,7 +6462,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strpbrk">3.113. strpbrk</h3>
+<h3 id="strpbrk">3.116. strpbrk</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6334,7 +6510,7 @@ so, it should be used only in the presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strqtok">3.114. strqtok</h3>
+<h3 id="strqtok">3.117. strqtok</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6392,7 +6568,7 @@ a second <code>s1</code> string before it finishes the first one.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strrchr">3.115. strrchr</h3>
+<h3 id="strrchr">3.118. strrchr</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6437,7 +6613,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strspn">3.116. strspn</h3>
+<h3 id="strspn">3.119. strspn</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6483,7 +6659,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strstr">3.117. strstr</h3>
+<h3 id="strstr">3.120. strstr</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6528,7 +6704,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strtok">3.118. strtok</h3>
+<h3 id="strtok">3.121. strtok</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6585,7 +6761,7 @@ a second <code>s1</code> string before it finishes the first one.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strxfrm">3.119. strxfrm</h3>
+<h3 id="strxfrm">3.122. strxfrm</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6646,7 +6822,7 @@ just copy s2 to s1 using <code><a href="#strncpy">strncpy</a></code>.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strupper">3.120. strupper</h3>
+<h3 id="strupper">3.123. strupper</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6696,11 +6872,11 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strupr">3.121. strupr</h3>
+<h3 id="strupr">3.124. strupr</h3>
 <blockquote>
 <p>See <code>strupper</code>.</p>
 </blockquote>
-<h3 id="suzy_div_result">3.122. suzy_div_result</h3>
+<h3 id="suzy_div_result">3.125. suzy_div_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6750,7 +6926,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_div_start">3.123. suzy_div_start</h3>
+<h3 id="suzy_div_start">3.126. suzy_div_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6799,7 +6975,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_math_busy">3.124. suzy_math_busy</h3>
+<h3 id="suzy_math_busy">3.127. suzy_math_busy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6841,7 +7017,7 @@ routines also poll defensively, so reading too early is always safe.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_mod_result">3.125. suzy_mod_result</h3>
+<h3 id="suzy_mod_result">3.128. suzy_mod_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6888,7 +7064,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_mod_start">3.126. suzy_mod_start</h3>
+<h3 id="suzy_mod_start">3.129. suzy_mod_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6936,7 +7112,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_mul_result">3.127. suzy_mul_result</h3>
+<h3 id="suzy_mul_result">3.130. suzy_mul_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6969,7 +7145,7 @@ the signed and unsigned multiply harvests are the same routine.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_mul_start">3.128. suzy_mul_start</h3>
+<h3 id="suzy_mul_start">3.131. suzy_mul_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7011,7 +7187,7 @@ provided for symmetry with the divide.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_muldiv_result">3.129. suzy_muldiv_result</h3>
+<h3 id="suzy_muldiv_result">3.132. suzy_muldiv_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7058,7 +7234,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_muldiv_start">3.130. suzy_muldiv_start</h3>
+<h3 id="suzy_muldiv_start">3.133. suzy_muldiv_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7107,7 +7283,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_udiv_result">3.131. suzy_udiv_result</h3>
+<h3 id="suzy_udiv_result">3.134. suzy_udiv_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7158,7 +7334,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_udiv_start">3.132. suzy_udiv_start</h3>
+<h3 id="suzy_udiv_start">3.135. suzy_udiv_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7208,7 +7384,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_umod_result">3.133. suzy_umod_result</h3>
+<h3 id="suzy_umod_result">3.136. suzy_umod_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7255,7 +7431,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_umod_start">3.134. suzy_umod_start</h3>
+<h3 id="suzy_umod_start">3.137. suzy_umod_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7303,7 +7479,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_umul_result">3.135. suzy_umul_result</h3>
+<h3 id="suzy_umul_result">3.138. suzy_umul_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7346,7 +7522,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_umul_start">3.136. suzy_umul_start</h3>
+<h3 id="suzy_umul_start">3.139. suzy_umul_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7394,7 +7570,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_umuldiv_result">3.137. suzy_umuldiv_result</h3>
+<h3 id="suzy_umuldiv_result">3.140. suzy_umuldiv_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7441,7 +7617,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_umuldiv_start">3.138. suzy_umuldiv_start</h3>
+<h3 id="suzy_umuldiv_start">3.141. suzy_umuldiv_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7490,7 +7666,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_busy">3.139. tgi_busy</h3>
+<h3 id="tgi_busy">3.142. tgi_busy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7521,7 +7697,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_clear">3.140. tgi_clear</h3>
+<h3 id="tgi_clear">3.143. tgi_clear</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7563,7 +7739,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_clearrows">3.141. tgi_clearrows</h3>
+<h3 id="tgi_clearrows">3.144. tgi_clearrows</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7604,7 +7780,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_flip">3.142. tgi_flip</h3>
+<h3 id="tgi_flip">3.145. tgi_flip</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7634,7 +7810,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_getcolor">3.143. tgi_getcolor</h3>
+<h3 id="tgi_getcolor">3.146. tgi_getcolor</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7664,7 +7840,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_getcolorcount">3.144. tgi_getcolorcount</h3>
+<h3 id="tgi_getcolorcount">3.147. tgi_getcolorcount</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7701,7 +7877,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_getdefpalette">3.145. tgi_getdefpalette</h3>
+<h3 id="tgi_getdefpalette">3.148. tgi_getdefpalette</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7731,7 +7907,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_getmaxcolor">3.146. tgi_getmaxcolor</h3>
+<h3 id="tgi_getmaxcolor">3.149. tgi_getmaxcolor</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7769,7 +7945,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_getmaxx">3.147. tgi_getmaxx</h3>
+<h3 id="tgi_getmaxx">3.150. tgi_getmaxx</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7807,7 +7983,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_getmaxy">3.148. tgi_getmaxy</h3>
+<h3 id="tgi_getmaxy">3.151. tgi_getmaxy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7845,7 +8021,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_getpagecount">3.149. tgi_getpagecount</h3>
+<h3 id="tgi_getpagecount">3.152. tgi_getpagecount</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7883,7 +8059,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_getpalette">3.150. tgi_getpalette</h3>
+<h3 id="tgi_getpalette">3.153. tgi_getpalette</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7913,7 +8089,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_gettextheight">3.151. tgi_gettextheight</h3>
+<h3 id="tgi_gettextheight">3.154. tgi_gettextheight</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7952,7 +8128,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_gettextwidth">3.152. tgi_gettextwidth</h3>
+<h3 id="tgi_gettextwidth">3.155. tgi_gettextwidth</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7991,7 +8167,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_getxres">3.153. tgi_getxres</h3>
+<h3 id="tgi_getxres">3.156. tgi_getxres</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8029,7 +8205,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_getyres">3.154. tgi_getyres</h3>
+<h3 id="tgi_getyres">3.157. tgi_getyres</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8067,7 +8243,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_gotoxy">3.155. tgi_gotoxy</h3>
+<h3 id="tgi_gotoxy">3.158. tgi_gotoxy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8105,7 +8281,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_init">3.156. tgi_init</h3>
+<h3 id="tgi_init">3.159. tgi_init</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8144,7 +8320,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_outtext">3.157. tgi_outtext</h3>
+<h3 id="tgi_outtext">3.160. tgi_outtext</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8184,7 +8360,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_outtextxy">3.158. tgi_outtextxy</h3>
+<h3 id="tgi_outtextxy">3.161. tgi_outtextxy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8222,7 +8398,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_setbgcolor">3.159. tgi_setbgcolor</h3>
+<h3 id="tgi_setbgcolor">3.162. tgi_setbgcolor</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8260,7 +8436,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_setbpp">3.160. tgi_setbpp</h3>
+<h3 id="tgi_setbpp">3.163. tgi_setbpp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8304,7 +8480,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_setcollisiondetection">3.161. tgi_setcollisiondetection</h3>
+<h3 id="tgi_setcollisiondetection">3.164. tgi_setcollisiondetection</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8343,7 +8519,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_setcolor">3.162. tgi_setcolor</h3>
+<h3 id="tgi_setcolor">3.165. tgi_setcolor</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8382,7 +8558,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_setdrawpage">3.163. tgi_setdrawpage</h3>
+<h3 id="tgi_setdrawpage">3.166. tgi_setdrawpage</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8421,7 +8597,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_setfont">3.164. tgi_setfont</h3>
+<h3 id="tgi_setfont">3.167. tgi_setfont</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8462,7 +8638,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_setframerate">3.165. tgi_setframerate</h3>
+<h3 id="tgi_setframerate">3.168. tgi_setframerate</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8499,7 +8675,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_setpalette">3.166. tgi_setpalette</h3>
+<h3 id="tgi_setpalette">3.169. tgi_setpalette</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8537,7 +8713,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_settextdir">3.167. tgi_settextdir</h3>
+<h3 id="tgi_settextdir">3.170. tgi_settextdir</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8575,7 +8751,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_settextscale">3.168. tgi_settextscale</h3>
+<h3 id="tgi_settextscale">3.171. tgi_settextscale</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8614,7 +8790,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_settextstyle">3.169. tgi_settextstyle</h3>
+<h3 id="tgi_settextstyle">3.172. tgi_settextstyle</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8654,7 +8830,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_setviewpage">3.170. tgi_setviewpage</h3>
+<h3 id="tgi_setviewpage">3.173. tgi_setviewpage</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8693,7 +8869,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_sprite">3.171. tgi_sprite</h3>
+<h3 id="tgi_sprite">3.174. tgi_sprite</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8737,7 +8913,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tgi_updatedisplay">3.172. tgi_updatedisplay</h3>
+<h3 id="tgi_updatedisplay">3.175. tgi_updatedisplay</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8769,7 +8945,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tolower">3.173. tolower</h3>
+<h3 id="tolower">3.176. tolower</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8814,7 +8990,7 @@ only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="toupper">3.174. toupper</h3>
+<h3 id="toupper">3.177. toupper</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8859,7 +9035,7 @@ only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="ultoa">3.175. ultoa</h3>
+<h3 id="ultoa">3.178. ultoa</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8887,7 +9063,7 @@ string using <code>radix</code> as the base.</p>
 </li>
 <li>
 <p>The function is non standard, so it is not available in strict ANSI mode.
-You should probably use <code>sprintf</code> instead.</p>
+You should probably use <a href="#sprintf">sprintf</a> instead.</p>
 </li>
 <li>
 <p>The function is only available as fastcall function, so it may only be
@@ -8913,7 +9089,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="utoa">3.176. utoa</h3>
+<h3 id="utoa">3.179. utoa</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8941,7 +9117,7 @@ using <code>radix</code> as the base.</p>
 </li>
 <li>
 <p>The function is non standard, so it is not available in strict ANSI mode.
-You should probably use <code>sprintf</code> instead.</p>
+You should probably use <a href="#sprintf">sprintf</a> instead.</p>
 </li>
 <li>
 <p>The function is only available as fastcall function, so it may only be
@@ -8960,6 +9136,147 @@ used in presence of a prototype.</p>
 <a href="#itoa">itoa</a>,
 <a href="#ltoa">ltoa</a>,
 <a href="#ultoa">ultoa</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="vsnprintf">3.180. vsnprintf</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Format data into a string buffer, with a size limit, from a va_list.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#stdio.h">stdio.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>int __fastcall__ vsnprintf (char* buf, size_t size, const char* format, va_list ap);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p><code>vsnprintf</code> works exactly like <a href="#snprintf">snprintf</a>, except that the variable arguments are taken from the <code>va_list</code> <code>ap</code> instead of from a variable argument list.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The conversions <code>c d i n o p s u x X</code> are supported, together with flags, field width, precision and the <code>h l z t j L</code> length modifiers. Because cc65 has no floating-point support, the floating-point conversions (<code>e E f F g G a A</code>) are <em>not</em> available.</p>
+</li>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>ISO 9899</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#snprintf">snprintf</a>,
+<a href="#vsprintf">vsprintf</a>,
+<a href="#vsscanf">vsscanf</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="vsprintf">3.181. vsprintf</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Format data into a string buffer, from a va_list.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#stdio.h">stdio.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>int __fastcall__ vsprintf (char* buf, const char* format, va_list ap);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p><code>vsprintf</code> works exactly like <a href="#sprintf">sprintf</a>, except that the variable arguments are taken from the <code>va_list</code> <code>ap</code> instead of from a variable argument list.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The conversions <code>c d i n o p s u x X</code> are supported, together with flags, field width, precision and the <code>h l z t j L</code> length modifiers. Because cc65 has no floating-point support, the floating-point conversions (<code>e E f F g G a A</code>) are <em>not</em> available.</p>
+</li>
+<li>
+<p>There are no provisions to prevent a buffer overflow; use <a href="#vsnprintf">vsnprintf</a> if a bound is required.</p>
+</li>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>ISO 9899</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#sprintf">sprintf</a>,
+<a href="#vsnprintf">vsnprintf</a>,
+<a href="#vsscanf">vsscanf</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="vsscanf">3.182. vsscanf</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Read formatted data from a string, into a va_list.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#stdio.h">stdio.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>int __fastcall__ vsscanf (const char* s, const char* format, va_list ap);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p><code>vsscanf</code> works exactly like <a href="#sscanf">sscanf</a>, except that the pointer arguments are taken from the <code>va_list</code> <code>ap</code> instead of from a variable argument list.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The same conversions and the same floating-point / wide-character limitations as <a href="#sscanf">sscanf</a> apply.</p>
+</li>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>ISO 9899</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#sprintf">sprintf</a>,
+<a href="#sscanf">sscanf</a>,
+<a href="#vsnprintf">vsnprintf</a></p>
 </dd>
 <dt>Example</dt>
 <dd>

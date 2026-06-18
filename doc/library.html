@@ -77,7 +77,11 @@ character console:</p>
 <p>The only <code>&lt;stdio.h&gt;</code> functions that remain are the in-RAM
   string routines: <code>sprintf/snprintf</code> (and
   <code>vsprintf/vsnprintf</code>) format into a buffer, and
-  <code>sscanf</code> (and <code>vsscanf</code>) parses one. To stream raw
+  <code>sscanf</code> (and <code>vsscanf</code>) parses one. Because cc65 has
+  no floating-point support, the floating-point conversions
+  (<code>e E f F g G a A</code>) are absent from all of them, and
+  <code>sscanf</code> additionally rejects the wide-character conversions
+  (<code>S C</code>). To stream raw
   bytes from the cart, use <code>read()</code>/<code>lseek()</code> on a handle
   from <code>openn()</code> (see <code>&lt;unistd.h&gt;</code> and
   <code>&lt;lynx.h&gt;</code>).</p>
