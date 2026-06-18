@@ -218,6 +218,17 @@ void SymUseAttr (SymEntry* Sym, struct Declaration* D)
     Sym->Attr = D->Attributes;
     D->Attributes = 0;
     Sym->Flags |= SC_HAVEATTR;
+
+    /* The zeropage attribute maps onto the SC_ZEROPAGE symbol flag, which
+    ** drives .importzp/.exportzp for cross-module references and (together
+    ** with the storage being emitted into the ZEROPAGE segment, see
+    ** compile.c) makes the object a true zero-page symbol. The caller is
+    ** responsible for rejecting the attribute where it cannot apply
+    ** (functions, automatic objects, initialized objects).
+    */
+    if (SymHasAttr (Sym, atZeropage)) {
+        Sym->Flags |= SC_ZEROPAGE;
+    }
 }
 
 

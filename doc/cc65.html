@@ -38,6 +38,7 @@ improvements.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl2"><a href="#pragma-writable-strings">7.19. #pragma writable-strings ([push,] on|off)</a></li>
 <li class="lvl2"><a href="#sect-7-20">7.20. #pragma zpsym (&lt;name&gt;)</a></li>
 <li class="lvl1"><a href="#var-storage">8. Variable storage and lifetime</a></li>
+<li class="lvl2"><a href="#zeropage-attr">8.1. The __zeropage specifier</a></li>
 <li class="lvl1"><a href="#register-vars">9. Register variables</a></li>
 <li class="lvl1"><a href="#inline-asm">10. Inline assembler</a></li>
 <li class="lvl1"><a href="#operators">11. The C language: operators</a></li>
@@ -1024,6 +1025,11 @@ void somefunc2(int, char *);
 <pre class="verb">        extern int foo;
         #pragma zpsym ("foo");  /* foo is in the zeropage */
   </pre>
+<p>For the common case of a variable that is both <em>defined</em> and
+  <em>used</em> from C, the <code><a href="#zeropage-attr">__zeropage</a></code>
+  attribute (see below) is simpler: it places the storage in the zero page and
+  marks the symbol in a single declaration, with no companion assembler file and
+  no separate <code>#pragma</code>.</p>
 <h2 id="var-storage">8. Variable storage and lifetime</h2>
 <p>Where the compiler places a variable depends on its storage class and scope, not on its type. There are three kinds of storage: the software C stack, the static segments (BSS, DATA and RODATA), and zero page register space. The heap used by <code>malloc</code> and friends is never used for variables the compiler allocates itself.</p>
 <p>Variables declared <code>auto</code> &mdash; the default for any local declared inside a function &mdash; live on the cc65 software stack. This is a separate, downward-growing stack addressed through a zero page pointer; it is not the 6502 hardware stack, which the runtime uses only for return addresses and scratch. Each call allocates the locals on entry and releases them on exit, so their lifetime is exactly one invocation and their address is relative to the current stack pointer rather than fixed. Because this allocate-and-release happens every time a block is entered, declaring locals in nested blocks rather than at the top of the function costs extra code and time.</p>
@@ -1037,8 +1043,27 @@ void somefunc2(int, char *);
 <tr><td><code>static</code> local</td><td>BSS / DATA / RODATA</td><td>fixed address</td><td>internal (module-local)</td><td>whole program</td></tr>
 <tr><td><code>static</code> global</td><td>BSS / DATA / RODATA</td><td>fixed address</td><td>internal (module-local)</td><td>whole program</td></tr>
 <tr><td>plain global</td><td>BSS / DATA / RODATA</td><td>fixed address</td><td>external (exported)</td><td>whole program</td></tr>
+<tr><td><code>__zeropage</code> global</td><td>ZEROPAGE</td><td>zero page (fast, 2-byte)</td><td>internal or external</td><td>whole program</td></tr>
 </tbody></table></div>
 <p>Within the static cases the segment follows the initializer: uninitialized goes to BSS (zeroed at startup), a non-<code>const</code> initializer goes to DATA, and <code>const</code> data goes to RODATA.</p>
+<h3 id="zeropage-attr">8.1. The <code>__zeropage</code> specifier</h3>
+<p>A file-scope variable can be placed in the 6502 zero page in one of two equivalent ways. The first is the <code>__zeropage</code> attribute, declared in <code>&lt;zeropage.h&gt;</code> (it expands to <code>__attribute__((zeropage))</code>), written as a suffix on the declaration &mdash; the same position cc65 accepts every other attribute. The second is the <code>__zeropage__</code> keyword, a prefix specifier that sits alongside the storage class. This replaces the older idiom of defining the variable in an assembler <code>.zeropage</code> segment and importing it with <code>#pragma <a href="#sect-7-20">zpsym</a></code>.</p>
+<pre class="verb">        #include &lt;zeropage.h&gt;
+
+        /* Attribute (suffix) form: */
+        unsigned char  fastFlag  __zeropage;        /* definition: lives in ZEROPAGE */
+        int            scanPos   __zeropage;
+
+        /* Keyword (prefix) form - equivalent, and combines with a storage class: */
+        __zeropage__ unsigned char       fastFlag;
+        static __zeropage__ unsigned char privCounter;   /* either order is accepted */
+
+        /* In a shared header, so every module agrees on the address size: */
+        extern unsigned char fastFlag __zeropage;   /* reference: imported as zeropage */
+  </pre>
+<p>The two forms are interchangeable and may even be combined on one declaration. The keyword is the double-underscore spelling only, so it never collides with an identifier named <code>zeropage</code>; as a prefix it reads with the placement up front (<code>__zeropage__ int scanPos;</code>). Like a storage class it must precede the type.</p>
+<p>The defining translation unit emits the object into the built-in <code>ZEROPAGE</code> segment, whose zero-page address size makes the label a true zero-page symbol; it is exported with <code>.exportzp</code>. Any translation unit that marks the matching <code>extern</code> as <code>__zeropage</code> imports it with <code>.importzp</code> and addresses it through the fast 2-byte zero-page addressing modes. A <code>static __zeropage</code> object is private to its module but still zero-page addressed. To keep the address size consistent across modules, put the tagged <code>extern</code> in a header that every user includes; a module that omits it on one side produces an address-size mismatch at link time.</p>
+<p>Either form is rejected where it cannot apply: on functions or typedefs, on local (automatic) objects &mdash; it is valid only at file scope &mdash; and on a definition that carries an initializer (the <code>ZEROPAGE</code> segment, like an assembler <code>.res</code> cell, holds no initialization image). Zero page is a scarce, 256-byte resource shared with the cc65 runtime (the C-stack pointer, <code>sreg</code>, the <code>ptr</code>/<code>tmp</code> scratch cells, register variables, and so on), so reserve it for a few hot scalars and pointers rather than arrays or large structs. Over-allocating the zero page is reported by <code><a href="ld65.html">ld65</a></code> as a <code>ZEROPAGE</code> segment overflow.</p>
 <h2 id="register-vars">9. Register variables</h2>
 <p>The runtime for all supported platforms has 6 bytes of zero page space
 available for register variables (this could be increased, but I think it's a

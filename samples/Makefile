@@ -66,7 +66,8 @@ EXELIST_lynx = \
         setbpp.lnx \
         comlynx.lnx \
         fonttest.lnx \
-        heaptest.lnx
+        heaptest.lnx \
+        zeropage.lnx
 
 samples: $(EXELIST_$(SYS))
 

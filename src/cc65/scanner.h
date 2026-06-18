@@ -79,6 +79,9 @@ typedef enum token_t {
     TOK_FASTCALL,
     TOK_CDECL,
 
+    /* Target-specific specifier: place an object in the zero page */
+    TOK_ZEROPAGE,
+
     /* Tokens denoting types */
     TOK_FIRST_TYPE,
     TOK_ENUM            = TOK_FIRST_TYPE,

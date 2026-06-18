@@ -89,6 +89,7 @@ static const struct Keyword {
     { "__fastcall__",   TOK_FASTCALL    },
     { "__inline__",     TOK_INLINE      },
     { "__near__",       TOK_NEAR        },
+    { "__zeropage__",   TOK_ZEROPAGE    },
     { "asm",            TOK_ASM         },
     { "auto",           TOK_AUTO        },
     { "break",          TOK_BREAK       },

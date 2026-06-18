@@ -42,6 +42,7 @@
 #include "asmlabel.h"
 #include "codegen.h"
 #include "declare.h"
+#include "declattr.h"
 #include "error.h"
 #include "expr.h"
 #include "function.h"
@@ -423,6 +424,17 @@ static void ParseOneDecl (const DeclSpec* Spec)
 
     /* Read the declaration */
     ParseDecl (Spec, &Decl, DM_NEED_IDENT);
+
+    /* The zeropage specifier (the __zeropage__ keyword, folded into the
+    ** storage class as SC_ZEROPAGE, or the equivalent
+    ** __attribute__((zeropage))) is only honoured on file-scope declarations,
+    ** where the object can be placed in the ZEROPAGE segment and exported /
+    ** imported as a zero-page symbol. On a block-scope declaration it would be
+    ** silently ignored, so reject it with a helpful message instead.
+    */
+    if ((Decl.StorageClass & SC_ZEROPAGE) != 0 || DeclHasAttr (&Decl, atZeropage)) {
+        Error ("'zeropage' is only valid at file scope");
+    }
 
     /* Set the correct storage class for functions */
     if ((Decl.StorageClass & SC_FUNC) == SC_FUNC) {

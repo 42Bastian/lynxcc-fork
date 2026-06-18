@@ -407,6 +407,23 @@ static void FixQualifiers (Type* DataType)
 
 
 
+static int ParseZeropageSpec (void)
+/* Consume any run of __zeropage__ specifiers. Return true if at least one was
+** seen. The specifier is target-specific and orthogonal to the storage class,
+** so it is scanned separately and folded into the storage class as
+** SC_ZEROPAGE (see ParseDeclSpec).
+*/
+{
+    int Seen = 0;
+    while (CurTok.Tok == TOK_ZEROPAGE) {
+        Seen = 1;
+        NextToken ();
+    }
+    return Seen;
+}
+
+
+
 static void ParseStorageClass (DeclSpec* D, unsigned DefStorage)
 /* Parse a storage class */
 {
@@ -1695,14 +1712,33 @@ void ParseDeclSpec (DeclSpec* D, unsigned DefStorage, long DefType)
 {
     TypeCode Qualifiers;
 
+    int Zeropage;
+
     /* Initialize the DeclSpec struct */
     InitDeclSpec (D);
 
     /* There may be qualifiers *before* the storage class specifier */
     Qualifiers = OptionalQualifiers (T_QUAL_CONST | T_QUAL_VOLATILE);
 
+    /* The __zeropage__ specifier is orthogonal to the storage class and may
+    ** appear on either side of it (e.g. "__zeropage__ static" or
+    ** "static __zeropage__"). Scan it both before and after the storage class.
+    */
+    Zeropage  = ParseZeropageSpec ();
+
     /* Now get the storage class specifier for this declaration */
     ParseStorageClass (D, DefStorage);
+
+    Zeropage |= ParseZeropageSpec ();
+
+    /* Fold the __zeropage__ specifier into the storage class. From here it is
+    ** carried as SC_ZEROPAGE on the symbol, exactly like the equivalent
+    ** __attribute__((zeropage)); both forms share all downstream handling
+    ** (segment placement, .importzp/.exportzp, and validation).
+    */
+    if (Zeropage) {
+        D->StorageClass |= SC_ZEROPAGE;
+    }
 
     /* Parse the type specifiers passing any initial type qualifiers */
     ParseTypeSpec (D, DefType, Qualifiers);

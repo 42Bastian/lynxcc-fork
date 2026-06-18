@@ -36,6 +36,7 @@
 #include <string.h>
 
 /* common */
+#include "coll.h"
 #include "xmalloc.h"
 
 /* cc65 */
@@ -57,6 +58,7 @@
 /* Forwards for attribute handlers */
 static void NoReturnAttr (Declaration* D);
 static void UnusedAttr (Declaration* D);
+static void ZeropageAttr (Declaration* D);
 
 
 
@@ -69,8 +71,10 @@ struct AttrDesc {
 static const AttrDesc AttrTable [] = {
     { "__noreturn__",   NoReturnAttr    },
     { "__unused__",     UnusedAttr      },
+    { "__zeropage__",   ZeropageAttr    },
     { "noreturn",       NoReturnAttr    },
     { "unused",         UnusedAttr      },
+    { "zeropage",       ZeropageAttr    },
 };
 
 
@@ -173,6 +177,33 @@ static void UnusedAttr (Declaration* D)
 {
     /* Add the noreturn attribute */
     AddAttr (D, NewDeclAttr (atUnused));
+}
+
+
+
+static void ZeropageAttr (Declaration* D)
+/* Parse the "zeropage" attribute */
+{
+    /* Add the zeropage attribute */
+    AddAttr (D, NewDeclAttr (atZeropage));
+}
+
+
+
+int DeclHasAttr (const Declaration* D, DeclAttrType AttrType)
+/* Return true if the declaration carries the given attribute */
+{
+    /* Beware: We may not even have a collection */
+    if (D->Attributes != 0) {
+        unsigned I;
+        for (I = 0; I < CollCount (D->Attributes); ++I) {
+            const DeclAttr* A = CollConstAt (D->Attributes, I);
+            if (A->AttrType == AttrType) {
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
 
 
