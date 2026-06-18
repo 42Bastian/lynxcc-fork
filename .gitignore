@@ -1,1 +1,13 @@
 .DS_Store
+
+# Build output directories
+/bin/
+/lib/
+/libwrk/
+/wrk/
+
+# Compiled sample artifacts (sources are *.c + Makefile)
+samples/*.lnx
+samples/*.map
+samples/*.o
+samples/*.s
