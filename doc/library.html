@@ -34,7 +34,9 @@ in the C standard.</p>
 <p><code>tmpfile/tmpnam</code></p>
 </li>
 <li>
-<p><code>system</code> (cc65 alternative <code>exec</code>)</p>
+<p><code>system</code> and the non-standard <code>exec</code>: the Lynx has no
+  shell or command processor. To run another cart image, use
+  <code>lynx_load</code>/<code>lynx_exec</code> from <code>&lt;lynx.h&gt;</code>.</p>
 </li>
 <li>
 <p>All functions that handle floating point numbers in some manner.</p>
@@ -54,20 +56,27 @@ in the C standard.</p>
 <p><code>setbuf/setvbuf</code></p>
 </li>
 </ul>
-<p>Functions not available on all supported systems:</p>
+<p>File I/O on the Lynx is read-only, because the cart is ROM and there is no
+character console:</p>
 <ul>
 <li>
-<p><code>fopen/fread/fwrite/fclose/fputs/fgets/fscanf</code>: The functions
-  are built on open/read/write/close. Those latter functions are not available
-  on all systems.</p>
+<p>The byte-stream <em>output</em> functions are <em>not</em> provided:
+  <code>fopen/freopen/fclose</code>, <code>fwrite</code>,
+  <code>printf/fprintf/vprintf/vfprintf</code>,
+  <code>putchar/puts/fputc/fputs</code> and <code>perror</code>. For on-screen
+  text use <code>tgi_outtext</code> from <code>&lt;tgi.h&gt;</code>;
+  <code>sprintf/snprintf</code> format into RAM buffers and work normally.</p>
 </li>
 <li>
-<p><code>ftell/fseek/fgetpos/fsetpos</code>: Support depends on the
-  capabilities of the target machine.</p>
+<p>The <em>read</em>-side stream functions <em>are</em> available, backed by
+  <code>read()</code> on a handle from <code>openn()</code>:
+  <code>fread/fgets/fgetc/fscanf</code>, <code>ftell/fseek/fgetpos/fsetpos</code>,
+  <code>rewind</code> and <code>ungetc</code>.</p>
 </li>
 <li>
-<p><code>rename/remove/rewind</code>: Support depends on the capabilities of
-  the target machine.</p>
+<p><code>remove/rename</code> and the name-based <code>open/creat/close/write</code>
+  are <em>not</em> provided: cart files are ROM and are addressed by number, not
+  by name.</p>
 </li>
 <li>
 <p><code>time</code>: Many of the supported systems don't have a real-time
@@ -84,9 +93,8 @@ in the C standard.</p>
   a problem.</p>
 </li>
 <li>
-<p><code>getenv</code>: Since there is no such thing as an environment on all
-  supported systems, the <code>getenv</code> function always will return a <code>NULL</code>
-  pointer.</p>
+<p><code>getenv/putenv</code>: there is no environment on the Lynx, so these
+  functions are not provided.</p>
 </li>
 <li>
 <p><code>locale</code>: There is no locale other than the "C" locale. The

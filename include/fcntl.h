@@ -62,14 +62,13 @@
 
 
 /* Functions */
-/* NOTE: open() and creat() are NOT implemented by the Atari Lynx runtime.
-** The cart is ROM and its files are addressed by number, so there is nothing
-** to parse a name into and nothing to create. Use openn() from <lynx.h> for
-** numbered, read-only cart access (read()/lseek() then operate on it).
+/* NOTE: the Atari Lynx cart is read-only ROM whose files are addressed by
+** number, so there is nothing to open or create by name, nothing to write,
+** and no file descriptors to close.  open(), creat(), close() and write()
+** are therefore NOT provided.  Use openn() from <lynx.h> for numbered,
+** read-only cart access, then read()/lseek() from <unistd.h> to operate on
+** it.  The O_xxx flags above are retained only for the assembler runtime.
 */
-int open (const char* name, int flags, ...);    /* May take a mode argument */
-int __fastcall__ close (int fd);
-int __fastcall__ creat (const char* name, unsigned mode);
 
 
 

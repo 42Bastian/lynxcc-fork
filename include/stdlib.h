@@ -48,12 +48,10 @@ typedef unsigned size_t;
 #define EXIT_SUCCESS    0
 #define EXIT_FAILURE    1
 
-/* Those non-standard cc65 exit constants definitions are in addition
-** to the EXIT_SUCCESS and EXIT_FAILURE constants, which should not be
-** redefined
+/* The non-standard cc65 EXIT_ASSERT / EXIT_ABORT exit codes have been
+** removed along with assert()/abort() on this target (the Lynx has no
+** console for their diagnostics).  Only EXIT_SUCCESS and EXIT_FAILURE remain.
 */
-#define EXIT_ASSERT 2
-#define EXIT_ABORT 3
 
 
 /* Return type of the div function */
@@ -97,7 +95,10 @@ void _randomize (void);         /* Non-standard */
 unsigned char __fastcall__ randmask (unsigned char mask);  /* Non-standard */
 
 /* Other standard stuff */
-void abort (void) __attribute__ ((noreturn));
+/* NOTE: getenv(), putenv(), system() and abort() are NOT provided on the
+** Lynx.  There is no environment, no shell, and no console for abort()'s
+** diagnostic; use exit() to terminate.
+*/
 int __fastcall__ abs (int val);
 long __fastcall__ labs (long val);
 int __fastcall__ atoi (const char* s);
@@ -107,12 +108,10 @@ void* __fastcall__ bsearch (const void* key, const void* base, size_t n,
                             size_t size, int __fastcall__ (* cmp) (const void*, const void*));
 div_t __fastcall__ div (int numer, int denom);
 void __fastcall__ exit (int ret) __attribute__ ((noreturn));
-char* __fastcall__ getenv (const char* name);
 void __fastcall__ qsort (void* base, size_t count, size_t size,
                          int __fastcall__ (* compare) (const void*, const void*));
 long __fastcall__ strtol (const char* nptr, char** endptr, int base);
 unsigned long __fastcall__ strtoul (const char* nptr, char** endptr, int base);
-int __fastcall__ system (const char* s);
 
 /* Non-ANSI functions */
 void __fastcall__ _swap (void* p, void* q, size_t size);
@@ -120,7 +119,6 @@ char* __fastcall__ itoa (int val, char* buf, int radix);
 char* __fastcall__ utoa (unsigned val, char* buf, int radix);
 char* __fastcall__ ltoa (long val, char* buf, int radix);
 char* __fastcall__ ultoa (unsigned long val, char* buf, int radix);
-int __fastcall__ putenv (char* s);
 
 
 

@@ -61,10 +61,6 @@ typedef unsigned size_t;
 typedef long int off_t;
 #endif
 
-/* Stuff for getopt */
-extern char *optarg;
-extern int optind, opterr, optopt;
-
 
 
 /*****************************************************************************/
@@ -74,23 +70,17 @@ extern int optind, opterr, optopt;
 
 
 /* Files */
-int __fastcall__ write (int fd, const void* buf, unsigned count);
+/* NOTE: the Lynx cart is read-only ROM addressed by number, so write() and
+** the name-based filesystem calls (unlink, chdir, getcwd, mkdir, rmdir) are
+** NOT provided.  Only the read-only primitives below exist; obtain a handle
+** with openn() from <lynx.h>, then read()/lseek() on it.  getopt() and the
+** non-standard exec() are likewise omitted on this target.
+*/
 int __fastcall__ read (int fd, void* buf, unsigned count);
 off_t __fastcall__ lseek (int fd, off_t offset, int whence);
-int __fastcall__ unlink (const char* name);     /* Same as remove() */
-
-/* Directories */
-int __fastcall__ chdir (const char* name);
-char* __fastcall__ getcwd (char* buf, size_t size);
-int mkdir (const char* name, ...);              /* May take a mode argument */
-int __fastcall__ rmdir (const char* name);
 
 /* Others */
 unsigned __fastcall__ sleep (unsigned seconds);
-int __fastcall__ getopt (int argc, char* const* argv, const char* optstring);
-
-/* Non standard: */
-int __fastcall__ exec (const char* progname, const char* cmdline);
 
 
 

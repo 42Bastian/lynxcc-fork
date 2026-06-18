@@ -41,8 +41,6 @@
 
 
 
-typedef struct DIR DIR;
-
 #if defined(__APPLE2__)
 
 struct dirent {
@@ -149,17 +147,11 @@ struct dirent {
 
 
 
-DIR* __fastcall__ opendir (const char* name);
-
-struct dirent* __fastcall__ readdir (DIR* dir);
-
-int __fastcall__ closedir (DIR* dir);
-
-long __fastcall__ telldir (DIR* dir);
-
-void __fastcall__ seekdir (DIR* dir, long offs);
-
-void __fastcall__ rewinddir (DIR* dir);
+/* NOTE: the Lynx cart has no traversable directory, so the directory-stream
+** functions (opendir/readdir/closedir/telldir/seekdir/rewinddir) are NOT
+** provided.  This header only defines the cart's per-file directory entry
+** (struct dirent) and the zero-page FileEntry that the runtime populates.
+*/
 
 
 

@@ -41,15 +41,16 @@ installed cc65.</p>
 <h3 id="sect-1-2">1.2. The sample modules</h3>
 <p>To explain the development flow, I will use the following example modules:</p>
 <p>hello.c:</p>
-<pre class="code">        #include &lt;stdio.h&gt;
-        #include &lt;stdlib.h&gt;
+<pre class="code">        #include &lt;string.h&gt;
 
         extern const char text[];       /* In text.s */
 
         int main (void)
         {
-            printf ("%s\n", text);
-            return EXIT_SUCCESS;
+            /* The Lynx has no text console, so there is nothing to print
+               here; this module only demonstrates the build flow.  For
+               on-screen text, see the TGI "Hello World" in the Lynx docs. */
+            return (int) strlen (text);
         }</pre>
 <p>text.s:</p>
 <pre class="code">        .export _text
@@ -150,7 +151,7 @@ the current directory.</p>
 <h2 id="sect-6">6. Running The Executable</h2>
 <p>The Lynx has no operating system or text screen: the linker output is a
 bootable cart image, and text output requires the TGI graphics driver.
-The <code>printf</code> in the tutorial above therefore produces no visible
+The program in the tutorial above therefore produces no visible
 output on the Lynx - it demonstrates the build mechanics only. For a
 program that actually displays text on the Lynx screen, see the Hello
 World example in the <a href="lynx.html">Lynx-specific
