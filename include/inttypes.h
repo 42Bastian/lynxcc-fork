@@ -151,7 +151,7 @@ uintmax_t __fastcall__ strtoumax (const char* nptr, char** endptr, int base);
 #define PRIXMAX                 "lX"
 #define PRIXPTR                 "X"
 
-/* fscanf() macros for signed integers */
+/* sscanf() macros for signed integers */
 #define SCNd8                   "hd"
 #define SCNd16                  "d"
 #define SCNd32                  "ld"
@@ -182,7 +182,7 @@ uintmax_t __fastcall__ strtoumax (const char* nptr, char** endptr, int base);
 #define SCNiMAX                 "li"
 #define SCNiPTR                 "i"
 
-/* fscanf() macros for unsigned integers */
+/* sscanf() macros for unsigned integers */
 #define SCNo8                   "ho"
 #define SCNo16                  "o"
 #define SCNo32                  "lo"

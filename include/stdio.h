@@ -43,40 +43,13 @@
 
 
 
-/* Types */
-typedef struct _FILE FILE;
-typedef unsigned long fpos_t;
-
-/* Standard file descriptors */
-extern FILE* stdin;
-extern FILE* stdout;
-extern FILE* stderr;
-
-/* Standard defines */
-#define _IOFBF          0
-#define _IOLBF          1
-#define _IONBF          2
-#define BUFSIZ          256
+/* Standard defines.  SEEK_* describe the whence argument of lseek() (declared
+** in <unistd.h>); only SEEK_SET is actually implemented on the Lynx cart.
+*/
 #define EOF             -1
-#define FOPEN_MAX       8
 #define SEEK_CUR        0
 #define SEEK_END        1
 #define SEEK_SET        2
-#define TMP_MAX         256
-
-/* Standard defines that are platform dependent */
-#if defined(__APPLE2__)
-#  define FILENAME_MAX  (64+1)
-#elif defined(__ATARI__)
-#  define FILENAME_MAX  (12+1)
-#elif defined(__LUNIX__)
-#  define FILENAME_MAX  (80+1)
-#elif defined(__TELESTRAT__)
-#  define FILENAME_MAX  (50+1)
-#else
-#  define FILENAME_MAX  (16+1)
-#endif
-#define L_tmpnam        FILENAME_MAX
 
 
 
@@ -88,46 +61,25 @@ extern FILE* stderr;
 
 /* Functions */
 /* NOTE: the Lynx has no character console and the cart is read-only ROM, so
-** the byte-stream OUTPUT family (fopen/freopen/fclose, fwrite, printf/
-** fprintf/vprintf/vfprintf, putchar/puts/fputc/fputs, perror, _poserror)
-** and the name-based remove()/rename() are NOT provided on this target.
-** For on-screen text use tgi_outtext() from <tgi.h>.  sprintf()/snprintf()
-** and friends format into RAM buffers and work normally.  The read-side
-** stream functions below remain available, backed by read() on a handle
-** from openn().
+** there is no FILE object on this target and none of the byte-stream families
+** are provided:
+**   - OUTPUT: fopen/freopen/fclose, fwrite, printf/fprintf/vprintf/vfprintf,
+**     putchar/puts/fputc/fputs, perror, _poserror, remove()/rename().
+**   - INPUT:  fopen/fread/fgetc/fgets, fscanf/scanf/vfscanf/vscanf,
+**     fseek/ftell/fgetpos/fsetpos/rewind, getchar/gets/ungetc,
+**     feof/ferror/clearerr/fflush, fdopen/fileno.
+** For on-screen text use tgi_outtext() from <tgi.h>.  Only the in-RAM string
+** functions below remain: sprintf()/snprintf() format into a buffer and
+** sscanf() parses one.  To stream raw bytes from the cart use read()/lseek()
+** on a handle from openn() (see <unistd.h> and <lynx.h>).
 */
-void __fastcall__ clearerr (FILE* f);
-int __fastcall__ feof (FILE* f);
-int __fastcall__ ferror (FILE* f);
-int __fastcall__ fflush (FILE* f);
-int __fastcall__ fgetc (FILE* f);
-char* __fastcall__ fgets (char* buf, size_t size, FILE* f);
-size_t __fastcall__ fread (void* buf, size_t size, size_t count, FILE* f);
-int __fastcall__ fgetpos (FILE* f, fpos_t *pos);
-int __fastcall__ fsetpos (FILE* f, const fpos_t* pos);
-long __fastcall__ ftell (FILE* f);
-int __fastcall__ fseek (FILE* f, long offset, int whence);
-void __fastcall__ rewind (FILE *f);
-int getchar (void);
-char* __fastcall__ gets (char* s);
 int snprintf (char* buf, size_t size, const char* format, ...);
 int sprintf (char* buf, const char* format, ...);
-int __fastcall__ ungetc (int c, FILE* f);
 int __fastcall__ vsnprintf (char* buf, size_t size, const char* format, va_list ap);
 int __fastcall__ vsprintf (char* buf, const char* format, va_list ap);
 
-int scanf (const char* format, ...);
-int fscanf (FILE* f, const char* format, ...);
 int sscanf (const char* s, const char* format, ...);
-int __fastcall__ vscanf (const char* format, va_list ap);
 int __fastcall__ vsscanf (const char* s, const char* format, va_list ap);
-int __fastcall__ vfscanf (FILE* f, const char* format, va_list ap);
-
-FILE* __fastcall__ fdopen (int fd, const char* mode);   /* Unix */
-int __fastcall__ fileno (FILE* f);                      /* Unix */
-
-/* Masking macros for some functions */
-#define getc(f)         fgetc (f)               /* ANSI */
 
 
 

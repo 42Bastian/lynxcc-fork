@@ -60,18 +60,27 @@ in the C standard.</p>
 character console:</p>
 <ul>
 <li>
-<p>The byte-stream <em>output</em> functions are <em>not</em> provided:
+<p>There is no <code>FILE</code> object, so none of the byte-stream functions
+  are provided. The <em>output</em> family is absent &mdash;
   <code>fopen/freopen/fclose</code>, <code>fwrite</code>,
   <code>printf/fprintf/vprintf/vfprintf</code>,
-  <code>putchar/puts/fputc/fputs</code> and <code>perror</code>. For on-screen
-  text use <code>tgi_outtext</code> from <code>&lt;tgi.h&gt;</code>;
-  <code>sprintf/snprintf</code> format into RAM buffers and work normally.</p>
+  <code>putchar/puts/fputc/fputs</code> and <code>perror</code> &mdash; and so
+  is the <em>input</em> FILE family:
+  <code>fread/fgets/fgetc</code>, <code>fscanf/scanf/vfscanf/vscanf</code>,
+  <code>fseek/ftell/fgetpos/fsetpos/rewind</code>,
+  <code>getchar/gets/ungetc</code>,
+  <code>feof/ferror/clearerr/fflush</code> and
+  <code>fdopen/fileno</code>. For on-screen text use <code>tgi_outtext</code>
+  from <code>&lt;tgi.h&gt;</code>.</p>
 </li>
 <li>
-<p>The <em>read</em>-side stream functions <em>are</em> available, backed by
-  <code>read()</code> on a handle from <code>openn()</code>:
-  <code>fread/fgets/fgetc/fscanf</code>, <code>ftell/fseek/fgetpos/fsetpos</code>,
-  <code>rewind</code> and <code>ungetc</code>.</p>
+<p>The only <code>&lt;stdio.h&gt;</code> functions that remain are the in-RAM
+  string routines: <code>sprintf/snprintf</code> (and
+  <code>vsprintf/vsnprintf</code>) format into a buffer, and
+  <code>sscanf</code> (and <code>vsscanf</code>) parses one. To stream raw
+  bytes from the cart, use <code>read()</code>/<code>lseek()</code> on a handle
+  from <code>openn()</code> (see <code>&lt;unistd.h&gt;</code> and
+  <code>&lt;lynx.h&gt;</code>).</p>
 </li>
 <li>
 <p><code>remove/rename</code> and the name-based <code>open/creat/close/write</code>
