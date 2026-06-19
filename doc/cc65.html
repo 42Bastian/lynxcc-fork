@@ -104,10 +104,8 @@ Short options:
   -g                            Add debug info to object file
   -h                            Help (this text)
   -j                            Default characters are signed
-  -mm model                     Set the memory model
   -o name                       Name the output file
   -r                            Enable register variables
-  -t sys                        Set the target system
   -v                            Increase verbosity
 
 Long options:
@@ -117,7 +115,6 @@ Long options:
   --check-stack                 Generate stack overflow checks
   --code-name seg               Set the name of the CODE segment
   --codesize x                  Accept larger code by factor x
-  --cpu type                    Set cpu type (6502, 65c02)
   --create-dep name             Create a make dependency file
   --create-full-dep name        Create a full make dependency file
   --data-name seg               Set the name of the DATA segment
@@ -135,13 +132,11 @@ Long options:
   --list-opt-steps              List all optimizer steps and exit
   --list-warnings               List available warning types for -W
   --local-strings               Emit string literals immediately
-  --memory-model model          Set the memory model
   --register-space b            Set space available for register variables
   --register-vars               Enable register variables
   --rodata-name seg             Set the name of the RODATA segment
   --signed-chars                Default characters are signed
   --static-locals               Make local variables static
-  --target sys                  Set the target system
   --verbose                     Increase verbosity
   --version                     Print the compiler version number
   --writable-strings            Make string literals writable
@@ -180,16 +175,6 @@ Long options:
   generation and optimization phases. It gives the allowed size increase
   factor (in percent). The default is 100 when not using <code>-Oi</code> and 200 when
   using <code>-Oi</code> (<code>-Oi</code> is the same as <code>-O --codesize 200</code>).</p>
-<a id="option--cpu"></a>
-</dd>
-<dt><code>--cpu CPU</code></dt>
-<dd>
-<p>Set the CPU, the compiler generates code for. You may specify "6502" or
-  "65C02" as the CPU. The default depends on the selected target (see option
-  <code><a href="#option-t">-t</a></code>). It is the 6502 CPU for most targets or
-  if no target has been set. Specifying 65C02 will use a few 65C02
-  instructions when generating code. Don't expect too much from this option:
-  In most cases the difference in size and speed is just 1-2%.</p>
 <a id="option-create-dep"></a>
 </dd>
 <dt><code>--create-dep name</code></dt>
@@ -357,25 +342,6 @@ Long options:
   almost any load operation), this will make the code larger and slower. A
   better way is to declare characters explicitly as "signed" if needed. You
   can also use <code><a href="#pragma-signed-chars">#pragma signed-chars</a></code> for better control of this option.</p>
-</dd>
-<a id="option-t"></a>
-<dt><code>-t target, --target target</code></dt>
-<dd>
-<p>This option is used to set the target system. The target system determines
-  the character set that is used for strings and character constants and the
-  default CPU. The CPU setting can be overriden by use of the <code><a href="#option--cpu">--cpu</a></code> option.</p>
-<p>The following target systems are supported in this tree:</p>
-<ul>
-<li>
-<p>none</p>
-</li>
-<li>
-<p>lynx</p>
-</li>
-</ul>
-<p>Other upstream cc65 target names are still accepted by the tools for
-  compatibility, but their libraries and linker configurations have been
-  removed, so only <code>lynx</code> (and <code>none</code>) are usable.</p>
 </dd>
 <dt><code>-v, --verbose</code></dt>
 <dd>
@@ -758,8 +724,8 @@ mind, you should be able to write fairly portable code.</p>
 </dd>
 <dt><code>__LYNX__</code></dt>
 <dd>
-<p>This macro is defined if the target is the Atari Lynx (-t lynx) - the only
-  target with library support in this tree.</p>
+<p>This macro is always defined: the Atari Lynx is the only target supported by
+  this tree, and the compiler always generates 65SC02 code for it.</p>
 </dd>
 <dt><code>__OPT__</code></dt>
 <dd>

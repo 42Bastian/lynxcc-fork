@@ -102,16 +102,13 @@ static void Usage (void)
             "  -h\t\t\t\tHelp (this text)\n"
             "  -i\t\t\t\tIgnore case of symbols\n"
             "  -l name\t\t\tCreate a listing file if assembly was ok\n"
-            "  -mm model\t\t\tSet the memory model\n"
             "  -o name\t\t\tName the output file\n"
             "  -s\t\t\t\tEnable smart mode\n"
-            "  -t sys\t\t\tSet the target system\n"
             "  -v\t\t\t\tIncrease verbosity\n"
             "\n"
             "Long options:\n"
             "  --auto-import\t\t\tMark unresolved symbols as import\n"
             "  --bin-include-dir dir\t\tSet a search path for binary includes\n"
-            "  --cpu type\t\t\tSet cpu type\n"
             "  --create-dep name\t\tCreate a make dependency file\n"
             "  --create-full-dep name\tCreate a full make dependency file\n"
             "  --debug\t\t\tDebug mode\n"
@@ -123,11 +120,9 @@ static void Usage (void)
             "  --large-alignment\t\tDon't warn about large alignments\n"
             "  --listing name\t\tCreate a listing file if assembly was ok\n"
             "  --list-bytes n\t\tMaximum number of bytes per listing line\n"
-            "  --memory-model model\t\tSet the memory model\n"
             "  --pagelength n\t\tSet the page length for the listing\n"
             "  --relax-checks\t\tRelax some checks (see docs)\n"
             "  --smart\t\t\tEnable smart mode\n"
-            "  --target sys\t\t\tSet the target system\n"
             "  --verbose\t\t\tIncrease verbosity\n"
             "  --version\t\t\tPrint the assembler version\n",
             ProgName);
@@ -183,161 +178,12 @@ static void NewSymbol (const char* SymName, long Val)
 
 
 
-static void CBMSystem (const char* Sys)
-/* Define a CBM system */
+static void SetSys (void)
+/* Define the (fixed) Lynx target system */
 {
-    NewSymbol ("__CBM__", 1);
-    NewSymbol (Sys, 1);
-}
-
-
-
-static void SetSys (const char* Sys)
-/* Define a target system */
-{
-    switch (Target = FindTarget (Sys)) {
-
-        case TGT_NONE:
-            break;
-
-        case TGT_MODULE:
-            AbEnd ("Cannot use 'module' as a target for the assembler");
-            break;
-
-        case TGT_ATARI2600:
-            NewSymbol ("__ATARI2600__", 1);
-            break;
-
-        case TGT_ATARI5200:
-            NewSymbol ("__ATARI5200__", 1);
-            break;
-
-        case TGT_ATARI:
-            NewSymbol ("__ATARI__", 1);
-            break;
-
-        case TGT_ATARIXL:
-            NewSymbol ("__ATARI__", 1);
-            NewSymbol ("__ATARIXL__", 1);
-            break;
-
-        case TGT_C16:
-            CBMSystem ("__C16__");
-            break;
-
-        case TGT_C64:
-            CBMSystem ("__C64__");
-            break;
-
-        case TGT_C65:
-            CBMSystem ("__C65__");
-            break;
-
-        case TGT_VIC20:
-            CBMSystem ("__VIC20__");
-            break;
-
-        case TGT_C128:
-            CBMSystem ("__C128__");
-            break;
-
-        case TGT_PLUS4:
-            CBMSystem ("__C16__");
-            NewSymbol ("__PLUS4__", 1);
-            break;
-
-        case TGT_CBM510:
-            CBMSystem ("__CBM510__");
-            break;
-
-        case TGT_CBM610:
-            CBMSystem ("__CBM610__");
-            break;
-
-        case TGT_PET:
-            CBMSystem ("__PET__");
-            break;
-
-        case TGT_BBC:
-            NewSymbol ("__BBC__", 1);
-            break;
-
-        case TGT_APPLE2:
-            NewSymbol ("__APPLE2__", 1);
-            break;
-
-        case TGT_APPLE2ENH:
-            NewSymbol ("__APPLE2__", 1);
-            NewSymbol ("__APPLE2ENH__", 1);
-            break;
-
-        case TGT_GAMATE:
-            NewSymbol ("__GAMATE__", 1);
-            break;
-
-        case TGT_GEOS_CBM:
-            /* Do not handle as a CBM system */
-            NewSymbol ("__GEOS__", 1);
-            NewSymbol ("__GEOS_CBM__", 1);
-            break;
-
-        case TGT_CREATIVISION:
-            NewSymbol ("__CREATIVISION__", 1);
-            break;
-
-        case TGT_GEOS_APPLE:
-            NewSymbol ("__GEOS__", 1);
-            NewSymbol ("__GEOS_APPLE__", 1);
-            break;
-
-        case TGT_LUNIX:
-            NewSymbol ("__LUNIX__", 1);
-            break;
-
-        case TGT_ATMOS:
-            NewSymbol ("__ATMOS__", 1);
-            break;
-
-        case TGT_TELESTRAT:
-             NewSymbol ("__TELESTRAT__", 1);
-             break;
-
-        case TGT_NES:
-            NewSymbol ("__NES__", 1);
-            break;
-
-        case TGT_SUPERVISION:
-            NewSymbol ("__SUPERVISION__", 1);
-            break;
-
-        case TGT_LYNX:
-            NewSymbol ("__LYNX__", 1);
-            break;
-
-        case TGT_SIM6502:
-            NewSymbol ("__SIM6502__", 1);
-            break;
-
-        case TGT_SIM65C02:
-            NewSymbol ("__SIM65C02__", 1);
-            break;
-
-        case TGT_OSIC1P:
-            NewSymbol ("__OSIC1P__", 1);
-            break;
-
-        case TGT_PCENGINE:
-            NewSymbol ("__PCE__", 1);
-            break;
-
-        case TGT_CX16:
-            CBMSystem ("__CX16__");
-            break;
-
-        default:
-            AbEnd ("Invalid target name: '%s'", Sys);
-
-    }
+    Target = TGT_LYNX;
+    SetCPU (CPU_65SC02);
+    NewSymbol ("__LYNX__", 1);
 
     /* Initialize the translation tables for the target system */
     TgtTranslateInit ();
@@ -422,19 +268,6 @@ static void OptBinIncludeDir (const char* Opt attribute ((unused)), const char* 
 /* Add an include search path for binaries */
 {
     AddSearchPath (BinSearchPath, Arg);
-}
-
-
-
-static void OptCPU (const char* Opt attribute ((unused)), const char* Arg)
-/* Handle the --cpu option */
-{
-    cpu_t CPU = FindCPU (Arg);
-    if (CPU == CPU_UNKNOWN) {
-        AbEnd ("Invalid CPU: '%s'", Arg);
-    } else {
-        SetCPU (CPU);
-    }
 }
 
 
@@ -563,30 +396,6 @@ static void OptListing (const char* Opt, const char* Arg)
 
 
 
-static void OptMemoryModel (const char* Opt, const char* Arg)
-/* Set the memory model */
-{
-    mmodel_t M;
-
-    /* Check the current memory model */
-    if (MemoryModel != MMODEL_UNKNOWN) {
-        AbEnd ("Cannot use option '%s' twice", Opt);
-    }
-
-    /* Translate the memory model name and check it */
-    M = FindMemoryModel (Arg);
-    if (M == MMODEL_UNKNOWN) {
-        AbEnd ("Unknown memory model: %s", Arg);
-    } else if (M == MMODEL_HUGE) {
-        AbEnd ("Unsupported memory model: %s", Arg);
-    }
-
-    /* Set the memory model */
-    SetMemoryModel (M);
-}
-
-
-
 static void OptPageLength (const char* Opt attribute ((unused)), const char* Arg)
 /* Handle the --pagelength option */
 {
@@ -616,12 +425,6 @@ static void OptSmart (const char* Opt attribute ((unused)),
 }
 
 
-
-static void OptTarget (const char* Opt attribute ((unused)), const char* Arg)
-/* Set the target system */
-{
-    SetSys (Arg);
-}
 
 
 
@@ -909,7 +712,6 @@ int main (int argc, char* argv [])
     static const LongOpt OptTab[] = {
         { "--auto-import",      0,      OptAutoImport           },
         { "--bin-include-dir",  1,      OptBinIncludeDir        },
-        { "--cpu",              1,      OptCPU                  },
         { "--create-dep",       1,      OptCreateDep            },
         { "--create-full-dep",  1,      OptCreateFullDep        },
         { "--debug",            0,      OptDebug                },
@@ -921,11 +723,9 @@ int main (int argc, char* argv [])
         { "--large-alignment",  0,      OptLargeAlignment       },
         { "--list-bytes",       1,      OptListBytes            },
         { "--listing",          1,      OptListing              },
-        { "--memory-model",     1,      OptMemoryModel          },
         { "--pagelength",       1,      OptPageLength           },
         { "--relax-checks",     0,      OptRelaxChecks          },
         { "--smart",            0,      OptSmart                },
-        { "--target",           1,      OptTarget               },
         { "--verbose",          0,      OptVerbose              },
         { "--version",          0,      OptVersion              },
     };
@@ -956,6 +756,9 @@ int main (int argc, char* argv [])
     ** for symbol definitions.
     */
     InitLineInfo ();
+
+    /* Set up the (fixed) Lynx target system and CPU */
+    SetSys ();
 
     /* Check the parameters */
     I = 1;
@@ -992,24 +795,12 @@ int main (int argc, char* argv [])
                     OptListing (Arg, GetArg (&I, 2));
                     break;
 
-                case 'm':
-                    if (Arg[2] == 'm') {
-                        OptMemoryModel (Arg, GetArg (&I, 3));
-                    } else {
-                        UnknownOption (Arg);
-                    }
-                    break;
-
                 case 'o':
                     OutFile = GetArg (&I, 2);
                     break;
 
                 case 's':
                     OptSmart (Arg, 0);
-                    break;
-
-                case 't':
-                    OptTarget (Arg, GetArg (&I, 2));
                     break;
 
                 case 'v':
@@ -1064,15 +855,6 @@ int main (int argc, char* argv [])
 
     /* Add the default include search paths. */
     FinishIncludePaths ();
-
-    /* If no CPU given, use the default CPU for the target */
-    if (GetCPU () == CPU_UNKNOWN) {
-        if (Target != TGT_UNKNOWN) {
-            SetCPU (GetTargetProperties (Target)->DefaultCPU);
-        } else {
-            SetCPU (CPU_6502);
-        }
-    }
 
     /* If no memory model was given, use the default */
     if (MemoryModel == MMODEL_UNKNOWN) {

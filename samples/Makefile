@@ -41,16 +41,16 @@ endif
 %: %.s
 
 .c.o:
-	$(CC) $(CFLAGS) -Ors --codesize 500 -T -g -t $(SYS) $<
+	$(CC) $(CFLAGS) -Ors --codesize 500 -T -g $<
 	$(AS) $(<:.c=.s)
 
 .s.o:
-	$(AS) $(ASFLAGS) -t $(SYS) $<
+	$(AS) $(ASFLAGS) $<
 
 .PRECIOUS: %.o
 
 %.lnx: %.o
-	$(LD) $(LDFLAGS_$(@F)_$(SYS)) $(LDFLAGS) -o $@ -t $(SYS) -m $(@:.lnx=.map) $^ $(SYS).lib
+	$(LD) $(LDFLAGS_$(@F)_$(SYS)) $(LDFLAGS) -o $@ -m $(@:.lnx=.map) $^ $(SYS).lib
 
 # --------------------------------------------------------------------------
 # Samples that build for the Lynx

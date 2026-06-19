@@ -25,7 +25,7 @@
 ** Controls: A toggles 4bpp/2bpp, pad up rotates the display 180
 ** degrees (tgi_flip honors the 2bpp end-of-buffer offset).
 **
-** Build:  cl65 -t lynx -Ors -o setbpp.lnx setbpp.c
+** Build:  cl65 -Ors -o setbpp.lnx setbpp.c
 */
 
 #include <lynx.h>

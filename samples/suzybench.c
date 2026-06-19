@@ -32,7 +32,7 @@
 ** the same arithmetic, then loop. Accuracy failures show the first failing
 ** (a, b, expected, got) triple per operator, in hex.
 **
-** Build:  cl65 -t lynx -Osri -o suzybench.lnx suzybench.c
+** Build:  cl65 -Osri -o suzybench.lnx suzybench.c
 */
 
 #include <lynx.h>

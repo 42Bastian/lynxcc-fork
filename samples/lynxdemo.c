@@ -8,7 +8,7 @@
 ** Controls: A grows the ball, B shrinks it, pad left/right changes
 ** its color.
 **
-** Build:  cl65 -t lynx -Ors -o lynxdemo.lnx lynxdemo.c
+** Build:  cl65 -Ors -o lynxdemo.lnx lynxdemo.c
 */
 
 #include <lynx.h>

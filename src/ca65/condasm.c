@@ -390,7 +390,8 @@ void DoConditionals (void)
                 D = AllocIf (".IFP4510", 1);
                 NextTok ();
                 if (IfCond) {
-                    SetIfCond (D, GetCPU() == CPU_4510);
+                    /* The 4510 CPU is no longer supported */
+                    SetIfCond (D, 0);
                 }
                 ExpectSep ();
                 CalcOverallIfCond ();
@@ -400,7 +401,8 @@ void DoConditionals (void)
                 D = AllocIf (".IFP816", 1);
                 NextTok ();
                 if (IfCond) {
-                    SetIfCond (D, GetCPU() == CPU_65816);
+                    /* The 65816 CPU is no longer supported */
+                    SetIfCond (D, 0);
                 }
                 ExpectSep ();
                 CalcOverallIfCond ();
@@ -410,7 +412,8 @@ void DoConditionals (void)
                 D = AllocIf (".IFPC02", 1);
                 NextTok ();
                 if (IfCond) {
-                    SetIfCond (D, GetCPU() == CPU_65C02);
+                    /* The 65C02 CPU is no longer supported */
+                    SetIfCond (D, 0);
                 }
                 ExpectSep ();
                 CalcOverallIfCond ();

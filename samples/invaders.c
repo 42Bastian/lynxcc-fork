@@ -25,7 +25,7 @@
 **
 ** Controls: pad left/right moves the cannon, A fires, A restarts.
 **
-** Build:  cl65 -t lynx -Ors -o invaders.lnx invaders.c
+** Build:  cl65 -Ors -o invaders.lnx invaders.c
 */
 
 #include <lynx.h>

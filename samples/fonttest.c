@@ -11,7 +11,7 @@
 **
 ** Controls: A cycles the scale (1x / 2x / 3x).
 **
-** Build:  cl65 -t lynx -Ors -o fonttest.lnx fonttest.c
+** Build:  cl65 -Ors -o fonttest.lnx fonttest.c
 */
 
 #include <lynx.h>

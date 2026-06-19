@@ -156,14 +156,10 @@ void g_preamble (void)
     AddTextLine ("\t.fopt\t\tcompiler,\"cc65 v %s\"",
                  GetVersionAsString ());
 
-    /* If we're producing code for some other CPU, switch the command set */
+    /* Switch the assembler to the correct command set */
     switch (CPU) {
         case CPU_6502:      AddTextLine ("\t.setcpu\t\t\"6502\"");      break;
-        case CPU_6502X:     AddTextLine ("\t.setcpu\t\t\"6502X\"");     break;
         case CPU_65SC02:    AddTextLine ("\t.setcpu\t\t\"65SC02\"");    break;
-        case CPU_65C02:     AddTextLine ("\t.setcpu\t\t\"65C02\"");     break;
-        case CPU_65816:     AddTextLine ("\t.setcpu\t\t\"65816\"");     break;
-        case CPU_HUC6280:   AddTextLine ("\t.setcpu\t\t\"HUC6280\"");   break;
         default:            Internal ("Unknown CPU: %d", CPU);
     }
 

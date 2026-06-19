@@ -34,7 +34,7 @@
 ** The DDA / billboard math was validated on a host prototype before
 ** porting (no 16-bit overflow: max sideDist ~330, max slice ~270).
 **
-** Build:  cl65 -t lynx -Ors -o raycaster.lnx raycaster.c
+** Build:  cl65 -Ors -o raycaster.lnx raycaster.c
 */
 
 #include <lynx.h>

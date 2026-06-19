@@ -49,42 +49,11 @@
 
 
 
-/* Supported target systems */
+/* Supported target systems.  This tree only supports the Atari Lynx. */
 typedef enum {
     TGT_UNKNOWN = -1,           /* Not specified or invalid target */
     TGT_NONE,
-    TGT_MODULE,
-    TGT_ATARI,
-    TGT_ATARI2600,
-    TGT_ATARI5200,
-    TGT_ATARIXL,
-    TGT_VIC20,
-    TGT_C16,
-    TGT_C64,
-    TGT_C128,
-    TGT_PLUS4,
-    TGT_CBM510,
-    TGT_CBM610,
-    TGT_OSIC1P,
-    TGT_PET,
-    TGT_BBC,
-    TGT_APPLE2,
-    TGT_APPLE2ENH,
-    TGT_GEOS_CBM,
-    TGT_CREATIVISION,
-    TGT_GEOS_APPLE,
-    TGT_LUNIX,
-    TGT_ATMOS,
-    TGT_TELESTRAT,
-    TGT_NES,
-    TGT_SUPERVISION,
     TGT_LYNX,
-    TGT_SIM6502,
-    TGT_SIM65C02,
-    TGT_PCENGINE,
-    TGT_GAMATE,
-    TGT_C65,
-    TGT_CX16,
     TGT_COUNT                   /* Number of target systems */
 } target_t;
 

@@ -30,7 +30,7 @@
 ** software operators before the animation starts; the HUD shows MATH OK or
 ** MATH FAIL so a regression is obvious on real hardware.
 **
-** Build:  cl65 -t lynx -O -o suzyasync.lnx suzyasync.c
+** Build:  cl65 -O -o suzyasync.lnx suzyasync.c
 */
 
 #include <lynx.h>

@@ -847,35 +847,6 @@ static void ReadStringConst (int StringTerm)
 
 
 
-static int Sweet16Reg (const StrBuf* Id)
-/* Check if the given identifier is a sweet16 register. Return -1 if this is
-** not the case, return the register number otherwise.
-*/
-{
-    unsigned RegNum;
-    char Check;
-
-    if (SB_GetLen (Id) < 2) {
-        return -1;
-    }
-    if (toupper (SB_AtUnchecked (Id, 0)) != 'R') {
-        return -1;
-    }
-    if (!IsDigit (SB_AtUnchecked (Id, 1))) {
-        return -1;
-    }
-
-    if (sscanf (SB_GetConstBuf (Id)+1, "%u%c", &RegNum, &Check) != 1 || RegNum > 15) {
-        /* Invalid register */
-        return -1;
-    }
-
-    /* The register number is valid */
-    return (int) RegNum;
-}
-
-
-
 void NextRawTok (void)
 /* Read the next raw token from the input stream */
 {
@@ -1112,15 +1083,6 @@ Again:
         return;
     }
 
-    /* Indirect op for sweet16 cpu. Must check this before checking for local
-    ** symbols, because these may also use the '@' symbol.
-    */
-    if (CPU == CPU_SWEET16 && C == '@') {
-        NextChar ();
-        CurTok.Tok = TOK_AT;
-        return;
-    }
-
     /* Local symbol? */
     if (C == LocalStart) {
 
@@ -1169,13 +1131,6 @@ Again:
                         }
                         break;
 
-                    case 'S':
-                        if ((CPU == CPU_4510) || (CPU == CPU_65816)) {
-                            CurTok.Tok = TOK_S;
-                            return;
-                        }
-                        break;
-
                     case 'X':
                         CurTok.Tok = TOK_X;
                         return;
@@ -1189,11 +1144,6 @@ Again:
                             NextChar ();
                             CurTok.Tok = TOK_OVERRIDE_ZP;
                            return;
-                        } else {
-                            if (CPU == CPU_4510) {
-                                CurTok.Tok = TOK_Z;
-                                return;
-                            }
                         }
                         break;
 
@@ -1201,23 +1151,8 @@ Again:
                         break;
                 }
                 break;
-            case 2:
-                if ((CPU == CPU_4510) &&
-                    (toupper (SB_AtUnchecked (&CurTok.SVal, 0)) == 'S') &&
-                    (toupper (SB_AtUnchecked (&CurTok.SVal, 1)) == 'P')) {
-
-                    CurTok.Tok = TOK_S;
-                    return;
-                }
-                /* FALL THROUGH */
             default:
-                if (CPU == CPU_SWEET16 &&
-                   (CurTok.IVal = Sweet16Reg (&CurTok.SVal)) >= 0) {
-
-                    /* A sweet16 register number in sweet16 mode */
-                    CurTok.Tok = TOK_REG;
-                    return;
-                }
+                break;
         }
 
         /* Check for define style macro */

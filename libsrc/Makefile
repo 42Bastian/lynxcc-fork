@@ -131,15 +131,15 @@ export CC65_HOME := $(abspath ..)
 define ASSEMBLE_recipe
 
 $(if $(QUIET),,@echo $(TARGET) - $<)
-@$(CA65) -t $(TARGET) $(CA65FLAGS) --create-dep $(@:.o=.d) -o $@ $<
+@$(CA65) $(CA65FLAGS) --create-dep $(@:.o=.d) -o $@ $<
 
 endef # ASSEMBLE_recipe
 
 define COMPILE_recipe
 
 $(if $(QUIET),,@echo $(TARGET) - $<)
-@$(CC65) -t $(TARGET) $(CC65FLAGS) --create-dep $(@:.o=.d) --dep-target $@ -o $(@:.o=.s) $<
-@$(CA65) -t $(TARGET) -o $@ $(@:.o=.s)
+@$(CC65) $(CC65FLAGS) --create-dep $(@:.o=.d) --dep-target $@ -o $(@:.o=.s) $<
+@$(CA65) -o $@ $(@:.o=.s)
 
 endef # COMPILE_recipe
 
@@ -151,7 +151,7 @@ endef # COMPILE_recipe
 
 $(EXTRA_OBJPAT): $(EXTRA_SRCPAT) | ../libwrk/$(TARGET) ../lib
 	@echo $(TARGET) - $(<F)
-	@$(CA65) -t $(TARGET) $(CA65FLAGS) --create-dep $(@:../lib/%.o=../libwrk/$(TARGET)/%.d) -o $@ $<
+	@$(CA65) $(CA65FLAGS) --create-dep $(@:../lib/%.o=../libwrk/$(TARGET)/%.d) -o $@ $<
 
 ../lib/$(TARGET).lib: $(OBJS) | ../lib
 	$(AR65) a $@ $?

@@ -88,7 +88,7 @@ invocation. It does <em>not</em> create object files directly, and it is <em>not
 able to translate more than one file per run.</p>
 <p>In the example above, we would use the following command line, to translate
 <code>hello.c</code> into <code>hello.s</code>:</p>
-<pre class="verb">        cc65 -O -t lynx hello.c</pre>
+<pre class="verb">        cc65 -O hello.c</pre>
 <p>The <code>-O</code> switch tells the compiler to do an additional optimizer run, which
 is usually a good idea, since it makes the code smaller. If you don't care
 about the size, but want to have slightly faster code, use <code>-Oi</code> to inline
@@ -104,7 +104,7 @@ invocation. The assembler is <em>not</em> able to translate more than one source
 file per run.</p>
 <p>Let's translate the "hello.s" and "text.s" files from our example:</p>
 <pre class="verb">        ca65 hello.s
-        ca65 -t lynx text.s</pre>
+        ca65 text.s</pre>
 <p>The <code>-t</code> switch is needed when translating the <code>text.s</code> file, so the
 text is converted from the input character-set (usually ISO-8859-1) into the
 target character-set (ASCII, in this example) by the assembler. The
@@ -124,7 +124,7 @@ C library, are in an object-file archive named after the system, in this case,
 "<code>lynx.lib</code>". We have to specify that file on the command line, so that the
 linker can resolve those functions.</p>
 <p>Let's link our files to get the final executable:</p>
-<pre class="verb">        ld65 -o hello -t lynx hello.o text.o lynx.lib</pre>
+<pre class="verb">        ld65 -o hello hello.o text.o lynx.lib</pre>
 <p>The argument after <code>-o</code> specifies the name of the output file, the argument
 after <code>-t</code> gives the target system. The following arguments are object
 files or libraries. Since the target library resolves imports in <code>hello.o</code>
@@ -157,7 +157,7 @@ program that actually displays text on the Lynx screen, see the Hello
 World example in the <a href="lynx.html">Lynx-specific
 documentation</a>, which uses TGI. By convention, give the output file a
 <code>.lnx</code> extension:</p>
-<pre class="verb">cl65 -O -t lynx -o hello.lnx hello.c text.s</pre>
+<pre class="verb">cl65 -O -o hello.lnx hello.c text.s</pre>
 <h3 id="sect-6-1">6.1. Emulators</h3>
 <dl>
 <dt>GearLynx</dt>

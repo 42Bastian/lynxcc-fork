@@ -44,19 +44,15 @@
 
 
 
-/* CPUs */
+/* CPUs.  This tree only supports the Atari Lynx, whose CPU is the 65SC02
+** (a strict superset of the base 6502).  All other CPU variants have been
+** removed.
+*/
 typedef enum {
     CPU_UNKNOWN = -1,           /* Not specified or invalid target */
     CPU_NONE,                   /* No CPU - for assembler */
-    CPU_6502,
-    CPU_6502X,                  /* "Extended", that is: with illegal opcodes */
-    CPU_65SC02,
-    CPU_65C02,
-    CPU_65816,
-    CPU_SWEET16,
-    CPU_HUC6280,                /* Used in PC engine */
-    CPU_M740,                   /* Mitsubishi 740 series MCUs */
-    CPU_4510,                   /* CPU of C65 */
+    CPU_6502,                   /* Base ISA the 65SC02 builds upon */
+    CPU_65SC02,                 /* CPU of the Atari Lynx */
     CPU_COUNT                   /* Number of different CPUs */
 } cpu_t;
 
@@ -64,14 +60,7 @@ typedef enum {
 enum {
     CPU_ISET_NONE       = 1 << CPU_NONE,
     CPU_ISET_6502       = 1 << CPU_6502,
-    CPU_ISET_6502X      = 1 << CPU_6502X,
     CPU_ISET_65SC02     = 1 << CPU_65SC02,
-    CPU_ISET_65C02      = 1 << CPU_65C02,
-    CPU_ISET_65816      = 1 << CPU_65816,
-    CPU_ISET_SWEET16    = 1 << CPU_SWEET16,
-    CPU_ISET_HUC6280    = 1 << CPU_HUC6280,
-    CPU_ISET_M740       = 1 << CPU_M740,
-    CPU_ISET_4510       = 1 << CPU_4510,
 };
 
 /* CPU used */

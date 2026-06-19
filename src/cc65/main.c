@@ -98,7 +98,6 @@ static void Usage (void)
             "  -mm model\t\t\tSet the memory model\n"
             "  -o name\t\t\tName the output file\n"
             "  -r\t\t\t\tEnable register variables\n"
-            "  -t sys\t\t\tSet the target system\n"
             "  -v\t\t\t\tIncrease verbosity\n"
             "\n"
             "Long options:\n"
@@ -108,7 +107,6 @@ static void Usage (void)
             "  --check-stack\t\t\tGenerate stack overflow checks\n"
             "  --code-name seg\t\tSet the name of the CODE segment\n"
             "  --codesize x\t\t\tAccept larger code by factor x\n"
-            "  --cpu type\t\t\tSet cpu type (6502, 65c02)\n"
             "  --create-dep name\t\tCreate a make dependency file\n"
             "  --create-full-dep name\tCreate a full make dependency file\n"
             "  --data-name seg\t\tSet the name of the DATA segment\n"
@@ -125,13 +123,11 @@ static void Usage (void)
             "  --list-opt-steps\t\tList all optimizer steps and exit\n"
             "  --list-warnings\t\tList available warning types for -W\n"
             "  --local-strings\t\tEmit string literals immediately\n"
-            "  --memory-model model\t\tSet the memory model\n"
             "  --register-space b\t\tSet space available for register variables\n"
             "  --register-vars\t\tEnable register variables\n"
             "  --rodata-name seg\t\tSet the name of the RODATA segment\n"
             "  --signed-chars\t\tDefault characters are signed\n"
             "  --static-locals\t\tMake local variables static\n"
-            "  --target sys\t\t\tSet the target system\n"
             "  --verbose\t\t\tIncrease verbosity\n"
             "  --version\t\t\tPrint the compiler version number\n"
             "  --writable-strings\t\tMake string literals writable\n",
@@ -140,156 +136,12 @@ static void Usage (void)
 
 
 
-static void cbmsys (const char* sys)
-/* Define a CBM system */
+static void SetSys (void)
+/* Define the (fixed) Lynx target system */
 {
-    DefineNumericMacro ("__CBM__", 1);
-    DefineNumericMacro (sys, 1);
-}
-
-
-
-static void SetSys (const char* Sys)
-/* Define a target system */
-{
-    switch (Target = FindTarget (Sys)) {
-
-        case TGT_NONE:
-            break;
-
-        case TGT_MODULE:
-            AbEnd ("Cannot use 'module' as a target for the compiler");
-            break;
-
-        case TGT_ATARI2600:
-            DefineNumericMacro ("__ATARI2600__", 1);
-            break;
-
-        case TGT_ATARI5200:
-            DefineNumericMacro ("__ATARI5200__", 1);
-            break;
-
-        case TGT_ATARI:
-            DefineNumericMacro ("__ATARI__", 1);
-            break;
-
-        case TGT_ATARIXL:
-            DefineNumericMacro ("__ATARI__", 1);
-            DefineNumericMacro ("__ATARIXL__", 1);
-            break;
-
-        case TGT_C16:
-            cbmsys ("__C16__");
-            break;
-
-        case TGT_C64:
-            cbmsys ("__C64__");
-            break;
-
-        case TGT_VIC20:
-            cbmsys ("__VIC20__");
-            break;
-
-        case TGT_C128:
-            cbmsys ("__C128__");
-            break;
-
-        case TGT_PLUS4:
-            cbmsys ("__C16__");
-            DefineNumericMacro ("__PLUS4__", 1);
-            break;
-
-        case TGT_CBM510:
-            cbmsys ("__CBM510__");
-            break;
-
-        case TGT_CBM610:
-            cbmsys ("__CBM610__");
-            break;
-
-        case TGT_PET:
-            cbmsys ("__PET__");
-            break;
-
-        case TGT_BBC:
-            DefineNumericMacro ("__BBC__", 1);
-            break;
-
-        case TGT_APPLE2:
-            DefineNumericMacro ("__APPLE2__", 1);
-            break;
-
-        case TGT_APPLE2ENH:
-            DefineNumericMacro ("__APPLE2__", 1);
-            DefineNumericMacro ("__APPLE2ENH__", 1);
-            break;
-
-        case TGT_GAMATE:
-            DefineNumericMacro ("__GAMATE__", 1);
-            break;
-
-        case TGT_GEOS_CBM:
-            /* Do not handle as a CBM system */
-            DefineNumericMacro ("__GEOS__", 1);
-            DefineNumericMacro ("__GEOS_CBM__", 1);
-            break;
-
-        case TGT_CREATIVISION:
-            DefineNumericMacro ("__CREATIVISION__", 1);
-            break;
-
-        case TGT_GEOS_APPLE:
-            DefineNumericMacro ("__GEOS__", 1);
-            DefineNumericMacro ("__GEOS_APPLE__", 1);
-            break;
-
-        case TGT_LUNIX:
-            DefineNumericMacro ("__LUNIX__", 1);
-            break;
-
-        case TGT_ATMOS:
-            DefineNumericMacro ("__ATMOS__", 1);
-            break;
-
-        case TGT_TELESTRAT:
-            DefineNumericMacro ("__TELESTRAT__", 1);
-            break;
-
-        case TGT_NES:
-            DefineNumericMacro ("__NES__", 1);
-            break;
-
-        case TGT_SUPERVISION:
-            DefineNumericMacro ("__SUPERVISION__", 1);
-            break;
-
-        case TGT_LYNX:
-            DefineNumericMacro ("__LYNX__", 1);
-            break;
-
-        case TGT_SIM6502:
-            DefineNumericMacro ("__SIM6502__", 1);
-            break;
-
-        case TGT_SIM65C02:
-            DefineNumericMacro ("__SIM65C02__", 1);
-            break;
-
-        case TGT_OSIC1P:
-            DefineNumericMacro ("__OSIC1P__", 1);
-            break;
-
-        case TGT_PCENGINE:
-            DefineNumericMacro ("__PCE__", 1);
-            break;
-
-        case TGT_CX16:
-            cbmsys ("__CX16__");
-            break;
-
-        default:
-            AbEnd ("Unknown target system type %d", Target);
-    }
+    Target = TGT_LYNX;
+    CPU    = CPU_65SC02;
+    DefineNumericMacro ("__LYNX__", 1);
 
     /* Initialize the translation tables for the target system */
     TgtTranslateInit ();
@@ -450,19 +302,6 @@ static void OptCreateFullDep (const char* Opt attribute ((unused)),
 /* Handle the --create-full-dep option */
 {
     FileNameOption (Opt, Arg, &FullDepName);
-}
-
-
-
-static void OptCPU (const char* Opt, const char* Arg)
-/* Handle the --cpu option */
-{
-    /* Find the CPU from the given name */
-    CPU = FindCPU (Arg);
-    if (CPU != CPU_6502 && CPU != CPU_6502X && CPU != CPU_65SC02 &&
-        CPU != CPU_65C02 && CPU != CPU_65816 && CPU != CPU_HUC6280) {
-        AbEnd ("Invalid argument for %s: '%s'", Opt, Arg);
-    }
 }
 
 
@@ -670,30 +509,6 @@ static void OptLocalStrings (const char* Opt attribute ((unused)),
 
 
 
-static void OptMemoryModel (const char* Opt, const char* Arg)
-/* Set the memory model */
-{
-    mmodel_t M;
-
-    /* Check the current memory model */
-    if (MemoryModel != MMODEL_UNKNOWN) {
-        AbEnd ("Cannot use option '%s' twice", Opt);
-    }
-
-    /* Translate the memory model name and check it */
-    M = FindMemoryModel (Arg);
-    if (M == MMODEL_UNKNOWN) {
-        AbEnd ("Unknown memory model: %s", Arg);
-    } else if (M == MMODEL_HUGE) {
-        AbEnd ("Unsupported memory model: %s", Arg);
-    }
-
-    /* Set the memory model */
-    SetMemoryModel (M);
-}
-
-
-
 static void OptRegisterSpace (const char* Opt, const char* Arg)
 /* Handle the --register-space option */
 {
@@ -740,14 +555,6 @@ static void OptStaticLocals (const char* Opt attribute ((unused)),
 /* Place local variables in static storage */
 {
     IS_Set (&StaticLocals, 1);
-}
-
-
-
-static void OptTarget (const char* Opt attribute ((unused)), const char* Arg)
-/* Set the target system */
-{
-    SetSys (Arg);
 }
 
 
@@ -836,7 +643,6 @@ int main (int argc, char* argv[])
         { "--check-stack",          0,      OptCheckStack           },
         { "--code-name",            1,      OptCodeName             },
         { "--codesize",             1,      OptCodeSize             },
-        { "--cpu",                  1,      OptCPU                  },
         { "--create-dep",           1,      OptCreateDep            },
         { "--create-full-dep",      1,      OptCreateFullDep        },
         { "--data-name",            1,      OptDataName             },
@@ -854,13 +660,11 @@ int main (int argc, char* argv[])
         { "--list-opt-steps",       0,      OptListOptSteps         },
         { "--list-warnings",        0,      OptListWarnings         },
         { "--local-strings",        0,      OptLocalStrings         },
-        { "--memory-model",         1,      OptMemoryModel          },
         { "--register-space",       1,      OptRegisterSpace        },
         { "--register-vars",        0,      OptRegisterVars         },
         { "--rodata-name",          1,      OptRodataName           },
         { "--signed-chars",         0,      OptSignedChars          },
         { "--static-locals",        0,      OptStaticLocals         },
-        { "--target",               1,      OptTarget               },
         { "--verbose",              0,      OptVerbose              },
         { "--version",              0,      OptVersion              },
         { "--writable-strings",     0,      OptWritableStrings      },
@@ -879,6 +683,9 @@ int main (int argc, char* argv[])
 
     /* Initialize the include search paths */
     InitIncludePaths ();
+
+    /* Set up the (fixed) Lynx target system and CPU */
+    SetSys ();
 
     /* Parse the command line */
     I = 1;
@@ -921,10 +728,6 @@ int main (int argc, char* argv[])
 
                 case 'r':
                     OptRegisterVars (Arg, 0);
-                    break;
-
-                case 't':
-                    OptTarget (Arg, GetArg (&I, 2));
                     break;
 
                 case 'u':
@@ -1020,15 +823,6 @@ int main (int argc, char* argv[])
 
     /* Create the output file name if it was not explicitly given */
     MakeDefaultOutputName (InputFile);
-
-    /* If no CPU given, use the default CPU for the target */
-    if (CPU == CPU_UNKNOWN) {
-        if (Target != TGT_UNKNOWN) {
-            CPU = GetTargetProperties (Target)->DefaultCPU;
-        } else {
-            CPU = CPU_6502;
-        }
-    }
 
     /* If no memory model was given, use the default */
     if (MemoryModel == MMODEL_UNKNOWN) {

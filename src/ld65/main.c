@@ -95,8 +95,7 @@ static struct InputFile {
     unsigned Type;
 }                              *InputFiles;
 static unsigned                InputFilesCount = 0;
-static const char              *CmdlineCfgFile = NULL,
-                               *CmdlineTarget = NULL;
+static const char              *CmdlineCfgFile = NULL;
 
 
 
@@ -122,7 +121,6 @@ static void Usage (void)
             "  -h\t\t\tHelp (this text)\n"
             "  -m name\t\tCreate a map file\n"
             "  -o name\t\tName the default output file\n"
-            "  -t sys\t\tSet the target system\n"
             "  -u sym\t\tForce an import of symbol 'sym'\n"
             "  -v\t\t\tVerbose mode\n"
             "  -vm\t\t\tVerbose map file\n"
@@ -145,7 +143,6 @@ static void Usage (void)
             "  --obj-path path\t\tSpecify an object file search path\n"
             "  --start-addr addr\t\tSet the default start address\n"
             "  --start-group\t\t\tStart a library group\n"
-            "  --target sys\t\t\tSet the target system\n"
             "  --version\t\t\tPrint the linker version\n",
             ProgName);
 }
@@ -510,37 +507,23 @@ static void OptStartGroup (const char* Opt attribute ((unused)),
 
 
 
-static void OptTarget (const char* Opt attribute ((unused)), const char* Arg)
-/* Set the target system */
+static void LoadDefaultConfig (void)
+/* Load the (fixed) Lynx linker configuration file */
 {
-    StrBuf FileName = STATIC_STRBUF_INITIALIZER;
-    char*  PathName;
+    char* PathName;
 
-    /* Map the target name to a target id */
-    Target = FindTarget (Arg);
-    if (Target == TGT_UNKNOWN) {
-        Error ("Invalid target name: '%s'", Arg);
-    }
+    /* The only supported target is the Atari Lynx */
+    Target = TGT_LYNX;
+    DefaultBinFmt = BINFMT_BINARY;
 
-    /* Set the target binary format */
-    DefaultBinFmt = GetTargetProperties (Target)->BinFmt;
-
-    /* Build config file name from target name */
-    SB_CopyStr (&FileName, GetTargetName (Target));
-    SB_AppendStr (&FileName, ".cfg");
-    SB_Terminate (&FileName);
-
-    /* Search for the file */
-    PathName = SearchFile (CfgSearchPath, SB_GetBuf (&FileName));
+    /* Search for the lynx config file */
+    PathName = SearchFile (CfgSearchPath, "lynx.cfg");
     if (PathName == 0) {
-        PathName = SearchFile (CfgDefaultPath, SB_GetBuf (&FileName));
+        PathName = SearchFile (CfgDefaultPath, "lynx.cfg");
     }
     if (PathName == 0) {
-        Error ("Cannot find config file '%s'", SB_GetBuf (&FileName));
+        Error ("Cannot find config file 'lynx.cfg'");
     }
-
-    /* Free file name memory */
-    SB_Done (&FileName);
 
     /* Read the file */
     CfgSetName (PathName);
@@ -595,21 +578,10 @@ static void CmdlOptEndGroup (const char* Opt attribute ((unused)),
 static void CmdlOptConfig (const char* Opt attribute ((unused)), const char* Arg)
 /* Set 'config file' command line parameter */
 {
-    if (CmdlineCfgFile || CmdlineTarget) {
-        Error ("Cannot use -C/-t twice");
+    if (CmdlineCfgFile) {
+        Error ("Cannot use -C twice");
     }
     CmdlineCfgFile = Arg;
-}
-
-
-
-static void CmdlOptTarget (const char* Opt attribute ((unused)), const char* Arg)
-/* Set 'target' command line parameter */
-{
-    if (CmdlineCfgFile || CmdlineTarget) {
-        Error ("Cannot use -C/-t twice");
-    }
-    CmdlineTarget = Arg;
 }
 
 
@@ -635,7 +607,6 @@ static void ParseCommandLine(void)
         { "--obj-path",                  1,      OptObjPath              },
         { "--start-addr",                1,      OptStartAddr            },
         { "--start-group",               0,      CmdlOptStartGroup       },
-        { "--target",                    1,      CmdlOptTarget           },
         { "--version",                   0,      OptVersion              },
     };
 
@@ -681,10 +652,6 @@ static void ParseCommandLine(void)
 
                 case 'o':
                     OptOutputName (NULL, GetArg (&I, 2));
-                    break;
-
-                case 't':
-                    CmdlOptTarget (Arg, GetArg (&I, 2));
                     break;
 
                 case 'u':
@@ -750,10 +717,10 @@ static void ParseCommandLine(void)
         ++I;
     }
 
-    if (CmdlineTarget) {
-        OptTarget (NULL, CmdlineTarget);
-    } else if (CmdlineCfgFile) {
+    if (CmdlineCfgFile) {
         OptConfig (NULL, CmdlineCfgFile);
+    } else {
+        LoadDefaultConfig ();
     }
 
     /* Process input files */

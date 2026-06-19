@@ -110,7 +110,6 @@ static CmdDesc CC65 = { 0, 0, 0, 0, 0, 0, 0 };
 static CmdDesc CA65 = { 0, 0, 0, 0, 0, 0, 0 };
 static CmdDesc CO65 = { 0, 0, 0, 0, 0, 0, 0 };
 static CmdDesc LD65 = { 0, 0, 0, 0, 0, 0, 0 };
-static CmdDesc GRC  = { 0, 0, 0, 0, 0, 0, 0 };
 
 /* Variables controlling the steps we're doing */
 static int DoLink       = 1;
@@ -130,12 +129,6 @@ static const char* FirstInput = 0;
 /* The names of the files for dependency generation */
 static const char* DepName = 0;
 static const char* FullDepName = 0;
-
-/* Remember if we should link a module */
-static int Module = 0;
-
-/* Extension used for a module */
-#define MODULE_EXT      ".o65"
 
 /* Name of the target specific runtime library */
 static char* TargetLib   = 0;
@@ -383,14 +376,6 @@ static void CmdSetOutput (CmdDesc* Cmd, const char* File)
 
 
 
-static void CmdSetTarget (CmdDesc* Cmd, target_t Target)
-/* Set the output file in a command desc */
-{
-    CmdAddArg2 (Cmd, "-t", GetTargetName (Target));
-}
-
-
-
 static void CmdPrint (CmdDesc* Cmd, FILE* F)
 /* Output the command line encoded in the command desc */
 {
@@ -471,25 +456,17 @@ static void Link (void)
 
     } else if (FirstInput && FindExt (FirstInput)) {  /* Only if ext present! */
 
-        const char* Extension = Module? MODULE_EXT : "";
-        char* Output = MakeFilename (FirstInput, Extension);
+        char* Output = MakeFilename (FirstInput, "");
         CmdSetOutput (&LD65, Output);
         xfree (Output);
 
     }
 
     /* If we have a linker config file given, add it to the command line.
-    ** Otherwise pass the target to the linker if we have one.
+    ** Otherwise the linker uses the (fixed) Lynx configuration by default.
     */
     if (LinkerConfig) {
-        if (Module) {
-            Error ("Cannot use -C and --module together");
-        }
         CmdAddArg2 (&LD65, "-C", LinkerConfig);
-    } else if (Module) {
-        CmdSetTarget (&LD65, TGT_MODULE);
-    } else {
-        CmdSetTarget (&LD65, Target);
     }
 
     /* Add all object files as parameters */
@@ -523,9 +500,6 @@ static void AssembleFile (const char* File, unsigned ArgCount)
 ** assembles the file. Will remove excess arguments after assembly.
 */
 {
-    /* Set the target system */
-    CmdSetTarget (&CA65, Target);
-
     /* Check if this is the last processing step */
     if (DoLink) {
         /* We're linking later. Add the output file of the assembly
@@ -612,9 +586,6 @@ static void Compile (const char* File)
     /* Remember the current compiler argument count */
     unsigned ArgCount = CC65.ArgCount;
 
-    /* Set the target system */
-    CmdSetTarget (&CC65, Target);
-
     /* Check if this is the final step */
     if (DoAssemble) {
         /* We will assemble this file later. If a dependency file is to be
@@ -654,40 +625,6 @@ static void Compile (const char* File)
 
     /* Remove the excess arguments */
     CmdDelArgs (&CC65, ArgCount);
-
-    /* If this is not the final step, assemble the generated file, then
-    ** remove it
-    */
-    if (DoAssemble) {
-        /* Assemble the intermediate file and remove it */
-        AssembleIntermediate (File);
-    }
-}
-
-
-
-static void CompileRes (const char* File)
-/* Compile the given geos resource file */
-{
-    /* Remember the current assembler argument count */
-    unsigned ArgCount = GRC.ArgCount;
-
-    /* Resource files need an geos-apple or geos-cbm target but this
-    ** is checked within grc65.
-    */
-    CmdSetTarget (&GRC, Target);
-
-    /* Add the file as argument for the resource compiler */
-    CmdAddArg (&GRC, File);
-
-    /* Add a NULL pointer to terminate the argument list */
-    CmdAddArg (&GRC, 0);
-
-    /* Run the compiler */
-    ExecProgram (&GRC);
-
-    /* Remove the excess arguments */
-    CmdDelArgs (&GRC, ArgCount);
 
     /* If this is not the final step, assemble the generated file, then
     ** remove it
@@ -753,10 +690,8 @@ static void Usage (void)
             "  -h\t\t\t\tHelp (this text)\n"
             "  -l name\t\t\tCreate an assembler listing file\n"
             "  -m name\t\t\tCreate a map file\n"
-            "  -mm model\t\t\tSet the memory model\n"
             "  -o name\t\t\tName the output file\n"
             "  -r\t\t\t\tEnable register variables\n"
-            "  -t sys\t\t\tSet the target system\n"
             "  -u sym\t\t\tForce an import of symbol 'sym'\n"
             "  -v\t\t\t\tVerbose mode\n"
             "  -vm\t\t\t\tVerbose map file\n"
@@ -795,7 +730,6 @@ static void Usage (void)
             "  --code-name seg\t\tSet the name of the CODE segment\n"
             "  --codesize x\t\t\tAccept larger code by factor x\n"
             "  --config name\t\t\tUse linker config file\n"
-            "  --cpu type\t\t\tSet CPU type\n"
             "  --create-dep name\t\tCreate a make dependency file\n"
             "  --create-full-dep name\tCreate a full make dependency file\n"
             "  --data-label name\t\tDefine and export a DATA segment label\n"
@@ -808,13 +742,9 @@ static void Usage (void)
             "  --include-dir dir\t\tSet a compiler include directory path\n"
             "  --ld-args options\t\tPass options to the linker\n"
             "  --lib-path path\t\tSpecify a library search path\n"
-            "  --list-targets\t\tList all available targets\n"
             "  --listing name\t\tCreate an assembler listing file\n"
             "  --list-bytes n\t\tNumber of bytes per assembler listing line\n"
             "  --mapfile name\t\tCreate a map file\n"
-            "  --memory-model model\t\tSet the memory model\n"
-            "  --module\t\t\tLink as a module\n"
-            "  --module-id id\t\tSpecify a module ID for the linker\n"
             "  --no-target-lib\t\tDon't link the target library\n"
             "  --o65-model model\t\tOverride the o65 model\n"
             "  --obj file\t\t\tLink this object file\n"
@@ -826,7 +756,6 @@ static void Usage (void)
             "  --signed-chars\t\tDefault characters are signed\n"
             "  --start-addr addr\t\tSet the default start address\n"
             "  --static-locals\t\tMake local variables static\n"
-            "  --target sys\t\t\tSet the target system\n"
             "  --version\t\t\tPrint the version number\n"
             "  --verbose\t\t\tVerbose mode\n"
             "  --zeropage-label name\t\tDefine and export a ZEROPAGE segment label\n"
@@ -963,16 +892,6 @@ static void OptConfig (const char* Opt attribute ((unused)), const char* Arg)
 
 
 
-static void OptCPU (const char* Opt attribute ((unused)), const char* Arg)
-/* Handle the --cpu option */
-{
-    /* Add the cpu type to the assembler and compiler */
-    CmdAddArg2 (&CA65, "--cpu", Arg);
-    CmdAddArg2 (&CC65, "--cpu", Arg);
-}
-
-
-
 static void OptCreateDep (const char* Opt attribute ((unused)), const char* Arg)
 /* Handle the --create-dep option */
 {
@@ -1102,62 +1021,11 @@ static void OptListing (const char* Opt attribute ((unused)), const char* Arg)
 
 
 
-static void OptListTargets (const char* Opt attribute ((unused)),
-                            const char* Arg attribute ((unused)))
-/* List all targets */
-{
-    target_t T;
-
-    /* List the targets */
-    for (T = TGT_NONE; T < TGT_COUNT; ++T) {
-        printf ("%s\n", GetTargetName (T));
-    }
-
-    /* Terminate */
-    exit (EXIT_SUCCESS);
-}
-
-
-
 static void OptMapFile (const char* Opt attribute ((unused)), const char* Arg)
 /* Create a map file */
 {
     /* Create a map file (linker) */
     CmdAddArg2 (&LD65, "-m", Arg);
-}
-
-
-
-static void OptMemoryModel (const char* Opt attribute ((unused)), const char* Arg)
-/* Set the memory model */
-{
-    mmodel_t MemoryModel = FindMemoryModel (Arg);
-    if (MemoryModel == MMODEL_UNKNOWN) {
-        Error ("Unknown memory model: %s", Arg);
-    } else if (MemoryModel == MMODEL_HUGE) {
-        Error ("Unsupported memory model: %s", Arg);
-    } else {
-        CmdAddArg2 (&CA65, "-mm", Arg);
-        CmdAddArg2 (&CC65, "-mm", Arg);
-    }
-}
-
-
-
-static void OptModule (const char* Opt attribute ((unused)),
-                       const char* Arg attribute ((unused)))
-/* Link as a module */
-{
-    Module = 1;
-}
-
-
-
-static void OptModuleId (const char* Opt attribute ((unused)), const char* Arg)
-/* Specify a module if for the linker */
-{
-    /* Pass it straight to the linker */
-    CmdAddArg2 (&LD65, "--module-id", Arg);
 }
 
 
@@ -1273,19 +1141,6 @@ static void OptStaticLocals (const char* Opt attribute ((unused)),
 
 
 
-static void OptTarget (const char* Opt attribute ((unused)), const char* Arg)
-/* Set the target system */
-{
-    Target = FindTarget (Arg);
-    if (Target == TGT_UNKNOWN) {
-        Error ("No such target system: '%s'", Arg);
-    } else if (Target == TGT_MODULE) {
-        Error ("Cannot use 'module' as target, use --module instead");
-    }
-}
-
-
-
 static void OptVerbose (const char* Opt attribute ((unused)),
                         const char* Arg attribute ((unused)))
 /* Verbose mode (compiler, assembler, linker) */
@@ -1344,7 +1199,6 @@ int main (int argc, char* argv [])
         { "--code-name",         1, OptCodeName       },
         { "--codesize",          1, OptCodeSize       },
         { "--config",            1, OptConfig         },
-        { "--cpu",               1, OptCPU            },
         { "--create-dep",        1, OptCreateDep      },
         { "--create-full-dep",   1, OptCreateFullDep  },
         { "--data-label",        1, OptDataLabel      },
@@ -1357,13 +1211,9 @@ int main (int argc, char* argv [])
         { "--include-dir",       1, OptIncludeDir     },
         { "--ld-args",           1, OptLdArgs         },
         { "--lib-path",          1, OptLibPath        },
-        { "--list-targets",      0, OptListTargets    },
         { "--listing",           1, OptListing        },
         { "--list-bytes",        1, OptListBytes      },
         { "--mapfile",           1, OptMapFile        },
-        { "--memory-model",      1, OptMemoryModel    },
-        { "--module",            0, OptModule         },
-        { "--module-id",         1, OptModuleId       },
         { "--no-target-lib",     0, OptNoTargetLib    },
         { "--o65-model",         1, OptO65Model       },
         { "--obj",               1, OptObj            },
@@ -1375,7 +1225,6 @@ int main (int argc, char* argv [])
         { "--signed-chars",      0, OptSignedChars    },
         { "--start-addr",        1, OptStartAddr      },
         { "--static-locals",     0, OptStaticLocals   },
-        { "--target",            1, OptTarget         },
         { "--verbose",           0, OptVerbose        },
         { "--version",           0, OptVersion        },
         { "--zeropage-label",    1, OptZeropageLabel  },
@@ -1408,7 +1257,6 @@ int main (int argc, char* argv [])
     CmdInit (&CA65, CmdPath, "ca65");
     CmdInit (&CO65, CmdPath, "co65");
     CmdInit (&LD65, CmdPath, "ld65");
-    CmdInit (&GRC,  CmdPath, "grc65");
     xfree (CmdPath);
 
     /* Our default target is the Lynx instead of "none" -
@@ -1551,11 +1399,6 @@ int main (int argc, char* argv [])
                     OptRegisterVars (Arg, 0);
                     break;
 
-                case 't':
-                    /* Set target system - compiler, assembler and linker */
-                    OptTarget (Arg, GetArg (&I, 2));
-                    break;
-
                 case 'u':
                     /* Force an import (linker) */
                     OptForceImport (Arg, GetArg (&I, 2));
@@ -1600,11 +1443,6 @@ int main (int argc, char* argv [])
                 case FILETYPE_LIB:
                     /* Add to the linker files */
                     CmdAddFile (&LD65, Arg);
-                    break;
-
-                case FILETYPE_GR:
-                    /* Add to the resource compiler files */
-                    CompileRes (Arg);
                     break;
 
                 case FILETYPE_O65:

@@ -571,7 +571,7 @@ assets/%.s: assets/%.abc
 OBJS += main.o assets/theme.o
 
 game.lnx: $(OBJS)
-	cl65 -t lynx -o $@ $(OBJS)
+	cl65 -o $@ $(OBJS)
 ```
 
 The generated `theme.s` assembles and links like any other source; the tune ends

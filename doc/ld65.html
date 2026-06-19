@@ -79,7 +79,6 @@ Short options:
   -h                    Help (this text)
   -m name               Create a map file
   -o name               Name the default output file
-  -t sys                Set the target system
   -u sym                Force an import of symbol 'sym'
   -v                    Verbose mode
   -vm                   Verbose map file
@@ -102,7 +101,6 @@ Long options:
   --obj-path path               Specify an object file search path
   --start-addr addr             Set the default start address
   --start-group                 Start a library group
-  --target sys                  Set the target system
   --version                     Print the linker version
 ---------------------------------------------------------------------------</pre>
 <h3 id="sect-2-2">2.2. Command-line options in detail</h3>
@@ -152,32 +150,6 @@ Long options:
   Depending on your output configuration, this name <em>might not</em> be used as the
   name for the output file. However, for the default configurations, this
   name is used for the output file name.</p>
-<a id="option-t"></a>
-</dd>
-<dt><code>-t sys, --target sys</code></dt>
-<dd>
-<p>The argument for the -t switch is the name of the target system. Since this
-  switch will activate a default configuration, it may not be used together
-  with the <code><a href="#option-C">-C</a></code> option. The following target
-  systems are currently supported:</p>
-<ul>
-<li>
-<p>none</p>
-</li>
-<li>
-<p>module</p>
-</li>
-<li>
-<p>lynx</p>
-</li>
-</ul>
-<p>Other upstream cc65 target names are still recognized, but their default
-  configurations and libraries have been removed from this tree, so only the
-  targets listed above are usable. For the Lynx, additional configurations
-  are provided as files: <code>lynx-bll.cfg</code> (BLL download-compatible
-  binaries), <code>lynx-coll.cfg</code> (reserves a collision-detection buffer) and
-  <code>lynx-uploader.cfg</code>.</p>
-</dd>
 <dt><code>-u sym[:addrsize], --force-import sym[:addrsize]</code></dt>
 <dd>
 <p>Force an import of a symbol. While object files are always linked to the
@@ -212,7 +184,11 @@ Long options:
 <dt><code>-C</code></dt>
 <dd>
 <p>This gives the name of an output config file to use. See section 4 for more
-  information about config files. -C may not be used together with <code><a href="#option-t">-t</a></code>.</p>
+  information about config files. If <code>-C</code> is not given, the linker uses
+  the built-in Atari Lynx configuration (<code>lynx.cfg</code>) by default.
+  Additional Lynx configurations are provided as files: <code>lynx-bll.cfg</code>
+  (BLL download-compatible binaries), <code>lynx-coll.cfg</code> (reserves a
+  collision-detection buffer) and <code>lynx-uploader.cfg</code>.</p>
 <a id="option-D"></a>
 </dd>
 <dt><code>-D sym=value, --define sym=value</code></dt>

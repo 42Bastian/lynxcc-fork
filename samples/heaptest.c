@@ -19,7 +19,7 @@
 ** grid of T1..Tn in green (OK) or red (X), a PASS k/n summary, a LEAK line
 ** (heap fully reclaimed to its starting state), and the first failing test.
 **
-** Build:  cl65 -t lynx -Ors -o heaptest.lnx heaptest.c
+** Build:  cl65 -Ors -o heaptest.lnx heaptest.c
 */
 
 #include <lynx.h>

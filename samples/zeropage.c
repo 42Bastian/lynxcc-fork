@@ -10,12 +10,12 @@
 ** difference is where they live and how they are addressed. Compare the
 ** generated code with and without the attribute:
 **
-**     cl65 -t lynx -S -Ors -o zeropage.s zeropage.c   (then read zeropage.s)
+**     cl65 -S -Ors -o zeropage.s zeropage.c   (then read zeropage.s)
 **
 ** Controls: A counts the "presses" counter up, B counts it down. The frame
 ** counter advances on its own.
 **
-** Build:  cl65 -t lynx -Ors -o zeropage.lnx zeropage.c
+** Build:  cl65 -Ors -o zeropage.lnx zeropage.c
 */
 
 #include <lynx.h>

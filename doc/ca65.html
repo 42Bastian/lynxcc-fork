@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="doc.css">
 <script>(function(){try{var t=localStorage.getItem("cc65-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
 </head><body>
-<div class="topbar"><a class="brand" href="index.html">lynxcc</a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><a href="cc65.html">cc65</a><a href="ca65.html" class="active">ca65</a><a href="ld65.html">ld65</a><a href="cl65.html">cl65</a><a href="library.html">Library</a><a href="funcref.html">Functions</a><a href="tgi.html">TGI</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>ca65 Users Guide</h1><p class="author"><a href="mailto:uz@cc65.org">Ullrich von Bassewitz</a>,<br> <a href="mailto:greg.king5@verizon.net">Greg King</a></p></header><div class="abstract">ca65 is a powerful macro assembler for the 6502, 65C02, and 65816 CPUs. It is
+<div class="topbar"><a class="brand" href="index.html">lynxcc</a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><a href="cc65.html">cc65</a><a href="ca65.html" class="active">ca65</a><a href="ld65.html">ld65</a><a href="cl65.html">cl65</a><a href="library.html">Library</a><a href="funcref.html">Functions</a><a href="tgi.html">TGI</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>ca65 Users Guide</h1><p class="author"><a href="mailto:uz@cc65.org">Ullrich von Bassewitz</a>,<br> <a href="mailto:greg.king5@verizon.net">Greg King</a></p></header><div class="abstract">ca65 is a powerful macro assembler for the 65SC02 CPU (the Atari Lynx). It is
 used as a companion assembler for the cc65 crosscompiler, but it may also be
 used as a standalone product.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Overview</a></li>
@@ -16,12 +16,8 @@ used as a standalone product.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#search-paths">3. Search paths</a></li>
 <li class="lvl1"><a href="#sect-4">4. Input format</a></li>
 <li class="lvl2"><a href="#sect-4-1">4.1. Assembler syntax</a></li>
-<li class="lvl2"><a href="#sect-4-2">4.2. 65816 mode</a></li>
-<li class="lvl2"><a href="#6502X-mode">4.3. 6502X mode</a></li>
-<li class="lvl2"><a href="#sect-4-4">4.4. 4510 mode</a></li>
-<li class="lvl2"><a href="#sweet16-mode">4.5. sweet16 mode</a></li>
-<li class="lvl2"><a href="#sect-4-6">4.6. Number format</a></li>
-<li class="lvl2"><a href="#sect-4-7">4.7. Conditional assembly</a></li>
+<li class="lvl2"><a href="#sect-4-6">4.2. Number format</a></li>
+<li class="lvl2"><a href="#sect-4-7">4.3. Conditional assembly</a></li>
 <li class="lvl1"><a href="#sect-5">5. Expressions</a></li>
 <li class="lvl2"><a href="#sect-5-1">5.1. Expression evaluation</a></li>
 <li class="lvl2"><a href="#sect-5-2">5.2. Size of an expression result</a></li>
@@ -85,112 +81,102 @@ used as a standalone product.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl2"><a href="#.TCOUNT">10.24. .TCOUNT</a></li>
 <li class="lvl2"><a href="#.XMATCH">10.25. .XMATCH</a></li>
 <li class="lvl1"><a href="#control-commands">11. Control commands</a></li>
-<li class="lvl2"><a href="#.A16">11.1. .A16</a></li>
-<li class="lvl2"><a href="#.A8">11.2. .A8</a></li>
-<li class="lvl2"><a href="#.ADDR">11.3. .ADDR</a></li>
-<li class="lvl2"><a href="#.ALIGN">11.4. .ALIGN</a></li>
-<li class="lvl2"><a href="#.ASCIIZ">11.5. .ASCIIZ</a></li>
-<li class="lvl2"><a href="#.ASSERT">11.6. .ASSERT</a></li>
-<li class="lvl2"><a href="#.AUTOIMPORT">11.7. .AUTOIMPORT</a></li>
-<li class="lvl2"><a href="#.BANKBYTES">11.8. .BANKBYTES</a></li>
-<li class="lvl2"><a href="#.BSS">11.9. .BSS</a></li>
-<li class="lvl2"><a href="#.BYTE">11.10. .BYT, .BYTE</a></li>
-<li class="lvl2"><a href="#.CASE">11.11. .CASE</a></li>
-<li class="lvl2"><a href="#.CHARMAP">11.12. .CHARMAP</a></li>
-<li class="lvl2"><a href="#.CODE">11.13. .CODE</a></li>
-<li class="lvl2"><a href="#.CONDES">11.14. .CONDES</a></li>
-<li class="lvl2"><a href="#.CONSTRUCTOR">11.15. .CONSTRUCTOR</a></li>
-<li class="lvl2"><a href="#.DATA">11.16. .DATA</a></li>
-<li class="lvl2"><a href="#.DBYT">11.17. .DBYT</a></li>
-<li class="lvl2"><a href="#.DEBUGINFO">11.18. .DEBUGINFO</a></li>
-<li class="lvl2"><a href="#.DEFINE">11.19. .DEFINE</a></li>
-<li class="lvl2"><a href="#.DELMACRO">11.20. .DELMAC, .DELMACRO</a></li>
-<li class="lvl2"><a href="#.DEFINED">11.21. .DEF, .DEFINED</a></li>
-<li class="lvl2"><a href="#.DEFINEDMACRO">11.22. .DEFINEDMACRO</a></li>
-<li class="lvl2"><a href="#.DESTRUCTOR">11.23. .DESTRUCTOR</a></li>
-<li class="lvl2"><a href="#.DWORD">11.24. .DWORD</a></li>
-<li class="lvl2"><a href="#.ELSE">11.25. .ELSE</a></li>
-<li class="lvl2"><a href="#.ELSEIF">11.26. .ELSEIF</a></li>
-<li class="lvl2"><a href="#.END">11.27. .END</a></li>
-<li class="lvl2"><a href="#.ENDENUM">11.28. .ENDENUM</a></li>
-<li class="lvl2"><a href="#.ENDIF">11.29. .ENDIF</a></li>
-<li class="lvl2"><a href="#.ENDMACRO">11.30. .ENDMAC, .ENDMACRO</a></li>
-<li class="lvl2"><a href="#.ENDPROC">11.31. .ENDPROC</a></li>
-<li class="lvl2"><a href="#.ENDREPEAT">11.32. .ENDREP, .ENDREPEAT</a></li>
-<li class="lvl2"><a href="#.ENDSCOPE">11.33. .ENDSCOPE</a></li>
-<li class="lvl2"><a href="#.ENDSTRUCT">11.34. .ENDSTRUCT</a></li>
-<li class="lvl2"><a href="#.ENDUNION">11.35. .ENDUNION</a></li>
-<li class="lvl2"><a href="#.ENUM">11.36. .ENUM</a></li>
-<li class="lvl2"><a href="#.ERROR">11.37. .ERROR</a></li>
-<li class="lvl2"><a href="#.EXITMACRO">11.38. .EXITMAC, .EXITMACRO</a></li>
-<li class="lvl2"><a href="#.EXPORT">11.39. .EXPORT</a></li>
-<li class="lvl2"><a href="#.EXPORTZP">11.40. .EXPORTZP</a></li>
-<li class="lvl2"><a href="#.FARADDR">11.41. .FARADDR</a></li>
-<li class="lvl2"><a href="#.FATAL">11.42. .FATAL</a></li>
-<li class="lvl2"><a href="#.FEATURE">11.43. .FEATURE</a></li>
-<li class="lvl2"><a href="#.FOPT">11.44. .FILEOPT, .FOPT</a></li>
-<li class="lvl2"><a href="#.FORCEIMPORT">11.45. .FORCEIMPORT</a></li>
-<li class="lvl2"><a href="#.GLOBAL">11.46. .GLOBAL</a></li>
-<li class="lvl2"><a href="#.GLOBALZP">11.47. .GLOBALZP</a></li>
-<li class="lvl2"><a href="#.HIBYTES">11.48. .HIBYTES</a></li>
-<li class="lvl2"><a href="#.I16">11.49. .I16</a></li>
-<li class="lvl2"><a href="#.I8">11.50. .I8</a></li>
-<li class="lvl2"><a href="#.IF">11.51. .IF</a></li>
-<li class="lvl2"><a href="#.IFBLANK">11.52. .IFBLANK</a></li>
-<li class="lvl2"><a href="#.IFCONST">11.53. .IFCONST</a></li>
-<li class="lvl2"><a href="#.IFDEF">11.54. .IFDEF</a></li>
-<li class="lvl2"><a href="#.IFNBLANK">11.55. .IFNBLANK</a></li>
-<li class="lvl2"><a href="#.IFNDEF">11.56. .IFNDEF</a></li>
-<li class="lvl2"><a href="#.IFNREF">11.57. .IFNREF</a></li>
-<li class="lvl2"><a href="#.IFP02">11.58. .IFP02</a></li>
-<li class="lvl2"><a href="#.IFP4510">11.59. .IFP4510</a></li>
-<li class="lvl2"><a href="#.IFP816">11.60. .IFP816</a></li>
-<li class="lvl2"><a href="#.IFPC02">11.61. .IFPC02</a></li>
-<li class="lvl2"><a href="#.IFPSC02">11.62. .IFPSC02</a></li>
-<li class="lvl2"><a href="#.IFREF">11.63. .IFREF</a></li>
-<li class="lvl2"><a href="#.IMPORT">11.64. .IMPORT</a></li>
-<li class="lvl2"><a href="#.IMPORTZP">11.65. .IMPORTZP</a></li>
-<li class="lvl2"><a href="#.INCBIN">11.66. .INCBIN</a></li>
-<li class="lvl2"><a href="#.INCLUDE">11.67. .INCLUDE</a></li>
-<li class="lvl2"><a href="#.INTERRUPTOR">11.68. .INTERRUPTOR</a></li>
-<li class="lvl2"><a href="#.ISMNEMONIC">11.69. .ISMNEM, .ISMNEMONIC</a></li>
-<li class="lvl2"><a href="#.LINECONT">11.70. .LINECONT</a></li>
-<li class="lvl2"><a href="#.LIST">11.71. .LIST</a></li>
-<li class="lvl2"><a href="#.LISTBYTES">11.72. .LISTBYTES</a></li>
-<li class="lvl2"><a href="#.LOBYTES">11.73. .LOBYTES</a></li>
-<li class="lvl2"><a href="#.LOCAL">11.74. .LOCAL</a></li>
-<li class="lvl2"><a href="#.LOCALCHAR">11.75. .LOCALCHAR</a></li>
-<li class="lvl2"><a href="#.MACPACK">11.76. .MACPACK</a></li>
-<li class="lvl2"><a href="#.MACRO">11.77. .MAC, .MACRO</a></li>
-<li class="lvl2"><a href="#.ORG">11.78. .ORG</a></li>
-<li class="lvl2"><a href="#.OUT">11.79. .OUT</a></li>
-<li class="lvl2"><a href="#.P02">11.80. .P02</a></li>
-<li class="lvl2"><a href="#.P4510">11.81. .P4510</a></li>
-<li class="lvl2"><a href="#.P816">11.82. .P816</a></li>
-<li class="lvl2"><a href="#.PAGELENGTH">11.83. .PAGELEN, .PAGELENGTH</a></li>
-<li class="lvl2"><a href="#.PC02">11.84. .PC02</a></li>
-<li class="lvl2"><a href="#.POPCPU">11.85. .POPCPU</a></li>
-<li class="lvl2"><a href="#.POPSEG">11.86. .POPSEG</a></li>
-<li class="lvl2"><a href="#.PROC">11.87. .PROC</a></li>
-<li class="lvl2"><a href="#.PSC02">11.88. .PSC02</a></li>
-<li class="lvl2"><a href="#.PUSHCPU">11.89. .PUSHCPU</a></li>
-<li class="lvl2"><a href="#.PUSHSEG">11.90. .PUSHSEG</a></li>
-<li class="lvl2"><a href="#.RELOC">11.91. .RELOC</a></li>
-<li class="lvl2"><a href="#.REPEAT">11.92. .REPEAT</a></li>
-<li class="lvl2"><a href="#.RES">11.93. .RES</a></li>
-<li class="lvl2"><a href="#.RODATA">11.94. .RODATA</a></li>
-<li class="lvl2"><a href="#.SCOPE">11.95. .SCOPE</a></li>
-<li class="lvl2"><a href="#.SEGMENT">11.96. .SEGMENT</a></li>
-<li class="lvl2"><a href="#.SET">11.97. .SET</a></li>
-<li class="lvl2"><a href="#.SETCPU">11.98. .SETCPU</a></li>
-<li class="lvl2"><a href="#.SMART">11.99. .SMART</a></li>
-<li class="lvl2"><a href="#.STRUCT">11.100. .STRUCT</a></li>
-<li class="lvl2"><a href="#.TAG">11.101. .TAG</a></li>
-<li class="lvl2"><a href="#.UNDEFINE">11.102. .UNDEF, .UNDEFINE</a></li>
-<li class="lvl2"><a href="#.UNION">11.103. .UNION</a></li>
-<li class="lvl2"><a href="#.WARNING">11.104. .WARNING</a></li>
-<li class="lvl2"><a href="#.WORD">11.105. .WORD</a></li>
-<li class="lvl2"><a href="#.ZEROPAGE">11.106. .ZEROPAGE</a></li>
+<li class="lvl2"><a href="#.ADDR">11.1. .ADDR</a></li>
+<li class="lvl2"><a href="#.ALIGN">11.2. .ALIGN</a></li>
+<li class="lvl2"><a href="#.ASCIIZ">11.3. .ASCIIZ</a></li>
+<li class="lvl2"><a href="#.ASSERT">11.4. .ASSERT</a></li>
+<li class="lvl2"><a href="#.AUTOIMPORT">11.5. .AUTOIMPORT</a></li>
+<li class="lvl2"><a href="#.BANKBYTES">11.6. .BANKBYTES</a></li>
+<li class="lvl2"><a href="#.BSS">11.7. .BSS</a></li>
+<li class="lvl2"><a href="#.BYTE">11.8. .BYT, .BYTE</a></li>
+<li class="lvl2"><a href="#.CASE">11.9. .CASE</a></li>
+<li class="lvl2"><a href="#.CHARMAP">11.10. .CHARMAP</a></li>
+<li class="lvl2"><a href="#.CODE">11.11. .CODE</a></li>
+<li class="lvl2"><a href="#.CONDES">11.12. .CONDES</a></li>
+<li class="lvl2"><a href="#.CONSTRUCTOR">11.13. .CONSTRUCTOR</a></li>
+<li class="lvl2"><a href="#.DATA">11.14. .DATA</a></li>
+<li class="lvl2"><a href="#.DBYT">11.15. .DBYT</a></li>
+<li class="lvl2"><a href="#.DEBUGINFO">11.16. .DEBUGINFO</a></li>
+<li class="lvl2"><a href="#.DEFINE">11.17. .DEFINE</a></li>
+<li class="lvl2"><a href="#.DELMACRO">11.18. .DELMAC, .DELMACRO</a></li>
+<li class="lvl2"><a href="#.DEFINED">11.19. .DEF, .DEFINED</a></li>
+<li class="lvl2"><a href="#.DEFINEDMACRO">11.20. .DEFINEDMACRO</a></li>
+<li class="lvl2"><a href="#.DESTRUCTOR">11.21. .DESTRUCTOR</a></li>
+<li class="lvl2"><a href="#.DWORD">11.22. .DWORD</a></li>
+<li class="lvl2"><a href="#.ELSE">11.23. .ELSE</a></li>
+<li class="lvl2"><a href="#.ELSEIF">11.24. .ELSEIF</a></li>
+<li class="lvl2"><a href="#.END">11.25. .END</a></li>
+<li class="lvl2"><a href="#.ENDENUM">11.26. .ENDENUM</a></li>
+<li class="lvl2"><a href="#.ENDIF">11.27. .ENDIF</a></li>
+<li class="lvl2"><a href="#.ENDMACRO">11.28. .ENDMAC, .ENDMACRO</a></li>
+<li class="lvl2"><a href="#.ENDPROC">11.29. .ENDPROC</a></li>
+<li class="lvl2"><a href="#.ENDREPEAT">11.30. .ENDREP, .ENDREPEAT</a></li>
+<li class="lvl2"><a href="#.ENDSCOPE">11.31. .ENDSCOPE</a></li>
+<li class="lvl2"><a href="#.ENDSTRUCT">11.32. .ENDSTRUCT</a></li>
+<li class="lvl2"><a href="#.ENDUNION">11.33. .ENDUNION</a></li>
+<li class="lvl2"><a href="#.ENUM">11.34. .ENUM</a></li>
+<li class="lvl2"><a href="#.ERROR">11.35. .ERROR</a></li>
+<li class="lvl2"><a href="#.EXITMACRO">11.36. .EXITMAC, .EXITMACRO</a></li>
+<li class="lvl2"><a href="#.EXPORT">11.37. .EXPORT</a></li>
+<li class="lvl2"><a href="#.EXPORTZP">11.38. .EXPORTZP</a></li>
+<li class="lvl2"><a href="#.FARADDR">11.39. .FARADDR</a></li>
+<li class="lvl2"><a href="#.FATAL">11.40. .FATAL</a></li>
+<li class="lvl2"><a href="#.FEATURE">11.41. .FEATURE</a></li>
+<li class="lvl2"><a href="#.FOPT">11.42. .FILEOPT, .FOPT</a></li>
+<li class="lvl2"><a href="#.FORCEIMPORT">11.43. .FORCEIMPORT</a></li>
+<li class="lvl2"><a href="#.GLOBAL">11.44. .GLOBAL</a></li>
+<li class="lvl2"><a href="#.GLOBALZP">11.45. .GLOBALZP</a></li>
+<li class="lvl2"><a href="#.HIBYTES">11.46. .HIBYTES</a></li>
+<li class="lvl2"><a href="#.IF">11.47. .IF</a></li>
+<li class="lvl2"><a href="#.IFBLANK">11.48. .IFBLANK</a></li>
+<li class="lvl2"><a href="#.IFCONST">11.49. .IFCONST</a></li>
+<li class="lvl2"><a href="#.IFDEF">11.50. .IFDEF</a></li>
+<li class="lvl2"><a href="#.IFNBLANK">11.51. .IFNBLANK</a></li>
+<li class="lvl2"><a href="#.IFNDEF">11.52. .IFNDEF</a></li>
+<li class="lvl2"><a href="#.IFNREF">11.53. .IFNREF</a></li>
+<li class="lvl2"><a href="#.IFP02">11.54. .IFP02</a></li>
+<li class="lvl2"><a href="#.IFPSC02">11.55. .IFPSC02</a></li>
+<li class="lvl2"><a href="#.IFREF">11.56. .IFREF</a></li>
+<li class="lvl2"><a href="#.IMPORT">11.57. .IMPORT</a></li>
+<li class="lvl2"><a href="#.IMPORTZP">11.58. .IMPORTZP</a></li>
+<li class="lvl2"><a href="#.INCBIN">11.59. .INCBIN</a></li>
+<li class="lvl2"><a href="#.INCLUDE">11.60. .INCLUDE</a></li>
+<li class="lvl2"><a href="#.INTERRUPTOR">11.61. .INTERRUPTOR</a></li>
+<li class="lvl2"><a href="#.ISMNEMONIC">11.62. .ISMNEM, .ISMNEMONIC</a></li>
+<li class="lvl2"><a href="#.LINECONT">11.63. .LINECONT</a></li>
+<li class="lvl2"><a href="#.LIST">11.64. .LIST</a></li>
+<li class="lvl2"><a href="#.LISTBYTES">11.65. .LISTBYTES</a></li>
+<li class="lvl2"><a href="#.LOBYTES">11.66. .LOBYTES</a></li>
+<li class="lvl2"><a href="#.LOCAL">11.67. .LOCAL</a></li>
+<li class="lvl2"><a href="#.LOCALCHAR">11.68. .LOCALCHAR</a></li>
+<li class="lvl2"><a href="#.MACPACK">11.69. .MACPACK</a></li>
+<li class="lvl2"><a href="#.MACRO">11.70. .MAC, .MACRO</a></li>
+<li class="lvl2"><a href="#.ORG">11.71. .ORG</a></li>
+<li class="lvl2"><a href="#.OUT">11.72. .OUT</a></li>
+<li class="lvl2"><a href="#.P02">11.73. .P02</a></li>
+<li class="lvl2"><a href="#.PAGELENGTH">11.74. .PAGELEN, .PAGELENGTH</a></li>
+<li class="lvl2"><a href="#.POPCPU">11.75. .POPCPU</a></li>
+<li class="lvl2"><a href="#.POPSEG">11.76. .POPSEG</a></li>
+<li class="lvl2"><a href="#.PROC">11.77. .PROC</a></li>
+<li class="lvl2"><a href="#.PSC02">11.78. .PSC02</a></li>
+<li class="lvl2"><a href="#.PUSHCPU">11.79. .PUSHCPU</a></li>
+<li class="lvl2"><a href="#.PUSHSEG">11.80. .PUSHSEG</a></li>
+<li class="lvl2"><a href="#.RELOC">11.81. .RELOC</a></li>
+<li class="lvl2"><a href="#.REPEAT">11.82. .REPEAT</a></li>
+<li class="lvl2"><a href="#.RES">11.83. .RES</a></li>
+<li class="lvl2"><a href="#.RODATA">11.84. .RODATA</a></li>
+<li class="lvl2"><a href="#.SCOPE">11.85. .SCOPE</a></li>
+<li class="lvl2"><a href="#.SEGMENT">11.86. .SEGMENT</a></li>
+<li class="lvl2"><a href="#.SET">11.87. .SET</a></li>
+<li class="lvl2"><a href="#.SETCPU">11.88. .SETCPU</a></li>
+<li class="lvl2"><a href="#.SMART">11.89. .SMART</a></li>
+<li class="lvl2"><a href="#.STRUCT">11.90. .STRUCT</a></li>
+<li class="lvl2"><a href="#.TAG">11.91. .TAG</a></li>
+<li class="lvl2"><a href="#.UNDEFINE">11.92. .UNDEF, .UNDEFINE</a></li>
+<li class="lvl2"><a href="#.UNION">11.93. .UNION</a></li>
+<li class="lvl2"><a href="#.WARNING">11.94. .WARNING</a></li>
+<li class="lvl2"><a href="#.WORD">11.95. .WORD</a></li>
+<li class="lvl2"><a href="#.ZEROPAGE">11.96. .ZEROPAGE</a></li>
 <li class="lvl1"><a href="#macros">12. Macros</a></li>
 <li class="lvl2"><a href="#sect-12-1">12.1. Introduction</a></li>
 <li class="lvl2"><a href="#sect-12-2">12.2. Macros without parameters</a></li>
@@ -240,10 +226,8 @@ development:</p>
         backend of a compiler.</p>
 </li>
 <li>
-<p>The assembler must support the newer 65C02 and 65816 CPUs. I have been
-        thinking about a 65816 backend for the C compiler, and even my old
-        a816 assembler had support for these CPUs, so this wasn't really a
-        problem.</p>
+<p>The assembler must support the 65SC02 CPU used by the Atari Lynx (a
+        superset of the base 6502 instruction set).</p>
 </li>
 <li>
 <p>The assembler must produce relocatable code. This is necessary for the
@@ -307,16 +291,13 @@ Short options:
   -h                            Help (this text)
   -i                            Ignore case of symbols
   -l name                       Create a listing file if assembly was ok
-  -mm model                     Set the memory model
   -o name                       Name the output file
   -s                            Enable smart mode
-  -t sys                        Set the target system
   -v                            Increase verbosity
 
 Long options:
   --auto-import                 Mark unresolved symbols as import
   --bin-include-dir dir         Set a search path for binary includes
-  --cpu type                    Set cpu type
   --create-dep name             Create a make dependency file
   --create-full-dep name        Create a full make dependency file
   --debug                       Debug mode
@@ -328,11 +309,9 @@ Long options:
   --large-alignment             Don't warn about large alignments
   --listing name                Create a listing file if assembly was ok
   --list-bytes n                Maximum number of bytes per listing line
-  --memory-model model          Set the memory model
   --pagelength n                Set the page length for the listing
   --relax-checks                Relax some checks (see docs)
   --smart                       Enable smart mode
-  --target sys                  Set the target system
   --verbose                     Increase verbosity
   --version                     Print the assembler version
 ---------------------------------------------------------------------------</pre>
@@ -346,13 +325,6 @@ Long options:
   may be used more than once to specify more than one directory to search. The
   current directory is always searched first before considering any
   additional directories. See also the section about <a href="#search-paths">search paths</a>.</p>
-<a id="option--cpu"></a>
-</dd>
-<dt><code>--cpu type</code></dt>
-<dd>
-<p>Set the default for the CPU type. The option takes a parameter, which
-  may be one of</p>
-<p>6502, 6502X, 65SC02, 65C02, 65816, sweet16, HuC6280, 4510</p>
 <a id="option-create-dep"></a>
 </dd>
 <dt><code>--create-dep name</code></dt>
@@ -426,12 +398,6 @@ Long options:
   input. See the <code><a href="#.LISTBYTES">.LISTBYTES</a></code> directive
   for more information. The value zero can be used to encode an unlimited
   number of printed bytes.</p>
-<a id="option-mm"></a>
-</dd>
-<dt><code>-mm model, --memory-model model</code></dt>
-<dd>
-<p>Define the default memory model. Possible model specifiers are near, far and
-  huge.</p>
 <a id="option-o"></a>
 </dd>
 <dt><code>-o name</code></dt>
@@ -465,27 +431,10 @@ Long options:
 </dd>
 <dt><code>-s, --smart-mode</code></dt>
 <dd>
-<p>In smart mode (enabled by -s or the <code><a href="#.SMART">.SMART</a></code>
-  pseudo instruction) the assembler will track usage of the <code>REP</code> and
-  <code>SEP</code> instructions in 65816 mode and update the operand sizes
-  accordingly. If the operand of such an instruction cannot be evaluated by
-  the assembler (for example, because the operand is an imported symbol), a
-  warning is issued.</p>
-<p>Beware: Since the assembler cannot trace the execution flow this may
-  lead to false results in some cases. If in doubt, use the .ixx and .axx
-  instructions to tell the assembler about the current settings. Smart
-  mode is off by default.</p>
-<a id="option-t"></a>
-</dd>
-<dt><code>-t sys, --target sys</code></dt>
-<dd>
-<p>Set the target system. This will enable translation of character strings and
-  character constants into the character set of the target platform. The
-  default for the target system is "none", which means that no translation
-  will take place. The assembler supports the same target systems as the
-  compiler, see there for a list.</p>
-<p>Depending on the target, the default CPU type is also set. This can be
-  overriden by using the <code><a href="#option--cpu">--cpu</a></code> option.</p>
+<p>Smart mode (enabled by -s or the <code><a href="#.SMART">.SMART</a></code>
+  pseudo instruction) historically tracked the <code>REP</code> and <code>SEP</code>
+  instructions in 65816 mode. Since the 65816 is no longer supported, smart mode
+  has no effect in this tree. Smart mode is off by default.</p>
 <a id="option-v"></a>
 </dd>
 <dt><code>-v, --verbose</code></dt>
@@ -569,7 +518,7 @@ on the command line.</p>
 </ol>
 <h2 id="sect-4">4. Input format</h2>
 <h3 id="sect-4-1">4.1. Assembler syntax</h3>
-<p>The assembler accepts the standard 6502/65816 assembler syntax. One line may
+<p>The assembler accepts the standard 6502 assembler syntax. One line may
 contain a label (which is identified by a colon), and, in addition to the
 label, an assembler mnemonic, a macro, or a control command (see section <a href="#control-commands">Control Commands</a> for supported control
 commands). Alternatively, the line may contain a symbol definition using
@@ -586,156 +535,21 @@ it is ignored).</p>
 <p>The assembler accepts</p>
 <ul>
 <li>
-<p>all valid 6502 mnemonics when in 6502 mode (the default or after the
+<p>all valid 6502 mnemonics when in 6502 mode (after the
       <code><a href="#.P02">.P02</a></code> command was given).</p>
 </li>
 <li>
-<p>all valid 6502 mnemonics plus a set of illegal instructions when in
-      <a href="#6502X-mode">6502X mode</a>.</p>
-</li>
-<li>
-<p>all valid 65SC02 mnemonics when in 65SC02 mode (after the
-      <code><a href="#.PSC02">.PSC02</a></code> command was given).</p>
-</li>
-<li>
-<p>all valid 65C02 mnemonics when in 65C02 mode (after the
-      <code><a href="#.PC02">.PC02</a></code> command was given).</p>
-</li>
-<li>
-<p>all valid 65816 mnemonics when in 65816 mode (after the
-      <code><a href="#.P816">.P816</a></code> command was given).</p>
-</li>
-<li>
-<p>all valid 4510 mnemonics when in 4510 mode (after the
-      <code><a href="#.P4510">.P4510</a></code> command was given).</p>
+<p>all valid 65SC02 mnemonics when in 65SC02 mode (the default, or after the
+      <code><a href="#.PSC02">.PSC02</a></code> command was given). The 65SC02 is the
+      CPU of the Atari Lynx and the only CPU supported by this tree.</p>
 </li>
 </ul>
-<h3 id="sect-4-2">4.2. 65816 mode</h3>
-<p>In 65816 mode, several aliases are accepted, in addition to the official
-mnemonics:</p>
-<ul>
-<li>
-<p><code>CPA</code> is an alias for <code>CMP</code></p>
-</li>
-<li>
-<p><code>DEA</code> is an alias for <code>DEC A</code></p>
-</li>
-<li>
-<p><code>INA</code> is an alias for <code>INC A</code></p>
-</li>
-<li>
-<p><code>SWA</code> is an alias for <code>XBA</code></p>
-</li>
-<li>
-<p><code>TAD</code> is an alias for <code>TCD</code></p>
-</li>
-<li>
-<p><code>TAS</code> is an alias for <code>TCS</code></p>
-</li>
-<li>
-<p><code>TDA</code> is an alias for <code>TDC</code></p>
-</li>
-<li>
-<p><code>TSA</code> is an alias for <code>TSC</code></p>
-</li>
-</ul>
-<h3 id="6502X-mode">4.3. 6502X mode</h3>
-<p>6502X mode is an extension to the normal 6502 mode. In this mode, several
-mnemonics for illegal instructions of the NMOS 6502 CPUs are accepted. Since
-these instructions are illegal, there are no official mnemonics for them. The
-unofficial ones are taken from <a href="http://www.oxyron.de/html/opcodes02.html">http://www.oxyron.de/html/opcodes02.html</a>. Please note that only the
-ones marked as "stable" are supported. The following table uses information
-from the mentioned web page, for more information, see there.</p>
-<ul>
-<li>
-<p><code>ALR: A:=(A and #{imm})/2;</code></p>
-</li>
-<li>
-<p><code>ANC: A:=A and #{imm};</code> Generates opcode $0B.</p>
-</li>
-<li>
-<p><code>ARR: A:=(A and #{imm})/2;</code></p>
-</li>
-<li>
-<p><code>AXS: X:=A and X-#{imm};</code></p>
-</li>
-<li>
-<p><code>DCP: {adr}:={adr}-1; A-{adr};</code></p>
-</li>
-<li>
-<p><code>ISC: {adr}:={adr}+1; A:=A-{adr};</code></p>
-</li>
-<li>
-<p><code>LAS: A,X,S:={adr} and S;</code></p>
-</li>
-<li>
-<p><code>LAX: A,X:={adr};</code></p>
-</li>
-<li>
-<p><code>RLA: {adr}:={adr}rol; A:=A and {adr};</code></p>
-</li>
-<li>
-<p><code>RRA: {adr}:={adr}ror; A:=A adc {adr};</code></p>
-</li>
-<li>
-<p><code>SAX: {adr}:=A and X;</code></p>
-</li>
-<li>
-<p><code>SLO: {adr}:={adr}*2; A:=A or {adr};</code></p>
-</li>
-<li>
-<p><code>SRE: {adr}:={adr}/2; A:=A xor {adr};</code></p>
-</li>
-</ul>
-<h3 id="sect-4-4">4.4. 4510 mode</h3>
-<p>The 4510 is a microcontroller that is the core of the Commodore C65 aka C64DX.
-It contains among other functions a slightly modified 65CE02/4502 CPU, to allow
-address mapping for 20 bits of address space (1 megabyte addressable area).
-As compared to the description of the CPU in the
-<a href="http://www.zimmers.net/anonftp/pub/cbm/c65/c65manualupdated.txt.gz">C65 System Specification</a>
-<a href="https://raw.githubusercontent.com/MEGA65/c65-specifications/master/c65manualupdated.txt">(updated version)</a> uses these changes:</p>
-<ul>
-<li>
-<p><code>LDA (d,SP),Y</code> may also be written as <code>LDA (d,S),Y</code>
-(matching the 65816 notataion).</p>
-</li>
-<li>
-<p>All branch instruction allow now 16 bit offsets. To use a 16 bit
-branch you have to prefix these with an "L" (e.g. "<code>LBNE</code>" instead of
-"<code>BNE</code>"). This might change at a later implementation of the assembler.</p>
-</li>
-</ul>
-<p>For more information about the Commodore C65/C64DX and the 4510 CPU, see
-<a href="http://www.zimmers.net/anonftp/pub/cbm/c65/">http://www.zimmers.net/anonftp/pub/cbm/c65/</a> and
-<a href="https://en.wikipedia.org/wiki/Commodore_65">Wikipedia</a>.</p>
-<h3 id="sweet16-mode">4.5. sweet16 mode</h3>
-<p>SWEET 16 is an interpreter for a pseudo 16 bit CPU written by Steve Wozniak
-for the Apple ][ machines. It is available in the Apple ][ ROM. ca65 can
-generate code for this pseudo CPU when switched into sweet16 mode. The
-following is special in sweet16 mode:</p>
-<ul>
-<li>
-<p>The '@' character denotes indirect addressing and is no longer available
-for cheap local labels. If you need cheap local labels, you will have to
-switch to another lead character using the <code><a href="#.LOCALCHAR">.LOCALCHAR</a></code> command.</p>
-</li>
-<li>
-<p>Registers are specified using <code>R0</code> .. <code>R15</code>. In sweet16 mode,
-these identifiers are reserved words.</p>
-</li>
-</ul>
-<p>Please note that the assembler does neither supply the interpreter needed for
-SWEET 16 code, nor the zero page locations needed for the SWEET 16 registers,
-nor does it call the interpreter. All this must be done by your program. Apple
-][ programmers do probably know how to use sweet16 mode.</p>
-<p>For more information about SWEET 16, see
-<a href="http://www.6502.org/source/interpreters/sweet16.htm">http://www.6502.org/source/interpreters/sweet16.htm</a>.</p>
-<h3 id="sect-4-6">4.6. Number format</h3>
+<h3 id="sect-4-6">4.2. Number format</h3>
 <p>For literal values, the assembler accepts the widely used number formats: A
 preceding '$' or a trailing 'h' denotes a hex value, a preceding '%'
 denotes a binary value, and a bare number is interpreted as a decimal. There
 are currently no octal values and no floats.</p>
-<h3 id="sect-4-7">4.7. Conditional assembly</h3>
+<h3 id="sect-4-7">4.3. Conditional assembly</h3>
 <p>Please note that when using the conditional directives (<code>.IF</code> and friends),
 the input must consist of valid assembler tokens, even in <code>.IF</code> branches
 that are not assembled. The reason for this behaviour is that the assembler
@@ -1414,9 +1228,7 @@ writable.</p>
 <h3 id=".ASIZE">9.2. <code>.ASIZE</code></h3>
 <p>Reading this pseudo variable will return the current size of the
   Accumulator in bits.</p>
-<p>For the 65816 instruction set .ASIZE will return either 8 or 16, depending
-  on the current size of the operand in immediate accu addressing mode.</p>
-<p>For all other CPU instruction sets, .ASIZE will always return 8.</p>
+<p>On the 65SC02 (the only CPU supported by this tree) .ASIZE always returns 8.</p>
 <p>Example:</p>
 <pre class="verb">        ; Reverse Subtract with Accumulator
         ; A = memory - A
@@ -1441,7 +1253,7 @@ writable.</p>
   even more complex expressions.</p>
 <p>Example:</p>
 <pre class="verb">        .macpack        cpu
-        .if     (.cpu .bitand CPU_ISET_65816)
+        .if     (.cpu .bitand CPU_ISET_65SC02)
                 phx
                 phy
         .else
@@ -1454,9 +1266,7 @@ writable.</p>
 <h3 id=".ISIZE">9.4. <code>.ISIZE</code></h3>
 <p>Reading this pseudo variable will return the current size of the Index
   register in bits.</p>
-<p>For the 65816 instruction set .ISIZE will return either 8 or 16, depending
-  on the current size of the operand in immediate index addressing mode.</p>
-<p>For all other CPU instruction sets, .ISIZE will always return 8.</p>
+<p>On the 65SC02 (the only CPU supported by this tree) .ISIZE always returns 8.</p>
 <p>See also: <code><a href="#.ASIZE">.ASIZE</a></code></p>
 <h3 id=".PARAMCOUNT">9.5. <code>.PARAMCOUNT</code></h3>
 <p>This builtin pseudo variable is only available in macros. It is replaced by
@@ -1912,27 +1722,16 @@ either a string or an expression.</p>
 <p>See: <code><a href="#.MATCH">.MATCH</a></code></p>
 <h2 id="control-commands">11. Control commands</h2>
 <p>Here's a list of all control commands and a description, what they do:</p>
-<h3 id=".A16">11.1. <code>.A16</code></h3>
-<p>Valid only in 65816 mode. Switch the accumulator to 16 bit.</p>
-<p>Note: This command will not emit any code, it will tell the assembler to
-  create 16 bit operands for immediate accumulator addressing mode.</p>
-<p>See also: <code><a href="#.SMART">.SMART</a></code></p>
-<h3 id=".A8">11.2. <code>.A8</code></h3>
-<p>Valid only in 65816 mode. Switch the accumulator to 8 bit.</p>
-<p>Note: This command will not emit any code, it will tell the assembler to
-  create 8 bit operands for immediate accu addressing mode.</p>
-<p>See also: <code><a href="#.SMART">.SMART</a></code></p>
-<h3 id=".ADDR">11.3. <code>.ADDR</code></h3>
-<p>Define word sized data. In 6502 mode, this is an alias for <code>.WORD</code> and
-  may be used for better readability if the data words are address values. In
-  65816 mode, the address is forced to be 16 bit wide to fit into the current
-  segment. See also <code><a href="#.FARADDR">.FARADDR</a></code>. The command
-  must be followed by a sequence of (not necessarily constant) expressions.</p>
+<h3 id=".ADDR">11.1. <code>.ADDR</code></h3>
+<p>Define word sized data. This is an alias for <code>.WORD</code> and
+  may be used for better readability if the data words are address values. The
+  command must be followed by a sequence of (not necessarily constant)
+  expressions.</p>
 <p>Example:</p>
 <pre class="verb">        .addr   $0D00, $AF13, _Clear
   </pre>
 <p>See: <code><a href="#.FARADDR">.FARADDR</a></code>, <code><a href="#.WORD">.WORD</a></code></p>
-<h3 id=".ALIGN">11.4. <code>.ALIGN</code></h3>
+<h3 id=".ALIGN">11.2. <code>.ALIGN</code></h3>
 <p>Align data to a given boundary. The command expects a constant integer
   argument in the range 1 ... 65536, plus an optional second argument
   in byte range. If there is a second argument, it is used as fill value,
@@ -1982,7 +1781,7 @@ either a string or an expression.</p>
   only alignments possible in older versions of the assembler), the problem is
   less severe, because the least common multiple of powers to the same base is
   always the larger one.</p>
-<h3 id=".ASCIIZ">11.5. <code>.ASCIIZ</code></h3>
+<h3 id=".ASCIIZ">11.3. <code>.ASCIIZ</code></h3>
 <p>Define a string with a trailing zero.</p>
 <p>Example:</p>
 <pre class="verb">        Msg:    .asciiz "Hello world"
@@ -1990,7 +1789,7 @@ either a string or an expression.</p>
 <p>This will put the string "Hello world" followed by a binary zero into
   the current segment. There may be more strings separated by commas, but
   the binary zero is only appended once (after the last one).</p>
-<h3 id=".ASSERT">11.6. <code>.ASSERT</code></h3>
+<h3 id=".ASSERT">11.4. <code>.ASSERT</code></h3>
 <p>Add an assertion. The command is followed by an expression, an action
   specifier, and an optional message that is output in case the assertion
   fails. If no message was given, the string "Assertion failed" is used. The
@@ -2008,7 +1807,7 @@ either a string or an expression.</p>
   <code>warning</code> outputs a warning, while the <code>error</code> specifier outputs
   an error message. In the latter case, generation of the output file is
   suppressed in both the assembler and linker.</p>
-<h3 id=".AUTOIMPORT">11.7. <code>.AUTOIMPORT</code></h3>
+<h3 id=".AUTOIMPORT">11.5. <code>.AUTOIMPORT</code></h3>
 <p>Is followed by a plus or a minus character. When switched on (using a
   +), undefined symbols are automatically marked as import instead of
   giving errors. When switched off (which is the default so this does not
@@ -2026,7 +1825,7 @@ either a string or an expression.</p>
 <p>Example:</p>
 <pre class="verb">        .autoimport     +       ; Switch on auto import
   </pre>
-<h3 id=".BANKBYTES">11.8. <code>.BANKBYTES</code></h3>
+<h3 id=".BANKBYTES">11.6. <code>.BANKBYTES</code></h3>
 <p>Define byte sized data by extracting only the bank byte (that is, bits 16-23) from
   each expression.  This is equivalent to <code><a href="#.BYTE">.BYTE</a></code> with
   the operator '^' prepended to each expression in its list.</p>
@@ -2045,20 +1844,20 @@ either a string or an expression.</p>
 <p>See also: <code><a href="#.BYTE">.BYTE</a></code>,
             <code><a href="#.HIBYTES">.HIBYTES</a></code>,
             <code><a href="#.LOBYTES">.LOBYTES</a></code></p>
-<h3 id=".BSS">11.9. <code>.BSS</code></h3>
+<h3 id=".BSS">11.7. <code>.BSS</code></h3>
 <p>Switch to the BSS segment. The name of the BSS segment is always "BSS",
   so this is a shortcut for</p>
 <pre class="verb">        .segment  "BSS"
   </pre>
 <p>See also the <code><a href="#.SEGMENT">.SEGMENT</a></code> command.</p>
-<h3 id=".BYTE">11.10. <code>.BYT, .BYTE</code></h3>
+<h3 id=".BYTE">11.8. <code>.BYT, .BYTE</code></h3>
 <p>Define byte sized data. Must be followed by a sequence of (byte ranged)
   expressions or strings.</p>
 <p>Example:</p>
 <pre class="verb">        .byte   "Hello "
         .byt    "world", $0D, $00
   </pre>
-<h3 id=".CASE">11.11. <code>.CASE</code></h3>
+<h3 id=".CASE">11.9. <code>.CASE</code></h3>
 <p>Switch on or off case sensitivity on identifiers. The default is off
   (that is, identifiers are case sensitive), but may be changed by the
   -i switch on the command line.
@@ -2067,23 +1866,22 @@ either a string or an expression.</p>
 <p>Example:</p>
 <pre class="verb">        .case   -               ; Identifiers are not case sensitive
   </pre>
-<h3 id=".CHARMAP">11.12. <code>.CHARMAP</code></h3>
+<h3 id=".CHARMAP">11.10. <code>.CHARMAP</code></h3>
 <p>Apply a custom mapping for characters. The command is followed by two
   numbers. The first one is the index of the source character (range 0..255);
   the second one is the mapping (range 0..255). The mapping applies to all
   character and string constants <em>when</em> they generate output; and, overrides
-  a mapping table specified with the <code><a href="#option-t">-t</a></code>
-  command line switch.</p>
+  the built-in target character mapping.</p>
 <p>Example:</p>
 <pre class="verb">  .charmap        $41, $61        ; Map 'A' to 'a'
   </pre>
-<h3 id=".CODE">11.13. <code>.CODE</code></h3>
+<h3 id=".CODE">11.11. <code>.CODE</code></h3>
 <p>Switch to the CODE segment. The name of the CODE segment is always
   "CODE", so this is a shortcut for</p>
 <pre class="verb">        .segment  "CODE"
   </pre>
 <p>See also the <code><a href="#.SEGMENT">.SEGMENT</a></code> command.</p>
-<h3 id=".CONDES">11.14. <code>.CONDES</code></h3>
+<h3 id=".CONDES">11.12. <code>.CONDES</code></h3>
 <p>Export a symbol and mark it in a special way. The linker is able to build
   tables of all such symbols. This may be used to automatically create a list
   of functions needed to initialize linked library modules.</p>
@@ -2108,7 +1906,7 @@ either a string or an expression.</p>
   </pre>
 <p>See the <code><a href="#.CONSTRUCTOR">.CONSTRUCTOR</a></code>, <code><a href="#.DESTRUCTOR">.DESTRUCTOR</a></code> and <code><a href="#.INTERRUPTOR">.INTERRUPTOR</a></code> commands and the separate section <a href="#condes">Module constructors/destructors</a> explaining the feature in more
   detail.</p>
-<h3 id=".CONSTRUCTOR">11.15. <code>.CONSTRUCTOR</code></h3>
+<h3 id=".CONSTRUCTOR">11.13. <code>.CONSTRUCTOR</code></h3>
 <p>Export a symbol and mark it as a module constructor. This may be used
   together with the linker to build a table of constructor subroutines that
   are called by the startup code.</p>
@@ -2129,13 +1927,13 @@ either a string or an expression.</p>
 <p>See the <code><a href="#.CONDES">.CONDES</a></code> and <code><a href="#.DESTRUCTOR">.DESTRUCTOR</a></code> commands and the separate section
   <a href="#condes">Module constructors/destructors</a> explaining the
   feature in more detail.</p>
-<h3 id=".DATA">11.16. <code>.DATA</code></h3>
+<h3 id=".DATA">11.14. <code>.DATA</code></h3>
 <p>Switch to the DATA segment. The name of the DATA segment is always
   "DATA", so this is a shortcut for</p>
 <pre class="verb">        .segment  "DATA"
   </pre>
 <p>See also the <code><a href="#.SEGMENT">.SEGMENT</a></code> command.</p>
-<h3 id=".DBYT">11.17. <code>.DBYT</code></h3>
+<h3 id=".DBYT">11.15. <code>.DBYT</code></h3>
 <p>Define word sized data with the hi and lo bytes swapped (use <code>.WORD</code> to
   create word sized data in native 65XX format). Must be followed by a
   sequence of (word ranged) expressions.</p>
@@ -2146,7 +1944,7 @@ either a string or an expression.</p>
 <pre class="verb">        $12 $34 $45 $12
   </pre>
 <p>into the current segment in that order.</p>
-<h3 id=".DEBUGINFO">11.18. <code>.DEBUGINFO</code></h3>
+<h3 id=".DEBUGINFO">11.16. <code>.DEBUGINFO</code></h3>
 <p>Switch on or off debug info generation. The default is off (that is,
   the object file will not contain debug infos), but may be changed by the
   -g switch on the command line.
@@ -2155,7 +1953,7 @@ either a string or an expression.</p>
 <p>Example:</p>
 <pre class="verb">        .debuginfo      +       ; Generate debug info
   </pre>
-<h3 id=".DEFINE">11.19. <code>.DEFINE</code></h3>
+<h3 id=".DEFINE">11.17. <code>.DEFINE</code></h3>
 <p>Start a define style macro definition. The command is followed by an
   identifier (the macro name) and optionally by a list of formal arguments
   in braces.</p>
@@ -2164,7 +1962,7 @@ either a string or an expression.</p>
   don't have to.</p>
 <p>See also the <code><a href="#.UNDEFINE">.UNDEFINE</a></code> command and
   section <a href="#macros">Macros</a>.</p>
-<h3 id=".DELMACRO">11.20. <code>.DELMAC, .DELMACRO</code></h3>
+<h3 id=".DELMACRO">11.18. <code>.DELMAC, .DELMACRO</code></h3>
 <p>Delete a classic macro (defined with <code><a href="#.MACRO">.MACRO</a></code>) . The command is followed by the name of an
   existing macro. Its definition will be deleted together with the name.
   If necessary, another macro with this name may be defined later.</p>
@@ -2172,7 +1970,7 @@ either a string or an expression.</p>
        <code><a href="#.EXITMACRO">.EXITMACRO</a></code>,
        <code><a href="#.MACRO">.MACRO</a></code></p>
 <p>See also section <a href="#macros">Macros</a>.</p>
-<h3 id=".DEFINED">11.21. <code>.DEF, .DEFINED</code></h3>
+<h3 id=".DEFINED">11.19. <code>.DEF, .DEFINED</code></h3>
 <p>Builtin function. The function expects an identifier as argument in braces.
   The argument is evaluated, and the function yields "true" if the identifier
   is a symbol that is already defined somewhere in the source file up to the
@@ -2180,7 +1978,7 @@ either a string or an expression.</p>
   <code><a href="#.IFDEF">.IFDEF</a></code> statement may be replaced by</p>
 <pre class="verb">        .if     .defined(a)
   </pre>
-<h3 id=".DEFINEDMACRO">11.22. <code>.DEFINEDMACRO</code></h3>
+<h3 id=".DEFINEDMACRO">11.20. <code>.DEFINEDMACRO</code></h3>
 <p>Builtin function. The function expects an identifier as argument in braces.
   The argument is evaluated, and the function yields "true" if the identifier
   has already been defined as the name of a macro. Otherwise the function yields
@@ -2197,7 +1995,7 @@ either a string or an expression.</p>
                 adc #$01
         .endif
   </pre>
-<h3 id=".DESTRUCTOR">11.23. <code>.DESTRUCTOR</code></h3>
+<h3 id=".DESTRUCTOR">11.21. <code>.DESTRUCTOR</code></h3>
 <p>Export a symbol and mark it as a module destructor. This may be used
   together with the linker to build a table of destructor subroutines that
   are called by the startup code.</p>
@@ -2218,45 +2016,45 @@ either a string or an expression.</p>
 <p>See the <code><a href="#.CONDES">.CONDES</a></code> and <code><a href="#.CONSTRUCTOR">.CONSTRUCTOR</a></code> commands and the separate
   section <a href="#condes">Module constructors/destructors</a> explaining
   the feature in more detail.</p>
-<h3 id=".DWORD">11.24. <code>.DWORD</code></h3>
+<h3 id=".DWORD">11.22. <code>.DWORD</code></h3>
 <p>Define dword sized data (4 bytes) Must be followed by a sequence of
   expressions.</p>
 <p>Example:</p>
 <pre class="verb">        .dword  $12344512, $12FA489
   </pre>
-<h3 id=".ELSE">11.25. <code>.ELSE</code></h3>
+<h3 id=".ELSE">11.23. <code>.ELSE</code></h3>
 <p>Conditional assembly: Reverse the current condition.</p>
-<h3 id=".ELSEIF">11.26. <code>.ELSEIF</code></h3>
+<h3 id=".ELSEIF">11.24. <code>.ELSEIF</code></h3>
 <p>Conditional assembly: Reverse current condition and test a new one.</p>
-<h3 id=".END">11.27. <code>.END</code></h3>
+<h3 id=".END">11.25. <code>.END</code></h3>
 <p>Forced end of assembly. Assembly stops at this point, even if the command
   is read from an include file.</p>
-<h3 id=".ENDENUM">11.28. <code>.ENDENUM</code></h3>
+<h3 id=".ENDENUM">11.26. <code>.ENDENUM</code></h3>
 <p>End a <code><a href="#.ENUM">.ENUM</a></code> declaration.</p>
-<h3 id=".ENDIF">11.29. <code>.ENDIF</code></h3>
+<h3 id=".ENDIF">11.27. <code>.ENDIF</code></h3>
 <p>Conditional assembly: Close a <code><a href="#.IF">.IF...</a></code> or
   <code><a href="#.ELSE">.ELSE</a></code> branch.</p>
-<h3 id=".ENDMACRO">11.30. <code>.ENDMAC, .ENDMACRO</code></h3>
+<h3 id=".ENDMACRO">11.28. <code>.ENDMAC, .ENDMACRO</code></h3>
 <p>Marks the end of a macro definition.</p>
 <p>See: <code><a href="#.DELMACRO">.DELMACRO</a></code>,
        <code><a href="#.EXITMACRO">.EXITMACRO</a></code>,
        <code><a href="#.MACRO">.MACRO</a></code></p>
 <p>See also section <a href="#macros">Macros</a>.</p>
-<h3 id=".ENDPROC">11.31. <code>.ENDPROC</code></h3>
+<h3 id=".ENDPROC">11.29. <code>.ENDPROC</code></h3>
 <p>End of the local lexical level (see <code><a href="#.PROC">.PROC</a></code>).</p>
-<h3 id=".ENDREPEAT">11.32. <code>.ENDREP, .ENDREPEAT</code></h3>
+<h3 id=".ENDREPEAT">11.30. <code>.ENDREP, .ENDREPEAT</code></h3>
 <p>End a <code><a href="#.REPEAT">.REPEAT</a></code> block.</p>
-<h3 id=".ENDSCOPE">11.33. <code>.ENDSCOPE</code></h3>
+<h3 id=".ENDSCOPE">11.31. <code>.ENDSCOPE</code></h3>
 <p>End of the local lexical level (see <code><a href="#.SCOPE">.SCOPE</a></code>).</p>
-<h3 id=".ENDSTRUCT">11.34. <code>.ENDSTRUCT</code></h3>
+<h3 id=".ENDSTRUCT">11.32. <code>.ENDSTRUCT</code></h3>
 <p>Ends a struct definition. See the <code><a href="#.STRUCT">.STRUCT</a></code>
   command and the separate section named <a href="#structs">"Structs
   and unions"</a>.</p>
-<h3 id=".ENDUNION">11.35. <code>.ENDUNION</code></h3>
+<h3 id=".ENDUNION">11.33. <code>.ENDUNION</code></h3>
 <p>Ends a union definition. See the <code><a href="#.UNION">.UNION</a></code>
   command and the separate section named <a href="#structs">"Structs
   and unions"</a>.</p>
-<h3 id=".ENUM">11.36. <code>.ENUM</code></h3>
+<h3 id=".ENUM">11.34. <code>.ENUM</code></h3>
 <p>Start an enumeration. This directive is very similar to the C <code>enum</code>
   keyword. If a name is given, a new scope is created for the enumeration,
   otherwise the enumeration members are placed in the enclosing scope.</p>
@@ -2299,7 +2097,7 @@ either a string or an expression.</p>
   The values for the following members are incremented by one; so, <code>EOK</code>
   would be zero, and so on. <code>EWOULDBLOCK</code> is an alias for <code>EAGAIN</code>; so,
   it has an override for the value, using an already defined symbol.</p>
-<h3 id=".ERROR">11.37. <code>.ERROR</code></h3>
+<h3 id=".ERROR">11.35. <code>.ERROR</code></h3>
 <p>Force an assembly error. The assembler will output an error message
   preceded by "User error". Assembly is continued but no object file will
   generated.</p>
@@ -2317,14 +2115,14 @@ either a string or an expression.</p>
 <p>See also: <code><a href="#.FATAL">.FATAL</a></code>,
             <code><a href="#.OUT">.OUT</a></code>,
             <code><a href="#.WARNING">.WARNING</a></code></p>
-<h3 id=".EXITMACRO">11.38. <code>.EXITMAC, .EXITMACRO</code></h3>
+<h3 id=".EXITMACRO">11.36. <code>.EXITMAC, .EXITMACRO</code></h3>
 <p>Abort a macro expansion immediately. This command is often useful in
   recursive macros.</p>
 <p>See: <code><a href="#.DELMACRO">.DELMACRO</a></code>,
        <code><a href="#.ENDMACRO">.ENDMACRO</a></code>,
        <code><a href="#.MACRO">.MACRO</a></code></p>
 <p>See also section <a href="#macros">Macros</a>.</p>
-<h3 id=".EXPORT">11.39. <code>.EXPORT</code></h3>
+<h3 id=".EXPORT">11.37. <code>.EXPORT</code></h3>
 <p>Make symbols accessible from other modules. Must be followed by a comma
   separated list of symbols to export, with each one optionally followed by an
   address specification and (also optional) an assignment. Using an additional
@@ -2341,7 +2139,7 @@ either a string or an expression.</p>
 <p>As with constant definitions, using <code>:=</code> instead of <code>=</code> marks the
   symbols as a label.</p>
 <p>See: <code><a href="#.EXPORTZP">.EXPORTZP</a></code></p>
-<h3 id=".EXPORTZP">11.40. <code>.EXPORTZP</code></h3>
+<h3 id=".EXPORTZP">11.38. <code>.EXPORTZP</code></h3>
 <p>Make symbols accessible from other modules. Must be followed by a comma
   separated list of symbols to export. The exported symbols are explicitly
   marked as zero page symbols. An assignment may be included in the
@@ -2352,14 +2150,14 @@ either a string or an expression.</p>
         .exportzp  baz := $02
   </pre>
 <p>See: <code><a href="#.EXPORT">.EXPORT</a></code></p>
-<h3 id=".FARADDR">11.41. <code>.FARADDR</code></h3>
+<h3 id=".FARADDR">11.39. <code>.FARADDR</code></h3>
 <p>Define far (24 bit) address data. The command must be followed by a
   sequence of (not necessarily constant) expressions.</p>
 <p>Example:</p>
 <pre class="verb">        .faraddr        DrawCircle, DrawRectangle, DrawHexagon
   </pre>
 <p>See: <code><a href="#.ADDR">.ADDR</a></code></p>
-<h3 id=".FATAL">11.42. <code>.FATAL</code></h3>
+<h3 id=".FATAL">11.40. <code>.FATAL</code></h3>
 <p>Force an assembly error and terminate assembly. The assembler will output an
   error message preceded by "User error" and will terminate assembly
   immediately.</p>
@@ -2377,7 +2175,7 @@ either a string or an expression.</p>
 <p>See also: <code><a href="#.ERROR">.ERROR</a></code>,
             <code><a href="#.OUT">.OUT</a></code>,
             <code><a href="#.WARNING">.WARNING</a></code></p>
-<h3 id=".FEATURE">11.43. <code>.FEATURE</code></h3>
+<h3 id=".FEATURE">11.41. <code>.FEATURE</code></h3>
 <p>This directive may be used to enable one or more compatibility features
   of the assembler. While the use of <code>.FEATURE</code> should be avoided when
   possible, it may be useful when porting sources written for other
@@ -2409,8 +2207,7 @@ either a string or an expression.</p>
         jmp     [$fffe]
         jmp     [table,x]
     </pre>
-<p><em>Note:</em> This should not be used in 65186 mode because it conflicts with
-    the 65816 instruction syntax for far addressing. See the section covering
+<p>See the section covering
     <code><a href="#address-sizes">address sizes</a></code> for more information.</p>
 </dd>
 <dt><code>c_comments</code><a id="c_comments"></a></dt>
@@ -2550,7 +2347,7 @@ either a string or an expression.</p>
   be able to translate the sources without changes, even when enabling these
   features. However, I have found several sources that translate without
   problems when enabling these features on the command line.</p>
-<h3 id=".FOPT">11.44. <code>.FILEOPT, .FOPT</code></h3>
+<h3 id=".FOPT">11.42. <code>.FILEOPT, .FOPT</code></h3>
 <p>Insert an option string into the object file. There are two forms of
   this command, one specifies the option by a keyword, the second
   specifies it as a number. Since usage of the second one needs knowledge
@@ -2570,7 +2367,7 @@ either a string or an expression.</p>
         .fileopt        compiler, "BASIC 2.0"
         .fopt           author, "J. R. User"
   </pre>
-<h3 id=".FORCEIMPORT">11.45. <code>.FORCEIMPORT</code></h3>
+<h3 id=".FORCEIMPORT">11.43. <code>.FORCEIMPORT</code></h3>
 <p>Import an absolute symbol from another module. The command is followed by a
   comma separated list of symbols to import. The command is similar to <code>
   <a href="#.IMPORT">.IMPORT</a></code>, but the import reference is always
@@ -2581,14 +2378,14 @@ either a string or an expression.</p>
 <pre class="verb">        .forceimport    needthisone, needthistoo
   </pre>
 <p>See: <code><a href="#.IMPORT">.IMPORT</a></code></p>
-<h3 id=".GLOBAL">11.46. <code>.GLOBAL</code></h3>
+<h3 id=".GLOBAL">11.44. <code>.GLOBAL</code></h3>
 <p>Declare symbols as global. Must be followed by a comma separated list of
   symbols to declare. Symbols from the list, that are defined somewhere in the
   source, are exported, all others are imported. Additional <code><a href="#.IMPORT">.IMPORT</a></code> or <code><a href="#.EXPORT">.EXPORT</a></code> commands for the same symbol are allowed.</p>
 <p>Example:</p>
 <pre class="verb">        .global foo, bar
   </pre>
-<h3 id=".GLOBALZP">11.47. <code>.GLOBALZP</code></h3>
+<h3 id=".GLOBALZP">11.45. <code>.GLOBALZP</code></h3>
 <p>Declare symbols as global. Must be followed by a comma separated list of
   symbols to declare. Symbols from the list, that are defined somewhere in the
   source, are exported, all others are imported. Additional <code><a href="#.IMPORTZP">.IMPORTZP</a></code> or <code><a href="#.EXPORTZP">.EXPORTZP</a></code> commands for the same symbol are allowed. The symbols
@@ -2596,7 +2393,7 @@ either a string or an expression.</p>
 <p>Example:</p>
 <pre class="verb">        .globalzp foo, bar
   </pre>
-<h3 id=".HIBYTES">11.48. <code>.HIBYTES</code></h3>
+<h3 id=".HIBYTES">11.46. <code>.HIBYTES</code></h3>
 <p>Define byte sized data by extracting only the high byte (that is, bits 8-15) from
   each expression.  This is equivalent to <code><a href="#.BYTE">.BYTE</a></code> with
   the operator '&gt;' prepended to each expression in its list.</p>
@@ -2621,23 +2418,13 @@ either a string or an expression.</p>
 <p>See also: <code><a href="#.BYTE">.BYTE</a></code>,
             <code><a href="#.LOBYTES">.LOBYTES</a></code>,
             <code><a href="#.BANKBYTES">.BANKBYTES</a></code></p>
-<h3 id=".I16">11.49. <code>.I16</code></h3>
-<p>Valid only in 65816 mode. Switch the index registers to 16 bit.</p>
-<p>Note: This command will not emit any code, it will tell the assembler to
-  create 16 bit operands for immediate operands.</p>
-<p>See also the <code><a href="#.I8">.I8</a></code> and <code><a href="#.SMART">.SMART</a></code> commands.</p>
-<h3 id=".I8">11.50. <code>.I8</code></h3>
-<p>Valid only in 65816 mode. Switch the index registers to 8 bit.</p>
-<p>Note: This command will not emit any code, it will tell the assembler to
-  create 8 bit operands for immediate operands.</p>
-<p>See also the <code><a href="#.I16">.I16</a></code> and <code><a href="#.SMART">.SMART</a></code> commands.</p>
-<h3 id=".IF">11.51. <code>.IF</code></h3>
+<h3 id=".IF">11.47. <code>.IF</code></h3>
 <p>Conditional assembly: Evaluate an expression and switch assembler output
   on or off depending on the expression. The expression must be a constant
   expression, that is, all operands must be defined.</p>
 <p>A expression value of zero evaluates to FALSE, any other value evaluates
   to TRUE.</p>
-<h3 id=".IFBLANK">11.52. <code>.IFBLANK</code></h3>
+<h3 id=".IFBLANK">11.48. <code>.IFBLANK</code></h3>
 <p>Conditional assembly: Check if there are any remaining tokens in this line,
   and evaluate to FALSE if this is the case, and to TRUE otherwise. If the
   condition is not true, further lines are not assembled until an <code><a href="#.ELSE">.ELSE</a></code>, <code><a href="#.ELSEIF">.ELSEIF</a></code> or
@@ -2655,19 +2442,19 @@ either a string or an expression.</p>
         .endmacro
   </pre>
 <p>See also: <code><a href="#.BLANK">.BLANK</a></code></p>
-<h3 id=".IFCONST">11.53. <code>.IFCONST</code></h3>
+<h3 id=".IFCONST">11.49. <code>.IFCONST</code></h3>
 <p>Conditional assembly: Evaluate an expression and switch assembler output
   on or off depending on the constness of the expression.</p>
 <p>A const expression evaluates to to TRUE, a non const expression (one
   containing an imported or currently undefined symbol) evaluates to
   FALSE.</p>
 <p>See also: <code><a href="#.CONST">.CONST</a></code></p>
-<h3 id=".IFDEF">11.54. <code>.IFDEF</code></h3>
+<h3 id=".IFDEF">11.50. <code>.IFDEF</code></h3>
 <p>Conditional assembly: Check if a symbol is defined. Must be followed by
   a symbol name. The condition is true if the the given symbol is already
   defined, and false otherwise.</p>
 <p>See also: <code><a href="#.DEFINED">.DEFINED</a></code></p>
-<h3 id=".IFNBLANK">11.55. <code>.IFNBLANK</code></h3>
+<h3 id=".IFNBLANK">11.51. <code>.IFNBLANK</code></h3>
 <p>Conditional assembly: Check if there are any remaining tokens in this line,
   and evaluate to TRUE if this is the case, and to FALSE otherwise. If the
   condition is not true, further lines are not assembled until an <code><a href="#.ELSE">.ELSE</a></code>, <code><a href="#.ELSEIF">.ELSEIF</a></code> or
@@ -2684,32 +2471,23 @@ either a string or an expression.</p>
         .endmacro
   </pre>
 <p>See also: <code><a href="#.BLANK">.BLANK</a></code></p>
-<h3 id=".IFNDEF">11.56. <code>.IFNDEF</code></h3>
+<h3 id=".IFNDEF">11.52. <code>.IFNDEF</code></h3>
 <p>Conditional assembly: Check if a symbol is defined. Must be followed by
   a symbol name. The condition is true if the the given symbol is not
   defined, and false otherwise.</p>
 <p>See also: <code><a href="#.DEFINED">.DEFINED</a></code></p>
-<h3 id=".IFNREF">11.57. <code>.IFNREF</code></h3>
+<h3 id=".IFNREF">11.53. <code>.IFNREF</code></h3>
 <p>Conditional assembly: Check if a symbol is referenced. Must be followed
   by a symbol name. The condition is true if if the the given symbol was
   not referenced before, and false otherwise.</p>
 <p>See also: <code><a href="#.REFERENCED">.REFERENCED</a></code></p>
-<h3 id=".IFP02">11.58. <code>.IFP02</code></h3>
+<h3 id=".IFP02">11.54. <code>.IFP02</code></h3>
 <p>Conditional assembly: Check if the assembler is currently in 6502 mode
   (see <code><a href="#.P02">.P02</a></code> command).</p>
-<h3 id=".IFP4510">11.59. <code>.IFP4510</code></h3>
-<p>Conditional assembly: Check if the assembler is currently in 4510 mode
-  (see <code><a href="#.P4510">.P4510</a></code> command).</p>
-<h3 id=".IFP816">11.60. <code>.IFP816</code></h3>
-<p>Conditional assembly: Check if the assembler is currently in 65816 mode
-  (see <code><a href="#.P816">.P816</a></code> command).</p>
-<h3 id=".IFPC02">11.61. <code>.IFPC02</code></h3>
-<p>Conditional assembly: Check if the assembler is currently in 65C02 mode
-  (see <code><a href="#.PC02">.PC02</a></code> command).</p>
-<h3 id=".IFPSC02">11.62. <code>.IFPSC02</code></h3>
+<h3 id=".IFPSC02">11.55. <code>.IFPSC02</code></h3>
 <p>Conditional assembly: Check if the assembler is currently in 65SC02 mode
   (see <code><a href="#.PSC02">.PSC02</a></code> command).</p>
-<h3 id=".IFREF">11.63. <code>.IFREF</code></h3>
+<h3 id=".IFREF">11.56. <code>.IFREF</code></h3>
 <p>Conditional assembly: Check if a symbol is referenced. Must be followed
   by a symbol name. The condition is true if if the the given symbol was
   referenced before, and false otherwise.</p>
@@ -2723,7 +2501,7 @@ either a string or an expression.</p>
         .endif
   </pre>
 <p>See also: <code><a href="#.REFERENCED">.REFERENCED</a></code></p>
-<h3 id=".IMPORT">11.64. <code>.IMPORT</code></h3>
+<h3 id=".IMPORT">11.57. <code>.IMPORT</code></h3>
 <p>Import a symbol from another module. The command is followed by a comma
   separated list of symbols to import, with each one optionally followed by
   an address specification.</p>
@@ -2732,7 +2510,7 @@ either a string or an expression.</p>
         .import bar: zeropage
   </pre>
 <p>See: <code><a href="#.IMPORTZP">.IMPORTZP</a></code></p>
-<h3 id=".IMPORTZP">11.65. <code>.IMPORTZP</code></h3>
+<h3 id=".IMPORTZP">11.58. <code>.IMPORTZP</code></h3>
 <p>Import a symbol from another module. The command is followed by a comma
   separated list of symbols to import. The symbols are explicitly imported
   as zero page symbols (that is, symbols with values in byte range).</p>
@@ -2740,7 +2518,7 @@ either a string or an expression.</p>
 <pre class="verb">        .importzp       foo, bar
   </pre>
 <p>See: <code><a href="#.IMPORT">.IMPORT</a></code></p>
-<h3 id=".INCBIN">11.66. <code>.INCBIN</code></h3>
+<h3 id=".INCBIN">11.59. <code>.INCBIN</code></h3>
 <p>Include a file as binary data. The command expects a string argument
   that is the name of a file to include literally in the current segment.
   In addition to that, a start offset and a size value may be specified,
@@ -2757,12 +2535,12 @@ either a string or an expression.</p>
         ; Read 100 bytes starting at offset 200
         .incbin         "graphics.dat", 200, 100
   </pre>
-<h3 id=".INCLUDE">11.67. <code>.INCLUDE</code></h3>
+<h3 id=".INCLUDE">11.60. <code>.INCLUDE</code></h3>
 <p>Include another file. Include files may be nested up to a depth of 16.</p>
 <p>Example:</p>
 <pre class="verb">        .include        "subs.inc"
   </pre>
-<h3 id=".INTERRUPTOR">11.68. <code>.INTERRUPTOR</code></h3>
+<h3 id=".INTERRUPTOR">11.61. <code>.INTERRUPTOR</code></h3>
 <p>Export a symbol and mark it as an interruptor. This may be used together
   with the linker to build a table of interruptor subroutines that are called
   in an interrupt.</p>
@@ -2783,7 +2561,7 @@ either a string or an expression.</p>
 <p>See the <code><a href="#.CONDES">.CONDES</a></code> command and the separate
   section <a href="#condes">Module constructors/destructors</a> explaining
   the feature in more detail.</p>
-<h3 id=".ISMNEMONIC">11.69. <code>.ISMNEM, .ISMNEMONIC</code></h3>
+<h3 id=".ISMNEMONIC">11.62. <code>.ISMNEM, .ISMNEMONIC</code></h3>
 <p>Builtin function. The function expects an identifier as argument in braces.
   The argument is evaluated, and the function yields "true" if the identifier
   is defined as an instruction mnemonic that is recognized by the assembler.
@@ -2795,7 +2573,7 @@ either a string or an expression.</p>
                 .endmacro
         .endif
   </pre>
-<h3 id=".LINECONT">11.70. <code>.LINECONT</code></h3>
+<h3 id=".LINECONT">11.63. <code>.LINECONT</code></h3>
 <p>Switch on or off line continuations using the backslash character
   before a newline. The option is off by default.
   Note: Line continuations do not work in a comment. A backslash at the
@@ -2809,7 +2587,7 @@ either a string or an expression.</p>
         lda     \
                 #$20                    ; This is legal now
   </pre>
-<h3 id=".LIST">11.71. <code>.LIST</code></h3>
+<h3 id=".LIST">11.64. <code>.LIST</code></h3>
 <p>Enable output to the listing. The command must be followed by a boolean
   switch ("on", "off", "+" or "-") and will enable or disable listing
   output.
@@ -2821,7 +2599,7 @@ either a string or an expression.</p>
 <p>Example:</p>
 <pre class="verb">        .list   on              ; Enable listing output
   </pre>
-<h3 id=".LISTBYTES">11.72. <code>.LISTBYTES</code></h3>
+<h3 id=".LISTBYTES">11.65. <code>.LISTBYTES</code></h3>
 <p>Set, how many bytes are shown in the listing for one source line. The
   default is 12, so the listing will show only the first 12 bytes for any
   source line that generates more than 12 bytes of code or data.
@@ -2832,7 +2610,7 @@ either a string or an expression.</p>
         .listbytes      12              ; List the first 12 bytes
         .incbin         "data.bin"      ; Include large binary file
   </pre>
-<h3 id=".LOBYTES">11.73. <code>.LOBYTES</code></h3>
+<h3 id=".LOBYTES">11.66. <code>.LOBYTES</code></h3>
 <p>Define byte sized data by extracting only the low byte (that is, bits 0-7) from
   each expression.  This is equivalent to <code><a href="#.BYTE">.BYTE</a></code> with
   the operator '&lt;' prepended to each expression in its list.</p>
@@ -2857,7 +2635,7 @@ either a string or an expression.</p>
 <p>See also: <code><a href="#.BYTE">.BYTE</a></code>,
             <code><a href="#.HIBYTES">.HIBYTES</a></code>,
             <code><a href="#.BANKBYTES">.BANKBYTES</a></code></p>
-<h3 id=".LOCAL">11.74. <code>.LOCAL</code></h3>
+<h3 id=".LOCAL">11.67. <code>.LOCAL</code></h3>
 <p>This command may only be used inside a macro definition. It declares a
   list of identifiers as local to the macro expansion.</p>
 <p>A problem when using macros are labels: Since they don't change their name,
@@ -2872,7 +2650,7 @@ either a string or an expression.</p>
   to address the problem.</p>
 <p>You get an error when using <code><a href="#.LOCAL">.LOCAL</a></code> outside
   a macro.</p>
-<h3 id=".LOCALCHAR">11.75. <code>.LOCALCHAR</code></h3>
+<h3 id=".LOCALCHAR">11.68. <code>.LOCALCHAR</code></h3>
 <p>Defines the character that start "cheap" local labels. You may use one
   of '@' and '?' as start character. The default is '@'.</p>
 <p>Cheap local labels are labels that are visible only between two non
@@ -2889,7 +2667,7 @@ either a string or an expression.</p>
         Sub:    ...                     ; New global label
                 bne     ?Loop           ; ERROR: Unknown identifier!
   </pre>
-<h3 id=".MACPACK">11.76. <code>.MACPACK</code></h3>
+<h3 id=".MACPACK">11.69. <code>.MACPACK</code></h3>
 <p>Insert a predefined macro package. The command is followed by an
   identifier specifying the macro package to insert. Available macro
   packages are:</p>
@@ -2908,7 +2686,7 @@ either a string or an expression.</p>
                 jne     Label           ; Jump long on condition
   </pre>
 <p>Macro packages are explained in more detail in section <a href="#macropackages">Macro packages</a>.</p>
-<h3 id=".MACRO">11.77. <code>.MAC, .MACRO</code></h3>
+<h3 id=".MACRO">11.70. <code>.MAC, .MACRO</code></h3>
 <p>Start a classic macro definition. The command is followed by an identifier
   (the macro name) and optionally by a comma separated list of identifiers
   that are macro parameters. A macro definition is terminated by <code><a href="#.ENDMACRO">.ENDMACRO</a></code>.</p>
@@ -2921,7 +2699,7 @@ either a string or an expression.</p>
        <code><a href="#.ENDMACRO">.ENDMACRO</a></code>,
        <code><a href="#.EXITMACRO">.EXITMACRO</a></code></p>
 <p>See also section <a href="#macros">Macros</a>.</p>
-<h3 id=".ORG">11.78. <code>.ORG</code></h3>
+<h3 id=".ORG">11.71. <code>.ORG</code></h3>
 <p>Start a section of absolute code. The command is followed by a constant
   expression that gives the new PC counter location for which the code is
   assembled. Use <code><a href="#.RELOC">.RELOC</a></code> to switch back to
@@ -2935,7 +2713,7 @@ either a string or an expression.</p>
 <p>Example:</p>
 <pre class="verb">        .org    $7FF            ; Emit code starting at $7FF
   </pre>
-<h3 id=".OUT">11.79. <code>.OUT</code></h3>
+<h3 id=".OUT">11.72. <code>.OUT</code></h3>
 <p>Output a string to the console without producing an error. This command
   is similar to <code>.ERROR</code>, however, it does not force an assembler error
   that prevents the creation of an object file.</p>
@@ -2945,23 +2723,11 @@ either a string or an expression.</p>
 <p>See also: <code><a href="#.ERROR">.ERROR</a></code>,
             <code><a href="#.FATAL">.FATAL</a></code>,
             <code><a href="#.WARNING">.WARNING</a></code></p>
-<h3 id=".P02">11.80. <code>.P02</code></h3>
-<p>Enable the 6502 instruction set, disable 65SC02, 65C02 and 65816
-  instructions. This is the default if not overridden by the
-  <code><a href="#option--cpu">--cpu</a></code> command line option.</p>
-<p>See: <code><a href="#.PC02">.PC02</a></code>, <code><a href="#.PSC02">.PSC02</a></code>, <code><a href="#.P816">.P816</a></code> and
-  <code><a href="#.P4510">.P4510</a></code></p>
-<h3 id=".P4510">11.81. <code>.P4510</code></h3>
-<p>Enable the 4510 instruction set. This is a superset of the 65C02 and
-  6502 instruction sets.</p>
-<p>See: <code><a href="#.P02">.P02</a></code>, <code><a href="#.PSC02">.PSC02</a></code>, <code><a href="#.PC02">.PC02</a></code> and
-  <code><a href="#.P816">.P816</a></code></p>
-<h3 id=".P816">11.82. <code>.P816</code></h3>
-<p>Enable the 65816 instruction set. This is a superset of the 65SC02 and
-  6502 instruction sets.</p>
-<p>See: <code><a href="#.P02">.P02</a></code>, <code><a href="#.PSC02">.PSC02</a></code>, <code><a href="#.PC02">.PC02</a></code> and
-  <code><a href="#.P4510">.P4510</a></code></p>
-<h3 id=".PAGELENGTH">11.83. <code>.PAGELEN, .PAGELENGTH</code></h3>
+<h3 id=".P02">11.73. <code>.P02</code></h3>
+<p>Enable the base 6502 instruction set, disabling the 65SC02 extensions.
+  The default CPU in this tree is the 65SC02 (the Atari Lynx CPU).</p>
+<p>See: <code><a href="#.PSC02">.PSC02</a></code></p>
+<h3 id=".PAGELENGTH">11.74. <code>.PAGELEN, .PAGELENGTH</code></h3>
 <p>Set the page length for the listing. Must be followed by an integer
   constant. The value may be "unlimited", or in the range 32 to 127. The
   statement has no effect if no listing is generated. The default value is -1
@@ -2974,12 +2740,7 @@ either a string or an expression.</p>
 
         .pagelength     unlimited       ; Unlimited page length
   </pre>
-<h3 id=".PC02">11.84. <code>.PC02</code></h3>
-<p>Enable the 65C02 instructions set. This instruction set includes all
-  6502 and 65SC02 instructions.</p>
-<p>See: <code><a href="#.P02">.P02</a></code>, <code><a href="#.PSC02">.PSC02</a></code>, <code><a href="#.P816">.P816</a></code> and
-  <code><a href="#.P4510">.P4510</a></code></p>
-<h3 id=".POPCPU">11.85. <code>.POPCPU</code></h3>
+<h3 id=".POPCPU">11.75. <code>.POPCPU</code></h3>
 <p>Pop the last CPU setting from the stack, and activate it.</p>
 <p>This command will switch back to the CPU that was last pushed onto the CPU
   stack using the <code><a href="#.PUSHCPU">.PUSHCPU</a></code> command, and
@@ -2987,7 +2748,7 @@ either a string or an expression.</p>
 <p>The assembler will print an error message if the CPU stack is empty when
   this command is issued.</p>
 <p>See: <code><a href="#.CPU">.CPU</a></code>, <code><a href="#.PUSHCPU">.PUSHCPU</a></code>, <code><a href="#.SETCPU">.SETCPU</a></code></p>
-<h3 id=".POPSEG">11.86. <code>.POPSEG</code></h3>
+<h3 id=".POPSEG">11.76. <code>.POPSEG</code></h3>
 <p>Pop the last pushed segment from the stack, and set it.</p>
 <p>This command will switch back to the segment that was last pushed onto the
   segment stack using the <code><a href="#.PUSHSEG">.PUSHSEG</a></code>
@@ -2995,7 +2756,7 @@ either a string or an expression.</p>
 <p>The assembler will print an error message if the segment stack is empty
   when this command is issued.</p>
 <p>See: <code><a href="#.PUSHSEG">.PUSHSEG</a></code></p>
-<h3 id=".PROC">11.87. <code>.PROC</code></h3>
+<h3 id=".PROC">11.77. <code>.PROC</code></h3>
 <p>Start a nested lexical level with the given name and adds a symbol with this
   name to the enclosing scope. All new symbols from now on are in the local
   lexical level and are accessible from outside only via <a href="#scopesyntax">explicit scope specification</a>. Symbols defined outside this local
@@ -3020,12 +2781,11 @@ either a string or an expression.</p>
         .endproc                ; Leave lexical level
   </pre>
 <p>See: <code><a href="#.ENDPROC">.ENDPROC</a></code> and <code><a href="#.SCOPE">.SCOPE</a></code></p>
-<h3 id=".PSC02">11.88. <code>.PSC02</code></h3>
-<p>Enable the 65SC02 instructions set. This instruction set includes all
-  6502 instructions.</p>
-<p>See: <code><a href="#.P02">.P02</a></code>, <code><a href="#.PC02">.PC02</a></code>, <code><a href="#.P816">.P816</a></code> and
-  <code><a href="#.P4510">.P4510</a></code></p>
-<h3 id=".PUSHCPU">11.89. <code>.PUSHCPU</code></h3>
+<h3 id=".PSC02">11.78. <code>.PSC02</code></h3>
+<p>Enable the 65SC02 instruction set (the Atari Lynx CPU). This instruction set
+  includes all 6502 instructions and is the default in this tree.</p>
+<p>See: <code><a href="#.P02">.P02</a></code></p>
+<h3 id=".PUSHCPU">11.79. <code>.PUSHCPU</code></h3>
 <p>Push the currently active CPU onto a stack. The stack has a size of 8
   entries.</p>
 <p><code>.PUSHCPU</code> allows together with <code><a href="#.POPCPU">.POPCPU</a></code> to switch to another CPU and to restore the old CPU
@@ -3033,7 +2793,7 @@ either a string or an expression.</p>
 <p>The assembler will print an error message if the CPU stack is already full,
   when this command is issued.</p>
 <p>See: <code><a href="#.CPU">.CPU</a></code>, <code><a href="#.POPCPU">.POPCPU</a></code>, <code><a href="#.SETCPU">.SETCPU</a></code></p>
-<h3 id=".PUSHSEG">11.90. <code>.PUSHSEG</code></h3>
+<h3 id=".PUSHSEG">11.80. <code>.PUSHSEG</code></h3>
 <p>Push the currently active segment onto a stack. The entries on the stack
   include the name of the segment and the segment type. The stack has a size
   of 16 entries.</p>
@@ -3043,9 +2803,9 @@ either a string or an expression.</p>
 <p>The assembler will print an error message if the segment stack is already
   full, when this command is issued.</p>
 <p>See: <code><a href="#.POPSEG">.POPSEG</a></code></p>
-<h3 id=".RELOC">11.91. <code>.RELOC</code></h3>
+<h3 id=".RELOC">11.81. <code>.RELOC</code></h3>
 <p>Switch back to relocatable mode. See the <code><a href="#.ORG">.ORG</a></code> command.</p>
-<h3 id=".REPEAT">11.92. <code>.REPEAT</code></h3>
+<h3 id=".REPEAT">11.82. <code>.REPEAT</code></h3>
 <p>Repeat all commands between <code>.REPEAT</code> and <code><a href="#.ENDREPEAT">.ENDREPEAT</a></code> constant number of times. The command is followed by
   a constant expression that tells how many times the commands in the body
   should get repeated. Optionally, a comma and an identifier may be specified.
@@ -3065,7 +2825,7 @@ either a string or an expression.</p>
         .endmacro
   </pre>
 <p>See: <code><a href="#.ENDREPEAT">.ENDREPEAT</a></code></p>
-<h3 id=".RES">11.93. <code>.RES</code></h3>
+<h3 id=".RES">11.83. <code>.RES</code></h3>
 <p>Reserve storage. The command is followed by one or two constant
   expressions. The first one is mandatory and defines, how many bytes of
   storage should be defined. The second, optional expression must by a
@@ -3076,7 +2836,7 @@ either a string or an expression.</p>
 <pre class="verb">        ; Reserve 12 bytes of memory with value $AA
         .res    12, $AA
   </pre>
-<h3 id=".RODATA">11.94. <code>.RODATA</code></h3>
+<h3 id=".RODATA">11.84. <code>.RODATA</code></h3>
 <p>Switch to the RODATA segment. The name of the RODATA segment is always
   "RODATA", so this is a shortcut for</p>
 <pre class="verb">        .segment  "RODATA"
@@ -3084,7 +2844,7 @@ either a string or an expression.</p>
 <p>The RODATA segment is a segment that is used by the compiler for
   readonly data like string constants.</p>
 <p>See also the <code><a href="#.SEGMENT">.SEGMENT</a></code> command.</p>
-<h3 id=".SCOPE">11.95. <code>.SCOPE</code></h3>
+<h3 id=".SCOPE">11.85. <code>.SCOPE</code></h3>
 <p>Start a nested lexical level with the given name. All new symbols from now
   on are in the local lexical level and are accessible from outside only via
   <a href="#scopesyntax">explicit scope specification</a>. Symbols defined
@@ -3108,7 +2868,7 @@ either a string or an expression.</p>
                 lda #Error::File        ; Use symbol from scope Error
   </pre>
 <p>See: <code><a href="#.ENDSCOPE">.ENDSCOPE</a></code> and <code><a href="#.PROC">.PROC</a></code></p>
-<h3 id=".SEGMENT">11.96. <code>.SEGMENT</code></h3>
+<h3 id=".SEGMENT">11.86. <code>.SEGMENT</code></h3>
 <p>Switch to another segment. Code and data is always emitted into a
   segment, that is, a named section of data. The default segment is
   "CODE". There may be up to 254 different segments per object file
@@ -3137,61 +2897,37 @@ either a string or an expression.</p>
         .segment "ZP2": absolute        ; Error, redecl mismatch
   </pre>
 <p>See: <code><a href="#.BSS">.BSS</a></code>, <code><a href="#.CODE">.CODE</a></code>, <code><a href="#.DATA">.DATA</a></code>, <code><a href="#.RODATA">.RODATA</a></code>, and <code><a href="#.ZEROPAGE">.ZEROPAGE</a></code></p>
-<h3 id=".SET">11.97. <code>.SET</code></h3>
+<h3 id=".SET">11.87. <code>.SET</code></h3>
 <p><code>.SET</code> is used to assign a value to a variable. See <a href="#variables">Numeric variables</a> for a full description.</p>
-<h3 id=".SETCPU">11.98. <code>.SETCPU</code></h3>
+<h3 id=".SETCPU">11.88. <code>.SETCPU</code></h3>
 <p>Switch the CPU instruction set. The command is followed by a string that
-  specifies the CPU. Possible values are those that can also be supplied to
-  the <code><a href="#option--cpu">--cpu</a></code> command line option,
-  namely: 6502, 6502X, 65SC02, 65C02, 65816, 4510 and HuC6280.</p>
+  specifies the CPU. This tree only supports the Atari Lynx, so the possible
+  values are <code>"6502"</code> and <code>"65SC02"</code>; all other CPUs have
+  been removed.</p>
 <p>See: <code><a href="#.CPU">.CPU</a></code>,
        <code><a href="#.IFP02">.IFP02</a></code>,
-       <code><a href="#.IFP816">.IFP816</a></code>,
-       <code><a href="#.IFPC02">.IFPC02</a></code>,
        <code><a href="#.IFPSC02">.IFPSC02</a></code>,
        <code><a href="#.P02">.P02</a></code>,
-       <code><a href="#.P816">.P816</a></code>,
-       <code><a href="#.P4510">.P4510</a></code>,
-       <code><a href="#.PC02">.PC02</a></code>,
        <code><a href="#.PSC02">.PSC02</a></code></p>
-<h3 id=".SMART">11.99. <code>.SMART</code></h3>
+<h3 id=".SMART">11.89. <code>.SMART</code></h3>
 <p>Switch on or off smart mode. The command must be followed by a '+' or '-'
   character to switch the option on or off respectively. The default is off
   (that is, the assembler doesn't try to be smart), but this default may be
   changed by the -s switch on the command line.</p>
-<p>In smart mode the assembler will do the following:</p>
-<ul>
-<li>
-<p>Track usage of the <code>REP</code> and <code>SEP</code> instructions in 65816 mode
-        and update the operand sizes accordingly. If the operand of such an
-        instruction cannot be evaluated by the assembler (for example, because
-        the operand is an imported symbol), a warning is issued. Beware: Since
-        the assembler cannot trace the execution flow this may lead to false
-        results in some cases. If in doubt, use the <code>.Inn</code> and <code>.Ann</code>
-        instructions to tell the assembler about the current settings.</p>
-</li>
-<li>
-<p>In 65816 mode, replace a <code>RTS</code> instruction by <code>RTL</code> if it is
-        used within a procedure declared as <code>far</code>, or if the procedure has
-        no explicit address specification, but it is <code>far</code> because of the
-        memory model used.</p>
-</li>
-</ul>
+<p>Smart mode historically tracked the <code>REP</code>/<code>SEP</code> instructions
+  and <code>RTS</code>-to-<code>RTL</code> conversion in 65816 mode. Since the 65816
+  is no longer supported, smart mode currently has no effect in this tree.</p>
 <p>Example:</p>
 <pre class="verb">        .smart                          ; Be smart
         .smart  -                       ; Stop being smart
   </pre>
-<p>See: <code><a href="#.A16">.A16</a></code>,
-       <code><a href="#.A8">.A8</a></code>,
-       <code><a href="#.I16">.I16</a></code>,
-       <code><a href="#.I8">.I8</a></code></p>
-<h3 id=".STRUCT">11.100. <code>.STRUCT</code></h3>
+<h3 id=".STRUCT">11.90. <code>.STRUCT</code></h3>
 <p>Starts a struct definition. Structs are covered in a separate section named
   <a href="#structs">"Structs and unions"</a>.</p>
 <p>See also: <code><a href="#.ENDSTRUCT">.ENDSTRUCT</a></code>,
             <code><a href="#.ENDUNION">.ENDUNION</a></code>,
             <code><a href="#.UNION">.UNION</a></code></p>
-<h3 id=".TAG">11.101. <code>.TAG</code></h3>
+<h3 id=".TAG">11.91. <code>.TAG</code></h3>
 <p>Allocate space for a struct or union.</p>
 <p>Example:</p>
 <pre class="verb">        .struct Point
@@ -3202,20 +2938,20 @@ either a string or an expression.</p>
         .bss
                 .tag    Point           ; Allocate 4 bytes
   </pre>
-<h3 id=".UNDEFINE">11.102. <code>.UNDEF, .UNDEFINE</code></h3>
+<h3 id=".UNDEFINE">11.92. <code>.UNDEF, .UNDEFINE</code></h3>
 <p>Delete a define style macro definition. The command is followed by an
   identifier which specifies the name of the macro to delete. Macro
   replacement is switched of when reading the token following the command
   (otherwise the macro name would be replaced by its replacement list).</p>
 <p>See also the <code><a href="#.DEFINE">.DEFINE</a></code> command and
   section <a href="#macros">Macros</a>.</p>
-<h3 id=".UNION">11.103. <code>.UNION</code></h3>
+<h3 id=".UNION">11.93. <code>.UNION</code></h3>
 <p>Starts a union definition. Unions are covered in a separate section named
   <a href="#structs">"Structs and unions"</a>.</p>
 <p>See also: <code><a href="#.ENDSTRUCT">.ENDSTRUCT</a></code>,
             <code><a href="#.ENDUNION">.ENDUNION</a></code>,
             <code><a href="#.STRUCT">.STRUCT</a></code></p>
-<h3 id=".WARNING">11.104. <code>.WARNING</code></h3>
+<h3 id=".WARNING">11.94. <code>.WARNING</code></h3>
 <p>Force an assembly warning. The assembler will output a warning message
   preceded by "User warning". This warning will always be output, even if
   other warnings are disabled with the <code><a href="#option-W">-W0</a></code>
@@ -3238,13 +2974,13 @@ either a string or an expression.</p>
 <p>See also: <code><a href="#.ERROR">.ERROR</a></code>,
             <code><a href="#.FATAL">.FATAL</a></code>,
             <code><a href="#.OUT">.OUT</a></code></p>
-<h3 id=".WORD">11.105. <code>.WORD</code></h3>
+<h3 id=".WORD">11.95. <code>.WORD</code></h3>
 <p>Define word sized data. Must be followed by a sequence of (word ranged,
   but not necessarily constant) expressions.</p>
 <p>Example:</p>
 <pre class="verb">        .word   $0D00, $AF13, _Clear
   </pre>
-<h3 id=".ZEROPAGE">11.106. <code>.ZEROPAGE</code></h3>
+<h3 id=".ZEROPAGE">11.96. <code>.ZEROPAGE</code></h3>
 <p>Switch to the ZEROPAGE segment and mark it as direct (zeropage) segment.
   The name of the ZEROPAGE segment is always "ZEROPAGE", so this is a
   shortcut for</p>
@@ -3541,8 +3277,8 @@ may be accidentally implied:</p>
         lda DUO(5,4), Y         ; LDA (indirect), Y
         lda 0+DUO(5,4), Y       ; LDA absolute indexed, Y</pre>
 <h3 id="sect-12-8">12.8. Characters in macros</h3>
-<p>When using the <a href="#option-t">-t</a> option, characters are translated
-into the target character set of the specific machine. However, this happens
+<p>Characters are translated into the target character set of the specific
+machine. However, this happens
 as late as possible. This means that strings are translated if they are part
 of a <code><a href="#.BYTE">.BYTE</a></code> or <code><a href="#.ASCIIZ">.ASCIIZ</a></code> command. Characters are translated as soon as they are
 used as part of an expression.</p>
@@ -3645,30 +3381,21 @@ jump to the actual branch target.</p>
 <pre class="verb">        jeq, jne, jmi, jpl, jcs, jcc, jvs, jvc</pre>
 <h3 id="sect-13-3">13.3. <code>.MACPACK cpu</code></h3>
 <p>This macro package does not define any macros but constants used to examine
-the value read from the <code><a href="#.CPU">.CPU</a></code> pseudo variable. For
-each supported CPU a constant similar to</p>
+the value read from the <code><a href="#.CPU">.CPU</a></code> pseudo variable. This
+tree only supports the Atari Lynx (65SC02, a superset of the 6502), so the
+defined CPU constants are</p>
 <pre class="verb">    CPU_6502
-    CPU_65SC02
-    CPU_65C02
-    CPU_65816
-    CPU_SWEET16
-    CPU_HUC6280
-    CPU_4510</pre>
-<p>is defined. These constants may be used to determine the exact type of the
-currently enabled CPU. In addition to that, for each CPU instruction set,
-another constant is defined:</p>
+    CPU_65SC02</pre>
+<p>These constants may be used to determine the exact type of the currently
+enabled CPU. In addition to that, for each CPU instruction set, another
+constant is defined:</p>
 <pre class="verb">    CPU_ISET_6502
-    CPU_ISET_65SC02
-    CPU_ISET_65C02
-    CPU_ISET_65816
-    CPU_ISET_SWEET16
-    CPU_ISET_HUC6280
-    CPU_ISET_4510</pre>
+    CPU_ISET_65SC02</pre>
 <p>The value read from the <code><a href="#.CPU">.CPU</a></code> pseudo variable may
 be checked with <code><a href="#operators">.BITAND</a></code> to determine if the
 currently enabled CPU supports a specific instruction set. For example the
-65C02 supports all instructions of the 65SC02 CPU, so it has the
-<code>CPU_ISET_65SC02</code> bit set in addition to its native <code>CPU_ISET_65C02</code>
+65SC02 supports all instructions of the 6502 CPU, so it has the
+<code>CPU_ISET_6502</code> bit set in addition to its native <code>CPU_ISET_65SC02</code>
 bit. Using</p>
 <pre class="verb">        .if (.cpu .bitand CPU_ISET_65SC02)
                 lda     (sp)
@@ -3678,8 +3405,7 @@ bit. Using</p>
         .endif</pre>
 <p>it is possible to determine if the</p>
 <pre class="verb">                lda     (sp)</pre>
-<p>instruction is supported, which is the case for the 65SC02, 65C02 and 65816
-CPUs (the latter two are upwards compatible to the 65SC02).</p>
+<p>instruction is supported, which is the case for the 65SC02.</p>
 <h3 id="sect-13-4">13.4. <code>.MACPACK module</code></h3>
 <p>This macro package defines a macro named <code>module_header</code>. It takes an
 identifier as argument and is used to define the header of a module both

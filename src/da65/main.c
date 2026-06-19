@@ -89,7 +89,6 @@ static void Usage (void)
             "  --argument-column n\tSpecify argument start column\n"
             "  --comment-column n\tSpecify comment start column\n"
             "  --comments n\t\tSet the comment level for the output\n"
-            "  --cpu type\t\tSet cpu type\n"
             "  --debug-info\t\tAdd debug info to object file\n"
             "  --formfeeds\t\tAdd formfeeds to the output\n"
             "  --help\t\tHelp (this text)\n"
@@ -205,16 +204,6 @@ static void OptComments (const char* Opt, const char* Arg)
 
     /* Use the value */
     Comments = (unsigned char) Val;
-}
-
-
-
-static void OptCPU (const char* Opt attribute ((unused)), const char* Arg)
-/* Handle the --cpu option */
-{
-    /* Find the CPU from the given name */
-    CPU = FindCPU (Arg);
-    SetOpcTable (CPU);
 }
 
 
@@ -540,7 +529,6 @@ int main (int argc, char* argv [])
         { "--bytes-per-line",   1,      OptBytesPerLine         },
         { "--comment-column",   1,      OptCommentColumn        },
         { "--comments",         1,      OptComments             },
-        { "--cpu",              1,      OptCPU                  },
         { "--debug-info",       0,      OptDebugInfo            },
         { "--formfeeds",        0,      OptFormFeeds            },
         { "--help",             0,      OptHelp                 },
@@ -651,9 +639,10 @@ int main (int argc, char* argv [])
         AbEnd ("comment-column value must be smaller than text-column value");
     }
 
-    /* If no CPU given, use the default CPU */
+    /* If no CPU given by the info file, use the default (Lynx) CPU */
     if (CPU == CPU_UNKNOWN) {
-        CPU = CPU_6502;
+        CPU = CPU_65SC02;
+        SetOpcTable (CPU);
     }
 
     /* Get the current time and convert it to string so it can be used in

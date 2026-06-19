@@ -1100,11 +1100,8 @@ static ExprNode* Factor (void)
             break;
 
         case TOK_ASIZE:
-            if (GetCPU () != CPU_65816) {
-                N = GenLiteralExpr (8);
-            } else {
-                N = GenLiteralExpr (ExtBytes[AM65I_IMM_ACCU] * 8);
-            }
+            /* The accumulator is always 8 bit on the 65SC02 */
+            N = GenLiteralExpr (8);
             NextTok ();
             break;
 
@@ -1142,11 +1139,8 @@ static ExprNode* Factor (void)
             break;
 
         case TOK_ISIZE:
-            if (GetCPU () != CPU_65816) {
-                N = GenLiteralExpr (8);
-            } else {
-                N = GenLiteralExpr (ExtBytes[AM65I_IMM_INDEX] * 8);
-            }
+            /* The index registers are always 8 bit on the 65SC02 */
+            N = GenLiteralExpr (8);
             NextTok ();
             break;
 

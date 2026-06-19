@@ -31,10 +31,8 @@ Short options:
   -h                            Help (this text)
   -l name                       Create an assembler listing file
   -m name                       Create a map file
-  -mm model                     Set the memory model
   -o name                       Name the output file
   -r                            Enable register variables
-  -t sys                        Set the target system
   -u sym                        Force an import of symbol 'sym'
   -v                            Verbose mode
   -vm                           Verbose map file
@@ -73,7 +71,6 @@ Long options:
   --code-name seg               Set the name of the CODE segment
   --codesize x                  Accept larger code by factor x
   --config name                 Use linker config file
-  --cpu type                    Set cpu type
   --create-dep name             Create a make dependency file
   --create-full-dep name        Create a full make dependency file
   --data-label name             Define and export a DATA segment label
@@ -86,13 +83,9 @@ Long options:
   --include-dir dir             Set a compiler include directory path
   --ld-args options             Pass options to the linker
   --lib-path path               Specify a library search path
-  --list-targets                List all available targets
   --listing name                Create an assembler listing file
   --list-bytes n                Number of bytes per assembler listing line
   --mapfile name                Create a map file
-  --memory-model model          Set the memory model
-  --module                      Link as a module
-  --module-id id                Specify a module id for the linker
   --no-target-lib               Don't link the target library
   --o65-model model             Override the o65 model
   --obj file                    Link this object file
@@ -104,7 +97,6 @@ Long options:
   --signed-chars                Default characters are signed
   --start-addr addr             Set the default start address
   --static-locals               Make local variables static
-  --target sys                  Set the target system
   --version                     Print the version number
   --verbose                     Verbose mode
   --zeropage-label name         Define and export a ZEROPAGE segment label
@@ -155,14 +147,6 @@ switch.</p>
   then. It is supposed to be used with shell backquotes or the GNU make shell
   function. That way, you can write build scripts or Makefiles accessing target
   files without any assumption about the cc65 installation path.</p>
-</dd>
-<dt><code>-t sys, --target sys</code></dt>
-<dd>
-<p>The default for this option is different from the compiler and linker, in the
-  case that the option is missing:  While the other tools (compiler, assembler,
-  and linker) will use the "none" system settings by default, cl65 will use
-  "lynx" as a target system by default, since the Atari Lynx is the only
-  target with library support in this tree.</p>
 </dd>
 <dt><code>--no-target-lib</code></dt>
 <dd>
@@ -252,12 +236,12 @@ extensions.</p>
 <p>The morse trainer software, which consists of one C file (morse.c) and one
 assembler file (irq.s) will need the following separate steps to compile
 into an executable named morse:</p>
-<pre class="verb">        cc65 -g -Oi -t lynx morse.c
+<pre class="verb">        cc65 -g -Oi morse.c
         ca65 -g morse.s
         ca65 -g irq.s
-        ld65 -o morse -t lynx lynx.o morse.o irq.o lynx.lib</pre>
+        ld65 -o morse lynx.o morse.o irq.o lynx.lib</pre>
 <p>When using cl65, this is simplified to</p>
-<pre class="verb">        cl65 -g -Oi -t lynx morse.c irq.s</pre>
+<pre class="verb">        cl65 -g -Oi morse.c irq.s</pre>
 <p>As a general rule, you may use cl65 instead of cc65 at most times,
 especially in makefiles to build object files directly from C files. Use</p>
 <pre class="verb">        .c.o:

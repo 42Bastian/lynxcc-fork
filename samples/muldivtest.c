@@ -21,7 +21,7 @@
 ** The screen shows pass/total per sweep and the first failing case, if any.
 ** "ALL PASS" means every case matched. Press A to re-run.
 **
-** Build:  cl65 -t lynx -O -o muldivtest.lnx muldivtest.c
+** Build:  cl65 -O -o muldivtest.lnx muldivtest.c
 */
 
 #include <lynx.h>

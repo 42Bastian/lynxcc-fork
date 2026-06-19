@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="doc.css">
 <script>(function(){try{var t=localStorage.getItem("cc65-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
 </head><body>
-<div class="topbar"><a class="brand" href="index.html">lynxcc</a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><a href="cc65.html">cc65</a><a href="ca65.html">ca65</a><a href="ld65.html">ld65</a><a href="cl65.html">cl65</a><a href="library.html">Library</a><a href="funcref.html">Functions</a><a href="tgi.html">TGI</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>da65 Users Guide</h1><p class="author"><a href="mailto:uz@cc65.org">Ullrich von Bassewitz</a>,<br> <a href="mailto:greg.king5@verizon.net">Greg King</a></p></header><div class="abstract">da65 is a 6502/65C02 disassembler that is able to read user-supplied
+<div class="topbar"><a class="brand" href="index.html">lynxcc</a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><a href="cc65.html">cc65</a><a href="ca65.html">ca65</a><a href="ld65.html">ld65</a><a href="cl65.html">cl65</a><a href="library.html">Library</a><a href="funcref.html">Functions</a><a href="tgi.html">TGI</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>da65 Users Guide</h1><p class="author"><a href="mailto:uz@cc65.org">Ullrich von Bassewitz</a>,<br> <a href="mailto:greg.king5@verizon.net">Greg King</a></p></header><div class="abstract">da65 is a 65SC02 disassembler that is able to read user-supplied
 information about its input data, for better results. The output is ready for
 feeding into ca65, the macro assembler supplied with the cc65 C compiler.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Overview</a></li>
@@ -27,9 +27,9 @@ feeding into ca65, the macro assembler supplied with the cc65 C compiler.</div><
 <li class="lvl2"><a href="#sect-4-7">4.7. An Info File Example</a></li>
 <li class="lvl1"><a href="#sect-5">5. Copyright</a></li>
 </ul></nav><h2 id="sect-1">1. Overview</h2>
-<p>da65 is a disassembler for 6502/65C02 code. It is supplied as a utility with
-the cc65 C compiler and generates output that is suitable for the ca65
-macro assembler.</p>
+<p>da65 is a disassembler for 65SC02 code (the Atari Lynx CPU). It is supplied as
+a utility with the cc65 C compiler and generates output that is suitable for the
+ca65 macro assembler.</p>
 <p>Besides generating output for ca65, one of the design goals was that the user
 is able to feed additional information about the code into the disassembler,
 for improved results. This information may include the location and size of
@@ -59,7 +59,6 @@ Long options:
   --argument-column n   Specify argument start column
   --comment-column n    Specify comment start column
   --comments n          Set the comment level for the output
-  --cpu type            Set cpu type
   --debug-info          Add debug info to object file
   --formfeeds           Add formfeeds to the output
   --help                Help (this text)
@@ -94,34 +93,6 @@ Long options:
 <p>Set the comment level for the output. Valid arguments are 0..4. Greater
   values will increase the level of additional information written to the
   output file in form of comments.</p>
-<a id="option--cpu"></a>
-</dd>
-<dt><code>--cpu type</code></dt>
-<dd>
-<p>Set the CPU type. The option takes a parameter, which may be one of</p>
-<ul>
-<li>
-<p>6502</p>
-</li>
-<li>
-<p>6502x</p>
-</li>
-<li>
-<p>65sc02</p>
-</li>
-<li>
-<p>65c02</p>
-</li>
-<li>
-<p>huc6280</p>
-</li>
-<li>
-<p>4510</p>
-</li>
-</ul>
-<p>6502x is for the NMOS 6502 with unofficial opcodes. huc6280 is the CPU of
-  the PC engine. 4510 is the CPU of the Commodore C65. Support for the 65816
-  currently is not available.</p>
 <a id="option--formfeeds"></a>
 </dd>
 <dt><code>-F, --formfeeds</code></dt>
@@ -219,19 +190,11 @@ Long options:
 </dl>
 <h2 id="sect-3">3. Detailed workings</h2>
 <h3 id="sect-3-1">3.1. Supported CPUs</h3>
-<p>The default (no CPU given on the command line or in the <code>GLOBAL</code> section of
-the info file) is the 6502 CPU. The disassembler knows all "official" opcodes
-for this CPU. Invalid opcodes are translated into <code>.byte</code> commands.</p>
-<p>With the command line option <code><a href="#option--cpu">--cpu</a></code>, the
-disassembler may be told to recognize either the 65SC02 or 65C02 CPUs. The
-latter understands the same opcodes as the former, plus 16 additional bit
-manipulation and bit test-and-branch commands.</p>
-<p>When disassembling 4510 code, due to handling of 16-bit wide branches, da65
-can produce output that can not be re-assembled, when one or more of those
-branches point outside of the disassembled memory. This can happen when text
-or binary data is processed.</p>
-<p>While there is some code for the 65816 in the sources, it is currently
-unsupported.</p>
+<p>This tree only supports the Atari Lynx, whose CPU is the 65SC02. The
+disassembler recognizes the 65SC02 opcodes (a superset of the base 6502);
+the default when no CPU is given in the <code>GLOBAL</code> section of the info
+file is the 65SC02. Invalid opcodes are translated into <code>.byte</code>
+commands. Support for all other CPUs has been removed.</p>
 <h3 id="sect-3-2">3.2. Attribute map</h3>
 <p>The disassembler works by creating an attribute map for the whole address
 space ($0000 - $FFFF). Initially, all attributes are cleared. Then, an
@@ -295,8 +258,9 @@ following attributes are recognized:</p>
 </dd>
 <dt><code>CPU</code></dt>
 <dd>
-<p>This attribute may be used instead of the <code><a href="#option--cpu">--cpu</a></code> option on the command line. For possible values see
-  there. The value is a string and must be enclosed in quotes.</p>
+<p>This attribute sets the CPU to disassemble for. The value is a string and
+  must be enclosed in quotes. The supported values are <code>"6502"</code> and
+  <code>"65sc02"</code> (the Atari Lynx CPU); all other CPUs have been removed.</p>
 </dd>
 <dt><code>HEXOFFS</code></dt>
 <dd>

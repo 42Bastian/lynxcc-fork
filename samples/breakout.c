@@ -18,7 +18,7 @@
 **
 ** Controls: pad left/right moves, A serves/restarts.
 **
-** Build:  cl65 -t lynx -Ors -o breakout.lnx breakout.c
+** Build:  cl65 -Ors -o breakout.lnx breakout.c
 */
 
 #include <lynx.h>

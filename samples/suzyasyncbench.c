@@ -29,7 +29,7 @@
 ** suzybench.c. Real hardware is the oracle; an emulator is trustworthy here
 ** only if it models Suzy math timing.
 **
-** Build:  cl65 -t lynx -Osri -o suzyasyncbench.lnx suzyasyncbench.c
+** Build:  cl65 -Osri -o suzyasyncbench.lnx suzyasyncbench.c
 */
 
 #include <lynx.h>

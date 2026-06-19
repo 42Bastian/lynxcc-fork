@@ -331,27 +331,17 @@ static StrBuf* GenArrayType (StrBuf* Type, unsigned SpanSize,
 
 
 static void DoA16 (void)
-/* Switch the accu to 16 bit mode (assembler only) */
+/* Switch the accu to 16 bit mode (65816 only, no longer supported) */
 {
-    if (GetCPU() != CPU_65816) {
-        Error ("Command is only valid in 65816 mode");
-    } else {
-        /* Immidiate mode has two extension bytes */
-        ExtBytes [AM65I_IMM_ACCU] = 2;
-    }
+    Error ("Command is only valid in 65816 mode");
 }
 
 
 
 static void DoA8 (void)
-/* Switch the accu to 8 bit mode (assembler only) */
+/* Switch the accu to 8 bit mode (65816 only, no longer supported) */
 {
-    if (GetCPU() != CPU_65816) {
-        Error ("Command is only valid in 65816 mode");
-    } else {
-        /* Immidiate mode has one extension byte */
-        ExtBytes [AM65I_IMM_ACCU] = 1;
-    }
+    Error ("Command is only valid in 65816 mode");
 }
 
 
@@ -369,7 +359,7 @@ static void DoAddr (void)
     /* Parse arguments */
     while (1) {
         ExprNode* Expr = Expression ();
-        if (GetCPU () == CPU_65816 || ForceRange) {
+        if (ForceRange) {
             /* Do a range check */
             Expr = GenWordExpr (Expr);
         }
@@ -1170,27 +1160,17 @@ static void DoHiBytes (void)
 
 
 static void DoI16 (void)
-/* Switch the index registers to 16 bit mode (assembler only) */
+/* Switch the index registers to 16 bit mode (65816 only, no longer supported) */
 {
-    if (GetCPU() != CPU_65816) {
-        Error ("Command is only valid in 65816 mode");
-    } else {
-        /* Immidiate mode has two extension bytes */
-        ExtBytes [AM65I_IMM_INDEX] = 2;
-    }
+    Error ("Command is only valid in 65816 mode");
 }
 
 
 
 static void DoI8 (void)
-/* Switch the index registers to 16 bit mode (assembler only) */
+/* Switch the index registers to 8 bit mode (65816 only, no longer supported) */
 {
-    if (GetCPU() != CPU_65816) {
-        Error ("Command is only valid in 65816 mode");
-    } else {
-        /* Immidiate mode has one extension byte */
-        ExtBytes [AM65I_IMM_INDEX] = 1;
-    }
+    Error ("Command is only valid in 65816 mode");
 }
 
 
@@ -1529,25 +1509,25 @@ static void DoP02 (void)
 
 
 static void DoPC02 (void)
-/* Switch to 65C02 CPU */
+/* The 65C02 CPU is no longer supported */
 {
-    SetCPU (CPU_65C02);
+    Error ("The 65C02 CPU is no longer supported");
 }
 
 
 
 static void DoP816 (void)
-/* Switch to 65816 CPU */
+/* The 65816 CPU is no longer supported */
 {
-    SetCPU (CPU_65816);
+    Error ("The 65816 CPU is no longer supported");
 }
 
 
 
 static void DoP4510 (void)
-/* Switch to 4510 CPU */
+/* The 4510 CPU is no longer supported */
 {
-    SetCPU (CPU_4510);
+    Error ("The 4510 CPU is no longer supported");
 }
 
 
