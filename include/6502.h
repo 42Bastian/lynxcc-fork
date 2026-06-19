@@ -80,31 +80,6 @@ void __fastcall__ _sys (struct regs* r);
 
 
 
-/* Set and reset the break vector. The given user function is called if
-** a break occurs. The values of the registers may be read from the brk_...
-** variables. The value in brk_pc will point to the address that contains
-** the brk instruction.
-** The set_brk function will install an exit handler that will reset the
-** vector if the program ends.
-*/
-
-extern unsigned char brk_a;     /* A register value */
-extern unsigned char brk_x;     /* X register value */
-extern unsigned char brk_y;     /* Y register value */
-extern unsigned char brk_sr;    /* Status register */
-extern unsigned brk_pc;         /* PC value */
-
-typedef void (*brk_handler) (void);
-/* Type of the break handler */
-
-void __fastcall__ set_brk (brk_handler f);
-/* Set the break vector to the given address */
-
-void reset_brk (void);
-/* Reset the break vector to the original value */
-
-
-
 /* Possible returns for irq_handler() */
 #define IRQ_NOT_HANDLED 0
 #define IRQ_HANDLED     1

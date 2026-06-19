@@ -42,12 +42,6 @@
 
 
 
-/* There is exactly one joypad, always present */
-#define JOY_COUNT               1
-
-/* Return the number of joysticks supported (source compat, zero cost) */
-#define joy_count()             JOY_COUNT
-
 /* Argument for joy_read (ignored, kept for source compatibility) */
 #define JOY_1                   0
 

@@ -75,16 +75,6 @@ unsigned long __fastcall__ umul16x8r32 (unsigned lhs, unsigned char rhs);
 unsigned long __fastcall__ umul16x16r32 (unsigned lhs, unsigned rhs);
 /* Multiplicate two unsigned 16 bit to yield an unsigned 32 bit result */
 
-unsigned int __fastcall__ mul20 (unsigned char value);
-/* Multiply an 8 bit unsigned value by 20 and return the 16 bit unsigned
-** result
-*/
-
-unsigned int __fastcall__ mul40 (unsigned char value);
-/* Multiply an 8 bit unsigned value by 40 and return the 16 bit unsigned
-** result
-*/
-
 int __fastcall__ _sin (unsigned x);
 /* Return the sine of the argument, which must be in range 0..360. The result
 ** is in 8.8 fixed point format, which means that 1.0 = $100 and -1.0 = $FF00.

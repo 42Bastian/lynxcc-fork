@@ -687,8 +687,8 @@ static, smart-linked library, described below.</p>
 <p>There is no loadable joystick driver: input support is a static library
 function (see <code>design/LYNX_JOY_SER_DESIGN.md</code>). <code>joy_read()</code> returns all
 nine inputs in one call: d-pad, A, B, Opt 1 and Opt 2 in the low byte and
-Pause in bit 8. No installation is required and there is nothing to fail;
-<code>joy_count()</code> is a compile-time constant 1. Edge detection is done in
+Pause in bit 8. No installation is required and there is nothing to fail.
+There is exactly one always-present joypad. Edge detection is done in
 the application: <code>pressed = now &amp; ~prev</code>.</p>
 <p>The extended memory (em), mouse, conio and dbg APIs have been removed
 entirely: the Lynx has a flat 64 KB address space, no pointing device and

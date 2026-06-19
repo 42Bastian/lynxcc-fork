@@ -139,13 +139,15 @@ they still match) and gains the three that the `#$F3` mask used to hide:
 #define JOY_PAUSE(v)    ((v) & JOY_PAUSE_MASK)
 ```
 
-Constants replace queries (TGI §2.2 pattern). `joystick.h` rewritten (~30 lines):
+`joystick.h` rewritten (~30 lines):
 
 ```c
-#define JOY_COUNT       1
-#define joy_count()     JOY_COUNT
+#define JOY_1           0       /* joy_read argument, ignored */
 unsigned __fastcall__ joy_read (unsigned char joystick);
 ```
+
+There is exactly one always-present joypad, so the old `joy_count()` query
+(and its `JOY_COUNT` constant) carried no information and was removed.
 
 `joy_install`, `joy_uninstall`, `joy_load_driver`, `joy_unload`, `joy_static_stddrv`,
 `joy_stddrv`, `_joy_drv`, and all `JOY_ERR_*` codes are deleted — with no install step
