@@ -71,7 +71,13 @@ EXELIST_lynx = \
 
 samples: $(EXELIST_$(SYS))
 
+# The top-level Makefile invokes "make -C samples all". Always rebuild the
+# samples from scratch here so that a changed toolchain, library or config is
+# guaranteed to be re-exercised (the .lnx files carry no dependency on the
+# library, so an incremental build would otherwise leave them stale).
 all:
+	@$(MAKE) --no-print-directory mostlyclean
+	@$(MAKE) --no-print-directory samples
 
 # --------------------------------------------------------------------------
 # Installation rules
