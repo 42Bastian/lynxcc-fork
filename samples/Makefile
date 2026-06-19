@@ -63,6 +63,7 @@ EXELIST_lynx = \
         breakout.lnx \
         invaders.lnx \
         raycaster.lnx \
+        sybil.lnx \
         setbpp.lnx \
         comlynx.lnx \
         fonttest.lnx \
