@@ -11,3 +11,7 @@ samples/*.lnx
 samples/*.map
 samples/*.o
 samples/*.s
+
+# sp65-generated sprite headers (rebuilt from heart.pcx)
+samples/heart_packed.h
+samples/heart_literal.h

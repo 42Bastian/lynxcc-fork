@@ -39,12 +39,8 @@
 #include "attr.h"
 #include "convert.h"
 #include "error.h"
-#include "geosbitmap.h"
-#include "geosicon.h"
-#include "koala.h"
 #include "lynxsprite.h"
 #include "raw.h"
-#include "vic2sprite.h"
 
 
 
@@ -63,12 +59,8 @@ struct ConverterMapEntry {
 
 /* Converter table, alphabetically sorted */
 static const ConverterMapEntry ConverterMap[] = {
-    {   "geos-bitmap",          GenGeosBitmap   },
-    {   "geos-icon",            GenGeosIcon     },
-    {   "koala",                GenKoala        },
     {   "lynx-sprite",          GenLynxSprite   },
     {   "raw",                  GenRaw          },
-    {   "vic2-sprite",          GenVic2Sprite   },
 };
 
 

@@ -6,8 +6,8 @@
 <script>(function(){try{var t=localStorage.getItem("cc65-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
 </head><body>
 <div class="topbar"><a class="brand" href="index.html">lynxcc</a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><a href="cc65.html">cc65</a><a href="ca65.html">ca65</a><a href="ld65.html">ld65</a><a href="cl65.html">cl65</a><a href="funcref.html">Functions</a><a href="tgi.html">TGI</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>sp65 Users Guide</h1></header><div class="abstract">sp65 is a sprite and bitmap utility that is part of the cc65 development suite.
-It is used to convert graphics and bitmaps into the target formats of the
-supported machines.</div><nav class="toc"><h2>Contents</h2><ul>
+In this Lynx-only fork it converts graphics and bitmaps into the Atari Lynx
+sprite format.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Overview</a></li>
 <li class="lvl1"><a href="#sect-2">2. Usage</a></li>
 <li class="lvl2"><a href="#sect-2-1">2.1. Command line option overview</a></li>
@@ -17,23 +17,21 @@ supported machines.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#input-formats">5. Input formats</a></li>
 <li class="lvl2"><a href="#sect-5-1">5.1. PCX</a></li>
 <li class="lvl1"><a href="#conversions">6. Conversions</a></li>
-<li class="lvl2"><a href="#sect-6-1">6.1. GEOS bitmap</a></li>
-<li class="lvl2"><a href="#sect-6-2">6.2. GEOS icon</a></li>
-<li class="lvl2"><a href="#sect-6-3">6.3. Koala image</a></li>
-<li class="lvl2"><a href="#sect-6-4">6.4. Lynx sprite</a></li>
-<li class="lvl2"><a href="#sect-6-5">6.5. VIC2 sprite</a></li>
+<li class="lvl2"><a href="#sect-6-1">6.1. Lynx sprite</a></li>
 <li class="lvl1"><a href="#output-formats">7. Output formats</a></li>
 <li class="lvl2"><a href="#sect-7-1">7.1. Binary</a></li>
 <li class="lvl2"><a href="#sect-7-2">7.2. Assembler code</a></li>
 <li class="lvl2"><a href="#sect-7-3">7.3. C code</a></li>
 <li class="lvl1"><a href="#sect-8">8. Copyright</a></li>
 </ul></nav><h2 id="sect-1">1. Overview</h2>
-<p>sp65 is a tool that converts images from common formats into formats used
-on the 6502 platforms that are the targets of the cc65 compiler suite. In
-addition, it allows some very simple operation with loaded graphics data, like
-using part of an image for further processing.</p>
-<p>The utility has been designed in a way that adding additional source or target
-formats is easy. The final output is either binary, or C/assembler source.</p>
+<p>sp65 is a tool that converts images from common formats into the Atari Lynx
+sprite format used by this fork of the cc65 compiler suite. In addition, it
+allows some very simple operation with loaded graphics data, like using part of
+an image for further processing.</p>
+<p>The utility is structured so that adding source or target formats is easy;
+upstream cc65 ships several other target converters, but this Lynx fork keeps
+only the Lynx sprite converter. The final output is either binary, or
+C/assembler source.</p>
 <h2 id="sect-2">2. Usage</h2>
 <h3 id="sect-2-1">2.1. Command line option overview</h3>
 <p>The sp65 utility accepts the following options:</p>
@@ -177,23 +175,45 @@ specifying the names of the attributes. Using</p>
 <p>The attributes that are valid for each processor or converter are listed
 below.</p>
 <h2 id="input-formats">5. Input formats</h2>
-<p>Input formats are either specified explicitly when using <code><a href="#option--read">--read</a></code>, or are determined by looking at the
-extension of the file name given.</p>
+<p>Input formats are either specified explicitly when using <code><a href="#option--read">--read</a></code> (the <code>format</code> attribute), or are
+determined by looking at the extension of the file name given. The reader
+machinery is table driven so more formats can be added, but at present
+<strong>PCX is the only input format</strong> the tool actually implements.</p>
 <h3 id="sect-5-1">5.1. PCX</h3>
-<p>While sp65 is prepared for more, this is currently the only possible input
-format. There are no additional attributes for this format.</p>
+<p>PCX is recognised by the <code>.pcx</code> extension (upper or lower case) or by
+giving <code>format=pcx</code> explicitly. There are no additional attributes for
+this format. The reader accepts the following PCX variants and rejects
+anything else with an error:</p>
+<div class="table-wrap">
+<table class="grid">
+<thead><tr><th>Planes &times; bits</th><th>Interpretation</th><th>Palette source</th></tr></thead>
+<tbody>
+<tr><td>1 plane &times; 1 bpp</td><td>Monochrome; pixel becomes index 0 or 1</td><td>Built-in monochrome palette</td></tr>
+<tr><td>1 plane &times; 8 bpp</td><td>Indexed (up to 256 entries)</td><td>16-colour palette in the header, or a 256-colour palette appended after the pixel data</td></tr>
+<tr><td>3 planes &times; 8 bpp</td><td>Truecolour RGB</td><td>None (direct colour)</td></tr>
+<tr><td>4 planes &times; 8 bpp</td><td>Truecolour RGBA (rarely seen)</td><td>None (direct colour); 4th plane is alpha</td></tr>
+</tbody>
+</table>
+</div>
+<p>Both uncompressed and PCX run-length-encoded (RLE) pixel data are read; the
+two-bit compression field is the only one understood, any other value is an
+error. For the common indexed (8&nbsp;bpp, one plane) case the palette is taken
+either from a 256-colour block appended to the file (preceded by the
+<code>0x0C</code> marker byte) or, for images using no more than 16 colours, from
+the 16-colour palette stored in the header. An indexed file that uses more than
+16 distinct indices but carries no appended palette is rejected. Run
+<code>sp65 -v &hellip;</code> to have the PCX header (version, geometry, plane
+layout, compression) dumped while reading.</p>
+<p>For the Lynx the practical path is a one-plane, 8&nbsp;bpp <em>indexed</em>
+PCX whose pixel indices are the Lynx pen values: the <a href="#sect-6-1">Lynx
+sprite</a> converter derives the sprite's bit depth straight from the highest
+index actually used (see below), so keep the index range tight (0&ndash;1 for
+1&nbsp;bpp, up to 0&ndash;15 for 4&nbsp;bpp).</p>
 <h2 id="conversions">6. Conversions</h2>
-<h3 id="sect-6-1">6.1. GEOS bitmap</h3>
-<p>The current bitmap working copy is converted to a GEOS compacted bitmap. This
-format is used by several GEOS functions (i.e. 'BitmapUp') and is described
-in 'The Official GEOS Programmers Reference Guide', chapter 4, section
-'Bit-Mapped Graphics'.</p>
-<h3 id="sect-6-2">6.2. GEOS icon</h3>
-<p>The current bitmap working copy is converted to GEOS icon format. A GEOS icon
-has the same format as a C64 high resolution sprite (24x21, monochrome, 63
-bytes). There are no additional attributes for this conversion.</p>
-<h3 id="sect-6-3">6.3. Koala image</h3>
-<h3 id="sect-6-4">6.4. Lynx sprite</h3>
+<p>This fork targets the Atari Lynx only, so the Lynx sprite converter is the
+sole conversion provided. (The generic <a href="#sect-7-1">raw</a> output is also
+available for writing the loaded bitmap straight out as bytes.)</p>
+<h3 id="sect-6-1">6.1. Lynx sprite</h3>
 <p>Lynx can handle 1, 2, 3 and 4 bits per pixel indexed sprites. The maximum size
 of a sprite is roughly 508 pixels but in reality the Lynx screen is only 160 by
 102 pixels which makes very large sprites useless.</p>
@@ -202,24 +222,33 @@ of a sprite is roughly 508 pixels but in reality the Lynx screen is only 160 by
 <dl>
 <dt>mode</dt>
 <dd>
-<p>The first is what kind of encoding to use for the sprite. The attribute for
-  this is called "mode" and the possible values are "literal", "packed" or
-  "transparent". The default is "packed" if no mode is specified.</p>
-<p>The "literal" is a totally literal mode with no packing. In this mode the
-  number of pixels per scanline will be a multiple of 8 both right and left from
-  the action point.</p>
-<p>If the source bitmap edge ends with a color where the least significant bit is
-  one then there will be an extra 8 zero bits on that scan line.</p>
-<p>So if you are using totally literal sprites and intend to change them at
-  runtime then please add a single pixel border far left and far right with
-  zeros in order to prevent graphical glitches in the game.</p>
-<p>The standard encoding is called "packed". In this mode the sprite is packed
-  using run-length encoding and literal coding mixed for optimisation to
-  produce a small sprite.</p>
-<p>The last encoding mode "transparent" is like packed. But here we know that
-  the index 0 will be transparent so we can clip off all 0 pixels from the left
-  and right edge of the sprite. This will produce the smallest sprite possible
-  on the Lynx. The sprite is not rectangular anymore.</p>
+<p>Selects the scan-line encoding for the sprite. The possible values are
+  <code>literal</code>, <code>packed</code> and <code>shaped</code>. If the
+  attribute is omitted the mode is <code>auto</code>, which currently produces
+  the same output as <code>literal</code>. See the
+  <a href="#packed-vs-literal">diagram below</a> for how the two on-cart layouts
+  differ.</p>
+<p><code>literal</code> is a totally literal mode with no packing: each scan
+  line stores its pen indices back to back, padded up to whole bytes. If a scan
+  line ends on a pen value whose least significant bit is one, an extra byte is
+  emitted so Suzy's last-pixel hardware bug does not drop the final pixel. If
+  you intend to change literal sprites at runtime, add a one-pixel border of pen
+  0 at the far left and far right to avoid edge glitches.</p>
+<p><code>packed</code> packs each scan line with run-length encoding and literal
+  runs mixed for the smaller of the two on a per-run basis, producing a compact
+  sprite. This is the encoding the runtime packer in <code>packtest.c</code> and
+  the build-time <code>sprpack.c</code> sample exercise.</p>
+<p><code>shaped</code> is like <code>packed</code>, but the pen index named by
+  the <code>edge</code> attribute is treated as transparent, so trailing edge
+  pixels are clipped from each line. This produces the smallest sprite possible
+  on the Lynx; the sprite is no longer rectangular.</p>
+</dd>
+<dt>edge</dt>
+<dd>
+<p>The pen index treated as the transparent edge colour in <code>shaped</code>
+  mode. Pixels equal to this index that trail the last opaque pixel on a scan
+  line are clipped away. The default is 0. The attribute has no effect in the
+  other modes.</p>
 </dd>
 <dt>ax</dt>
 <dd>
@@ -240,7 +269,103 @@ of a sprite is roughly 508 pixels but in reality the Lynx screen is only 160 by
   around the anchor point. The default value is 0 (top).</p>
 </dd>
 </dl>
-<h3 id="sect-6-5">6.5. VIC2 sprite</h3>
+<p id="packed-vs-literal">Both <code>literal</code> and <code>packed</code> store the sprite one scan line
+at a time, each line introduced by a byte count (its own length + 1; a count of
+1 advances to the next quadrant and 0 ends the sprite). What differs is how the
+pen indices inside a line are laid down:</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 392" style="width:100%;height:auto;max-width:700px" role="img" aria-label="How packed and literal scan-line encodings differ for one Lynx sprite line">
+  <!-- ===== A. the source scan line ===== -->
+  <text x="24" y="20" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11.5" fill="var(--ink-soft)">One 16-pixel scan line (2&nbsp;bpp) &mdash; pen index per pixel:</text>
+  <!-- 16 cells, width 40, x 24..664 -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11" text-anchor="middle">
+    <!-- run of 5 x pen 1 -->
+    <rect x="24"  y="30" width="40" height="30" fill="var(--accent)" fill-opacity="0.30" stroke="var(--border)"/>
+    <rect x="64"  y="30" width="40" height="30" fill="var(--accent)" fill-opacity="0.30" stroke="var(--border)"/>
+    <rect x="104" y="30" width="40" height="30" fill="var(--accent)" fill-opacity="0.30" stroke="var(--border)"/>
+    <rect x="144" y="30" width="40" height="30" fill="var(--accent)" fill-opacity="0.30" stroke="var(--border)"/>
+    <rect x="184" y="30" width="40" height="30" fill="var(--accent)" fill-opacity="0.30" stroke="var(--border)"/>
+    <!-- literal: pens 2,3,1 -->
+    <rect x="224" y="30" width="40" height="30" fill="var(--accent)" fill-opacity="0.62" stroke="var(--border)"/>
+    <rect x="264" y="30" width="40" height="30" fill="var(--accent-2)" fill-opacity="0.55" stroke="var(--border)"/>
+    <rect x="304" y="30" width="40" height="30" fill="var(--accent)" fill-opacity="0.30" stroke="var(--border)"/>
+    <!-- run of 8 x pen 0 -->
+    <rect x="344" y="30" width="40" height="30" fill="var(--panel)" stroke="var(--border)"/>
+    <rect x="384" y="30" width="40" height="30" fill="var(--panel)" stroke="var(--border)"/>
+    <rect x="424" y="30" width="40" height="30" fill="var(--panel)" stroke="var(--border)"/>
+    <rect x="464" y="30" width="40" height="30" fill="var(--panel)" stroke="var(--border)"/>
+    <rect x="504" y="30" width="40" height="30" fill="var(--panel)" stroke="var(--border)"/>
+    <rect x="544" y="30" width="40" height="30" fill="var(--panel)" stroke="var(--border)"/>
+    <rect x="584" y="30" width="40" height="30" fill="var(--panel)" stroke="var(--border)"/>
+    <rect x="624" y="30" width="40" height="30" fill="var(--panel)" stroke="var(--border)"/>
+    <g fill="var(--ink)">
+      <text x="44"  y="50">1</text><text x="84"  y="50">1</text><text x="124" y="50">1</text>
+      <text x="164" y="50">1</text><text x="204" y="50">1</text>
+      <text x="244" y="50">2</text><text x="284" y="50">3</text><text x="324" y="50">1</text>
+      <text x="364" y="50">0</text><text x="404" y="50">0</text><text x="444" y="50">0</text>
+      <text x="484" y="50">0</text><text x="524" y="50">0</text><text x="564" y="50">0</text>
+      <text x="604" y="50">0</text><text x="644" y="50">0</text>
+    </g>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="124" y="74">5 equal pixels</text>
+    <text x="284" y="74">3 differing</text>
+    <text x="504" y="74">8 equal pixels</text>
+  </g>
+
+  <!-- ===== B. packed ===== -->
+  <text x="24" y="116" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="600" fill="var(--accent)">PACKED &mdash; a bitstream of packets</text>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" text-anchor="middle">
+    <!-- count -->
+    <rect x="24" y="128" width="60" height="56" fill="var(--panel-2)" stroke="var(--border)"/>
+    <text x="54" y="150" font-size="10" fill="var(--ink-soft)">count</text>
+    <text x="54" y="168" font-size="9" fill="var(--ink-faint)">len+1</text>
+    <!-- run packet -->
+    <rect x="92" y="128" width="156" height="56" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+    <text x="170" y="148" font-size="10.5" fill="var(--ink)">run</text>
+    <text x="170" y="170" font-size="10" fill="var(--ink-soft)">0 &middot; len 5 &middot; pen 1</text>
+    <!-- literal packet -->
+    <rect x="256" y="128" width="196" height="56" fill="var(--accent-2)" fill-opacity="0.16" stroke="var(--accent-2)"/>
+    <text x="354" y="148" font-size="10.5" fill="var(--ink)">literal</text>
+    <text x="354" y="170" font-size="10" fill="var(--ink-soft)">1 &middot; len 3 &middot; pen 2,3,1</text>
+    <!-- run packet -->
+    <rect x="460" y="128" width="156" height="56" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+    <text x="538" y="148" font-size="10.5" fill="var(--ink)">run</text>
+    <text x="538" y="170" font-size="10" fill="var(--ink-soft)">0 &middot; len 8 &middot; pen 0</text>
+    <!-- end -->
+    <rect x="624" y="128" width="60" height="56" fill="var(--panel-2)" stroke="var(--border)"/>
+    <text x="654" y="150" font-size="10" fill="var(--ink-soft)">end</text>
+    <text x="654" y="168" font-size="10" fill="var(--ink-faint)">00000</text>
+  </g>
+  <text x="24" y="206" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-soft)">Each packet: 1 flag bit (0&nbsp;=&nbsp;run, 1&nbsp;=&nbsp;literal) + 4-bit length, then the pen value(s) at the sprite's bit depth.</text>
+  <text x="24" y="221" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-faint)">A run stores one pen once; a literal stores each pen. The encoder picks whichever is shorter, run by run.</text>
+
+  <!-- ===== C. literal ===== -->
+  <text x="24" y="262" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="600" fill="var(--accent)">LITERAL &mdash; pen indices back to back</text>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" text-anchor="middle">
+    <rect x="24" y="274" width="60" height="56" fill="var(--panel-2)" stroke="var(--border)"/>
+    <text x="54" y="296" font-size="10" fill="var(--ink-soft)">count</text>
+    <text x="54" y="314" font-size="9" fill="var(--ink-faint)">len+1</text>
+    <rect x="92" y="274" width="524" height="56" fill="var(--panel)" stroke="var(--border)"/>
+    <text x="354" y="296" font-size="10.5" fill="var(--ink)">1 1 1 1 1 2 3 1 0 0 0 0 0 0 0 0</text>
+    <text x="354" y="316" font-size="9.5" fill="var(--ink-faint)">16 pens &times; 2 bits, MSB-first, padded to whole bytes</text>
+    <rect x="624" y="274" width="60" height="56" fill="var(--panel-2)" stroke="var(--border)" stroke-dasharray="3 3"/>
+    <text x="654" y="296" font-size="10" fill="var(--ink-soft)">pad?</text>
+    <text x="654" y="314" font-size="9" fill="var(--ink-faint)">if LSB=1</text>
+  </g>
+  <text x="24" y="352" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-soft)">No per-pixel overhead, but no compression. A trailing pad byte is added only when a line ends on an odd pen value (Suzy last-pixel bug).</text>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">For a line with long runs the packed form is shorter; for noisy lines the literal form can win, which is why <code>packed</code> chooses run vs literal coding run by run.</figcaption>
+</figure>
+<p>To generate a packed sprite as a build-time asset (rather than packing at
+runtime), point sp65 at an indexed PCX and ask for the <code>packed</code>
+mode:</p>
+<pre class="verb">        sp65 -r heart.pcx -c lynx-sprite,mode=packed -w heart.h,ident=heart</pre>
+<p>This emits a C header with a <code>const unsigned char heart[]</code> data
+block ready to drop into an SCB's <code>data</code> pointer. The
+<a href="samples.html">sprpack</a> sample does exactly this and draws the result
+next to the same image in <code>literal</code> mode; <code>packtest</code> is the
+runtime-packing counterpart.</p>
 <h2 id="output-formats">7. Output formats</h2>
 <p>Using <code><a href="#option--write">--write</a></code> it is possible to write
 processed data to an output file. An attribute "name" is mandatory, it is used

@@ -51,7 +51,6 @@ typedef enum {
     FILETYPE_ASM,               /* Assembler file */
     FILETYPE_OBJ,               /* Object file */
     FILETYPE_LIB,               /* Library file */
-    FILETYPE_GR,                /* GEOS resource file */
     FILETYPE_O65                /* O65 object file */
 } FILETYPE;
 
