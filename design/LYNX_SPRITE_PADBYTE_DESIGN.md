@@ -123,9 +123,11 @@ Why this is safe everywhere we measured:
 
 ## 3. What the code does
 
-Every hand-built sprite in the tree uses the literal encoding (`LITERAL | REHV`).
-Each now carries a per-line pad byte (offset incremented to match), with the pad
-*value* chosen so it resolves to pen 0 for that sprite:
+Every hand-built *asset* sprite in the tree uses the literal encoding
+(`LITERAL | REHV`). Each carries a per-line pad byte (offset incremented to
+match), with the pad *value* chosen so it resolves to pen 0 for that sprite. The
+sole packed-encoding user is `samples/packtest.c`, which builds packed data at
+runtime to prove the two encodings interchangeable (§5–6):
 
 | File | Sprites | Depth | value 0 maps to | Pad byte |
 |------|---------|-------|-----------------|----------|
@@ -137,6 +139,8 @@ Each now carries a per-line pad byte (offset incremented to match), with the pad
 | `samples/sybil.c` | `syb0..syb2(+l)`, `en_a/en_b`, `coin_img`, `blk_img` | 4bpp | pen 0 (identity penpal) | `$00` |
 | `libsrc/lynx/tgi/tgi-text.s` | runtime 8×8 glyph strip (`build8x8`) | 1bpp | draw pen (active-low) | `$FF` |
 | `libsrc/lynx/tgi/tgi-text5x5.s` | runtime 5×5 glyph strip (`build5x5`) | 1bpp | — | exempt (§4) |
+| `samples/packtest.c` (literal control) | `litdata[]` rainbow/bands | 1/2/3/4bpp | pen 0 (identity penpal) | `$00` |
+| `samples/packtest.c` (packed copy) | `packdata[]` rainbow/bands | 1/2/3/4bpp | pen 0 (identity penpal) | `00000` marker (§5) |
 
 The 8×8 text builder emits the pad at runtime: its per-row offset is `1 + len +
 1`, the header loop writes `$FF` into each row's trailing pad position, and the
@@ -157,9 +161,12 @@ The 8×8 text builder emits the pad at runtime: its per-row offset is `1 + len +
    last byte will be painted." At 3bpp, pixels don't tile bytes evenly
    (8 / 3 = 2 px + 2 stray bits), so a literal line whose pixel count isn't a
    multiple of 8 pixels would paint 1–2 garbage pixels at the line end — a
-   separate hazard from the last-pixel drop. Nothing in the tree uses `BPP_3`
-   literal today; `_suzy.h` carries a caution near `BPP_3`. For 3bpp, pad each
-   literal line to a whole-byte pixel count or use the packed encoding.
+   separate hazard from the last-pixel drop. `samples/packtest.c` is the only
+   `BPP_3` literal user, and it sidesteps the hazard by construction: its lines
+   are 16 px wide, and 16 × 3 = 48 bits = a whole 6 bytes, so no stray bits are
+   left over. A 3bpp literal line whose width is *not* a multiple of 8 px still
+   needs padding to a whole-byte pixel count (or the packed encoding); `_suzy.h`
+   carries a caution near `BPP_3`.
 
 ## 5. Forward guidance
 
@@ -169,10 +176,16 @@ The 8×8 text builder emits the pad at runtime: its per-row offset is `1 + len +
   chosen value at the call site whenever it is not `$00`). The only sprites that
   may skip the pad are those whose rightmost source pixel is provably pen 0 on
   every line (the gap-padded fonts in §4).
-- **Packed lines** (when packed authoring arrives): if the last meaningful bit of
-  a line's bit-stream falls on bit 0 of a byte, append a `$00` pad byte and add 1
-  to that line's offset. Independent of depth. The right long-term answer is an
-  offline packer (`sprpck`-style) that emits the pad automatically.
+- **Packed lines**: if the last meaningful bit of a line's bit-stream falls on
+  bit 0 of a byte, the line needs trailing slack so the group Suzy drops is not
+  real imagery. Independent of depth. The robust, always-safe way to guarantee
+  this — and what `samples/packtest.c`'s `pack_line()` does — is to emit the
+  `00000` end-of-line marker after the last packet and byte-align with zero bits:
+  the marker's five bits always follow the final image bit, so the dropped group
+  is marker/pad, never a pixel, on *every* line rather than only the ~1/8 that
+  end on bit 0. The right long-term answer for asset import is an offline packer
+  (`sprpck`-style; `sp65` already ships a `lynxsprite` converter) that emits the
+  marker/pad automatically.
 
 ## 6. Verification
 
@@ -189,4 +202,12 @@ paper:
   pen 0..3 ramp (the body is pixel value 0, recoloured per band).
 - **breakout / invaders / sybil**: full-width bricks, ships and platforms with no
   trailing-edge clipping and no stray pad pixels.
+- **packtest**: at each of the four depths the runtime-packed copy is compared
+  against the literal control by reading back the displayed framebuffer. The two
+  16×16 blocks are pixel-identical (0 differing pixels) for 1/2/3/4 bpp, and the
+  literal control itself matches the intended source pattern mapped through the
+  palette — so packed and literal are confirmed equivalent against an independent
+  ground truth, not merely self-consistent. The adversarial source (vertical
+  rainbow over solid bands) exercises both literal packets and RLE runs, every
+  pen value, and value-0 transparency.
 - Full rebuild (toolchain + lib + all samples) stays green.

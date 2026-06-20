@@ -65,6 +65,7 @@ EXELIST_lynx = \
         raycaster.lnx \
         sybil.lnx \
         setbpp.lnx \
+        packtest.lnx \
         comlynx.lnx \
         fonttest.lnx \
         heaptest.lnx \

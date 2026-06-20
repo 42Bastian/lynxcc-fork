@@ -362,13 +362,16 @@ must obey explicitly, not by accident:
   value-0-transparent idiom, but a value the sprite's penpal maps to pen 0 when value 0 is
   an opaque colour (setbpp's bands use `$22`), and `$FF` for the active-low 8×8 font in
   `tgi-text.s`. **PACKED** lines need the pad only when the last meaningful bit
-  lands on bit 0 of a byte (~1/8 of lines). Two corollaries: (a) literal lines at **3bpp**
-  must additionally be padded to a whole-byte pixel count, since 3bpp doesn't tile bytes
-  evenly and the spec paints the leftover bits as 1-2 stray pixels
-  (`BPP_2`/`BPP_4`/`BPP_1` are exempt from *that* hazard); and (b) any future
-  packed-sprite authoring or import path must apply the pad-byte rule — preferably via an
-  offline `sprpck`-style packer rather than by hand. Full analysis, with the GearLynx
-  measurements, in `LYNX_SPRITE_PADBYTE_DESIGN.md`.
+  lands on bit 0 of a byte (~1/8 of lines); emitting the `00000` end-of-line marker after
+  the last packet supplies that slack on every line unconditionally. Two corollaries: (a)
+  literal lines at **3bpp** must additionally be padded to a whole-byte pixel count, since
+  3bpp doesn't tile bytes evenly and the spec paints the leftover bits as 1-2 stray pixels
+  (`BPP_2`/`BPP_4`/`BPP_1` are exempt from *that* hazard); and (b) any packed-sprite
+  authoring or import path must apply the pad-byte rule. `samples/packtest.c` is the
+  worked example — it builds packed sprites at runtime and is GearLynx-verified
+  pixel-identical to a literal control at all four depths; the long-term answer for asset
+  import is an offline `sprpck`-style packer (`sp65`'s `lynxsprite`). Full analysis, with
+  the GearLynx measurements, in `LYNX_SPRITE_PADBYTE_DESIGN.md`.
 - **"Please don't" — undefined bits (3.2).** The 2bpp mode of §2.7 uses a DISPCTL bit
   the Display chapter disowns; under the spec's own guidance this is exactly the kind of
   unapproved use it asks designers not to rely on. The feature stays (explicitly
