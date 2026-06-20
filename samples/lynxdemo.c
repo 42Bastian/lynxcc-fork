@@ -16,26 +16,39 @@
 #include <joystick.h>
 #include <6502.h>
 
-/* Ball, 8x8, 4bpp literal: pen 1 body, pen 2 highlight. Each sprite
-** data line starts with its byte count (including itself); 0 ends the
-** sprite.
+/* Ball, 8x8, 4bpp literal. Each sprite data line starts with its byte
+** count (including itself) and ends with a trailing pad byte; a 0 count
+** ends the sprite.
+**
+** Pixel values: 0 = transparent (the rounded corners), 1 = body (the
+** selectable colour, set into penpal[0] low nibble each frame), 2 = a
+** light-grey shine. value 0 maps to pen 0, which a normal sprite leaves
+** transparent, so the corners drop out and the ball reads as round.
+**
+** Suzy drops the last source pixel of every literal scan line (confirmed
+** on GearLynx and real hardware), so each line carries one extra pad
+** pixel for the engine to drop instead of real imagery. The pad must
+** resolve to pen 0; value 0 already does, so the pad byte is 0x00.
+** See design/LYNX_SPRITE_PADBYTE_DESIGN.md.
 */
 static unsigned char ball_img[] = {
-    0x05, 0x00, 0x11, 0x11, 0x00,
-    0x05, 0x01, 0x21, 0x11, 0x10,
-    0x05, 0x12, 0x11, 0x11, 0x11,
-    0x05, 0x11, 0x11, 0x11, 0x11,
-    0x05, 0x11, 0x11, 0x11, 0x11,
-    0x05, 0x11, 0x11, 0x11, 0x11,
-    0x05, 0x01, 0x11, 0x11, 0x10,
-    0x05, 0x00, 0x11, 0x11, 0x00,
+    0x06, 0x00, 0x11, 0x11, 0x00, 0x00,
+    0x06, 0x01, 0x21, 0x11, 0x10, 0x00,
+    0x06, 0x12, 0x11, 0x11, 0x11, 0x00,
+    0x06, 0x11, 0x11, 0x11, 0x11, 0x00,
+    0x06, 0x11, 0x11, 0x11, 0x11, 0x00,
+    0x06, 0x11, 0x11, 0x11, 0x11, 0x00,
+    0x06, 0x01, 0x11, 0x11, 0x10, 0x00,
+    0x06, 0x00, 0x11, 0x11, 0x00, 0x00,
     0x00
 };
 
 static SCB_REHV_PAL ball = {
     BPP_4 | TYPE_NORMAL, LITERAL | REHV, NO_COLLIDE,
     0, ball_img, 76, 47, 0x0100, 0x0100,
-    { 0xF3, 0x00, 0, 0, 0, 0, 0, 0 }    /* pen1 = white, pen2 = l.grey */
+    /* value 0 -> pen 0 (transparent), value 1 -> body (set per frame),
+    ** value 2 -> pen 3 (light-grey shine). */
+    { 0x00, 0x30, 0, 0, 0, 0, 0, 0 }
 };
 
 void main (void)
@@ -76,7 +89,7 @@ void main (void)
         ball.vpos  = y;
         ball.hsize = scale;
         ball.vsize = scale;
-        ball.penpal[0] = (unsigned char)(pen << 4) | 0x03;
+        ball.penpal[0] = pen;           /* value 1 (body) -> selected pen */
 
         /* Render into the back buffer, then request the swap */
         while (tgi_busy ()) {}

@@ -55,14 +55,24 @@ static const unsigned char mono_pal[32] = {
     0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
 };
 
-/* Solid 4x4 pen-1 literal sprite; scaled up to draw the shade bands
-** on the 4bpp screen. Recolored per band via penpal, like lynxdemo.
+/* Solid 4x4 literal sprite; scaled up to draw the shade bands on the
+** 4bpp screen. The body is pixel value 0, recolored per band through
+** the penpal high nibble (render4 sets penpal[0] = (pen << 4) | 3),
+** exactly like lynxdemo recolors its ball - so the four bands show
+** pens 0..3, the same ramp the 2bpp screen draws.
+**
+** Each line ends with a trailing pad byte (offset incremented to
+** match) for Suzy's last-pixel bug: it drops the final pixel of every
+** literal line, so without the pad the 40x-stretched band would lose
+** its rightmost slice. Because value 0 is the (opaque) band colour, a
+** 0x00 pad would show; pixel value 2 maps to pen 0 here, so the pad
+** byte is 0x22. See design/LYNX_SPRITE_PADBYTE_DESIGN.md.
 */
 static unsigned char band_img[] = {
-    0x03, 0x11, 0x11,
-    0x03, 0x11, 0x11,
-    0x03, 0x11, 0x11,
-    0x03, 0x11, 0x11,
+    0x04, 0x00, 0x00, 0x22,
+    0x04, 0x00, 0x00, 0x22,
+    0x04, 0x00, 0x00, 0x22,
+    0x04, 0x00, 0x00, 0x22,
     0x00
 };
 

@@ -351,20 +351,24 @@ must obey explicitly, not by accident:
   `tgi_sprite` passes user SCBs straight to hardware: document in `tgi.h` that an
   8-byte SCB palette must not begin at $xxFA (pad/align the SCB; ld65 `.align` or
   segment placement suffices). Worth a one-line check in a debug build of `tgi_sprite`.
-- **Sprite-data pad-byte bug (spec ch. 6, "Data Packing Format").** A hardware bug
-  requires that, in **PACKED** sprite data, the last meaningful bit of a scan line's
-  bit-stream not fall on bit 0 of a byte; when it does, the encoder must append a `$00`
-  pad byte to that line **and** add 1 to the line's offset byte (happens ~1/8 of lines).
-  This is a packed-encoding concern only. All library- and sample-built sprites use the
-  **LITERAL** encoding, where each line is delimited by its leading offset byte (= `1 +
-  data bytes`) rather than by a bit-position-sensitive end-of-packet detector, so they
-  need no pad byte — this is why `tgi-text.s` builds its 1bpp glyph strip without a fill
-  byte. Two corollaries the design records: (a) literal lines at **3bpp** must still be
-  padded to a whole-byte pixel count, since 3bpp doesn't tile bytes evenly and the spec
-  paints the leftover bits as 1-2 stray pixels (`BPP_2`/`BPP_4`/`BPP_1` are exempt); and
-  (b) any future packed-sprite authoring or import path must apply the pad-byte rule —
-  preferably via an offline `sprpck`-style packer rather than by hand. Full analysis in
-  `LYNX_SPRITE_PADBYTE_DESIGN.md`.
+- **Sprite-data "last-pixel" pad-byte bug (spec ch. 6; verified on GearLynx).** Suzy's
+  sprite-data shift register drops the final pixel group of any scan line whose data ends
+  on a byte boundary. **LITERAL** lines always end on a byte boundary, so every literal
+  line loses its rightmost source pixel unless padded — measured on GearLynx, lynxdemo's
+  8-px ball renders 14 px wide (at 2×) without a pad and 16 px with one. The fix: append
+  one pad byte per literal line **and** add 1 to the line's offset byte. The pad's pixels
+  must resolve to **pen 0** (transparent on a normal sprite), which is decided on the pen
+  *after* the penpal lookup, not on the raw pixel value: use `$00` for the usual
+  value-0-transparent idiom, but a value the sprite's penpal maps to pen 0 when value 0 is
+  an opaque colour (setbpp's bands use `$22`), and `$FF` for the active-low 8×8 font in
+  `tgi-text.s`. **PACKED** lines need the pad only when the last meaningful bit
+  lands on bit 0 of a byte (~1/8 of lines). Two corollaries: (a) literal lines at **3bpp**
+  must additionally be padded to a whole-byte pixel count, since 3bpp doesn't tile bytes
+  evenly and the spec paints the leftover bits as 1-2 stray pixels
+  (`BPP_2`/`BPP_4`/`BPP_1` are exempt from *that* hazard); and (b) any future
+  packed-sprite authoring or import path must apply the pad-byte rule — preferably via an
+  offline `sprpck`-style packer rather than by hand. Full analysis, with the GearLynx
+  measurements, in `LYNX_SPRITE_PADBYTE_DESIGN.md`.
 - **"Please don't" — undefined bits (3.2).** The 2bpp mode of §2.7 uses a DISPCTL bit
   the Display chapter disowns; under the spec's own guidance this is exactly the kind of
   unapproved use it asks designers not to rely on. The feature stays (explicitly

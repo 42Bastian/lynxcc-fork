@@ -91,18 +91,25 @@ cury:           .res    2
 
 textdir:        .res    1       ; TGI_TEXT_HORIZONTAL is 0
 
-; 8 rows of (one offset-byte plus up to 20 character bytes) plus one
-; 0-offset-byte terminator. Also large enough for the compact font's
-; strip (5 rows of up to 1+15 bytes + terminator = 81 bytes).
+; 8 rows of (one offset-byte plus up to 20 character bytes plus one
+; trailing pad byte) plus one 0-offset-byte terminator. Also large enough
+; for the compact font's strip (5 rows of up to 1+15 bytes + terminator =
+; 81 bytes).
 ;
-; No per-row pad/fill byte is emitted. The Suzy "pad-byte" sprite bug
-; (spec ch. 6) applies only to the PACKED encoding; this glyph strip is a
-; totally-literal 1bpp sprite (SPRCTL1 = LITERAL|REHV), where each line is
-; delimited by its leading offset byte, not by a bit-position-sensitive
-; end-of-packet detector, so no pad byte is ever required.
-; See design/LYNX_SPRITE_PADBYTE_DESIGN.md sec. 1.
+; build8x8 emits a per-row pad byte. Suzy drops the final source pixel of
+; any literal scan line (confirmed on GearLynx and real hardware), so an
+; 8x8 glyph - exactly one byte / 8 px per row - would lose the rightmost
+; column of the last character. The pad pushes that dropped pixel past the
+; real glyph data. The pad must resolve to pen 0, which a normal sprite
+; leaves transparent. This 1bpp font is active-low: build8x8 puts the draw
+; pen in the HIGH nibble of text_c, so pixel value 0 is the (opaque) ink
+; and pixel value 1 is pen 0. The transparent pad byte is therefore $FF
+; (all value-1 pixels), NOT $00 - a $00 pad would paint a solid box after
+; the text. The compact 5x5 builder needs no pad: its rows always end on
+; the inter-glyph gap or byte padding, both transparent (see
+; tgi-text5x5.s). See design/LYNX_SPRITE_PADBYTE_DESIGN.md.
 
-text_bitmap:    .res    8*(1+20)+1
+text_bitmap:    .res    8*(1+20+1)+1
 
 .data
 
@@ -197,18 +204,19 @@ _tgi_outtext:
 ; (Logic unchanged from the original single-font builder.)
 
 build8x8:
-        lda     #$04            ; Normal sprite: pixel value 0 maps to pen 0,
-        sta     text_sprite     ; which a normal sprite leaves transparent.
+        lda     #$04            ; TYPE_NORMAL: pen 0 is transparent. The font
+        sta     text_sprite     ; is active-low (ink = pixel value 0).
 
-        lda     tgi_drawindex   ; Pen byte: foreground (bit 0) high nibble,
-        asl                     ; background (bit 1) low nibble = bgindex.
-        asl                     ; The default bgindex 0 -> pen 0 -> transparent
-        asl                     ; background; a non-zero tgi_setbgcolor still
-        asl                     ; gives an opaque coloured box.
+        lda     tgi_drawindex   ; Pen byte: draw pen (ink, pixel value 0) in
+        asl                     ; the high nibble, bgindex (pixel value 1) in
+        asl                     ; the low nibble. The default bgindex 0 -> pen 0
+        asl                     ; -> transparent background; a non-zero
+        asl                     ; tgi_setbgcolor gives an opaque coloured box.
         ora     tgi_bgindex
         sta     text_c
 
-        ldy     STRLEN          ; offset byte = 1 + len (no fill byte)
+        ldy     STRLEN          ; offset byte = 1 + len + 1 pad byte
+        iny
         iny
         sty     STROFF
 
@@ -216,11 +224,13 @@ build8x8:
         ldx     #$00
         clc
 @L5:    lda     STROFF
-        sta     text_bitmap,x
+        sta     text_bitmap,x   ; row offset byte
         txa
         adc     STROFF
-        tax
-
+        tax                     ; X = start of the next row
+        lda     #$FF            ; trailing pad byte: value-1 px -> pen 0
+        sta     text_bitmap-1,x ; (transparent; the engine drops this, not
+                                ;  the last real glyph column)
         dey
         bpl     @L5
         stz     text_bitmap,x

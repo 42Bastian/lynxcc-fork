@@ -82,9 +82,14 @@
 #define TYPE_BACKGROUND  0x00
 
 /* SPRCTL1 $FC81 */
-/* Suzy pad-byte bug (spec ch. 6): PACKED lines whose last bit lands on bit 0  */
-/* of a byte need a trailing $00 pad byte (offset++). LITERAL lines never do.  */
-/* See design/LYNX_SPRITE_PADBYTE_DESIGN.md.                                 */
+/* Suzy "last-pixel" bug (verified on GearLynx + real hardware): the sprite-    */
+/* data shift register drops the final pixel group of every scan line whose     */
+/* data ends on a byte boundary. LITERAL lines always do, so EACH literal line  */
+/* needs a trailing pad byte (offset++); the pad's pixels must resolve to PEN 0 */
+/* (transparent on a normal sprite) - usually value $00, but a value the SCB    */
+/* penpal maps to pen 0 for sprites that give value 0 an opaque pen. PACKED     */
+/* lines only need the pad when the last meaningful bit lands on bit 0 of a     */
+/* byte (spec ch. 6, ~1/8 of lines). See design/LYNX_SPRITE_PADBYTE_DESIGN.md.  */
 #define LITERAL          0x80
 #define PACKED           0x00
 #define ALGO3            0x40
