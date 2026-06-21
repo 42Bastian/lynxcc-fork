@@ -1,12 +1,12 @@
-.PHONY: all mostlyclean clean install zip avail unavail bin lib doc html info samples
+.PHONY: all mostlyclean clean install zip avail unavail bin lib doc html info examples
 
 .SUFFIXES:
 
 all mostlyclean clean install zip:
-	@$(MAKE) -C src     --no-print-directory $@
-	@$(MAKE) -C libsrc  --no-print-directory $@
-	@$(MAKE) -C doc     --no-print-directory $@
-	@$(MAKE) -C samples --no-print-directory $@
+	@$(MAKE) -C src      --no-print-directory $@
+	@$(MAKE) -C libsrc   --no-print-directory $@
+	@$(MAKE) -C doc      --no-print-directory $@
+	@$(MAKE) -C examples --no-print-directory $@
 
 avail unavail bin:
 	@$(MAKE) -C src     --no-print-directory $@
@@ -17,8 +17,8 @@ lib:
 doc html info:
 	@$(MAKE) -C doc     --no-print-directory $@
 
-samples:
-	@$(MAKE) -C samples --no-print-directory $@
+examples:
+	@$(MAKE) -C examples --no-print-directory $@
 
 %65:
 	@$(MAKE) -C src     --no-print-directory $@

@@ -367,7 +367,7 @@ must obey explicitly, not by accident:
   literal lines at **3bpp** must additionally be padded to a whole-byte pixel count, since
   3bpp doesn't tile bytes evenly and the spec paints the leftover bits as 1-2 stray pixels
   (`BPP_2`/`BPP_4`/`BPP_1` are exempt from *that* hazard); and (b) any packed-sprite
-  authoring or import path must apply the pad-byte rule. `samples/packtest.c` is the
+  authoring or import path must apply the pad-byte rule. `examples/packtest/packtest.c` is the
   worked example — it builds packed sprites at runtime and is GearLynx-verified
   pixel-identical to a literal control at all four depths; the long-term answer for asset
   import is an offline `sprpck`-style packer (`sp65`'s `lynxsprite`). Full analysis, with

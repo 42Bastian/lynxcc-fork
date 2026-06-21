@@ -237,7 +237,7 @@ of a sprite is roughly 508 pixels but in reality the Lynx screen is only 160 by
 <p><code>packed</code> packs each scan line with run-length encoding and literal
   runs mixed for the smaller of the two on a per-run basis, producing a compact
   sprite. This is the encoding the runtime packer in <code>packtest.c</code> and
-  the build-time <code>sprpack.c</code> sample exercise.</p>
+  the build-time <code>spritetest.c</code> sample exercise.</p>
 <p><code>shaped</code> is like <code>packed</code>, but the pen index named by
   the <code>edge</code> attribute is treated as transparent, so trailing edge
   pixels are clipped from each line. This produces the smallest sprite possible
@@ -363,7 +363,7 @@ mode:</p>
 <pre class="verb">        sp65 -r heart.pcx -c lynx-sprite,mode=packed -w heart.h,ident=heart</pre>
 <p>This emits a C header with a <code>const unsigned char heart[]</code> data
 block ready to drop into an SCB's <code>data</code> pointer. The
-<a href="samples.html">sprpack</a> sample does exactly this and draws the result
+<a href="samples.html">spritetest</a> sample does exactly this and draws the result
 next to the same image in <code>literal</code> mode; <code>packtest</code> is the
 runtime-packing counterpart.</p>
 <h2 id="output-formats">7. Output formats</h2>

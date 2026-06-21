@@ -264,8 +264,8 @@ updated when the feature landed:
   chapter (documents both the attribute and the `__zeropage__` keyword), a table
   row for `__zeropage` globals, a TOC entry, and a cross-reference from the
   `#pragma zpsym` section (§7.20).
-- `samples/zeropage.c`: a runnable sample with three `__zeropage` counters shown
-  through the TGI text harness; added to `samples/Makefile` (`EXELIST_lynx`) and
+- `examples/zeropage/zeropage.c`: a runnable sample with three `__zeropage` counters shown
+  through the TGI text harness; added to `examples/Makefile` (`EXELIST_lynx`) and
   to `doc/samples.html` under a new "Compiler features" heading.
 - `doc/funcref.html` was intentionally **not** touched: it is a per-function
   reference and `zeropage.h` declares a macro, not functions.
@@ -298,7 +298,7 @@ Built `bin/cc65` clean. Compiled a two-module test:
   initializer, function, typedef, and block-scope local.
 - **Link** — the three modules linked against `lynx.lib` with `cfg/lynx.cfg`
   into a valid `.lnx` (no ZEROPAGE overflow).
-- **Sample** — `samples/zeropage.c` compiles, assembles and links clean
+- **Sample** — `examples/zeropage/zeropage.c` compiles, assembles and links clean
   (zp placement confirmed in its `.s`). Emulator/hardware run pending, in line
   with the other samples in the tree.
 - **Regression** — an existing sample (`breakout.c`) still compiles and

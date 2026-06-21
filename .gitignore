@@ -6,12 +6,17 @@
 /libwrk/
 /wrk/
 
-# Compiled sample artifacts (sources are *.c + Makefile)
-samples/*.lnx
-samples/*.map
-samples/*.o
-samples/*.s
+# Compiled example artifacts (sources are *.c + Makefile). The root holds the
+# lynxdemo starter; every other example lives in a group subdirectory.
+examples/*.lnx
+examples/*.map
+examples/*.o
+examples/*.s
+examples/*/*.lnx
+examples/*/*.map
+examples/*/*.o
+examples/*/*.s
 
-# sp65-generated sprite headers (rebuilt from heart.pcx)
-samples/heart_packed.h
-samples/heart_literal.h
+# sp65-generated sprite headers (rebuilt from suzy/heart.pcx)
+examples/suzy/heart_packed.h
+examples/suzy/heart_literal.h

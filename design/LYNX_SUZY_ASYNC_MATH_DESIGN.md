@@ -1,9 +1,9 @@
 # Lynx Suzy math: asynchronous (non-blocking) start / poll / harvest
 
 Status: IMPLEMENTED (2026-06-14). Runtime in `libsrc/lynx/suzyasync.s`, API in
-`include/suzymath.h`; samples `samples/suzyasync.c` (perspective starfield) and
-`samples/suzyasyncbench.c` (overlap-vs-sync-vs-soft timing). Library and both
-ROMs build clean via `make lib` / `make samples`. The C call sites were checked
+`include/suzymath.h`; samples `examples/suzyasync/suzyasync.c` (perspective starfield) and
+`examples/suzyasyncbench/suzyasyncbench.c` (overlap-vs-sync-vs-soft timing). Library and both
+ROMs build clean via `make lib` / `make examples`. The C call sites were checked
 to pass operands exactly as the asm expects (divisor in A/X, dividend/factors on
 the C stack — identical to the operator routines), and a host model of all seven
 routines' algorithms validated 0 mismatches over 2,679 corner-pair checks
@@ -265,7 +265,7 @@ contract (§3).
 
 ## 8. Verification plan
 
-Extend `samples/muldivtest.c` (or a sibling `asyncmathtest.c`) with:
+Extend `examples/muldivtest/muldivtest.c` (or a sibling `asyncmathtest.c`) with:
 
 1. **Correctness sweep.** For every corner pair already in `muldivtest`'s table,
    run the async form (`start` → fixed dummy non-Suzy delay → `busy` poll →

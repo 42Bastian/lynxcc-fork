@@ -64,7 +64,7 @@ Consequences by encoding:
 
 ### Measured proof
 
-`samples/lynxdemo.c` draws an 8-px-wide literal ball at 2× scale, so a correct
+`examples/lynxdemo/lynxdemo.c` draws an 8-px-wide literal ball at 2× scale, so a correct
 render is 16 px wide. Booted in GearLynx and measured from the framebuffer:
 
 | ball encoding | rendered width | meaning |
@@ -126,21 +126,21 @@ Why this is safe everywhere we measured:
 Every hand-built *asset* sprite in the tree uses the literal encoding
 (`LITERAL | REHV`). Each carries a per-line pad byte (offset incremented to
 match), with the pad *value* chosen so it resolves to pen 0 for that sprite. The
-sole packed-encoding user is `samples/packtest.c`, which builds packed data at
+sole packed-encoding user is `examples/packtest/packtest.c`, which builds packed data at
 runtime to prove the two encodings interchangeable (§5–6):
 
 | File | Sprites | Depth | value 0 maps to | Pad byte |
 |------|---------|-------|-----------------|----------|
-| `samples/lynxdemo.c` | `ball_img` | 4bpp | pen 0 (transparent corners) | `$00` |
-| `samples/setbpp.c` | `band_img` | 4bpp | per-band pen (opaque) | `$22` |
-| `samples/breakout.c` | `brick_img`, `paddle_img`, `ball_img` | 4bpp | pen 0 (transparent) | `$00` |
-| `samples/invaders.c` | `inv_a/inv_b/inv_boom`, `ship_img`, bullets, bomb, bunker, ufo | 4bpp | pen 0 | `$00` |
-| `samples/raycaster.c` | `solid_img`, `guard_img`, `guard_img2`, `gun_img`, `flash_img` | 4bpp | pen 0 (`PEN_NONE`) | `$00` |
-| `samples/sybil.c` | `syb0..syb2(+l)`, `en_a/en_b`, `coin_img`, `blk_img` | 4bpp | pen 0 (identity penpal) | `$00` |
+| `examples/lynxdemo/lynxdemo.c` | `ball_img` | 4bpp | pen 0 (transparent corners) | `$00` |
+| `examples/setbpp/setbpp.c` | `band_img` | 4bpp | per-band pen (opaque) | `$22` |
+| `examples/breakout/breakout.c` | `brick_img`, `paddle_img`, `ball_img` | 4bpp | pen 0 (transparent) | `$00` |
+| `examples/invaders/invaders.c` | `inv_a/inv_b/inv_boom`, `ship_img`, bullets, bomb, bunker, ufo | 4bpp | pen 0 | `$00` |
+| `examples/raycaster/raycaster.c` | `solid_img`, `guard_img`, `guard_img2`, `gun_img`, `flash_img` | 4bpp | pen 0 (`PEN_NONE`) | `$00` |
+| `examples/sybil/sybil.c` | `syb0..syb2(+l)`, `en_a/en_b`, `coin_img`, `blk_img` | 4bpp | pen 0 (identity penpal) | `$00` |
 | `libsrc/lynx/tgi/tgi-text.s` | runtime 8×8 glyph strip (`build8x8`) | 1bpp | draw pen (active-low) | `$FF` |
 | `libsrc/lynx/tgi/tgi-text5x5.s` | runtime 5×5 glyph strip (`build5x5`) | 1bpp | — | exempt (§4) |
-| `samples/packtest.c` (literal control) | `litdata[]` rainbow/bands | 1/2/3/4bpp | pen 0 (identity penpal) | `$00` |
-| `samples/packtest.c` (packed copy) | `packdata[]` rainbow/bands | 1/2/3/4bpp | pen 0 (identity penpal) | `00000` marker (§5) |
+| `examples/packtest/packtest.c` (literal control) | `litdata[]` rainbow/bands | 1/2/3/4bpp | pen 0 (identity penpal) | `$00` |
+| `examples/packtest/packtest.c` (packed copy) | `packdata[]` rainbow/bands | 1/2/3/4bpp | pen 0 (identity penpal) | `00000` marker (§5) |
 
 The 8×8 text builder emits the pad at runtime: its per-row offset is `1 + len +
 1`, the header loop writes `$FF` into each row's trailing pad position, and the
@@ -161,7 +161,7 @@ The 8×8 text builder emits the pad at runtime: its per-row offset is `1 + len +
    last byte will be painted." At 3bpp, pixels don't tile bytes evenly
    (8 / 3 = 2 px + 2 stray bits), so a literal line whose pixel count isn't a
    multiple of 8 pixels would paint 1–2 garbage pixels at the line end — a
-   separate hazard from the last-pixel drop. `samples/packtest.c` is the only
+   separate hazard from the last-pixel drop. `examples/packtest/packtest.c` is the only
    `BPP_3` literal user, and it sidesteps the hazard by construction: its lines
    are 16 px wide, and 16 × 3 = 48 bits = a whole 6 bytes, so no stray bits are
    left over. A 3bpp literal line whose width is *not* a multiple of 8 px still
@@ -179,7 +179,7 @@ The 8×8 text builder emits the pad at runtime: its per-row offset is `1 + len +
 - **Packed lines**: if the last meaningful bit of a line's bit-stream falls on
   bit 0 of a byte, the line needs trailing slack so the group Suzy drops is not
   real imagery. Independent of depth. The robust, always-safe way to guarantee
-  this — and what `samples/packtest.c`'s `pack_line()` does — is to emit the
+  this — and what `examples/packtest/packtest.c`'s `pack_line()` does — is to emit the
   `00000` end-of-line marker after the last packet and byte-align with zero bits:
   the marker's five bits always follow the final image bit, so the dropped group
   is marker/pad, never a pixel, on *every* line rather than only the ~1/8 that

@@ -533,7 +533,7 @@ ABI changes would break every existing object file and driver.
 
 1. **Correctness**: rebuild `lynx.lib`; assemble-and-compare — for each changed runtime
    routine, a sim65-style unit harness is gone from this tree, so use Handy/Mednafen emulator
-   test ROMs built from `samples/lynxdemo.c` plus targeted test programs per routine.
+   test ROMs built from `examples/lynxdemo/lynxdemo.c` plus targeted test programs per routine.
 2. **Register-contract audit**: any routine whose header documents exit register state
    (e.g. `pushax`'s Y contract) gets its contract re-validated against `codeinfo.c` tables.
 3. **Performance**: cycle-count micro-benchmarks in an emulator with cycle counting

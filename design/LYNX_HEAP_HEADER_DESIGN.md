@@ -238,8 +238,8 @@ holding: no overlapping live blocks, every block ≥ requested size, payload
 intact across churn, and full reclamation (`_heapmemavail` returns to base,
 `_heapptr` unwound to `_heaporg`, free list empty).
 
-A dedicated on-target ROM, `samples/heaptest.c`, was added (and wired into
-`samples/Makefile` + documented in `doc/samples.html`). It runs 17 checks that
+A dedicated on-target ROM, `examples/heaptest/heaptest.c`, was added (and wired into
+`examples/Makefile` + documented in `doc/samples.html`). It runs 17 checks that
 exercise the public API (`malloc`/`calloc`/`realloc`/`free`/`_heapblocksize`/
 `_heapmemavail`/`_heapadd`) and cross-check them against direct memory
 inspection — the raw size word below each pointer, the `_heaporg`/`_heapptr`/

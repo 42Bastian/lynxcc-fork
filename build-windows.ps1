@@ -5,7 +5,7 @@
 .DESCRIPTION
   Locates MSBuild via vswhere and builds the solution. Output binaries land in
   the repo-local bin\ directory (per the .vcxproj OutDir). This script builds
-  ONLY the solution; it does not build the Lynx runtime library or samples.
+  ONLY the solution; it does not build the Lynx runtime library or examples.
 
 .PARAMETER Configuration
   Solution configuration to build. Default: Release.

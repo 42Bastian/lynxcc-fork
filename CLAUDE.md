@@ -4,13 +4,13 @@
 
 Any code change MUST be reflected in the documentation in the same pass. When you
 add, remove, rename, or change the behaviour of anything user-visible (constants,
-macros, functions, headers, build targets, samples), update every place that
+macros, functions, headers, build targets, examples), update every place that
 documents it before considering the task done:
 
 - `include/*.h` and `asminc/*.inc` doc comments
 - `doc/*.html` (TGI, fonts, function reference, samples, etc.)
 - `design/LYNX_TGI_DESIGN.md` and any other `design/*_DESIGN.md` source-of-truth docs
-- relevant `README`/comments in `samples/`
+- relevant `README`/comments in `examples/`
 
 All `*_DESIGN.md` design documents live in the `design/` directory. New design
 docs go there too, and references to them from code/docs use the `design/` path.
