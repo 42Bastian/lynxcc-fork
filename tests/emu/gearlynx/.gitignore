@@ -1,0 +1,10 @@
+# Build artifacts and copyrighted BIOS are NOT tracked in git.
+# Rebuild the binary/SDL3 with the recipe in README.md; supply your own BIOS.
+gearlynx
+lib/
+lynxboot.img
+config.ini
+imgui.ini
+portable.ini
+*.state*
+*.sav
