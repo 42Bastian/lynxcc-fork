@@ -229,7 +229,7 @@ consistent with the fork's trimming of target-irrelevant surface.
 
 All of §4.1–§4.7 applied; `pmemalign.c` deleted and its stale
 `libwrk/lynx/pmemalign.{o,d,s}` purged. Verified in a Linux sandbox build:
-toolchain rebuilt from `src/`, `lynx.lib` relinked clean with `pmemalign.o`
+toolchain rebuilt from `compiler/`, `lynx.lib` relinked clean with `pmemalign.o`
 absent from the archive, all 8 samples link clean, and a tree-wide grep finds no
 remaining `posix_memalign` / `->start` / `usedblock::start` references. A
 host-model churn test (faithful C port of the allocator with the 2-byte header)

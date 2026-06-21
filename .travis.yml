@@ -7,7 +7,7 @@ script:
   - make bin USER_CFLAGS=-Werror
   - make lib QUIET=1
   - make -C test QUIET=1
-  - make -C src clean
+  - make -C compiler clean
   - make bin USER_CFLAGS=-Werror CROSS_COMPILE=i686-w64-mingw32-
   - make doc zip
 after_success:

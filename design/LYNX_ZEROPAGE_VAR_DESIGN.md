@@ -61,9 +61,9 @@ The key architectural facts (verified in the current tree) are what make this
 feature cheap:
 
 **ca65 has a built-in `ZEROPAGE` segment with zeropage address size.**
-`src/ca65/segment.c` initialises
+`compiler/ca65/segment.c` initialises
 `ZeropageSegDef = STATIC_SEGDEF_INITIALIZER (SEGNAME_ZEROPAGE, ADDR_SIZE_ZP)`,
-and `SEGNAME_ZEROPAGE` is `"ZEROPAGE"` (`src/common/segnames.h`). So *any* label
+and `SEGNAME_ZEROPAGE` is `"ZEROPAGE"` (`compiler/common/segnames.h`). So *any* label
 defined while the `.segment "ZEROPAGE"` is active is automatically a zeropage
 symbol as far as the assembler and linker are concerned — its address size is
 `zp`, and instructions referencing it assemble to the 2-byte zp form. All four
@@ -71,33 +71,33 @@ Lynx configs already map this segment (`cfg/lynx.cfg`,`lynx-bll.cfg`,
 `lynx-coll.cfg`,`lynx-uploader.cfg`: `ZEROPAGE: load = ZP, type = zp;`).
 
 **The compiler never forces an address width for a static symbol.**
-`g_getstatic`/`g_putstatic` in `src/cc65/codegen.c` emit plain `lda _x`,
+`g_getstatic`/`g_putstatic` in `compiler/cc65/codegen.c` emit plain `lda _x`,
 `ldx _x+1`, etc. (`GetLabelName` just produces `_x`). ca65 then chooses zp vs
 absolute from the symbol's own address size. **This means no code-generator
 changes are needed** — placement and import/export address size are the whole
 job.
 
-**`SC_ZEROPAGE` (0x8000, `src/cc65/symentry.h`) is the compiler's "this symbol
+**`SC_ZEROPAGE` (0x8000, `compiler/cc65/symentry.h`) is the compiler's "this symbol
 is zp" bit.** It is consumed in exactly two places:
-- `EmitExternals` (`src/cc65/symtab.c`) →
+- `EmitExternals` (`compiler/cc65/symtab.c`) →
   `g_defimport (Name, Flags & SC_ZEROPAGE)` /
   `g_defexport (Name, Flags & SC_ZEROPAGE)`, which emit `.importzp`/`.exportzp`
-  instead of `.import`/`.export` (`src/cc65/codegen.c`).
-- Today it is *only ever set* by `MakeZPSym` (`src/cc65/symtab.c`), i.e. the
+  instead of `.import`/`.export` (`compiler/cc65/codegen.c`).
+- Today it is *only ever set* by `MakeZPSym` (`compiler/cc65/symtab.c`), i.e. the
   `zpsym` pragma. That is the single mechanism this design generalises.
 
 **Global storage placement is driven by `Entry->V.BssName`.** For an
 uninitialised file-scope object (a tentative definition), `Compile()`
-(`src/cc65/compile.c`) records `Entry->V.BssName = GetSegName (SEG_BSS)` (which
+(`compiler/cc65/compile.c`) records `Entry->V.BssName = GetSegName (SEG_BSS)` (which
 `#pragma bss-name` can have changed). `FinishCompile()` later walks the globals
 and, for each, switches to that segment and emits the label + `g_res(size)`.
 So "put this global in ZEROPAGE" already has a clean hook: set its `BssName` to
 `"ZEROPAGE"`.
 
 **Attributes already flow from declaration to symbol.**
-`__attribute__((...))` is parsed by `ParseAttribute` (`src/cc65/declattr.c`),
+`__attribute__((...))` is parsed by `ParseAttribute` (`compiler/cc65/declattr.c`),
 which appends a `DeclAttr` to `D->Attributes`; `SymUseAttr`
-(`src/cc65/symentry.c`) then moves the list onto `Sym->Attr` and sets
+(`compiler/cc65/symentry.c`) then moves the list onto `Sym->Attr` and sets
 `SC_HAVEATTR`; `SymHasAttr` queries it. Today the only attributes are
 `atNoReturn` and `atUnused`. This is the pipeline the new feature plugs into.
 
@@ -147,13 +147,13 @@ and is what the docs and samples should show.
 ## 4. Compiler behaviour
 
 ### 4.1 Parsing
-Register `"zeropage"` in the `Attributes` table in `src/cc65/declattr.c` with a
+Register `"zeropage"` in the `Attributes` table in `compiler/cc65/declattr.c` with a
 handler `ZeropageAttr` that adds a new `atZeropage` enumerator (extend
-`DeclAttrType` in `src/cc65/declattr.h`). No new keyword, no scanner change.
+`DeclAttrType` in `compiler/cc65/declattr.h`). No new keyword, no scanner change.
 
 ### 4.2 Setting the symbol flag
 When attributes are transferred to the symbol (`SymUseAttr`,
-`src/cc65/symentry.c`), if the list contains `atZeropage`, OR `SC_ZEROPAGE`
+`compiler/cc65/symentry.c`), if the list contains `atZeropage`, OR `SC_ZEROPAGE`
 into `Sym->Flags`. This is the single point that makes both the `extern` import
 and the definition export resolve to the zp form:
 - `extern` reference → `EmitExternals` sees `SC_EXTERN` + `SC_ZEROPAGE` and
@@ -163,7 +163,7 @@ and the definition export resolve to the zp form:
   consistent with the symbol's zp address size.
 
 ### 4.3 Placing the storage (definitions only)
-In `Compile()` (`src/cc65/compile.c`), at the point where the tentative
+In `Compile()` (`compiler/cc65/compile.c`), at the point where the tentative
 definition's BSS name is captured, if the symbol carries `atZeropage`, force the
 name to `SEGNAME_ZEROPAGE` instead of `GetSegName (SEG_BSS)`:
 
@@ -196,7 +196,7 @@ rather than silent miscompilation. As built:
   if the entry is a function type or `SC_TYPEDEF`, emit
   `'zeropage' attribute is not valid here` and clear the inherited
   `SC_ZEROPAGE` so no `.importzp`/`.exportzp` is produced for a code symbol.
-- **Local (block-scope) objects** — `ParseOneDecl()` (`src/cc65/locals.c`)
+- **Local (block-scope) objects** — `ParseOneDecl()` (`compiler/cc65/locals.c`)
   checks `DeclHasAttr (&Decl, atZeropage)` and emits
   `'zeropage' attribute is only valid at file scope`. Block-scope declarations
   never run through `SymUseAttr`, so the attribute would otherwise be silently
@@ -220,7 +220,7 @@ rather than silent miscompilation. As built:
 
 Zero page is 256 bytes and is shared with the cc65 runtime, which already
 imports `sp, sreg, regsave, regbank, tmp1..tmp4, ptr1..ptr4` (see the
-`.importzp` lines in `src/cc65/codegen.c` startup emission) plus whatever the
+`.importzp` lines in `compiler/cc65/codegen.c` startup emission) plus whatever the
 Lynx libraries reserve. The config's `ZP` memory area bounds the `ZEROPAGE`
 segment; over-allocation surfaces as a hard ld65 error
 ("`ZEROPAGE` segment overflow") — a link-time failure, never a silent wrap.
@@ -321,18 +321,18 @@ appear together (idempotent).
 
 ### 11.1 As-built hook points
 
-- **Token** — `TOK_ZEROPAGE` added to `token_t` (`src/cc65/scanner.h`), placed
+- **Token** — `TOK_ZEROPAGE` added to `token_t` (`compiler/cc65/scanner.h`), placed
   after the function specifiers and outside the storage-class/type/qualifier
   ranges (those ranges have no callers, but keeping it out of them avoids any
   future range arithmetic surprise). Keyword `{ "__zeropage__", TOK_ZEROPAGE }`
   inserted in the alphabetically-sorted `Keywords[]` table in
-  `src/cc65/scanner.c` (the table is `bsearch`ed, so order matters; it sorts
+  `compiler/cc65/scanner.c` (the table is `bsearch`ed, so order matters; it sorts
   between `__near__` and `asm`). Only the double-underscore spelling is
   reserved.
 - **Parsing** — `__zeropage__` is orthogonal to the storage class (you want
   `static __zeropage__`), so it is not a slot in `ParseStorageClass`'s switch.
   A small `ParseZeropageSpec()` helper consumes a run of the keyword, and
-  `ParseDeclSpec()` (`src/cc65/declare.c`) calls it both *before* and *after*
+  `ParseDeclSpec()` (`compiler/cc65/declare.c`) calls it both *before* and *after*
   `ParseStorageClass`, then folds the result into the storage class as
   `SC_ZEROPAGE`. Position is the same as a storage class — before the type, like
   cc65's existing `static int` (not `int static`) ordering.
@@ -341,7 +341,7 @@ appear together (idempotent).
   (`Entry->Flags |= Flags`) with no new code, and the §4.2/§4.3 export/import
   and segment-placement logic, plus the §5 validation, all fire unchanged. The
   one validation that needed widening is the block-scope check in
-  `ParseOneDecl` (`src/cc65/locals.c`): it now rejects either form
+  `ParseOneDecl` (`compiler/cc65/locals.c`): it now rejects either form
   (`Decl.StorageClass & SC_ZEROPAGE` **or** the attribute). Diagnostic wording
   was made form-neutral ("`'zeropage' is not valid here`",
   "`'zeropage' is only valid at file scope`").

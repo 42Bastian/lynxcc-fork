@@ -4,7 +4,7 @@ Scope: how hand-built sprites and the runtime TGI text strips are encoded agains
 Suzy's end-of-line sprite-data bug. This document is the source of truth for the
 pad-byte rule. Every claim here was checked on **GearLynx** (drhelius'
 accuracy-focused emulator) running the built `.lnx` ROMs headless in the sandbox
-(`tools/gearlynx`), reading back the rendered framebuffer pixel by pixel.
+(`tests/emu/gearlynx`), reading back the rendered framebuffer pixel by pixel.
 
 > **History.** Two earlier revisions were wrong in opposite directions and are
 > superseded by this one:
@@ -189,7 +189,7 @@ The 8×8 text builder emits the pad at runtime: its per-row offset is `1 + len +
 
 ## 6. Verification
 
-Performed on GearLynx (`tools/gearlynx`, headless, framebuffer read-back), not on
+Performed on GearLynx (`tests/emu/gearlynx`, headless, framebuffer read-back), not on
 paper:
 
 - **lynxdemo**: ball measured 14 px unpadded → 16 px with the `$00` pad, rounded

@@ -34,7 +34,7 @@ bodies and assemble clean.
 ### 1.1 The Lynx CPU and why cycles map to bytes
 
 The Lynx CPU is a **65SC02** core inside Mikey, clocked at 16 MHz / 4 ≈ 4 MHz. cc65 already
-models this: `src/common/target.c:211` maps the lynx target to `CPU_65SC02`.
+models this: `compiler/common/target.c:211` maps the lynx target to `CPU_65SC02`.
 
 The 65SC02 is the 65C02 instruction set *without* the Rockwell bit instructions
 (`RMBx/SMBx/BBRx/BBSx`). Lynx I omits them; the later Lynx II Mikey implements them, so they
@@ -62,17 +62,17 @@ is RAM (carts load to RAM per `lynx.cfg`), so self-modifying code is a legitimat
 
 The current support is real but thin:
 
-**Compiler codegen** (`src/cc65/codegen.c`) checks `CPU_ISET_65SC02` at exactly 3 sites,
+**Compiler codegen** (`compiler/cc65/codegen.c`) checks `CPU_ISET_65SC02` at exactly 3 sites,
 all in `g_inc`/`g_dec`: `INA`/`DEA` for char ±1/±2 and a short int-increment sequence.
 Every other `g_*` routine (≈90 of them) emits plain 6502.
 
-**Peephole optimizer** (`src/cc65/coptc02.c`) has 3 passes, registered in
+**Peephole optimizer** (`compiler/cc65/coptc02.c`) has 3 passes, registered in
 `codeopt.c:1400-1410`:
 - `Opt65C02Ind` — rewrites `(zp),y` → `(zp)` when register tracking proves Y==0.
 - `Opt65C02BitOps` — `LDA mem / AND|ORA #imm / STA mem` → `LDA #imm / TRB|TSB mem` (only when A is dead afterwards and both addressing modes match).
 - `Opt65C02Stores` — `STA/STX/STY` → `STZ` when the register is provably zero.
 
-**Branch shortening** (`src/cc65/coptind.c:2181-2188`) converts short-distance `JMP` → `BRA`.
+**Branch shortening** (`compiler/cc65/coptind.c:2181-2188`) converts short-distance `JMP` → `BRA`.
 
 **Runtime library**: only 34 of 200 files in `libsrc/runtime/` contain
 `.if (.cpu .bitand ::CPU_ISET_65SC02)` fast paths. The hottest entry points are 6502-only:
@@ -230,10 +230,10 @@ Implementation:
 
 - *Scanner*: unchanged. `!*` must NOT be lexed as one token (it would break `!*p`);
   the parser combines the two tokens by context.
-- *Parser* (`src/cc65/expr.c`): in the multiplicative-level `hie_internal` loop, if
+- *Parser* (`compiler/cc65/expr.c`): in the multiplicative-level `hie_internal` loop, if
   `CurTok == TOK_BOOL_NOT` and `NextTok` is `TOK_STAR`/`TOK_DIV`/`TOK_MOD`, consume both
   and select the hardware generator.
-- *Codegen* (`src/cc65/codegen.c`): hardware variants of `g_mul`/`g_div`/`g_mod` emitting
+- *Codegen* (`compiler/cc65/codegen.c`): hardware variants of `g_mul`/`g_div`/`g_mod` emitting
   calls to new runtime entries (below). Constant folding is kept, as is the
   power-of-two→shift strength reduction (shifts beat the hardware).
 - *Library*: the Suzy routines live under NEW entry names (`tossuzymulax`,

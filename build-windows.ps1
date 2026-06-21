@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Builds the cc65/Lynx host tools by running MSBuild on src\cc65.sln.
+  Builds the cc65/Lynx host tools by running MSBuild on compiler\cc65.sln.
 
 .DESCRIPTION
   Locates MSBuild via vswhere and builds the solution. Output binaries land in
@@ -22,7 +22,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$solution = Join-Path $repoRoot 'src\cc65.sln'
+$solution = Join-Path $repoRoot 'compiler\cc65.sln'
 
 if (-not (Test-Path $solution)) {
     throw "Solution not found: $solution"
