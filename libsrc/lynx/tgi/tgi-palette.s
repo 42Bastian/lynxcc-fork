@@ -11,7 +11,7 @@
 ; in tgi-init.s (which is always linked and loads it).
 ;
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
         .importzp       ptr1
         .import         tgi_defpalette

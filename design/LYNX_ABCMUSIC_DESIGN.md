@@ -538,7 +538,7 @@ The `_` prefix on the asm label is the cc65 C-name convention, so C sees
 **4. Game C code** uses the runtime replay entry (`abcplaybin`, §8.4):
 
 ```c
-#include <lynx.h>
+#include <lynx/lynx.h>
 #include "ABCMusic.h"
 #include "theme.h"
 

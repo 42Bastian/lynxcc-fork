@@ -27,8 +27,8 @@
 ** Build:  cl65 -Ors -o spritetest.lnx spritetest.c (after generating headers)
 */
 
-#include <lynx.h>
-#include <tgi.h>
+#include <lynx/lynx.h>
+#include <lynx/tgi.h>
 #include <6502.h>
 
 #include "heart_packed.h"

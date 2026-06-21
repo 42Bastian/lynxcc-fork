@@ -47,7 +47,7 @@
         .importzp       sp, ptr1, tmp1, tmp2, tmp3
 
         .include        "extzp.inc"
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
 ; ===========================================================================
 ; Carried state (module BSS). One op in flight, so a single block is enough.

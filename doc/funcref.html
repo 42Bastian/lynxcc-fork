@@ -15,11 +15,11 @@ the C functions available in the standard library.</div><nav class="toc"><h2>Con
 <li class="lvl2"><a href="#dirent.h">2.4. dirent.h</a></li>
 <li class="lvl2"><a href="#errno.h">2.5. errno.h</a></li>
 <li class="lvl2"><a href="#fcntl.h">2.6. fcntl.h</a></li>
-<li class="lvl2"><a href="#joystick.h">2.7. joystick.h</a></li>
-<li class="lvl2"><a href="#lynx.h">2.8. lynx.h</a></li>
-<li class="lvl2"><a href="#lz4.h">2.9. lz4.h</a></li>
+<li class="lvl2"><a href="#joystick.h">2.7. lynx/joystick.h</a></li>
+<li class="lvl2"><a href="#lynx.h">2.8. lynx/lynx.h</a></li>
+<li class="lvl2"><a href="#lz4.h">2.9. lynx/lz4.h</a></li>
 <li class="lvl2"><a href="#peekpoke.h">2.10. peekpoke.h</a></li>
-<li class="lvl2"><a href="#serial.h">2.11. serial.h</a></li>
+<li class="lvl2"><a href="#serial.h">2.11. lynx/serial.h</a></li>
 <li class="lvl2"><a href="#setjmp.h">2.12. setjmp.h</a></li>
 <li class="lvl2"><a href="#stdarg.h">2.13. stdarg.h</a></li>
 <li class="lvl2"><a href="#stdbool.h">2.14. stdbool.h</a></li>
@@ -27,11 +27,11 @@ the C functions available in the standard library.</div><nav class="toc"><h2>Con
 <li class="lvl2"><a href="#stdio.h">2.16. stdio.h</a></li>
 <li class="lvl2"><a href="#stdlib.h">2.17. stdlib.h</a></li>
 <li class="lvl2"><a href="#string.h">2.18. string.h</a></li>
-<li class="lvl2"><a href="#suzymath.h">2.19. suzymath.h</a></li>
-<li class="lvl2"><a href="#tgi.h">2.20. tgi.h</a></li>
+<li class="lvl2"><a href="#suzymath.h">2.19. lynx/suzymath.h</a></li>
+<li class="lvl2"><a href="#tgi.h">2.20. lynx/tgi.h</a></li>
 <li class="lvl2"><a href="#time.h">2.21. time.h</a></li>
 <li class="lvl2"><a href="#unistd.h">2.22. unistd.h</a></li>
-<li class="lvl2"><a href="#zlib.h">2.23. zlib.h</a></li>
+<li class="lvl2"><a href="#zlib.h">2.23. lynx/zlib.h</a></li>
 <li class="lvl1"><a href="#sect-3">3. Alphabetical function reference</a></li>
 <li class="lvl2"><a href="#_DE_ISDIR">3.1. _DE_ISDIR</a></li>
 <li class="lvl2"><a href="#_DE_ISLBL">3.2. _DE_ISLBL</a></li>
@@ -369,13 +369,13 @@ addressed by number, so <code>open</code>, <code>creat</code>, <code>close</code
 read-only cart access, then <code>read</code>/<code>lseek</code>.</p>
 </li>
 </ul>
-<h3 id="joystick.h">2.7. <code>joystick.h</code></h3>
+<h3 id="joystick.h">2.7. <code>lynx/joystick.h</code></h3>
 <ul>
 <li>
 <p><a href="#joy_read">joy_read</a></p>
 </li>
 </ul>
-<h3 id="lynx.h">2.8. <code>lynx.h</code></h3>
+<h3 id="lynx.h">2.8. <code>lynx/lynx.h</code></h3>
 <ul>
 <li>
 <p><a href="#lynx_eeread_93c46">lynx_eeread_93c46</a></p>
@@ -426,7 +426,7 @@ read-only cart access, then <code>read</code>/<code>lseek</code>.</p>
 <p><a href="#openn">openn</a></p>
 </li>
 </ul>
-<h3 id="lz4.h">2.9. <code>lz4.h</code></h3>
+<h3 id="lz4.h">2.9. <code>lynx/lz4.h</code></h3>
 <ul>
 <li>
 <p><a href="#decompress_lz4">decompress_lz4</a></p>
@@ -447,7 +447,7 @@ read-only cart access, then <code>read</code>/<code>lseek</code>.</p>
 <p><a href="#POKEW">POKEW</a></p>
 </li>
 </ul>
-<h3 id="serial.h">2.11. <code>serial.h</code></h3>
+<h3 id="serial.h">2.11. <code>lynx/serial.h</code></h3>
 <p>This header file contains definitions for initializing serial
 communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 <ul>
@@ -691,7 +691,7 @@ communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 <p><a href="#strupr">strupr</a></p>
 </li>
 </ul>
-<h3 id="suzymath.h">2.19. <code>suzymath.h</code></h3>
+<h3 id="suzymath.h">2.19. <code>lynx/suzymath.h</code></h3>
 <p>Asynchronous (non-blocking) access to the Suzy hardware math unit: start a
 multiply, divide or modulo, run unrelated CPU work while Suzy computes, then
 harvest the result. These are the start/poll/harvest counterpart of the
@@ -750,7 +750,7 @@ harvest the result. These are the start/poll/harvest counterpart of the
 <p><a href="#suzy_muldiv_result">suzy_muldiv_result</a></p>
 </li>
 </ul>
-<h3 id="tgi.h">2.20. <code>tgi.h</code></h3>
+<h3 id="tgi.h">2.20. <code>lynx/tgi.h</code></h3>
 <p>Static <a href="tgi.html">Tiny Graphics Interface</a> for the Lynx: one fixed 160x102x16 display mode, Suzy sprite drawing, pages, palette and bitmap/compact-font text.</p>
 <ul>
 <li>
@@ -870,7 +870,7 @@ harvest the result. These are the start/poll/harvest counterpart of the
 </li>
 </ul>
 <p>(incomplete)</p>
-<h3 id="zlib.h">2.23. <code>zlib.h</code></h3>
+<h3 id="zlib.h">2.23. <code>lynx/zlib.h</code></h3>
 <p>(incomplete)</p>
 <h2 id="sect-3">3. Alphabetical function reference</h2>
 <h3 id="_DE_ISDIR">3.1. _DE_ISDIR</h3>
@@ -2211,7 +2211,7 @@ changing values.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lz4.h">lz4.h</a></code></p>
+<p><code><a href="#lz4.h">lynx/lz4.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3220,7 +3220,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#joystick.h">joystick.h</a></code></p>
+<p><code><a href="#joystick.h">lynx/joystick.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3231,7 +3231,7 @@ used in presence of a prototype.</p>
 <p>Returns all nine Lynx inputs in one call: d-pad, A, B,
 Opt 1 and Opt 2 in the low byte and Pause in bit 8. The
 argument is ignored (there is exactly one joypad). Examine the result with
-the <code>JOY_xxx</code> masks and macros from <code>lynx.h</code>.</p>
+the <code>JOY_xxx</code> masks and macros from <code>lynx/lynx.h</code>.</p>
 </dd>
 <dt>Notes</dt>
 <dd>
@@ -3417,7 +3417,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3461,7 +3461,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3505,7 +3505,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3549,7 +3549,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3593,7 +3593,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3637,7 +3637,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3681,7 +3681,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3723,7 +3723,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3765,7 +3765,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3804,7 +3804,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3843,7 +3843,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3885,7 +3885,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3924,7 +3924,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -3966,7 +3966,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -4005,7 +4005,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -4373,7 +4373,7 @@ or <code>union</code> member.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx.h</a></code></p>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -4635,7 +4635,7 @@ necessary to call this function as a part of your clean-up when exiting the prog
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#serial.h">serial.h</a></code></p>
+<p><code><a href="#serial.h">lynx/serial.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -4655,7 +4655,7 @@ necessary to call this function as a part of your clean-up when exiting the prog
 </dd>
 <dt>Example</dt>
 <dd>
-<pre class="verb">#include &lt;serial.h&gt;
+<pre class="verb">#include &lt;lynx/serial.h&gt;
 
 static void initialize(){
   struct ser_params params = {
@@ -4680,7 +4680,7 @@ static void initialize(){
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#serial.h">serial.h</a></code></p>
+<p><code><a href="#serial.h">lynx/serial.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -4727,7 +4727,7 @@ while (ser_get(&amp;ch) == SER_ERR_NO_DATA)
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#serial.h">serial.h</a></code></p>
+<p><code><a href="#serial.h">lynx/serial.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -4756,7 +4756,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Example</dt>
 <dd>
-<pre class="verb">#include &lt;serial.h&gt;
+<pre class="verb">#include &lt;lynx/serial.h&gt;
 
 static void initialize(){
   struct ser_params params = {
@@ -4781,7 +4781,7 @@ static void initialize(){
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#serial.h">serial.h</a></code></p>
+<p><code><a href="#serial.h">lynx/serial.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -4825,7 +4825,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#serial.h">serial.h</a></code></p>
+<p><code><a href="#serial.h">lynx/serial.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -6475,7 +6475,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -6525,7 +6525,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -6574,7 +6574,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -6616,7 +6616,7 @@ routines also poll defensively, so reading too early is always safe.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -6663,7 +6663,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -6711,7 +6711,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -6744,7 +6744,7 @@ the signed and unsigned multiply harvests are the same routine.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -6786,7 +6786,7 @@ provided for symmetry with the divide.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -6833,7 +6833,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -6882,7 +6882,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -6933,7 +6933,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -6983,7 +6983,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7030,7 +7030,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7078,7 +7078,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7121,7 +7121,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7169,7 +7169,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7216,7 +7216,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#suzymath.h">suzymath.h</a></code></p>
+<p><code><a href="#suzymath.h">lynx/suzymath.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7265,7 +7265,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7296,7 +7296,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7338,7 +7338,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7379,7 +7379,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7409,7 +7409,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7439,7 +7439,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7453,7 +7453,7 @@ used in presence of a prototype.</p>
 <dd>
 <ul>
 <li>
-<p>Implemented as a zero-cost macro in <code>tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
+<p>Implemented as a zero-cost macro in <code>lynx/tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
 </li>
 </ul>
 </dd>
@@ -7476,7 +7476,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7506,7 +7506,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7520,7 +7520,7 @@ used in presence of a prototype.</p>
 <dd>
 <ul>
 <li>
-<p>Implemented as a zero-cost macro in <code>tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
+<p>Implemented as a zero-cost macro in <code>lynx/tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
 </li>
 </ul>
 </dd>
@@ -7544,7 +7544,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7558,7 +7558,7 @@ used in presence of a prototype.</p>
 <dd>
 <ul>
 <li>
-<p>Implemented as a zero-cost macro in <code>tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
+<p>Implemented as a zero-cost macro in <code>lynx/tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
 </li>
 </ul>
 </dd>
@@ -7582,7 +7582,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7596,7 +7596,7 @@ used in presence of a prototype.</p>
 <dd>
 <ul>
 <li>
-<p>Implemented as a zero-cost macro in <code>tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
+<p>Implemented as a zero-cost macro in <code>lynx/tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
 </li>
 </ul>
 </dd>
@@ -7620,7 +7620,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7634,7 +7634,7 @@ used in presence of a prototype.</p>
 <dd>
 <ul>
 <li>
-<p>Implemented as a zero-cost macro in <code>tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
+<p>Implemented as a zero-cost macro in <code>lynx/tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
 </li>
 </ul>
 </dd>
@@ -7658,7 +7658,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7688,7 +7688,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7727,7 +7727,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7766,7 +7766,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7780,7 +7780,7 @@ used in presence of a prototype.</p>
 <dd>
 <ul>
 <li>
-<p>Implemented as a zero-cost macro in <code>tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
+<p>Implemented as a zero-cost macro in <code>lynx/tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
 </li>
 </ul>
 </dd>
@@ -7804,7 +7804,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7818,7 +7818,7 @@ used in presence of a prototype.</p>
 <dd>
 <ul>
 <li>
-<p>Implemented as a zero-cost macro in <code>tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
+<p>Implemented as a zero-cost macro in <code>lynx/tgi.h</code>; it expands to a compile-time constant and generates no code.</p>
 </li>
 </ul>
 </dd>
@@ -7842,7 +7842,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7880,7 +7880,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7919,7 +7919,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7959,7 +7959,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -7997,7 +7997,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8035,7 +8035,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8079,7 +8079,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8118,7 +8118,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8157,7 +8157,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8196,7 +8196,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8237,7 +8237,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8274,7 +8274,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8312,7 +8312,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8350,7 +8350,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8389,7 +8389,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8429,7 +8429,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8468,7 +8468,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8512,7 +8512,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#tgi.h">tgi.h</a></code></p>
+<p><code><a href="#tgi.h">lynx/tgi.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
@@ -8878,7 +8878,7 @@ with the 65C02. The synchronous <code>!*</code>, <code>!/</code> and
 <code>!%</code> operators already use it, but they spend the whole operation in a
 poll loop, throwing that concurrency away &mdash; a divide can burn roughly 44 to
 100 CPU cycles doing nothing while the unit works. The functions in
-<code><a href="#suzymath.h">suzymath.h</a></code> expose the same hardware as a
+<code><a href="#suzymath.h">lynx/suzymath.h</a></code> expose the same hardware as a
 non-blocking, intrinsic-level API so those cycles can be spent on useful work
 instead.</p>
 <h3 id="suzymath-model">4.1. The hardware unit and the start / poll / harvest model</h3>
@@ -8892,7 +8892,7 @@ returns the value. The single math unit means the model is a simple three-state
 machine &mdash; idle, running, done &mdash; and that exactly one asynchronous
 operation may be in flight at any time, process-wide.</p>
 <p>The typical use, and the one worth writing, is the divide:</p>
-<pre><code>#include &lt;suzymath.h&gt;
+<pre><code>#include &lt;lynx/suzymath.h&gt;
 
 suzy_udiv_start(distance, speed);   /* start the slow divide            */
 update_score();                     /* ~80 cycles of NON-Suzy work      */
@@ -8955,7 +8955,7 @@ entry</a>, expect it to be available and to behave as defined in the C standard.
 <li>
 <p><code>system</code> and the non-standard <code>exec</code>: the Lynx has no
   shell or command processor. To run another cart image, use
-  <code>lynx_load</code>/<code>lynx_exec</code> from <code>&lt;lynx.h&gt;</code>.</p>
+  <code>lynx_load</code>/<code>lynx_exec</code> from <code>&lt;lynx/lynx.h&gt;</code>.</p>
 </li>
 <li>
 <p>All functions that handle floating-point numbers in some manner.</p>
@@ -9000,7 +9000,7 @@ character console:</p>
   <code>getchar/gets/ungetc</code>,
   <code>feof/ferror/clearerr/fflush</code> and
   <code>fdopen/fileno</code>. For on-screen text use <code>tgi_outtext</code>
-  from <code>&lt;tgi.h&gt;</code>.</p>
+  from <code>&lt;lynx/tgi.h&gt;</code>.</p>
 </li>
 <li>
 <p>The only <code>&lt;stdio.h&gt;</code> functions that remain are the in-RAM
@@ -9012,7 +9012,7 @@ character console:</p>
   <code>sscanf</code> additionally rejects the wide-character conversions
   (<code>S C</code>). To stream raw bytes from the cart, use
   <code>read()</code>/<code>lseek()</code> on a handle from <code>openn()</code>
-  (see <code>&lt;unistd.h&gt;</code> and <code>&lt;lynx.h&gt;</code>).</p>
+  (see <code>&lt;unistd.h&gt;</code> and <code>&lt;lynx/lynx.h&gt;</code>).</p>
 </li>
 <li>
 <p><code>remove/rename</code> and the name-based
@@ -9059,7 +9059,7 @@ entirely. Text output goes through the TGI bitmap-font functions instead
 (see <a href="tgi.html">tgi.html</a>). The generic loadable joystick driver is
 likewise replaced by a small static implementation; a single
 <code><a href="#joy_read">joy_read</a></code> call returns every input the
-console has (see <code><a href="#joystick.h">joystick.h</a></code> and
+console has (see <code><a href="#joystick.h">lynx/joystick.h</a></code> and
 <code>design/LYNX_JOY_SER_DESIGN.md</code>).</p>
 </article></main><footer class="site-foot">lynxcc documentation &mdash; a fork of cc65 focused on the Atari Lynx target.</footer>
 <script src="doc.js"></script>

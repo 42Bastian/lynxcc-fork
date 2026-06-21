@@ -69,12 +69,12 @@ smart linking finally applies. No header, no vectors, no install step, no module
 | `tgi_outtext(s)` / `tgi_outtextxy(x,y,s)` | Direct; font + 169-byte `text_bitmap` buffer (`8*(1+20)+1`, §2.3.1) link only when used. |
 | `tgi_gettextwidth(s)` / `tgi_gettextheight(s)` | Bitmap math only (8 × scale × strlen). |
 
-The `lynx.h` macros (`tgi_sprite`, `tgi_flip`, …) become declarations of the real
+The `lynx/lynx.h` macros (`tgi_sprite`, `tgi_flip`, …) become declarations of the real
 functions; existing call sites compile unchanged. `tgi_ioctl` itself is removed.
 
 ### 2.2 Constants replace queries
 
-Resolution and capabilities are compile-time facts. `tgi.h` gains:
+Resolution and capabilities are compile-time facts. `lynx/tgi.h` gains:
 
 ```c
 #define TGI_XRES        160
@@ -259,7 +259,7 @@ from white to **black** (§2.1) — `tgi_init(); tgi_clear();` behaves exactly a
 The flip side: programs that drew (text, sprites) after init *without* an explicit
 `tgi_setcolor` relied on the old white default and now draw black-on-black — invisible,
 silently. Both changes are runtime-silent, not compile errors — call them out in the
-`tgi.h` comments for `tgi_init` and `tgi_clear`, and audit the samples (`breakout.c`,
+`lynx/tgi.h` comments for `tgi_init` and `tgi_clear`, and audit the samples (`breakout.c`,
 `lynxdemo.c`, etc.) for missing `tgi_setcolor(COLOR_WHITE)` in the same commit.
 
 **Alternative considered**: keying clears off `tgi_bgindex` (`tgi_setbgcolor`) instead.
@@ -293,7 +293,7 @@ sections and the header/INSTALL/UNINSTALL dropped), `tgi_stat_stddrv.s`, `tgi_st
 
 **Headers:** `tgi/tgi-vectorfont.h`, `tgi/tgi-error.h`, `tgi/tgi-kernel.h`;
 `asminc/tgi-kernel.inc` shrinks to constants + zp/text variable globals;
-`asminc/tgi-error.inc`, `asminc/tgi-vectorfont.inc` deleted. `tgi.h` rewritten (~80
+`asminc/tgi-error.inc`, `asminc/tgi-vectorfont.inc` deleted. `lynx/tgi.h` rewritten (~80
 lines): surviving functions, constants of §2.2, color macros.
 
 **Build:** drop `tgi` from `DRVTYPES` in `libsrc/Makefile`; stop shipping
@@ -312,7 +312,7 @@ unchanged apart from the install line.
 | RAM (vectors + mirrors + header copies) | ~75 bytes | 0 |
 | Code always linked | ~1.6 KB (whole driver + kernel) | only what's called (~350 B min) |
 | Startup | install (sig check, 2 copy loops) + init | init only |
-| API entry points in `tgi.h` | 47 | 24 (7 of them zero-cost macros) |
+| API entry points in `lynx/tgi.h` | 47 | 24 (7 of them zero-cost macros) |
 
 ## 5. Hardware "perniciousness" rules (spec ch. 3) applied
 
@@ -343,12 +343,12 @@ must obey explicitly, not by accident:
   spec's own compiler warning); never read a write-only register to "preserve bits".
 - **Cart-write 12-tick rule (3.1.4).** After a game-cart write, no Suzy access for 12
   ticks. TGI never touches the cart; the constraint lives in the cart I/O code
-  (`libsrc/lynx/read.s` et al.), but `tgi.h` documentation warns against interleaving
+  (`libsrc/lynx/read.s` et al.), but `lynx/tgi.h` documentation warns against interleaving
   raw cart strobes with sprite calls.
 - **Palette-at-$xxFA hardware bug (3.1.5).** An SCB pen-index palette starting at
   address $xxFA loses its last 2 bytes (pens C–F keep stale values). TGI's internal
   sprites use 1-byte palettes (1bpp source data) and cannot straddle the break, but
-  `tgi_sprite` passes user SCBs straight to hardware: document in `tgi.h` that an
+  `tgi_sprite` passes user SCBs straight to hardware: document in `lynx/tgi.h` that an
   8-byte SCB palette must not begin at $xxFA (pad/align the SCB; ld65 `.align` or
   segment placement suffices). Worth a one-line check in a debug build of `tgi_sprite`.
 - **Sprite-data "last-pixel" pad-byte bug (spec ch. 6; verified on GearLynx).** Suzy's
@@ -426,8 +426,8 @@ must obey explicitly, not by accident:
 
 Each step shippable: (1) split the driver into the §2.6 modules with direct C entry
 symbols, keep old kernel temporarily delegating; (2) rewrite `tgi_init`,
-promote the six ioctl functions, switch `lynx.h` macros to declarations; (3) delete the
-kernel, loader, vector-font, primitive, and error files; rewrite `tgi.h` with constants;
+promote the six ioctl functions, switch `lynx/lynx.h` macros to declarations; (3) delete the
+kernel, loader, vector-font, primitive, and error files; rewrite `lynx/tgi.h` with constants;
 (4) Makefile/`DRVTYPES` cleanup, samples, `.map`-based size report.
 
 ## 9. Out of scope / follow-ups

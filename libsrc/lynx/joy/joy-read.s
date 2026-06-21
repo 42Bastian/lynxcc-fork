@@ -28,7 +28,7 @@
 
         .export         _joy_read
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
 _joy_read:
         lda     SWITCHES        ; Pause switch, bit 0

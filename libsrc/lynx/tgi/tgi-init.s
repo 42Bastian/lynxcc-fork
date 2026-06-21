@@ -22,7 +22,7 @@
 ; re-init.
 ;
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
         .include        "../extzp.inc"
         .include        "tgi-kernel.inc"
 

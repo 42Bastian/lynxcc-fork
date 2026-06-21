@@ -21,7 +21,7 @@ away. It is intended as an explicit, intrinsic-level API; it does **not** change
 the operators or any existing routine.
 
 This document is design only. Nothing here is implemented yet. It can ship either
-as a standalone unit (`libsrc/lynx/suzyasync.s` + `<suzymath.h>`) or be folded in
+as a standalone unit (`libsrc/lynx/suzyasync.s` + `<lynx/suzymath.h>`) or be folded in
 as `LYNX_CODEGEN_DESIGN.md` §2.6.4; the section numbering below assumes the
 latter for cross-referencing.
 
@@ -67,7 +67,7 @@ expression to a value at the point of use, so a result is always consumed
 immediately and there is nowhere to "return early." Splitting the operation
 across two program points (start here, harvest there, arbitrary code between)
 is a control-flow shape an operator cannot express. The async path is therefore
-an **intrinsic function API**, declared in a new header `<suzymath.h>`, lowering
+an **intrinsic function API**, declared in a new header `<lynx/suzymath.h>`, lowering
 to hand-written runtime entries — no `expr.c`/`codegen.c` changes at all. The
 operators and their `tossuzy*` routines are untouched.
 
@@ -110,7 +110,7 @@ the same reason the operators are: every async site is an explicit
 `suzy_*_start` / `suzy_*_result` pair, so a reviewer can scan the code between a
 pair for forbidden Suzy use.
 
-## 4. Proposed C API (`<suzymath.h>`)
+## 4. Proposed C API (`<lynx/suzymath.h>`)
 
 ```c
 /* ---- completion check (inline, no call overhead) ---- */
@@ -153,7 +153,7 @@ int      suzy_muldiv_result (void);
 Typical use, the case worth writing:
 
 ```c
-#include <suzymath.h>
+#include <lynx/suzymath.h>
 
 suzy_udiv_start(distance, speed);   /* start the slow divide            */
 update_score();                     /* ~80 cycles of NON-Suzy work      */
@@ -294,8 +294,8 @@ poll/harvest split, not the arithmetic itself.
 
 ## 9. Open questions / decisions deferred to implementation
 
-* **Header home:** new `<suzymath.h>` vs. folding the prototypes into
-  `<lynx.h>`. A dedicated header keeps the fork-specific surface contained and
+* **Header home:** new `<lynx/suzymath.h>` vs. folding the prototypes into
+  `<lynx/lynx.h>`. A dedicated header keeps the fork-specific surface contained and
   matches the "opt-in, auditable" spirit of the operators.
 * **muldiv arg placement:** §5 recommends all-three-at-start; confirm against
   real call sites (fixed-point scaling) that the divisor is always available

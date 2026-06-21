@@ -11,7 +11,7 @@
 ; match).
 ;
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
         .include        "../extzp.inc"
 
         .import         tgi_cls_sprite

@@ -23,7 +23,7 @@
 ; The receiver will always read the parity and report parity errors.
 ;
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
         .include        "zeropage.inc"
         .include        "ser.inc"
 

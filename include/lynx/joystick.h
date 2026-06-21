@@ -32,7 +32,7 @@
 
 
 
-#include <lynx.h>
+#include <lynx/lynx.h>
 
 
 

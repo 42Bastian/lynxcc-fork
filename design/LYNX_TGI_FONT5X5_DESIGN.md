@@ -177,7 +177,7 @@ void __fastcall__ tgi_setfont (unsigned char font);     /* tgi-setfont.s */
 Optionally the already-ignored `font` argument of `tgi_settextstyle` can be
 forwarded to `tgi_setfont` so existing call sites gain switching for free; this
 changes a currently-ignored argument's behaviour, so it is offered as a
-secondary convenience and would require the `tgi.h` comment to be updated.
+secondary convenience and would require the `lynx/tgi.h` comment to be updated.
 
 ## 7. Files touched
 

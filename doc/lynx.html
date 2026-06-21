@@ -43,8 +43,8 @@ more than one platform. Please see the function reference for more
 information.</p>
 <h2 id="sect-2">2. Building your first Hello World application</h2>
 <p>Here is a small traditional Hello World program for the Atari Lynx.</p>
-<pre class="verb">#include &lt;lynx.h&gt;
-#include &lt;tgi.h&gt;
+<pre class="verb">#include &lt;lynx/lynx.h&gt;
+#include &lt;lynx/tgi.h&gt;
 #include &lt;6502.h&gt; 
 
 void main(void) {
@@ -216,7 +216,7 @@ area and the top of the C&nbsp;stack move down to <code>$A057</code>:</p>
 <p>There is no keyboard. The Opt 1, Opt 2 and Pause switches are joypad
   inputs, reported by <code>joy_read()</code> together with the d-pad and the A/B
   buttons (masks <code>JOY_OPT1_MASK</code>, <code>JOY_OPT2_MASK</code>, <code>JOY_PAUSE_MASK</code>
-  in <code>lynx.h</code>). The classic conventions Pause+Opt 1 = restart and
+  in <code>lynx/lynx.h</code>). The classic conventions Pause+Opt 1 = restart and
   Pause+Opt 2 = flip screen are game conventions for the application to
   honor.</p>
 </dd>
@@ -561,9 +561,9 @@ of POSIX or ISO&nbsp;C.</li>
 </ul>
 
 <h2 id="sect-7">7. Platform specific header files</h2>
-<p>Programs containing Lynx specific code may use the <code>lynx.h</code> header file.</p>
+<p>Programs containing Lynx specific code may use the <code>lynx/lynx.h</code> header file.</p>
 <h3 id="sect-7-1">7.1. Lynx specific functions</h3>
-<p>These are declared in <code>lynx.h</code> and described in full in the
+<p>These are declared in <code>lynx/lynx.h</code> and described in full in the
 <a href="funcref.html">function reference</a>:</p>
 <dl>
 <dt>Cartridge access</dt>
@@ -592,20 +592,20 @@ and
 </dd>
 </dl>
 <h3 id="sect-7-2">7.2. Hardware access</h3>
-<p>The following pseudo variables declared in the <code>lynx.h</code> header file do
+<p>The following pseudo variables declared in the <code>lynx/lynx.h</code> header file do
 allow access to hardware located in the address space. Some variables are
 structures, accessing the struct fields will access the chip registers.</p>
 <dl>
 <dt><code>MIKEY</code></dt>
 <dd>
-<p>The <code>MIKEY</code> structure allows access to MIKEY chip. See the <code>_mikey.h</code>
-  header file located in the include directory for the declaration of the
+<p>The <code>MIKEY</code> structure allows access to MIKEY chip. See the <code>lynx/_mikey.h</code>
+  header file located in the include/lynx directory for the declaration of the
   structure.</p>
 </dd>
 <dt><code>SUZY</code></dt>
 <dd>
-<p>The <code>SUZY</code> structure allows access to SUZY chip. See the <code>_suzy.h</code>
-  header file located in the include directory for the declaration of the
+<p>The <code>SUZY</code> structure allows access to SUZY chip. See the <code>lynx/_suzy.h</code>
+  header file located in the include/lynx directory for the declaration of the
   structure.</p>
 </dd>
 <dt><code>_MIKEY_TIMERS</code></dt>
@@ -626,7 +626,7 @@ structures, accessing the struct fields will access the chip registers.</p>
 </dd>
 </dl>
 <h3 id="sect-7-3">7.3. Constants and macros</h3>
-<p><code>lynx.h</code> also defines the palette-index colour constants. They number
+<p><code>lynx/lynx.h</code> also defines the palette-index colour constants. They number
 the 16 entries of the default palette loaded by <code><a href="tgi.html">tgi_init</a></code>:</p>
 <pre class="verb">COLOR_BLACK      0x00   COLOR_YELLOW      0x08
 COLOR_RED        0x01   COLOR_LIGHTGREEN  0x09
@@ -782,7 +782,7 @@ automatically under the VBL interrupt. <code>lynx_snd_pause()</code> and
 <code>lynx_snd_stop_channel(channel)</code> silences just one, and
 <code>lynx_snd_active()</code> returns non-zero while any channel is still
 playing so a program can wait for a tune to finish. The functions are declared
-in <code>lynx.h</code>; see the
+in <code>lynx/lynx.h</code>; see the
 <a href="funcref.html#lynx_snd_init">function reference</a> for the full set.</p>
 <h3 id="sect-8-5">8.5. EEPROM (cart save data)</h3>
 <p>Because the cart ROM cannot be written at run time, persistent state &mdash;
@@ -796,13 +796,13 @@ the 93C46 (64 words, cell 0&ndash;63),
 <code>_93c86</code> for the 93C86 (1024 words, 0&ndash;1023). A read returns the
 word at the given cell; a write stores a word there. There is no separate erase
 call &mdash; to clear a word, just write the value you want. All six are
-<code>__fastcall__</code> functions declared in <code>lynx.h</code> and so need a
+<code>__fastcall__</code> functions declared in <code>lynx/lynx.h</code> and so need a
 prototype in scope; see the
 <a href="funcref.html#lynx_eeread_93c46">function reference</a>.</p>
 <h3 id="sect-8-6">8.6. Reading data from the cart</h3>
 <p>The cart is read-only ROM whose files are addressed by <em>number</em> rather
 than by name, and reading them is again a static library &mdash; no driver to
-install. The simplest path is the whole-file helpers in <code>lynx.h</code>:
+install. The simplest path is the whole-file helpers in <code>lynx/lynx.h</code>:
 <code>lynx_load(fileno)</code> copies the entire numbered file into the RAM
 address recorded in its directory entry, and <code>lynx_exec(fileno)</code> does
 the same then jumps to that address (used by &ldquo;compilation&rdquo; carts that
@@ -861,7 +861,7 @@ stock cc65 2.19. The full design, measurements, and verification plan are in
   <code>a !* b !/ c</code> that keeps a 32-bit intermediate product to avoid
   overflow. Small divisors are normalized to cut divide latency. A non-blocking
   start/poll/harvest variant of the same unit is available through
-  <code>&lt;suzymath.h&gt;</code>; see <a href="funcref.html#sect-4">How the
+  <code>&lt;lynx/suzymath.h&gt;</code>; see <a href="funcref.html#sect-4">How the
   Suzy math functions work</a> in the function reference.</p>
 </dd>
 <dt>Cycle-cost model</dt>
@@ -918,7 +918,7 @@ write to. The supported, numbered, read-only API is:</p>
 <dt><code>void __fastcall__ openn (int fileno)</code></dt>
 <dd>Locate directory entry <code>fileno</code> and position the cart at its first
 byte, ready for <code>read()</code>/<code>lseek()</code>. Declared in
-<code>&lt;lynx.h&gt;</code>. This primitive replaced the former
+<code>&lt;lynx/lynx.h&gt;</code>. This primitive replaced the former
 <code>open(const&nbsp;char&nbsp;*name,&nbsp;&hellip;)</code> wrapper: because files
 are just numbers, that wrapper did nothing but run a string such as
 <code>"3"</code> back through <code>atoi()</code> to recover the integer&nbsp;3
@@ -940,7 +940,7 @@ entry.</dd>
 persistent state (high scores, options) is kept in the cart's serial EEPROM. See
 the size-selectable
 <code>lynx_eeread_93c46</code>/<code>_93c66</code>/<code>_93c86</code> and
-<code>lynx_eewrite_*</code> family in <code>&lt;lynx.h&gt;</code>.</p>
+<code>lynx_eewrite_*</code> family in <code>&lt;lynx/lynx.h&gt;</code>.</p>
 <p><strong>Bank&nbsp;0 only.</strong> The block reader drives the cart through the
 <code>CART0</code> read strobe, so only bank&nbsp;0 is accessible. The
 <code>EXEHDR</code> header still records a <code>__BANK1BLOCKSIZE__</code> and the

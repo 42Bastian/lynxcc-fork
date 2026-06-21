@@ -22,8 +22,8 @@
 ** Build:  cl65 -Ors -o heaptest.lnx heaptest.c
 */
 
-#include <lynx.h>
-#include <tgi.h>
+#include <lynx/lynx.h>
+#include <lynx/tgi.h>
 #include <stdlib.h>
 #include <string.h>
 #include <_heap.h>

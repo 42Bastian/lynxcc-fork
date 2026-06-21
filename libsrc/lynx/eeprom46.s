@@ -30,7 +30,7 @@
         .import         popax
         .importzp       ptr1
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
 ; -------------------
 ; EEPROM command list

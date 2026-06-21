@@ -165,7 +165,7 @@ The 8×8 text builder emits the pad at runtime: its per-row offset is `1 + len +
    `BPP_3` literal user, and it sidesteps the hazard by construction: its lines
    are 16 px wide, and 16 × 3 = 48 bits = a whole 6 bytes, so no stray bits are
    left over. A 3bpp literal line whose width is *not* a multiple of 8 px still
-   needs padding to a whole-byte pixel count (or the packed encoding); `_suzy.h`
+   needs padding to a whole-byte pixel count (or the packed encoding); `lynx/_suzy.h`
    carries a caution near `BPP_3`.
 
 ## 5. Forward guidance

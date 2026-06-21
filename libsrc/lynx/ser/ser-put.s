@@ -6,7 +6,7 @@
 ; */
 ;
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
         .include        "ser.inc"
 
         .export         _ser_put

@@ -30,7 +30,7 @@
         .import         incsp2
         .importzp       sp
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
 tossuzyudivax:
         cpx     #0              ; divisor high byte zero -> divisor < 256

@@ -215,7 +215,7 @@ quotient in `MATHA..MATHD`; writing `MATHE` starts it). A multiply completes in 
 completion is polled via the math-working bit in `SPRSYS` (per-operation status:
 `MULTSTAT`/`DIVSTAT`); divide timing is 176 + 14·N ticks where N is the count of leading
 zeros in the divisor. The register definitions are already in this tree's
-`_suzy.h`/`lynx.inc`. Reference: Lynx hardware docs §12.1
+`lynx/_suzy.h`/`lynx/lynx.inc`. Reference: Lynx hardware docs §12.1
 (http://www.monlynx.de/lynx/lynx9.html).
 
 **Selection model: explicit opt-in operators, software by default.** The standard `*`,

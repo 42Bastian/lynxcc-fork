@@ -127,7 +127,7 @@ in X for free, so one call snapshots the complete input state atomically. The jo
 argument is ignored, exactly as the old driver's `READ` did; `JOY_1` stays defined for
 source compatibility, `JOY_2` is deleted.
 
-`lynx.h` keeps its six existing masks/macros unchanged (the low byte is raw $FCB0, so
+`lynx/lynx.h` keeps its six existing masks/macros unchanged (the low byte is raw $FCB0, so
 they still match) and gains the three that the `#$F3` mask used to hide:
 
 ```c
@@ -139,7 +139,7 @@ they still match) and gains the three that the `#$F3` mask used to hide:
 #define JOY_PAUSE(v)    ((v) & JOY_PAUSE_MASK)
 ```
 
-`joystick.h` rewritten (~30 lines):
+`lynx/joystick.h` rewritten (~30 lines):
 
 ```c
 #define JOY_1           0       /* joy_read argument, ignored */
@@ -165,7 +165,7 @@ there is nothing left to fail.
   don't need debouncing at all.
 - The chord conventions (`Pause+Opt1` = restart, `Pause+Opt2` = flip) are *game*
   conventions, not hardware — honoring them becomes application responsibility, and
-  the `joystick.h` comment says so.
+  the `lynx/joystick.h` comment says so.
 
 ```c
 unsigned now = joy_read (JOY_1);
@@ -194,7 +194,7 @@ Return-code error model is kept — unlike TGI, these calls are genuinely fallib
 runtime. `ser_ioctl` (dead on Lynx), `ser_install`, `ser_uninstall`,
 `ser_load_driver`, `ser_unload`, and `_ser_drv` are deleted.
 
-`ser-error.inc`/`serial.h` keep only the reachable codes, renumbered contiguously:
+`ser-error.inc`/`lynx/serial.h` keep only the reachable codes, renumbered contiguously:
 
 ```
 SER_ERR_OK = 0, SER_ERR_BAUD_UNAVAIL, SER_ERR_NO_DATA,
@@ -252,12 +252,12 @@ pointer wraparound. Not tunable without rewriting the pointer logic; documented 
 
 ### 3.5 Pre-existing quirks, documented not fixed
 
-Carried into `serial.h` comments: Lynx parity includes the parity bit itself in its
+Carried into `lynx/serial.h` comments: Lynx parity includes the parity bit itself in its
 calculation (EVEN/ODD are nonstandard on the wire); ComLynx is open-collector, so
 every transmitted byte is also received by the sender (loopback — useful for §7);
 `SER_PAR_NONE` is rejected (hardware always sends a ninth bit; use MARK/SPACE);
 a received break drops all four buffer pointers; only 8 data bits / 1 stop bit.
-`serial.h` keeps only the baud constants comlynx implements (62500, 31250, 9600, 7200,
+`lynx/serial.h` keeps only the baud constants comlynx implements (62500, 31250, 9600, 7200,
 4800, 3600, 2400, 1800, 1200, 600, 300, 150, 134.5, 110, 75); the RS-232 leftovers
 (45.5 … 230400, 19200, 38400, 57600, 115200, 56.875) are deleted.
 
@@ -301,7 +301,7 @@ and `include/em/`, `include/mouse.h` and `include/mouse/`, `include/dbg.h`;
 `asminc/ser.inc`), `asminc/ser-error.inc` (shrinks to the 5 codes, or folds into
 `ser.inc`), `asminc/modload.inc`, `asminc/module.mac`, `asminc/em-kernel.inc`,
 `asminc/em-error.inc`, `asminc/mouse-kernel.inc`, `include/conio.h` (§2.2).
-`joystick.h` and `serial.h` rewritten per §2/§3; `lynx.h` gains the
+`lynx/joystick.h` and `lynx/serial.h` rewritten per §2/§3; `lynx/lynx.h` gains the
 `JOY_OPT1/OPT2/PAUSE` masks (§2.1).
 
 **Build:** `DRVTYPES` block and `$(foreach drvtype,…)` template in `libsrc/Makefile`.
@@ -321,13 +321,13 @@ compile unchanged.
 - **`ser_close` now actually closes** (§3.1): disables serial interrupts and stops
   timer 4. Programs that called `ser_close` and kept expecting Rx bytes were broken by
   any reasonable reading of the API; nonetheless this is a runtime-visible change —
-  called out in `serial.h`.
+  called out in `lynx/serial.h`.
 - **`SER_ERR_*` values renumber** (§3.1). Code comparing against the macro names is
-  fine; code using bare integers breaks silently — called out in `serial.h`.
+  fine; code using bare integers breaks silently — called out in `lynx/serial.h`.
 - **`joy_read` reports more bits** (§2.1): Opt1/Opt2 now appear in the low byte
   (formerly masked) and Pause in bit 8. Code testing specific masks is unaffected;
   code treating the whole return as a boolean ("any input?") now also triggers on
-  the switches — called out in `joystick.h`. The widened return type is
+  the switches — called out in `lynx/joystick.h`. The widened return type is
   source-compatible (`unsigned char` promotes).
 - Everything else is compile-time: deleted functions fail at link/compile, the
   intended failure mode.
@@ -371,12 +371,12 @@ compile unchanged.
 
 Each step shippable:
 
-1. **joy** (independent, trivial): add `joy/joy-read.s`, rewrite `joystick.h`, add
-   the three masks to `lynx.h`, delete `libsrc/joystick/`, `lynx-stdjoy.s`,
+1. **joy** (independent, trivial): add `joy/joy-read.s`, rewrite `lynx/joystick.h`, add
+   the three masks to `lynx/lynx.h`, delete `libsrc/joystick/`, `lynx-stdjoy.s`,
    `joy_stat_stddrv.s`, `kbhit.s`, `cgetc.s`, `conio.h`, `libsrc/conio/`; fix the
    four samples.
 2. **ser**: split `lynx-comlynx.s` into the §3.3 modules with direct entry symbols
-   (including the `ser_close` fix and the `.interruptor` export); rewrite `serial.h`
+   (including the `ser_close` fix and the `.interruptor` export); rewrite `lynx/serial.h`
    and the asm includes; delete `libsrc/serial/`.
 3. **Sweep**: delete `modload`/`modfree`/`modload.h`/`modload.inc`/`module.mac`,
    `libref.s`, `libsrc/em/`, `libsrc/mouse/`, `libsrc/dbg/` + their headers; remove

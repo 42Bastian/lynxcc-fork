@@ -41,7 +41,7 @@
 ;
 
         .include        "zeropage.inc"
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
         .include        "tgi-kernel.inc"
 
         .import         tgi_draw_sprite

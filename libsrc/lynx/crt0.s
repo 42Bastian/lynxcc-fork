@@ -26,7 +26,7 @@
 
         .include        "zeropage.inc"
         .include        "extzp.inc"
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
 ; ------------------------------------------------------------------------
 ; Mikey and Suzy init data, reg offsets and data

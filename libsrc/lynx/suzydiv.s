@@ -34,7 +34,7 @@
         .import         popptr1, negax
         .importzp       ptr1, tmp1, tmp2, tmp3
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
 tossuzydivax:
         stx     tmp2            ; sign of rhs (high byte)

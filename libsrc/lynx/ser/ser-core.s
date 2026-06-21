@@ -17,7 +17,7 @@
 ; relies on natural 8-bit wraparound. Not tunable without rewriting it.
 ;
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
         .export         ser_txbuf, ser_rxbuf
         .export         ser_rxin, ser_rxout, ser_txin, ser_txout

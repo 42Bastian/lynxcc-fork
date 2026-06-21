@@ -210,7 +210,7 @@ void __fastcall__ lynx_eewrite_93c86 (unsigned addr, unsigned val);
 */
 
 /* Define Hardware */
-#include <_mikey.h>
+#include <lynx/_mikey.h>
 #define MIKEY (*(struct __mikey *)0xFD00)
 
 #define _MIKEY_TIMERS (*(struct _mikey_all_timers *) 0xFD00)  // mikey_timers[8]
@@ -219,7 +219,7 @@ void __fastcall__ lynx_eewrite_93c86 (unsigned addr, unsigned val);
 #define _UART_TIMER (*(struct _mikey_timer *) 0xFD14)         // timer4 (UART)
 #define _VIDDMA (*(unsigned int *) 0xFD92)                    // dispctl/viddma
 
-#include <_suzy.h>
+#include <lynx/_suzy.h>
 #define SUZY        (*(struct __suzy*)0xFC00)
 
 

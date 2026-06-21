@@ -5,7 +5,7 @@
         .export         initirq, doneirq
         .import         callirq
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
 ; ------------------------------------------------------------------------
 

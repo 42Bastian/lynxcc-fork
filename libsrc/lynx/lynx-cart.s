@@ -13,7 +13,7 @@
 ; with 1024 bytes/block carts that are using CART0 as a read strobe.
 ; Also the default crt0.s supports this most common Lynx cart format.
 
-        .include "lynx.inc"
+        .include "lynx/lynx.inc"
         .include "extzp.inc"
         .export  lynxskip0, lynxread0
         .export  lynxblock 

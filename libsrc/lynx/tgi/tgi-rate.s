@@ -11,7 +11,7 @@
 ; of timer handling (spec ch. 3.3).
 ;
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
         .export         _tgi_setframerate
 

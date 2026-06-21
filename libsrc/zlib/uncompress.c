@@ -4,7 +4,7 @@
 ** Piotr Fusik, 18.11.2001
 */
 
-#include <zlib.h>
+#include <lynx/zlib.h>
 
 int __fastcall__ uncompress (unsigned char* dest, unsigned* destLen,
                              const unsigned char* source, unsigned sourceLen)

@@ -32,10 +32,10 @@
 ** Build:  cl65 -Osri -o suzyasyncbench.lnx suzyasyncbench.c
 */
 
-#include <lynx.h>
-#include <tgi.h>
-#include <joystick.h>
-#include <suzymath.h>
+#include <lynx/lynx.h>
+#include <lynx/tgi.h>
+#include <lynx/joystick.h>
+#include <lynx/suzymath.h>
 #include <stdio.h>
 #include <6502.h>
 

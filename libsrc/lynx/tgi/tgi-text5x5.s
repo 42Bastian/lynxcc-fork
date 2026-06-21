@@ -22,7 +22,7 @@
 ;
 
         .include        "zeropage.inc"
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
         .import         tgi_drawindex
         .import         tgi_font5x5

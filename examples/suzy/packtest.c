@@ -33,8 +33,8 @@
 ** Build:  cl65 -Ors -o packtest.lnx packtest.c
 */
 
-#include <lynx.h>
-#include <tgi.h>
+#include <lynx/lynx.h>
+#include <lynx/tgi.h>
 #include <6502.h>
 #include <string.h>
 

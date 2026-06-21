@@ -27,7 +27,7 @@
         .importzp       sp
 
         .include        "extzp.inc"
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
 tossuzymulax:
 tossuzyumulax:

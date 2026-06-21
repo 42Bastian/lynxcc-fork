@@ -29,7 +29,7 @@
         .importzp       sp, tmp1, tmp2
 
         .include        "extzp.inc"
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
 tossuzyumodax:
         sta     MATHP           ; divisor low

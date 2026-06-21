@@ -24,9 +24,9 @@
 ** Build:  cl65 -O -o muldivtest.lnx muldivtest.c
 */
 
-#include <lynx.h>
-#include <tgi.h>
-#include <joystick.h>
+#include <lynx/lynx.h>
+#include <lynx/tgi.h>
+#include <lynx/joystick.h>
 #include <stdio.h>
 #include <6502.h>
 

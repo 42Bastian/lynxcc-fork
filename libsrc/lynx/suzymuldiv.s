@@ -45,7 +45,7 @@
         .importzp       sp, tmp1
 
         .include        "extzp.inc"
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
 ; ---------------------------------------------------------------------------
 ; Unsigned (a*b)/c

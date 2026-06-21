@@ -28,7 +28,7 @@
 ; through the __viddma/__sprsys shadows first (spec ch. 3.1.3).
 ;
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
         .include        "../extzp.inc"
         .include        "tgi-kernel.inc"
 

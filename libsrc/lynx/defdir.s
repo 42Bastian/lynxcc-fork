@@ -3,7 +3,7 @@
 ;
 ; A default directory with just the main executable.
 ;
-        .include "lynx.inc"
+        .include "lynx/lynx.inc"
         .import         __STARTOFDIRECTORY__
         .import         __MAIN_START__
         .import         __CODE_SIZE__, __DATA_SIZE__, __RODATA_SIZE__

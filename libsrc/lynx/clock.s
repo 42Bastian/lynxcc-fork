@@ -18,7 +18,7 @@
         .constructor    init_clock
 
         .import         sreg: zp
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
 
         .macpack        generic
 

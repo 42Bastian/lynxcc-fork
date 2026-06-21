@@ -8,7 +8,7 @@
 ; Derived from the lynx-160-102-16 TGI driver by Karri Kaksonen, 2004.
 ;
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
         .include        "tgi-kernel.inc"
 
         .export         tgi_draw_sprite

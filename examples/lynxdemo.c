@@ -11,9 +11,9 @@
 ** Build:  cl65 -Ors -o lynxdemo.lnx lynxdemo.c
 */
 
-#include <lynx.h>
-#include <tgi.h>
-#include <joystick.h>
+#include <lynx/lynx.h>
+#include <lynx/tgi.h>
+#include <lynx/joystick.h>
 #include <6502.h>
 
 /* Ball, 8x8, 4bpp literal. Each sprite data line starts with its byte

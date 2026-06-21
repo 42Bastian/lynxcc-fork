@@ -13,11 +13,11 @@
 /*****************************************************************************/
 
 #include <stdio.h>
-#include <lynx.h>
-#include <tgi.h>
+#include <lynx/lynx.h>
+#include <lynx/tgi.h>
 #include <6502.h>
-#include <serial.h>
-#include <joystick.h>
+#include <lynx/serial.h>
+#include <lynx/joystick.h>
 
 static char buf[32];
 

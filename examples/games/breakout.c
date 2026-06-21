@@ -21,9 +21,9 @@
 ** Build:  cl65 -Ors -o breakout.lnx breakout.c
 */
 
-#include <lynx.h>
-#include <tgi.h>
-#include <joystick.h>
+#include <lynx/lynx.h>
+#include <lynx/tgi.h>
+#include <lynx/joystick.h>
 #include <6502.h>
 #include <string.h>
 

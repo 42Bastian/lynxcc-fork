@@ -4,7 +4,7 @@
 ; Karri Kaksonen and Bjoern Spruck, 11.12.2012
 ;
 
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
         .include        "zeropage.inc"
 
         .export         _lynx_snd_init

@@ -33,10 +33,10 @@
 ** Build:  cl65 -O -o suzyasync.lnx suzyasync.c
 */
 
-#include <lynx.h>
-#include <tgi.h>
-#include <joystick.h>
-#include <suzymath.h>
+#include <lynx/lynx.h>
+#include <lynx/tgi.h>
+#include <lynx/joystick.h>
+#include <lynx/suzymath.h>
 #include <stdio.h>
 #include <6502.h>
 

@@ -1,4 +1,4 @@
-        .include        "lynx.inc"
+        .include "lynx/lynx.inc"
         .include        "extzp.inc"
         .interruptor    _UpLoaderIRQ
         .export         __UPLOADER__: absolute = 1
