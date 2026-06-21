@@ -4,7 +4,7 @@
 ; zeropage locations for exclusive use by the library
 ;
 
-        .include "extzp.inc"
+        .include "lynx/extzp.inc"
 
         .segment "EXTZP" : zeropage
 

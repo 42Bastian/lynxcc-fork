@@ -3,7 +3,7 @@
 Companion to `LYNX_TGI_DESIGN.md`, which established the pattern (its §9 names this
 work). Same premise: this is a Lynx-only tree, each driver type has exactly one driver
 that is always present, so the loadable-driver machinery is pure overhead. Same rules:
-direct-call static modules under `libsrc/lynx/`, clean API break, no shims, compile
+direct-call static modules under `libraries/core/`, clean API break, no shims, compile
 errors (not silent behavior change) as the failure mode.
 
 This round completes the de-driverization: afterwards **no driver kernel remains**, so
@@ -108,7 +108,7 @@ returns all nine inputs, and the keyboard costume is deleted** (§2.2).
 
 ### 2.1 joy_read
 
-One module, `libsrc/lynx/joy/joy-read.s`:
+One module, `libraries/core/joy-read.s`:
 
 ```asm
 ; unsigned __fastcall__ joy_read (unsigned char joystick);
@@ -176,7 +176,7 @@ prev = now;
 
 ## 3. New ser architecture
 
-The comlynx driver body moves into static modules in `libsrc/lynx/ser/`; the kernel,
+The comlynx driver body moves into static modules in `libraries/core/`; the kernel,
 header, jump table, and install path are deleted. All routines keep their current
 logic — this is a re-packaging, with two deliberate fixes noted below.
 
@@ -218,7 +218,7 @@ the bit never sets.
 ### 3.3 Module split (smart-linking layout)
 
 ```
-libsrc/lynx/ser/
+libraries/core/
   ser-core.s    TxBuffer/RxBuffer (512 B .bss), ring pointers, contrl,
                 SerialStat, TxDone + the IRQ handler (.interruptor ser_irq, 29)
   ser-open.s    ser_open (baud table, format checks)

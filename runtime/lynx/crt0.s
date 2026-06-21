@@ -25,7 +25,7 @@
         .import         __MAIN_START__, __MAIN_SIZE__, __STACKSIZE__
 
         .include        "zeropage.inc"
-        .include        "extzp.inc"
+        .include        "lynx/extzp.inc"
         .include "lynx/lynx.inc"
 
 ; ------------------------------------------------------------------------

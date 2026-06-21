@@ -12,7 +12,7 @@
 ;
 
         .include "lynx/lynx.inc"
-        .include        "../extzp.inc"
+        .include        "lynx/extzp.inc"
 
         .import         tgi_cls_sprite
 

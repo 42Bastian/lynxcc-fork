@@ -14,7 +14,7 @@
 ; Also the default crt0.s supports this most common Lynx cart format.
 
         .include "lynx/lynx.inc"
-        .include "extzp.inc"
+        .include "lynx/extzp.inc"
         .export  lynxskip0, lynxread0
         .export  lynxblock 
         .import  __BANK0BLOCKSIZE__

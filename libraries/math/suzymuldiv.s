@@ -44,7 +44,7 @@
         .import         incsp4, negax
         .importzp       sp, tmp1
 
-        .include        "extzp.inc"
+        .include        "lynx/extzp.inc"
         .include "lynx/lynx.inc"
 
 ; ---------------------------------------------------------------------------

@@ -277,10 +277,10 @@ regenerated deterministically.
 
 | File | Change |
 |------|--------|
-| `libsrc/lynx/tgi/tgi-text.s` | add `tgi_advtab` (`.addr 0`); `tgi_gettextwidth` branches to the advance-sum path when `tgi_advtab≠0`; factor out the `str_advance` helper. 8×8 path otherwise byte-identical. |
-| `libsrc/lynx/tgi/tgi-textvar.s` | **new**: `buildvar` — two-pass bit-packed strip with per-glyph advance (§4); shares the `build5x5` body shape and the shared epilogue. |
-| `libsrc/lynx/tgi/tgi-fontvar.s` | **new**: `tgi_fontvar` (96×5) + `tgi_fontadv` (96) (§7). |
-| `libsrc/lynx/tgi/tgi-setfont.s` | add the `TGI_FONT_VARIABLE` branch; `BITMAP`/`COMPACT` branches zero `tgi_advtab`. |
+| `libraries/graphics/tgi-text.s` | add `tgi_advtab` (`.addr 0`); `tgi_gettextwidth` branches to the advance-sum path when `tgi_advtab≠0`; factor out the `str_advance` helper. 8×8 path otherwise byte-identical. |
+| `libraries/graphics/tgi-textvar.s` | **new**: `buildvar` — two-pass bit-packed strip with per-glyph advance (§4); shares the `build5x5` body shape and the shared epilogue. |
+| `libraries/graphics/tgi-fontvar.s` | **new**: `tgi_fontvar` (96×5) + `tgi_fontadv` (96) (§7). |
+| `libraries/graphics/tgi-setfont.s` | add the `TGI_FONT_VARIABLE` branch; `BITMAP`/`COMPACT` branches zero `tgi_advtab`. |
 | `include/tgi.h` | add `TGI_FONT_VARIABLE 2`. |
 | `asminc/tgi-kernel.inc` | add `TGI_FONT_VARIABLE = 2`. |
 | `tools/genfontvar.py` | **new**: regenerates the tables from `img_help.bmp`. |

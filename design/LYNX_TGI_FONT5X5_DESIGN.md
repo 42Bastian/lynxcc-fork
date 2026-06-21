@@ -105,7 +105,7 @@ The whole strip is one sprite scaled once, so glyph spacing scales with the text
 
 ## 5. The compact font module
 
-New file `libsrc/lynx/tgi/tgi-font5x5.s` exporting `tgi_font5x5`: **5 bytes per
+New file `libraries/graphics/tgi-font5x5.s` exporting `tgi_font5x5`: **5 bytes per
 glyph**, 5 ink bits left-aligned in bits 7..3, **bit 1 = foreground**.
 
 Because the source is caps-only, lower-case `a`–`z` would be byte-identical
@@ -183,10 +183,10 @@ secondary convenience and would require the `lynx/tgi.h` comment to be updated.
 
 | File | Change |
 |------|--------|
-| `libsrc/lynx/tgi/tgi-text.s` | extract shared prologue/epilogue; add `tgi_buildptr`/`tgi_pitch`/`tgi_fontheight`; `build8x8` = current body (logic unchanged); `gettextwidth`/`gettextheight` read the metric bytes. |
-| `libsrc/lynx/tgi/tgi-text5x5.s` | **new**: `build5x5` (§4) — packed strip, transparent normal sprite, pen = `tgi_drawindex`, height 5. |
-| `libsrc/lynx/tgi/tgi-font5x5.s` | **new**: `tgi_font5x5`, 96 glyphs × 5 bytes, fg = bit 1. |
-| `libsrc/lynx/tgi/tgi-setfont.s` | **new**: set `buildptr`/`pitch`/`fontheight` from the font id. |
+| `libraries/graphics/tgi-text.s` | extract shared prologue/epilogue; add `tgi_buildptr`/`tgi_pitch`/`tgi_fontheight`; `build8x8` = current body (logic unchanged); `gettextwidth`/`gettextheight` read the metric bytes. |
+| `libraries/graphics/tgi-text5x5.s` | **new**: `build5x5` (§4) — packed strip, transparent normal sprite, pen = `tgi_drawindex`, height 5. |
+| `libraries/graphics/tgi-font5x5.s` | **new**: `tgi_font5x5`, 96 glyphs × 5 bytes, fg = bit 1. |
+| `libraries/graphics/tgi-setfont.s` | **new**: set `buildptr`/`pitch`/`fontheight` from the font id. |
 | `include/tgi.h` | add `TGI_FONT_COMPACT` + `tgi_setfont` prototype. |
 | `asminc/tgi-kernel.inc` | add `TGI_FONT_COMPACT = 1`. |
 

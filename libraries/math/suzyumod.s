@@ -28,7 +28,7 @@
         .import         incsp2
         .importzp       sp, tmp1, tmp2
 
-        .include        "extzp.inc"
+        .include        "lynx/extzp.inc"
         .include "lynx/lynx.inc"
 
 tossuzyumodax:

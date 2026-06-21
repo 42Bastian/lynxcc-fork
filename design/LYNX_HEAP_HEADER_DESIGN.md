@@ -59,10 +59,10 @@ HEAP_MIN_BLOCKSIZE = sizeof (struct freeblock)   /* == 6, unchanged */
 |------|-------------------------------|
 | `include/_heap.h` | declares `usedblock { size; start; }`, defines `HEAP_ADMIN_SPACE` |
 | `asminc/_heap.inc` | mirrors the struct + constant for asm |
-| `libsrc/common/malloc.s` | `FillSizeAndRet` writes `size`; `RetUserPtr` writes `start = ptr2`; returns `ptr2 + HEAP_ADMIN_SPACE` |
-| `libsrc/common/free.s` | reads `start` at user−2/−1 (offset $FE/$FF after high-byte decrement) to recover the raw block, then reads `size` from it |
-| `libsrc/common/realloc.c` | `b = (((usedblock*)block) - 1)->start;` then later `b->start = b;` |
-| `libsrc/common/_heapblocksize.s` | reads `start` (offset $FE/$FF), reads `size`, returns `size − (user − raw)` |
+| `libraries/libc/malloc.s` | `FillSizeAndRet` writes `size`; `RetUserPtr` writes `start = ptr2`; returns `ptr2 + HEAP_ADMIN_SPACE` |
+| `libraries/libc/free.s` | reads `start` at user−2/−1 (offset $FE/$FF after high-byte decrement) to recover the raw block, then reads `size` from it |
+| `libraries/libc/realloc.c` | `b = (((usedblock*)block) - 1)->start;` then later `b->start = b;` |
+| `libraries/libc/_heapblocksize.s` | reads `start` (offset $FE/$FF), reads `size`, returns `size − (user − raw)` |
 | `libsrc/common/pmemalign.c` | the **only** writer of a split `start`; the sole reason the field exists |
 | `include/stdlib.h` | declares `posix_memalign` |
 
@@ -99,7 +99,7 @@ to be `sizeof (usedblock)` and now resolves to 2. `freeblock` and
 `HEAP_MIN_BLOCKSIZE` are untouched. The "field order is significant" note on
 `usedblock` becomes moot (one field) but should stay on `freeblock`.
 
-### 4.2. `libsrc/common/malloc.s`
+### 4.2. `libraries/libc/malloc.s`
 Remove the `RetUserPtr` block that writes `usedblock::start`. The tail collapses
 to: `FillSizeAndRet` writes the size word, then falls through to "return
 `ptr2 + HEAP_ADMIN_SPACE`". Keep a label at the return point so the
@@ -108,7 +108,7 @@ target. The leading C-pseudocode comment already reflects the 2-byte scheme
 (`*p++ = size; return p;`) and needs no change — only the asm tail loses four
 instructions. The `add #HEAP_ADMIN_SPACE` that forms the user pointer now adds 2.
 
-### 4.3. `libsrc/common/free.s`
+### 4.3. `libraries/libc/free.s`
 Replace the raw-block recovery. Today it decrements the high pointer byte and
 reads the `start` word at offsets $FE/$FF, then dereferences it. New behaviour:
 the word at user−2/−1 is the size directly, and the raw block is `user − 2`.
@@ -118,14 +118,14 @@ afterwards — the `raw + size == _heapptr` heap-top test, the trailing-free-blo
 absorption, and the fall-through into `heapadd` — is unchanged, because `heapadd`
 only ever writes `freeblock`/`usedblock::size` and the heap pointers.
 
-### 4.4. `libsrc/common/_heapblocksize.s`
+### 4.4. `libraries/libc/_heapblocksize.s`
 Raw block is now `ptr − 2` with the size in its first word, so the routine
 returns `rawsize − HEAP_ADMIN_SPACE`. The current "size minus (user − raw)"
 correction (which existed to handle split blocks where `user − raw` varies)
 reduces to the constant 2, so the arithmetic simplifies to a single subtract of
 `HEAP_ADMIN_SPACE`.
 
-### 4.5. `libsrc/common/realloc.c`
+### 4.5. `libraries/libc/realloc.c`
 Replace `b = (((struct usedblock*) block) - 1)->start;` with
 `b = ((struct usedblock*) block) - 1;` (the raw block is the header itself), and
 delete both `b->start = b;` assignments. `oldsize = b->size;`, the heap-top
@@ -195,7 +195,7 @@ consistent with the fork's trimming of target-irrelevant surface.
 
 ## 8. Verification (when implemented)
 
-1. `grep` the whole tree (samples, libsrc, include, doc) for `posix_memalign`,
+1. `grep` the whole tree (examples, libraries, runtime, include, doc) for `posix_memalign`,
    `->start`, `usedblock::start`, and `HEAP_ADMIN_SPACE` to confirm no remaining
    readers of the old 4-byte assumption.
 2. Rebuild `lynx.lib` clean; confirm `pmemalign.o` is gone from the archive
@@ -217,10 +217,10 @@ consistent with the fork's trimming of target-irrelevant surface.
 | # | Change | File(s) | Risk |
 |---|--------|---------|------|
 | 1 | Drop `usedblock::start`; `HEAP_ADMIN_SPACE` → 2 | `include/_heap.h`, `asminc/_heap.inc` | Low |
-| 2 | Remove `start` write; return `ptr+2` | `libsrc/common/malloc.s` | Low (offset math) |
-| 3 | Recover raw block as `user−2`; read size directly | `libsrc/common/free.s` | Low (offset math) |
-| 4 | Return `rawsize − 2` | `libsrc/common/_heapblocksize.s` | Low (offset math) |
-| 5 | Raw block = `(usedblock*)block − 1`; drop `start` stores | `libsrc/common/realloc.c` | Low |
+| 2 | Remove `start` write; return `ptr+2` | `libraries/libc/malloc.s` | Low (offset math) |
+| 3 | Recover raw block as `user−2`; read size directly | `libraries/libc/free.s` | Low (offset math) |
+| 4 | Return `rawsize − 2` | `libraries/libc/_heapblocksize.s` | Low (offset math) |
+| 5 | Raw block = `(usedblock*)block − 1`; drop `start` stores | `libraries/libc/realloc.c` | Low |
 | 6 | Delete file (unused, needs `start`) | `libsrc/common/pmemalign.c` | Low (API removal) |
 | 7 | Remove `posix_memalign` prototype | `include/stdlib.h` | Low (API removal) |
 | 8 | HTML docs verified to need no change (no `posix_memalign`/overhead refs) | `doc/funcref.html`, `doc/lynx.html` | None |

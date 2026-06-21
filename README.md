@@ -34,7 +34,7 @@ Implemented so far:
   so the "no math in IRQ handlers" contract is auditable by grep. Long
   operands fall back to software; powers of two still become shifts; the buggy
   hardware remainder register is avoided (`!%` computes `n - (n/d)*d`).
-  Implemented as `tossuzy*` routines in `libsrc/lynx/` plus the parser
+  Implemented as `tossuzy*` routines in `libraries/math/` plus the parser
   combination in `expr.c` and hardware generators in `codegen.c`; verified
   against C semantics on 3144 operand pairs in a 65C02+Suzy simulator. Note:
   source using these operators is fork-specific — other compilers reject it.

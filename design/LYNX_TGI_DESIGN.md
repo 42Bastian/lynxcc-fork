@@ -44,7 +44,7 @@ every TGI program regardless of what it calls. Smart linking is defeated by desi
 ## 2. New architecture: direct-call static library
 
 The kernel/vector/driver triple collapses to one C-callable routine per function, living
-in `libsrc/lynx/tgi/`, one object module per function (or small cohesive group) so ld65's
+in `libraries/graphics/`, one object module per function (or small cohesive group) so ld65's
 smart linking finally applies. No header, no vectors, no install step, no module format.
 
 ### 2.1 Surviving API
@@ -164,7 +164,7 @@ per-driver `ERROR` byte are deleted (~250 bytes incl. message strings).
 ### 2.6 Module split (smart-linking layout)
 
 ```
-libsrc/lynx/tgi/
+libraries/graphics/
   tgi-core.s      draw_sprite, DRAWINDEX, DRAWPAGE/VIEWPAGE vars   (always linked)
   tgi-init.s      tgi_init
   tgi-clear.s     tgi_clear, tgi_clearrows + shared cls sprite
@@ -343,7 +343,7 @@ must obey explicitly, not by accident:
   spec's own compiler warning); never read a write-only register to "preserve bits".
 - **Cart-write 12-tick rule (3.1.4).** After a game-cart write, no Suzy access for 12
   ticks. TGI never touches the cart; the constraint lives in the cart I/O code
-  (`libsrc/lynx/read.s` et al.), but `lynx/tgi.h` documentation warns against interleaving
+  (`libraries/core/read.s` et al.), but `lynx/tgi.h` documentation warns against interleaving
   raw cart strobes with sprite calls.
 - **Palette-at-$xxFA hardware bug (3.1.5).** An SCB pen-index palette starting at
   address $xxFA loses its last 2 bytes (pens C–F keep stale values). TGI's internal

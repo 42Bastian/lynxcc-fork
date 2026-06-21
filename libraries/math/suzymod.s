@@ -25,7 +25,7 @@
         .import         popptr1, negax
         .importzp       ptr1, tmp1, tmp2, tmp3
 
-        .include        "extzp.inc"
+        .include        "lynx/extzp.inc"
         .include "lynx/lynx.inc"
 
 tossuzymodax:

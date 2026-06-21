@@ -1,6 +1,6 @@
 # Lynx Suzy math: asynchronous (non-blocking) start / poll / harvest
 
-Status: IMPLEMENTED (2026-06-14). Runtime in `libsrc/lynx/suzyasync.s`, API in
+Status: IMPLEMENTED (2026-06-14). Runtime in `libraries/math/suzyasync.s`, API in
 `include/suzymath.h`; samples `examples/suzyasync/suzyasync.c` (perspective starfield) and
 `examples/suzyasyncbench/suzyasyncbench.c` (overlap-vs-sync-vs-soft timing). Library and both
 ROMs build clean via `make lib` / `make examples`. The C call sites were checked
@@ -21,7 +21,7 @@ away. It is intended as an explicit, intrinsic-level API; it does **not** change
 the operators or any existing routine.
 
 This document is design only. Nothing here is implemented yet. It can ship either
-as a standalone unit (`libsrc/lynx/suzyasync.s` + `<lynx/suzymath.h>`) or be folded in
+as a standalone unit (`libraries/math/suzyasync.s` + `<lynx/suzymath.h>`) or be folded in
 as `LYNX_CODEGEN_DESIGN.md` §2.6.4; the section numbering below assumes the
 latter for cross-referencing.
 

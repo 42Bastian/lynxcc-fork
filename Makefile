@@ -3,16 +3,16 @@
 .SUFFIXES:
 
 all mostlyclean clean install zip:
-	@$(MAKE) -C compiler      --no-print-directory $@
-	@$(MAKE) -C libsrc   --no-print-directory $@
-	@$(MAKE) -C doc      --no-print-directory $@
-	@$(MAKE) -C examples --no-print-directory $@
+	@$(MAKE) -C compiler        --no-print-directory $@
+	@$(MAKE) -f libraries.mk    --no-print-directory $@
+	@$(MAKE) -C doc             --no-print-directory $@
+	@$(MAKE) -C examples        --no-print-directory $@
 
 avail unavail bin:
 	@$(MAKE) -C compiler     --no-print-directory $@
 
 lib:
-	@$(MAKE) -C libsrc  --no-print-directory $@
+	@$(MAKE) -f libraries.mk --no-print-directory $@
 
 doc html info:
 	@$(MAKE) -C doc     --no-print-directory $@
@@ -24,4 +24,4 @@ examples:
 	@$(MAKE) -C compiler     --no-print-directory $@
 
 %:
-	@$(MAKE) -C libsrc  --no-print-directory $@
+	@$(MAKE) -f libraries.mk --no-print-directory $@

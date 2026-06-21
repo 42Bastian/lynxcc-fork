@@ -263,7 +263,7 @@ unsigned Opt65C02StackOps (CodeSeg* S)
 ** body is a clear win at the cost of a handful of bytes - a case where size and
 ** speed genuinely diverge. The cycle-cost model decides: the rewrite only fires
 ** when the modelled inline body is faster than the modelled call. The emitted
-** instructions are byte-for-byte the bodies of libsrc/runtime/incsp1.s and
+** instructions are byte-for-byte the bodies of runtime/rt/incsp1.s and
 ** incsp2.s (minus the call/return), so correctness follows from the runtime.
 */
 {

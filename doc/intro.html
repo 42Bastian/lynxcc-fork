@@ -79,9 +79,13 @@ is the Atari Lynx.</p>
          +-----------------------&gt;ld65&lt;
                                    \/
                                  hello</pre>
-<p><code>crt0.o</code> (the startup code) and <code>lynx.lib</code> (the Lynx version of the
-runtime and C library) are built from this tree. Actually, the
-startup code is contained in the library, so you won't need to care about it.</p>
+<p><code>crt0.o</code> (the startup code) and <code>lynx.lib</code> (the always-linked
+<em>core</em> library: runtime, startup glue, base platform and C library) are
+built from this tree. Actually, the startup code is contained in the library, so
+you won't need to care about it. The SDK also builds optional subsystem
+libraries &mdash; <code>lynx-graphics.lib</code>, <code>lynx-audio.lib</code>,
+<code>lynx-math.lib</code> and <code>lynx-compress.lib</code> &mdash; that a
+program opts into only when it uses those subsystems (see below).</p>
 <h2 id="sect-2">2. The compiler</h2>
 <p>The compiler translates one C source into one assembly source, for each
 invocation. It does <em>not</em> create object files directly, and it is <em>not</em>
@@ -123,6 +127,15 @@ without a big impact on code size. Those runtime functions, together with the
 C library, are in an object-file archive named after the system, in this case,
 "<code>lynx.lib</code>". We have to specify that file on the command line, so that the
 linker can resolve those functions.</p>
+<p>Code that uses an optional subsystem &mdash; the TGI graphics, Mikey audio,
+Suzy hardware math, or the compression routines &mdash; also names the matching
+archive (<code>lynx-graphics.lib</code>, <code>lynx-audio.lib</code>,
+<code>lynx-math.lib</code>, <code>lynx-compress.lib</code>). List the optional
+libraries <em>before</em> the core <code>lynx.lib</code>, so a single in-order
+linker pass resolves every cross-reference (the linker pulls in only the modules
+a program actually references, so naming a subsystem it doesn't use costs
+nothing). For example, a program that draws with the TGI and uses Suzy math:</p>
+<pre class="verb">        ld65 -o hello hello.o text.o lynx-graphics.lib lynx-math.lib lynx.lib</pre>
 <p>Let's link our files to get the final executable:</p>
 <pre class="verb">        ld65 -o hello hello.o text.o lynx.lib</pre>
 <p>The argument after <code>-o</code> specifies the name of the output file, the argument

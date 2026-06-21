@@ -29,7 +29,7 @@
 ;
 
         .include "lynx/lynx.inc"
-        .include        "../extzp.inc"
+        .include        "lynx/extzp.inc"
         .include        "tgi-kernel.inc"
 
         .import         tgi_drawpage

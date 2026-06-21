@@ -4,7 +4,7 @@
 ; This bootloader creates a signed binary so that the Lynx will accept it.
 ;
         .include "lynx/lynx.inc"
-        .include "extzp.inc"
+        .include "lynx/extzp.inc"
         .import         __BANK0BLOCKSIZE__
         .export         __BOOTLDR__: absolute = 1
 

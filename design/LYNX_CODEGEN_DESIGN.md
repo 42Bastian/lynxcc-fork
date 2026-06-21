@@ -13,11 +13,11 @@ runtime — done for `memcpy`/`memset` (8–12% for n ≥ 256/512); `mul`/shifts
 and have no SMC opportunity (pure register/zp loops), see §2.6 for the better approach.
 §2.6 Suzy hardware multiply/divide — done: `!*`/`!/`/`!%` operators (parser combination in
 `hie_internal`, hardware generators `g_suzymul`/`g_suzydiv`/`g_suzymod`, five `tossuzy*`
-routines in `libsrc/lynx/`); verified against C semantics on 3144 operand pairs (corner
+routines in `libraries/math/`); verified against C semantics on 3144 operand pairs (corner
 values plus randoms) in a 65C02+Suzy simulator, including the divide-by-zero contract and
 the sign fixups. §2.6.1 fused multiply-divide — done: `a !* b !/ c` is recognized
 as one operation in `hie_internal` and lowered through `g_suzymuldiv` to
-`tossuzy[u]muldivax` in `libsrc/lynx/suzymuldiv.s`; the 32-bit product is divided
+`tossuzy[u]muldivax` in `libraries/math/suzymuldiv.s`; the 32-bit product is divided
 in place (no 16-bit truncation of the intermediate, one fewer readback/reload).
 Verified 0 mismatches vs a 32-bit C reference over 201k operand triples (corners +
 randoms + exhaustive small), signed and unsigned. §2.7 cycle-cost model — done: a
@@ -74,7 +74,7 @@ Every other `g_*` routine (≈90 of them) emits plain 6502.
 
 **Branch shortening** (`compiler/cc65/coptind.c:2181-2188`) converts short-distance `JMP` → `BRA`.
 
-**Runtime library**: only 34 of 200 files in `libsrc/runtime/` contain
+**Runtime library**: only 34 of 200 files in `runtime/rt/` contain
 `.if (.cpu .bitand ::CPU_ISET_65SC02)` fast paths. The hottest entry points are 6502-only:
 `pushax` (the single most-called runtime routine, 44 cycles), `ldaxsp`, `staxsp`, `staspidx`,
 `popptr1`, `ldauisp`, `pusha`, `enter`, `mul`, `shr`, `asr`, `lshl`, `lshr`.
@@ -89,7 +89,7 @@ trade size for speed have no cycle data to consult.
 
 ### 2.1 Runtime library fast paths (highest payoff, lowest risk)
 
-Compiled C on cc65 spends much of its time in `libsrc/runtime/`. These routines run on every
+Compiled C on cc65 spends much of its time in `runtime/rt/`. These routines run on every
 stack access, so cycle savings here multiply across the whole program. Add
 `.if (.cpu .bitand ::CPU_ISET_65SC02)` variants — the build already compiles the library
 per-target with the right CPU, and 34 files prove the pattern. No compiler changes needed.
@@ -107,7 +107,7 @@ Priority list (current cost → estimated new cost):
 5. **`popptr1`, `ldauisp`, `popa`-family**: `(sp)` for offset-0 accesses throughout.
 6. **`mul`, `shr/asr`, `lshl/lshr`**: not 65C02-specific, but Lynx-relevant — see SMC in §2.5.
 
-Verification is easy: the library builds with `make -C libsrc`, and each routine has a fixed
+Verification is easy: the library builds with `make -f libraries.mk`, and each routine has a fixed
 contract documented in its header comment (several, like `pushax`, note that the optimizer
 relies on the exit state of Y — **any variant must preserve those contracts**, or the
 compiler's register tracking in `codeinfo.c` must be updated to match).
@@ -237,7 +237,7 @@ Implementation:
   calls to new runtime entries (below). Constant folding is kept, as is the
   power-of-two→shift strength reduction (shifts beat the hardware).
 - *Library*: the Suzy routines live under NEW entry names (`tossuzymulax`,
-  `tossuzyudivax`, `tossuzyumodax`, `tossuzydivax`, `tossuzymodax`) in `libsrc/lynx/`,
+  `tossuzyudivax`, `tossuzyumodax`, `tossuzydivax`, `tossuzymodax`) in `libraries/math/`,
   coexisting with the untouched software `tosmulax` family in `lynx.lib`. No vpath
   override, no runtime flag, no per-call dispatch overhead.
 
@@ -247,8 +247,8 @@ use software — only explicit call sites get Suzy. The §2.6 constraints below 
 IRQ, polling) therefore only apply at sites the programmer explicitly marked, which makes
 the "no math in IRQ handlers" contract auditable by grep.
 
-**Mapping to cc65 runtime entry points** (the new `tossuzy*` entries in `libsrc/lynx/`;
-the stock software routines in `libsrc/runtime/` remain the `*`/`/`/`%` implementations):
+**Mapping to cc65 runtime entry points** (the new `tossuzy*` entries in `libraries/math/`;
+the stock software routines in `runtime/rt/` remain the `*`/`/`/`%` implementations):
 
 1. `tossuzyumulax`/`tossuzymulax` (`suzymul.s`): one unsigned hardware multiply serves both —
    cc65's int multiply returns only the low 16 bits of the product, which are identical
@@ -318,7 +318,7 @@ per-operator path (still correct). This is the legitimate, *polled* form of the
 multiply→divide register chaining that the "QbertRoot" hardware joke (hardware docs 12.4)
 abuses by racing an unfinished multiply.
 
-`libsrc/lynx/suzymuldiv.s` provides `tossuzyumuldivax` (unsigned) and `tossuzymuldivax`
+`libraries/math/suzymuldiv.s` provides `tossuzyumuldivax` (unsigned) and `tossuzymuldivax`
 (signed). Both load the two stacked factors, start the multiply, poll, then start the
 divide by **rewriting `MATHE` with its own value** — `MATHE` already holds the product's
 MSB and writing it triggers the divide without disturbing the 32-bit dividend (writes to
@@ -342,13 +342,13 @@ Because Suzy math is opt-in only, recompiling library source changes nothing. Th
 standard `*`/`/`/`%` operators keep lowering to the software `tosmulax`/`tosdivax`
 family, and the compiler's *implicit* multiplies — array indexing, pointer scaling,
 struct strides — also stay software (§2.6, "compiler-generated multiplies always use
-software"). No `.c` source in `libsrc/` silently switches to the hardware unit. The math
+software"). No `.c` source in `libraries/` silently switches to the hardware unit. The math
 unit reaches library code only where it is hand-written in asm or where an internal
 helper is deliberately routed over to it. The effect therefore splits into three: what
 already uses it, what would change if it were pushed deeper, and the contract the whole
 library must hold so neither breaks.
 
-**What already uses it (safe by construction).** Two places in `libsrc/lynx` touch the
+**What already uses it (safe by construction).** Two places in `libraries/math` touch the
 math unit: the `tossuzy*` routines themselves (`suzymul/div/mod/muldiv/udiv/umod.s`),
 linked only when a program uses `!*`/`!/`/`!%`; and `tgi/tgi-text.s`, where
 `tgi_gettextwidth` computes `strlen*8*scale >> 8` as an inline unsigned Suzy multiply and
@@ -479,7 +479,7 @@ Both consumers are wired in:
    so it runs only when the segment factor exceeds 100 — i.e. `-Oi` / `--codesize >100`)
    inlines `jsr incsp1` and `jsr incsp2`, the tiny C-stack-drop leaf routines whose `jsr`+`rts`
    overhead (12 cycles) dwarfs their body. It emits byte-for-byte the bodies of
-   `libsrc/runtime/incsp1.s` / `incsp2.s` (so correctness follows from the shipping runtime),
+   `runtime/rt/incsp1.s` / `incsp2.s` (so correctness follows from the shipping runtime),
    and only when the cycle model confirms the inline body beats the call: incsp1 19→7 cyc
    (+3 bytes), incsp2 26→17 cyc (+11 bytes). Such bare drops are rare in cc65 output (most
    cleanup goes through `popax`/`addysp`/callee-cleanup), exactly the size/speed divergence the
