@@ -38,7 +38,7 @@ same `.lnx`.
 ## 3. The manifest
 
 `cl65` learns the optional-library set from a data file, not hard-coded names,
-so new or `contrib` libraries do not require recompiling `cl65`. The
+so new or out-of-tree libraries do not require recompiling `cl65`. The
 `libraries/` build (`libraries.mk`) emits `lib/lynx-sdklibs.list`, one archive
 per line, in link order — **dependents first, core last**:
 
@@ -81,7 +81,7 @@ pin or override a library. The de-duplication compares base names, so a pinned
 | Option | Effect |
 | --- | --- |
 | `--no-sdk-libs` | Append only the core `lynx.lib`, not the optional set. Restores the fully explicit `-l` workflow (the §6.2 legibility path). |
-| `--sdk-libs <file>` | Use an alternative manifest (e.g. one that adds a `contrib` library) for projects that extend the SDK. |
+| `--sdk-libs <file>` | Use an alternative manifest (e.g. one that adds an out-of-tree library) for projects that extend the SDK. |
 
 These mirror the spirit of cc65's existing library/target-lib switches. An
 explicit `--sdk-libs` file that cannot be opened is a hard error; a missing

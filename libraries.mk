@@ -173,7 +173,8 @@ dirs:
 # --------------------------------------------------------------------------
 # Installation / packaging.  The four data directories the binaries hard-code
 # (include, asminc, cfg, lib) plus their lynx/ subdirs are copied verbatim;
-# full release/install packaging is handled later by packaging/ (design sec. 11).
+# full release/install packaging is handled by the make install/zip targets
+# (design sec. 11).
 
 datadir = $(PREFIX)/share/cc65
 

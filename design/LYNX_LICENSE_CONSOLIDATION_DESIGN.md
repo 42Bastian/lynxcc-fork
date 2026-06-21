@@ -44,7 +44,8 @@ This is not legal advice; it is a reading of the license text. The conditions in
 ## 3. Compliance conditions (must all hold)
 
 1. **`doc/licenses.html` ships in every distribution** — it is part of the
-   `doc/` tree that `packaging/` (see the SDK layout design) includes. The
+   `doc/` tree that the release install (`make install`/`zip`, see the SDK
+   layout design) includes. The
    notice is therefore never absent from the distribution.
 2. **All notices reproduced verbatim** in `doc/licenses.html`:
    - the cc65 zlib-style license;
@@ -124,9 +125,8 @@ landing mid-document still finds the path to the notices.
       `install`/`zip` `$(wildcard *.html)` automatically picks up
       `licenses.html`); pages parse with balanced tags and use only theme CSS
       variables, so they render in light and dark themes.
-- [ ] `packaging/` includes `doc/licenses.html` in the release tree — N/A yet:
-      no `packaging/` tree exists in the repo (future SDK-layout work). Once it
-      lands it must include the whole `doc/` tree, which carries `licenses.html`.
+- [x] The release install (`make install`/`zip`) carries `doc/licenses.html`:
+      it copies the whole `doc/` tree, which includes `licenses.html`.
 
 ## 8. Future SDK components
 

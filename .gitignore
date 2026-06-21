@@ -20,3 +20,12 @@ examples/*/*.s
 # sp65-generated sprite headers (rebuilt from suzy/heart.pcx)
 examples/suzy/heart_packed.h
 examples/suzy/heart_literal.h
+
+# Host-built unit-test binaries
+tests/unit/bin/
+
+# Project-template build outputs (templates/*/.gitignore also covers these)
+templates/*/game.lnx
+templates/*/game.map
+templates/*/src/*.o
+templates/*/src/*.s

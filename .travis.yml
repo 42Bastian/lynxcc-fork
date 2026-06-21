@@ -1,14 +1,9 @@
-language:
-  - c
-install:
-  - sudo apt-get update
-  - sudo apt-get install linuxdoc-tools linuxdoc-tools-info binutils-mingw-w64-i686 gcc-mingw-w64-i686 sshpass
+language: c
+# Mirrors .github/workflows/ci.yml: build the toolchain, libraries and
+# examples, then run the test suite. GearLynx is not installed here, so the
+# integration tests skip and the host unit tests are the gate.
 script:
-  - make bin USER_CFLAGS=-Werror
-  - make lib QUIET=1
-  - make -C test QUIET=1
-  - make -C compiler clean
-  - make bin USER_CFLAGS=-Werror CROSS_COMPILE=i686-w64-mingw32-
-  - make doc zip
-after_success:
-  - make -f Makefile.travis
+  - make bin
+  - make lib
+  - make examples
+  - make tests

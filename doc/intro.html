@@ -170,6 +170,12 @@ explicitly. See <a href="cl65.html">cl65.html</a> for details.</p>
 <p>The one-liner above should give you a Lynx cart image named "<code>hello</code>" in
 the current directory.</p>
 <p>For more information about the compile &amp; link utility, see <a href="cl65.html">cl65.html</a>.</p>
+<p>To start a real project rather than this tutorial, copy the
+<code>templates/basic</code> directory out of the SDK: it is a minimal, complete
+game (a <code>Makefile</code> that uses the automatic SDK libraries plus a
+<code>src/main.c</code> that brings up the TGI and reads the joystick) and is the
+canonical example of the <code>&lt;lynx/...&gt;</code> include layout and the
+zero-config link path. See its <code>README.md</code> for details.</p>
 <h2 id="sect-6">6. Running The Executable</h2>
 <p>The Lynx has no operating system or text screen: the linker output is a
 bootable cart image, and text output requires the TGI graphics driver.

@@ -1,4 +1,4 @@
-.PHONY: all mostlyclean clean install zip avail unavail bin lib doc html info examples
+.PHONY: all mostlyclean clean install zip avail unavail bin lib doc html info examples tests
 
 .SUFFIXES:
 
@@ -19,6 +19,13 @@ doc html info:
 
 examples:
 	@$(MAKE) -C examples --no-print-directory $@
+
+# Run the test suite (host unit tests + GearLynx integration). Build the
+# toolchain, libraries and examples first; the integration step skips itself
+# when the emulator is absent (see tests/run.sh). Kept out of "all" — it is an
+# on-demand / CI gate, not part of a plain build.
+tests:
+	@tests/run.sh
 
 %65:
 	@$(MAKE) -C compiler     --no-print-directory $@

@@ -4,7 +4,7 @@ Status: **DESIGN** (2026-06-21). Source of truth for migrating this tree from a
 single-target cc65 compiler fork into a structured **Atari Lynx game
 development SDK** — a complete toolkit for building Lynx games, comprising a
 toolchain, a core runtime, optional linkable subsystem libraries (graphics,
-audio, math, compression), project templates, examples, tests, and packaging.
+audio, math, compression), project templates, examples, and tests.
 
 The product this tree builds is the **Lynx Game Development SDK**. The compiler
 is one component of that SDK, not the whole project — the restructure exists to
@@ -30,7 +30,7 @@ stay in sync at every commit, per `CLAUDE.md`.
 - Give the new standalone SDK utility (`.lnx` manipulation) a home of its own,
   separate from the cc65-derived compiler.
 - Add the scaffolding a real SDK needs: `templates/`, `examples/`, `tests/`,
-  `contrib/`, `extern/`, `packaging/`.
+  `extern/`.
 - Do all of the above **without** breaking the working toolchain or its
   `CC65_HOME` discovery contract.
 
@@ -122,11 +122,9 @@ lynxcc/                     # repo root == CC65_HOME (dev tree)
 ├── examples/               # sample projects (was samples/), grouped by subsystem (§10)
 ├── tests/                  # automated tests + harness (NEW, see §10)
 │   └── emu/gearlynx/       #   local test emulator (NOT shipped, see §8/§10)
-├── contrib/                # community / unsupported extras (NEW)
 ├── extern/                 # placeholder for future vendored third-party code
 ├── doc/                    # documentation (name unchanged)
 ├── design/                 # *_DESIGN.md source-of-truth docs (unchanged)
-├── packaging/              # release/install scripts (NEW, see §11)
 ├── Makefile                # top-level orchestrator
 └── README.md  CLAUDE.md  LICENSE
 ```
@@ -242,8 +240,7 @@ monolithic `lynx.lib` already produces minimal binaries. Splitting into
 multiple archives buys **organisation and an explicit dependency contract**,
 not smaller output:
 
-- A subsystem can be versioned, documented, and (for `contrib`) shipped
-  independently.
+- A subsystem can be versioned, documented, and shipped independently.
 - An explicit `-l lynx-audio` on the link line keeps a program's dependencies
   legible and greppable when the user wants that, matching the project's
   existing "auditable by grep" ethos (cf. the `!*`/`!/` Suzy-math contract).
@@ -265,7 +262,7 @@ default the right libraries are pulled in automatically, with the explicit
   on-demand module extraction means unused subsystems add nothing to the binary.
 - Users who want an explicit, minimal link line use `--no-sdk-libs` plus
   `-l <lib>`, or invoke `ld65` directly. `examples/`/`templates/` Makefiles keep
-  an optional `LIBS` variable for that manual path and for `contrib` libraries.
+  an optional `LIBS` variable for that manual path and for out-of-tree libraries.
 - A program that references a subsystem symbol whose library has been excluded
   gets an undefined-symbol link error — the intended, legible failure mode.
 
@@ -306,7 +303,7 @@ target; this generalises that single default into an ordered list.
 **Mechanism**
 
 1. **SDK library manifest.** `cl65` learns the optional-library set from a data
-   file, not hard-coded names, so new or `contrib` libraries don't require
+   file, not hard-coded names, so new or out-of-tree libraries don't require
    recompiling `cl65`. The `libraries/` build emits `lib/lynx-sdklibs.list`,
    one archive per line in link order (dependents first, core last):
 
@@ -337,8 +334,8 @@ target; this generalises that single default into an ordered list.
 4. **New `cl65` options.**
    - `--no-sdk-libs` — append only the core `lynx.lib`, not the optional set;
      restores the fully explicit `-l` workflow (the §6.2 legibility path).
-   - `--sdk-libs <file>` — use an alternative manifest (e.g. one that adds a
-     `contrib` library) for projects that extend the SDK.
+   - `--sdk-libs <file>` — use an alternative manifest (e.g. one that adds an
+     out-of-tree library) for projects that extend the SDK.
 
    These mirror the spirit of cc65's existing library/target-lib switches.
 
@@ -408,12 +405,16 @@ built.
 The GearLynx headless emulator + MCP harness (currently `tools/gearlynx`) is
 **not** part of the SDK and is never shipped. It is a local testing tool only:
 it lives under `tests/emu/gearlynx`, is driven by the integration tests (§10),
-and is excluded from all release packaging (§11). It is not placed in `extern/`,
+and is excluded from all release artifacts (§11). It is not placed in `extern/`,
 which is reserved for genuinely-vendored code that *does* ship.
 
 ---
 
 ## 9. Templates
+
+*Status: IMPLEMENTED 2026-06-22 (phase 7). `templates/basic/` exists as
+described; the `src/main.c` skeleton moves a label with the joystick because the
+static TGI exposes sprite + text, not a pixel/line primitive.*
 
 `templates/` provides `cl65`/Make starting points so a user can scaffold a new
 game without copying an example. Minimum one template, structured to grow:
@@ -431,7 +432,7 @@ Later: `graphics`, `audio`, `full-game` variants. Because `cl65` auto-resolves
 SDK libraries (§6.6), a template `Makefile` needs no `LIBS` boilerplate to use
 graphics/audio/math — it is the canonical example of the `<lynx/...>` include
 convention (§7) and the zero-config link path. The optional `LIBS` hook is shown
-only in an advanced/`contrib` variant.
+only in an advanced variant.
 
 ---
 
@@ -493,20 +494,28 @@ gate and is where the `always full rebuild` discipline is enforced in CI. The
 emulator under `tests/emu/gearlynx` is a developer/CI testing tool only — it is
 never part of an SDK release (§11).
 
+*Status: IMPLEMENTED 2026-06-22 (phase 7). `unit/` ships `suzymath.c`, a
+host model sweeping the Suzy math invariants (software-mod recompute, the d<256
+divisor-normalisation identity, the 32-bit-intermediate fused muldiv, signed
+sign-fixup); the heap/ABI checks remain to be added in the same `unit/`
+pattern. `integration/gearlynx_check.py` boots each example through
+`emu/gearlynx/run.sh`, steps a fixed frame count with no input, and compares a
+SHA-256 of the screenshot against `golden/<name>.sha256` (a curated cross-
+subsystem set); it SKIPS (exit 0) when the emulator/BIOS are absent, so the
+unit tests are the always-on CI gate. `run.sh` chains the two and is invoked by
+`make tests` and `.github/workflows/ci.yml`.*
+
 ---
 
-## 11. Packaging, contrib, extern, doc
+## 11. Extern and doc
 
-- **`packaging/`** — scripts that assemble a release/install tree. Key job: map
-  the dev tree to the **installed** layout the binaries expect
-  (`<prefix>/bin`, `<prefix>/share/cc65/{include,asminc,lib,cfg}` or the
-  WinBin `bin/../{include,asminc,lib,cfg}` arrangement). Replaces the ad-hoc
-  `make install`/`zip` targets and `build-windows.ps1` packaging step.
-  **Explicitly excludes `tests/` (including `tests/emu/gearlynx`)** — the
-  emulator and test harness never ship in an SDK release.
-- **`contrib/`** — community/unsupported extras (extra libs, scripts). Built
-  opt-in, not part of the default `make all`, so breakage there never blocks the
-  core build.
+Release packaging stays handled by the existing `make install`/`zip` targets and
+`build-windows.ps1` step (§12); they already map the dev tree to the installed
+`<prefix>/share/cc65/{include,asminc,lib,cfg}` (or WinBin `bin/../`) layout the
+binaries expect, and **exclude `tests/` (including `tests/emu/gearlynx`)** — the
+emulator and test harness never ship in an SDK release. A dedicated `packaging/`
+directory is **not** added.
+
 - **`extern/`** — placeholder for genuinely-vendored third-party code that
   *ships* (e.g. a future compression reference). It holds nothing today;
   GearLynx is **not** here — it is a non-shipped test tool under `tests/emu/`.
@@ -554,8 +563,8 @@ Concretely:
 Existing conventions carry over verbatim: `CC65_HOME := $(abspath ..)` export
 for self-hosting, `ar65 d` to purge stale objects when a source is removed,
 the `bin/`-relative tool discovery in example Makefiles, and the
-`mostlyclean`/`clean`/`zip`/`install` phony targets (now also driving
-`packaging/`). The MSVC `.sln`/`.vcxproj` set adds the new `tools/` projects but
+`mostlyclean`/`clean`/`zip`/`install` phony targets. The MSVC `.sln`/`.vcxproj`
+set adds the new `tools/` projects but
 the existing compiler projects are otherwise preserved.
 
 Per project feedback, every change in the migration is followed by a **full
@@ -597,13 +606,17 @@ and **docs in sync**. Ordering minimises the window where references dangle.
    to `compiler/cl65/main.c`, update `doc/cl65.html`, add
    `design/LYNX_CL65_AUTOLIBS_DESIGN.md`. Verify each example links with zero
    `-l` flags and produces identical binaries.
-7. **New scaffolding**: `templates/basic`, `tests/` harness wired to CI,
-   `packaging/` install/zip scripts (excluding `tests/`), `contrib/` placeholder.
+7. **New scaffolding** (IMPLEMENTED 2026-06-22): `templates/basic` and the
+   `tests/` harness (host `unit/` + GearLynx `integration/` + `golden/`,
+   `tests/run.sh`) wired to CI via `.github/workflows/ci.yml` and the root
+   `make tests` target.
 8. **New tool**: implement `lnx` (separate `design/*_DESIGN.md` per `CLAUDE.md`).
+9. **Tag the SDK release**: a version bump marking the reference point users
+   target when following the §14 migration guide.
 
 Phases 1–4 are behaviour-preserving moves. Phase 5 changes the *link contract*
 and gets the most verification; phase 6 makes that contract automatic. Phases
-7–8 are additive.
+7–9 are additive.
 
 ---
 
@@ -671,7 +684,7 @@ C stdlib and the core platform, built via `cl65`, may need **no** changes at all
   docs work (§13 phases 6–7), with a **Migrating** nav entry across the doc set
   and a card on `index.html`.
 - **Tag the SDK release** (a version bump) as the reference point users target
-  when following this guide.
+  when following this guide — its own step in the rollout (§13 phase 9).
 
 ---
 
@@ -686,9 +699,9 @@ C stdlib and the core platform, built via `cl65`, may need **no** changes at all
 - **No compat shims for headers** means a noisy phase-4 diff and any
   out-of-tree user code breaks. Acceptable for a pre-1.0 SDK; flagged so it is a
   deliberate choice, not an accident.
-- **Install-tree vs dev-tree parity.** `packaging/` must reproduce the
+- **Install-tree vs dev-tree parity.** The installed tree must reproduce the
   `include/asminc/lib/cfg` adjacency the binaries hard-code; test an actual
-  install in phase 7, not just the dev tree.
+  install (via the existing `make install`/`zip`, §12), not just the dev tree.
 - **Repo name.** Directory is still `lynxcc`; renaming the repo to `lynxsdk` is
   a separate, cosmetic decision left to the maintainer.
 

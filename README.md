@@ -7,6 +7,25 @@ C compiler, linker, librarian, and the Lynx runtime library and drivers.
 
 Upstream cc65 documentation: [cc65.github.io/doc](https://cc65.github.io/doc)
 
+## Repository layout
+
+The tree is organised as a Lynx Game Development SDK
+([design/LYNX_SDK_LAYOUT_DESIGN.md](design/LYNX_SDK_LAYOUT_DESIGN.md)):
+
+- `compiler/` — the cc65 toolchain suite (cc65, ca65, ld65, ar65, co65, cl65,
+  sp65, da65).
+- `runtime/`, `libraries/` — the always-linked runtime plus the core and opt-in
+  subsystem libraries (graphics, audio, math, compression), archived into
+  `lib/lynx.lib` + `lib/lynx-*.lib`.
+- `include/`, `asminc/`, `cfg/`, `lib/`, `bin/` — the data and output
+  directories the binaries discover via `CC65_HOME`.
+- `templates/` — copyable project starters; `templates/basic` is the minimal
+  one-file game.
+- `examples/` — sample programs grouped by subsystem.
+- `tests/` — host unit tests plus GearLynx integration tests; run with
+  `make tests` (see [tests/README.md](tests/README.md)).
+- `doc/`, `design/` — HTML documentation and the source-of-truth design notes.
+
 ## Lynx code-generation improvements
 
 See [LYNX_CODEGEN_DESIGN.md](design/LYNX_CODEGEN_DESIGN.md) for the full design,

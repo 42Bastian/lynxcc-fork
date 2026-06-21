@@ -1,0 +1,33 @@
+name: CI
+
+# Build the toolchain, libraries and examples, then run the test suite
+# (tests/run.sh). GearLynx is not available on the hosted runner, so the
+# integration tests skip themselves and the host unit tests are the gate here.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build toolchain
+        run: make bin
+
+      - name: Build libraries
+        run: make lib
+
+      - name: Build examples
+        run: make examples
+
+      - name: Run tests
+        run: make tests
