@@ -80,9 +80,19 @@ LIBS = lib/lynx.lib          \
        lib/lynx-math.lib     \
        lib/lynx-compress.lib
 
+# The cl65 auto-library manifest (design sec. 6.6): one archive per line, in the
+# order cl65 hands them to ld65 — dependents first, core (lynx.lib) last — so a
+# single in-order library pass resolves every cross-reference. cl65 reads this
+# from lib/ (found via the same CC65_HOME/lib + WinBin search ld65 uses) and
+# appends the listed archives instead of only lynx.lib; ld65 extracts only the
+# referenced modules, so unused subsystems cost nothing. Keep this order in step
+# with the cl65 link order and the table in
+# design/LYNX_CL65_AUTOLIBS_DESIGN.md.
+MANIFEST = lib/lynx-sdklibs.list
+
 # --------------------------------------------------------------------------
 
-all lib: $(LIBS)
+all lib: $(LIBS) $(MANIFEST)
 
 mostlyclean:
 	$(call RMDIR,libwrk)
@@ -140,6 +150,21 @@ lib/lynx-math.lib: $(MATH_OBJS) | dirs
 
 lib/lynx-compress.lib: $(COMPRESS_OBJS) | dirs
 	$(ARCHIVE_recipe)
+
+# Regenerate the manifest whenever this Makefile (its source of truth) changes.
+# Written with one echo per line rather than make's $(file ...) function, which
+# needs GNU make 4.0+ — the macOS system make is still 3.81, where $(file ...)
+# silently writes nothing and cl65 would then fall back to linking only
+# lynx.lib (leaving e.g. the TGI graphics symbols unresolved). No space before
+# ">>" so Windows cmd does not append a trailing blank to each archive name.
+$(MANIFEST): libraries.mk | dirs
+	$(if $(QUIET),,@echo $(TARGET) - $@)
+	@$(RM) $@
+	@echo lynx-graphics.lib>>$@
+	@echo lynx-audio.lib>>$@
+	@echo lynx-compress.lib>>$@
+	@echo lynx-math.lib>>$@
+	@echo lynx.lib>>$@
 
 dirs:
 	@$(call MKDIR,lib)

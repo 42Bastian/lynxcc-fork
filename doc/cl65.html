@@ -86,6 +86,7 @@ Long options:
   --listing name                Create an assembler listing file
   --list-bytes n                Number of bytes per assembler listing line
   --mapfile name                Create a map file
+  --no-sdk-libs                 Link only the core SDK library, not the optional set
   --no-target-lib               Don't link the target library
   --o65-model model             Override the o65 model
   --obj file                    Link this object file
@@ -94,6 +95,7 @@ Long options:
   --register-space b            Set space available for register variables
   --register-vars               Enable register variables
   --rodata-name seg             Set the name of the RODATA segment
+  --sdk-libs file               Use an alternative SDK library manifest
   --signed-chars                Default characters are signed
   --start-addr addr             Set the default start address
   --static-locals               Make local variables static
@@ -152,6 +154,32 @@ switch.</p>
 <dd>
 <p>This option tells the cl65 to not include the target library into the list
   of libraries.</p>
+</dd>
+<dt><code>--no-sdk-libs</code></dt>
+<dd>
+<p>By default cl65 links the whole Lynx Game Development SDK library set
+  automatically: at the link step it appends every archive named in the SDK
+  library manifest (<code>lib/lynx-sdklibs.list</code>), in dependents-first /
+  core-last order, instead of only the core <code>lynx.lib</code>. Because
+  ld65 extracts only the object modules a program actually references, the
+  optional subsystems (graphics, audio, compress, math) a program does not
+  touch contribute nothing to the output — so a program links whatever it uses
+  with no <code>-l</code> flags. This option turns that off: only the core
+  <code>lynx.lib</code> is appended, restoring the fully explicit workflow
+  where you name each optional library yourself with <code>-l</code> (in
+  dependents-first, core-last order). If the manifest is absent, cl65 behaves
+  as if <code>--no-sdk-libs</code> were given. User-named libraries are linked
+  ahead of the automatic set and override it (an archive you name is not added
+  twice). See <code>design/LYNX_CL65_AUTOLIBS_DESIGN.md</code>.</p>
+</dd>
+<dt><code>--sdk-libs file</code></dt>
+<dd>
+<p>Use <code>file</code> as the SDK library manifest instead of the default
+  <code>lynx-sdklibs.list</code> found in the library search path. The file
+  lists one archive per line, in the order cl65 hands them to the linker
+  (dependents first, core last); blank lines and lines beginning with
+  <code>#</code> are ignored. Use this to extend the automatic set with a
+  <code>contrib</code> library without editing the shipped manifest.</p>
 </dd>
 <dt><code>-Wa options, --asm-args options</code></dt>
 <dd>

@@ -158,6 +158,15 @@ It knows how to build an executable (it will pass all object files to the
 linker). And finally, it has the Lynx as its default target, and will supply
 the correct startup file and runtime library names to the linker, so you don't
 have to care about that.</p>
+<p>It also resolves the optional SDK subsystem libraries automatically. Unlike
+the explicit <code>ld65</code> invocation above &mdash; where you list
+<code>lynx-graphics.lib</code>, <code>lynx-math.lib</code> and the rest yourself
+&mdash; cl65 appends the whole SDK set for you (in the correct dependents-first,
+core-last order), so a program that draws with the TGI or uses Suzy math links
+with <em>no</em> <code>-l</code> flags at all. The linker still pulls in only
+the modules a program actually references, so unused subsystems cost nothing.
+Pass <code>--no-sdk-libs</code> if you would rather name the optional libraries
+explicitly. See <a href="cl65.html">cl65.html</a> for details.</p>
 <p>The one-liner above should give you a Lynx cart image named "<code>hello</code>" in
 the current directory.</p>
 <p>For more information about the compile &amp; link utility, see <a href="cl65.html">cl65.html</a>.</p>

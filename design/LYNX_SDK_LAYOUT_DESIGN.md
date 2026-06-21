@@ -355,8 +355,8 @@ target; this generalises that single default into an ordered list.
 
 **Touch points:** `compiler/cl65/main.c` (link-step argument assembly + the two
 new long options), a generated `lib/lynx-sdklibs.list` from the `libraries/`
-build, and `doc/cl65.html` (docs-in-sync rule). When implemented this gets its
-own `design/LYNX_CL65_AUTOLIBS_DESIGN.md` source-of-truth note.
+build, and `doc/cl65.html` (docs-in-sync rule). Implemented in phase 6; the
+source-of-truth note is `design/LYNX_CL65_AUTOLIBS_DESIGN.md`.
 
 ---
 

@@ -134,6 +134,19 @@ static const char* FullDepName = 0;
 static char* TargetLib   = 0;
 static int   NoTargetLib = 0;
 
+/* SDK auto-library resolution (design/LYNX_CL65_AUTOLIBS_DESIGN.md).
+** By default cl65 appends the whole SDK library set named by the manifest
+** lib/lynx-sdklibs.list (dependents first, core last) instead of only the core
+** target library, so a program links whatever subsystems it references with no
+** -l flags. NoSDKLibs restores the core-only behaviour; SDKLibsName overrides
+** the manifest file.
+*/
+static int         NoSDKLibs   = 0;
+static const char* SDKLibsName = 0;
+
+/* The fixed name of the SDK library manifest, searched for in the lib/ path. */
+#define SDKLIBS_MANIFEST "lynx-sdklibs.list"
+
 
 
 /*****************************************************************************/
@@ -408,6 +421,117 @@ static void SetTargetFiles (void)
 
 
 
+static char* FindSDKManifest (void)
+/* Locate the SDK library manifest. Uses the explicit --sdk-libs name if given,
+** otherwise searches the same lib/ path ld65 uses (LD65_LIB, $CC65_HOME/lib, the
+** compiled-in default, and the WinBin ../lib fallback). Returns a malloced path
+** or NULL if no manifest was found.
+*/
+{
+    char* Path;
+    SearchPaths* LibPaths;
+
+    /* An explicit manifest is used verbatim */
+    if (SDKLibsName) {
+        return xstrdup (SDKLibsName);
+    }
+
+    /* Build the lib search path the same way ld65 builds LibDefaultPath */
+    LibPaths = NewSearchPath ();
+    AddSearchPath (LibPaths, "");
+    AddSearchPathFromEnv (LibPaths, "LD65_LIB");
+    AddSubSearchPathFromEnv (LibPaths, "CC65_HOME", "lib");
+#if defined(LD65_LIB) && !defined(_WIN32)
+    AddSearchPath (LibPaths, STRINGIZE (LD65_LIB));
+#endif
+    AddSubSearchPathFromWinBin (LibPaths, "lib");
+
+    Path = SearchFile (LibPaths, SDKLIBS_MANIFEST);
+    return Path;
+}
+
+
+
+static int LibAlreadyListed (const char* Lib)
+/* Return true if an archive with the same base name as Lib is already on the
+** linker file list (a user-supplied -l/.lib argument), so the manifest entry
+** can be skipped and the user's pin/override wins.
+*/
+{
+    unsigned I;
+    const char* Base = FindName (Lib);
+    for (I = 0; I < LD65.FileCount; ++I) {
+        if (LD65.Files[I] != 0 && strcmp (FindName (LD65.Files[I]), Base) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
+
+static int AppendSDKLibs (void)
+/* Append the SDK library set named by the manifest to the linker command line,
+** in listed order (dependents first, core last), skipping any archive the user
+** already pinned. Return true if the manifest was found and used, false if no
+** manifest exists (so the caller falls back to the core target library).
+*/
+{
+    char* Path;
+    FILE* F;
+    char  Line[256];
+
+    Path = FindSDKManifest ();
+    if (Path == 0) {
+        /* No manifest: degrade to today's core-only behaviour */
+        return 0;
+    }
+
+    F = fopen (Path, "r");
+    if (F == 0) {
+        /* An explicit --sdk-libs that cannot be opened is a hard error;
+        ** a missing auto-discovered manifest just falls back.
+        */
+        if (SDKLibsName) {
+            Error ("Cannot open SDK library manifest '%s': %s",
+                   Path, strerror (errno));
+        }
+        xfree (Path);
+        return 0;
+    }
+
+    while (fgets (Line, sizeof (Line), F) != 0) {
+        char* B = Line;
+        char* E;
+
+        /* Trim leading and trailing whitespace */
+        while (*B == ' ' || *B == '\t') {
+            ++B;
+        }
+        E = B + strlen (B);
+        while (E > B && (E[-1] == '\n' || E[-1] == '\r' ||
+                         E[-1] == ' '  || E[-1] == '\t')) {
+            *--E = '\0';
+        }
+
+        /* Skip blank lines and comments */
+        if (*B == '\0' || *B == '#') {
+            continue;
+        }
+
+        /* Append unless the user already named this archive */
+        if (!LibAlreadyListed (B)) {
+            CmdAddArg (&LD65, B);
+        }
+    }
+
+    fclose (F);
+    xfree (Path);
+    return 1;
+}
+
+
+
 /*****************************************************************************/
 /*                               Subprocesses                                */
 /*****************************************************************************/
@@ -474,14 +598,20 @@ static void Link (void)
         CmdAddArg (&LD65, LD65.Files [I]);
     }
 
-    /* Add the target library if it is not disabled */
+    /* Add the SDK libraries unless disabled. By default the whole SDK set
+    ** (from the manifest, dependents first, core last) is appended so the
+    ** subsystems a program references link with no -l flags; --no-sdk-libs
+    ** (and the manifest-absent fallback) append only the core target library.
+    */
     if (!NoTargetLib)
     {
-        /* Determine which target library is needed */
+        /* Determine which target (core) library is needed */
         SetTargetFiles ();
 
-        if (TargetLib) {
-            CmdAddArg (&LD65, TargetLib);
+        if (NoSDKLibs || !AppendSDKLibs ()) {
+            if (TargetLib) {
+                CmdAddArg (&LD65, TargetLib);
+            }
         }
     }
 
@@ -745,6 +875,7 @@ static void Usage (void)
             "  --listing name\t\tCreate an assembler listing file\n"
             "  --list-bytes n\t\tNumber of bytes per assembler listing line\n"
             "  --mapfile name\t\tCreate a map file\n"
+            "  --no-sdk-libs\t\t\tLink only the core SDK library, not the optional set\n"
             "  --no-target-lib\t\tDon't link the target library\n"
             "  --o65-model model\t\tOverride the o65 model\n"
             "  --obj file\t\t\tLink this object file\n"
@@ -753,6 +884,7 @@ static void Usage (void)
             "  --register-space b\t\tSet space available for register variables\n"
             "  --register-vars\t\tEnable register variables\n"
             "  --rodata-name seg\t\tSet the name of the RODATA segment\n"
+            "  --sdk-libs file\t\tUse an alternative SDK library manifest\n"
             "  --signed-chars\t\tDefault characters are signed\n"
             "  --start-addr addr\t\tSet the default start address\n"
             "  --static-locals\t\tMake local variables static\n"
@@ -1039,6 +1171,23 @@ static void OptNoTargetLib (const char* Opt attribute ((unused)),
 
 
 
+static void OptNoSDKLibs (const char* Opt attribute ((unused)),
+                          const char* Arg attribute ((unused)))
+/* Append only the core target library, not the optional SDK set */
+{
+    NoSDKLibs = 1;
+}
+
+
+
+static void OptSDKLibs (const char* Opt attribute ((unused)), const char* Arg)
+/* Use an alternative SDK library manifest */
+{
+    SDKLibsName = Arg;
+}
+
+
+
 static void OptO65Model (const char* Opt attribute ((unused)), const char* Arg)
 /* Handle the --o65-model option */
 {
@@ -1214,6 +1363,7 @@ int main (int argc, char* argv [])
         { "--listing",           1, OptListing        },
         { "--list-bytes",        1, OptListBytes      },
         { "--mapfile",           1, OptMapFile        },
+        { "--no-sdk-libs",       0, OptNoSDKLibs      },
         { "--no-target-lib",     0, OptNoTargetLib    },
         { "--o65-model",         1, OptO65Model       },
         { "--obj",               1, OptObj            },
@@ -1222,6 +1372,7 @@ int main (int argc, char* argv [])
         { "--register-space",    1, OptRegisterSpace  },
         { "--register-vars",     0, OptRegisterVars   },
         { "--rodata-name",       1, OptRodataName     },
+        { "--sdk-libs",          1, OptSDKLibs        },
         { "--signed-chars",      0, OptSignedChars    },
         { "--start-addr",        1, OptStartAddr      },
         { "--static-locals",     0, OptStaticLocals   },
