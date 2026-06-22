@@ -611,12 +611,61 @@ and **docs in sync**. Ordering minimises the window where references dangle.
    `tests/run.sh`) wired to CI via `.github/workflows/ci.yml` and the root
    `make tests` target.
 8. **New tool**: implement `lnx` (separate `design/*_DESIGN.md` per `CLAUDE.md`).
-9. **Tag the SDK release**: a version bump marking the reference point users
-   target when following the §14 migration guide.
+9. **License restructure** (§13.1): adopt the per-component licensing pattern
+   common to game-development SDKs — **MPL-2.0** on the fork's own new
+   SDK/toolchain files, **MIT** on `examples/` and `templates/`, and **CC-BY
+   4.0** on `doc/` — register all three in `doc/licenses.html`, and capture the
+   policy in a new `design/LYNX_LICENSE_POLICY_DESIGN.md` (new design doc per
+   `CLAUDE.md`). No code behaviour changes: this phase touches license headers,
+   `LICENSE*` files, and the license registry only.
+
+Finally, as a separate **un-numbered** step taken once the numbered phases above
+have all landed:
+
+- **Tag the SDK release**: a version bump marking the reference point users
+  target when following the §14 migration guide.
 
 Phases 1–4 are behaviour-preserving moves. Phase 5 changes the *link contract*
 and gets the most verification; phase 6 makes that contract automatic. Phases
-7–9 are additive.
+7–9 and the final release tag are additive.
+
+### 13.1 License restructure (phase 9)
+
+The SDK is currently distributed entirely under the cc65 zlib-style license
+plus the inventory of upstream/third-party notices consolidated into
+`doc/licenses.html` (see `design/LYNX_LICENSE_CONSOLIDATION_DESIGN.md`). Phase 9
+layers a per-component licensing pattern on top of that baseline, mirroring how
+many game-development toolchains license their pieces differently:
+
+| Component | New license | Scope |
+| --- | --- | --- |
+| SDK / toolchain | **MPL-2.0** | **Only** the new features and files this fork has authored. Existing files keep their current (cc65 zlib-style / Dunning / third-party) notices unchanged. |
+| Example games / templates | **MIT** | `examples/` and `templates/` — permissive so users can copy starter code into their own games with no copyleft reach. |
+| Documentation | **CC-BY 4.0** | `doc/` — Creative Commons Attribution, the conventional license for prose/reference material. |
+
+Key points that keep this compatible with the existing tree:
+
+- **MPL-2.0 is file-scoped by design.** Its copyleft attaches per *file*, so
+  applying it to only the fork's own new sources — without disturbing the
+  zlib-style notices on inherited cc65 files or the bundled third-party headers
+  (`include/zlib.h`, `include/lz4.h`) — is exactly the granularity MPL expects.
+  Inherited and third-party files keep their notices; the package stays a
+  compliant mix.
+- **Examples/templates as MIT** avoids imposing any SDK license on the games
+  users build from them, which is the point of shipping starter code.
+- **Docs as CC-BY 4.0** covers `doc/*.html` and the `design/*_DESIGN.md` sources
+  that feed them; attribution is satisfied by the existing authorship/footer
+  lines.
+- **Single registry.** Per the consolidation design's §8 future-components rule,
+  each new license is added to `doc/licenses.html` (verbatim license text in its
+  own subsection) rather than scattered through the manuals; the root `LICENSE`
+  file and per-source headers remain the authoritative copies. SPDX
+  `License-Identifier` tags on the fork's new files make the per-file scope
+  machine-checkable.
+
+The full mapping (which paths get which header, the verbatim license bodies, and
+the `doc/licenses.html` edits) lives in `design/LYNX_LICENSE_POLICY_DESIGN.md`,
+authored as part of this phase.
 
 ---
 
@@ -684,7 +733,8 @@ C stdlib and the core platform, built via `cl65`, may need **no** changes at all
   docs work (§13 phases 6–7), with a **Migrating** nav entry across the doc set
   and a card on `index.html`.
 - **Tag the SDK release** (a version bump) as the reference point users target
-  when following this guide — its own step in the rollout (§13 phase 9).
+  when following this guide — its own un-numbered final step in the rollout,
+  after the numbered phases (§13).
 
 ---
 
