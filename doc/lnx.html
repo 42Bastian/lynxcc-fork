@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lnx Users Guide</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+</head><body>
+<div class="topbar"><a class="brand" href="index.html">lynxcc</a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><a href="cc65.html">cc65</a><a href="ca65.html">ca65</a><a href="ld65.html">ld65</a><a href="cl65.html">cl65</a><a href="funcref.html">Functions</a><a href="tgi.html">TGI</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>lnx Users Guide</h1></header><div class="abstract">lnx is a standalone Lynx Game Development SDK utility that inspects and patches
+the 64-byte header of an Atari Lynx cartridge image (a <code>.lnx</code> file). It can
+print or hex-dump the header, rewrite its fields from command-line flags or a
+per-game JSON config, and wrap a raw image with a fresh header. It is a
+post-build editor, not a linker: cartridge images are still produced by ld65 and
+the <code>cfg/*.cfg</code> memory layout.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl1"><a href="#sect-2">2. The .lnx header</a></li>
+<li class="lvl1"><a href="#sect-3">3. Usage</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. Command line overview</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. Commands in detail</a></li>
+<li class="lvl2"><a href="#sect-3-3">3.3. Field options</a></li>
+<li class="lvl1"><a href="#sect-4">4. Per-game JSON configuration</a></li>
+<li class="lvl1"><a href="#sect-5">5. Examples</a></li>
+<li class="lvl1"><a href="#sect-6">6. Copyright</a></li>
+</ul></nav><h2 id="sect-1">1. Overview</h2>
+<p>Every linked <code>.lnx</code> file begins with a fixed 64-byte header that emulators
+(Handy, Mednafen) and flash carts read to learn the cartridge's bank sizes,
+name, manufacturer and screen rotation. In the lynxcc runtime this header is
+emitted by <code>runtime/lynx/exehdr.s</code> with placeholder values baked in at
+assembly time, so changing a game's cartridge name or rotation would otherwise
+mean editing the shared runtime and relinking.</p>
+<p>lnx makes the header a <em>post-link, per-game configuration</em>. A project keeps a
+small JSON file describing its cartridge metadata and stamps it onto the built
+image with a single command. The image body is never touched &mdash; only the 64
+header bytes are rewritten &mdash; so patching is fast and safe to repeat.</p>
+<p>lnx deliberately does not generate cartridge images, list or extract directory
+segments, or convert sprites. Image construction stays with ld65 and the
+<code>cfg/*.cfg</code> files; sprite conversion is sp65's job. lnx only reads and rewrites
+the header, and wraps a raw image with one.</p>
+<h2 id="sect-2">2. The .lnx header</h2>
+<p>The header is 64 bytes; multi-byte numbers are little-endian. String fields are
+stored fixed-width and NUL-padded.</p>
+<table>
+<thead><tr><th>Offset</th><th>Size</th><th>Field</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>4</td><td>magic</td><td>ASCII <code>"LYNX"</code></td></tr>
+<tr><td>4</td><td>2</td><td>bank-0 page size</td><td>bank-0 cart block size (e.g. 1024)</td></tr>
+<tr><td>6</td><td>2</td><td>bank-1 page size</td><td>bank-1 block size (0 if single bank)</td></tr>
+<tr><td>8</td><td>2</td><td>version</td><td>format version (1)</td></tr>
+<tr><td>10</td><td>32</td><td>cart name</td><td>NUL-padded ASCII</td></tr>
+<tr><td>42</td><td>16</td><td>manufacturer</td><td>NUL-padded ASCII</td></tr>
+<tr><td>58</td><td>1</td><td>rotation</td><td>0 none, 1 left, 2 right</td></tr>
+<tr><td>59</td><td>1</td><td>audin</td><td>AUDIN used for addressing: 0 no, 1 yes</td></tr>
+<tr><td>60</td><td>1</td><td>eeprom</td><td>EEPROM flag bit field (below)</td></tr>
+<tr><td>61</td><td>3</td><td>spare</td><td>reserved, written as zero</td></tr>
+</tbody>
+</table>
+<p>The EEPROM flag byte (offset 60) is a bit field: bits 0&ndash;2 select the chip
+(0 none, 1 93c46, 2 93c56, 3 93c66, 4 93c76, 5 93c86; size in bits is
+2<sup>chip+9</sup>), bits 3&ndash;5 are reserved, bit 6 is 0 for a real EEPROM
+chip or 1 for a LynxSD save file, and bit 7 is the word size (0 = 16-bit,
+1 = 8-bit). <code>lnx info</code> decodes these bits for you.</p>
+<p>A file is treated as having a header when its first four bytes are
+<code>LYNX</code>; otherwise it is a raw (headerless) image, as produced by a no-header
+linker config or any binary you want to wrap with <code>lnx create</code>. Over-long name
+values are truncated to the field width (31 characters for the cart name, 15 for
+the manufacturer) with a warning; the 64-byte header size never changes.</p>
+<h2 id="sect-3">3. Usage</h2>
+<h3 id="sect-3-1">3.1. Command line overview</h3>
+<p>lnx is invoked with a command, options, and an input file:</p>
+<pre class="verb">---------------------------------------------------------------------------
+usage: lnx &lt;command&gt; [options] &lt;file&gt;
+
+commands:
+  info    &lt;file.lnx&gt;           print the header fields
+  dump    &lt;file.lnx&gt;           hex+ASCII dump of the 64-byte header
+  patch   [field-opts] &lt;file&gt;  rewrite header fields of a .lnx
+  create  [field-opts] &lt;raw&gt;   wrap a raw image with a fresh header
+
+field options (patch/create):
+  --config &lt;file.json&gt;         read fields from a JSON config
+  --cartname &lt;str&gt;             set the 32-byte cart name
+  --manufacturer &lt;str&gt;         set the 16-byte manufacturer name
+  --rotation none|left|right   set the rotation flag (or 0|1|2)
+  --audin 0|1                  set the AUDIN-addressing flag
+  --eeprom &lt;n&gt;                 set the whole EEPROM flag byte (bit field)
+  --eeprom-chip &lt;name|0-5&gt;     set EEPROM chip (none|93c46|93c56|93c66|93c76|93c86)
+  --eeprom-lynxsd 0|1          set the LynxSD-save bit (bit 6)
+  --eeprom-word 8|16           set the EEPROM word size (bit 7)
+  --bank0 &lt;n&gt;                  set bank-0 page size
+  --bank1 &lt;n&gt;                  set bank-1 page size
+  --version &lt;n&gt;                set the header version word
+  -o, --output &lt;file&gt;          write result here (create requires -o;
+                               patch defaults to in place)
+
+  -h, --help                   this help
+  -V, --tool-version           print tool version
+---------------------------------------------------------------------------</pre>
+<h3 id="sect-3-2">3.2. Commands in detail</h3>
+<dl>
+<dt><code>info &lt;file.lnx&gt;</code></dt>
+<dd>
+<p>Print the decoded header fields (cart name, manufacturer, rotation, bank page
+  sizes, version) in human-readable form. Read-only. Errors if the input has no
+  <code>LYNX</code> header.</p>
+</dd>
+<dt><code>dump &lt;file.lnx&gt;</code></dt>
+<dd>
+<p>Print a hex-and-ASCII dump of the raw 64 header bytes, for verifying exact
+  on-disk layout. Read-only.</p>
+</dd>
+<dt><code>patch [field-opts] &lt;file&gt;</code></dt>
+<dd>
+<p>Rewrite the header of an existing <code>.lnx</code> from the supplied field options
+  and/or <code>--config</code> file. With no <code>-o</code>, the header is rewritten in place; with
+  <code>-o</code>, the file is copied and the copy's header is rewritten. The body after
+  byte 64 is left byte-for-byte unchanged, so re-running the same patch leaves
+  the file identical. Errors if the input has no <code>LYNX</code> header (use
+  <code>create</code> to add one).</p>
+</dd>
+<dt><code>create [field-opts] &lt;raw&gt;</code></dt>
+<dd>
+<p>Wrap a raw (headerless) image with a fresh 64-byte header, writing
+  <code>&lt;header&gt;&lt;raw body&gt;</code> to the <code>-o</code> target (which is required). The fresh
+  header starts from documented defaults (bank0 = 1024, bank1 = 0, version = 1,
+  rotation = none, blank names) and is then overlaid with the config/flags. A
+  warning is printed if the input already starts with <code>LYNX</code>, since that would
+  double-head the image.</p>
+</dd>
+</dl>
+<h3 id="sect-3-3">3.3. Field options</h3>
+<p>The field options are shared by <code>patch</code> and <code>create</code>. They are applied in a
+fixed order regardless of their order on the command line: the starting header
+(an existing one for <code>patch</code>, the defaults for <code>create</code>) is overlaid first by
+any <code>--config</code> file, then by each explicit <code>--flag</code>. So a flag always wins over
+the same field in the config, which lets a build pass a one-off override on top
+of the checked-in per-game JSON:</p>
+<dl>
+<dt><code>--config &lt;file.json&gt;</code></dt>
+<dd><p>Read header fields from a JSON config (see section 4).</p></dd>
+<dt><code>--cartname &lt;str&gt;</code></dt>
+<dd><p>Set the 32-byte cart name (truncated to 31 characters if longer).</p></dd>
+<dt><code>--manufacturer &lt;str&gt;</code></dt>
+<dd><p>Set the 16-byte manufacturer name (truncated to 15 characters if longer).</p></dd>
+<dt><code>--rotation none|left|right</code></dt>
+<dd><p>Set the rotation flag. The numeric forms <code>0</code>, <code>1</code>, <code>2</code> are also accepted.</p></dd>
+<dt><code>--audin 0|1</code></dt>
+<dd><p>Set the AUDIN-used-for-addressing flag.</p></dd>
+<dt><code>--eeprom &lt;n&gt;</code></dt>
+<dd><p>Set the whole EEPROM flag byte (0&ndash;255) as the raw bit field described
+  in section 2.</p></dd>
+<dt><code>--eeprom-chip none|93c46|93c56|93c66|93c76|93c86</code></dt>
+<dd><p>Set just the EEPROM chip (bits 0&ndash;2). A bare number <code>0</code>&ndash;<code>5</code> is
+  also accepted.</p></dd>
+<dt><code>--eeprom-lynxsd 0|1</code></dt>
+<dd><p>Set just the LynxSD-save bit (bit 6): <code>1</code> = LynxSD save file, <code>0</code> = real
+  EEPROM chip.</p></dd>
+<dt><code>--eeprom-word 8|16</code></dt>
+<dd><p>Set just the EEPROM word size (bit 7): <code>16</code>-bit (common) or <code>8</code>-bit.</p></dd>
+<dt><code>--bank0 &lt;n&gt;</code> / <code>--bank1 &lt;n&gt;</code></dt>
+<dd><p>Set the bank-0 / bank-1 page size word (0&ndash;65535).</p></dd>
+<dt><code>--version &lt;n&gt;</code></dt>
+<dd><p>Set the header version word (0&ndash;65535; normally 1).</p></dd>
+<dt><code>-o, --output &lt;file&gt;</code></dt>
+<dd><p>Write the result to this file. <code>create</code> requires it; <code>patch</code> defaults to
+  rewriting the input in place.</p></dd>
+</dl>
+<h2 id="sect-4">4. Per-game JSON configuration</h2>
+<p>The per-game config is a flat JSON object. Every key is optional &mdash; only keys
+that are present change the header, so the config layers cleanly on top of the
+existing header (for <code>patch</code>) or the defaults (for <code>create</code>). Unknown keys are
+rejected as errors, which catches typos rather than silently doing nothing.</p>
+<pre class="verb">{
+  "cartname": "Sybil's Quest",
+  "manufacturer": "lynxcc SDK",
+  "rotation": "left",
+  "audin": 0,
+  "eeprom_flag": 1,
+  "bank0_page_size": 1024,
+  "bank1_page_size": 0,
+  "version": 1
+}</pre>
+<p>The keys map to header fields as follows:</p>
+<table>
+<thead><tr><th>JSON key</th><th>Header field</th><th>JSON type</th></tr></thead>
+<tbody>
+<tr><td><code>cartname</code></td><td>cart name</td><td>string</td></tr>
+<tr><td><code>manufacturer</code></td><td>manufacturer</td><td>string</td></tr>
+<tr><td><code>rotation</code></td><td>rotation</td><td>string <code>none</code>/<code>left</code>/<code>right</code> or number <code>0</code>/<code>1</code>/<code>2</code></td></tr>
+<tr><td><code>audin</code></td><td>AUDIN flag</td><td>number <code>0</code>/<code>1</code> or boolean</td></tr>
+<tr><td><code>eeprom_flag</code> (alias <code>eeprom</code>)</td><td>EEPROM byte (whole)</td><td>number <code>0</code>&ndash;<code>255</code> (bit field)</td></tr>
+<tr><td><code>eeprom_chip</code></td><td>EEPROM bits 0&ndash;2</td><td>chip name or number <code>0</code>&ndash;<code>5</code></td></tr>
+<tr><td><code>eeprom_lynxsd</code></td><td>EEPROM bit 6</td><td>number <code>0</code>/<code>1</code> or boolean</td></tr>
+<tr><td><code>eeprom_word_size</code></td><td>EEPROM bit 7</td><td>number <code>8</code> or <code>16</code></td></tr>
+<tr><td><code>bank0_page_size</code></td><td>bank-0 page size</td><td>number</td></tr>
+<tr><td><code>bank1_page_size</code></td><td>bank-1 page size</td><td>number</td></tr>
+<tr><td><code>version</code></td><td>version</td><td>number</td></tr>
+</tbody>
+</table>
+<p>The EEPROM byte can be set as a whole (<code>eeprom_flag</code>) or field by field
+(<code>eeprom_chip</code>, <code>eeprom_lynxsd</code>, <code>eeprom_word_size</code>), and the same applies to
+the matching command-line flags. The pieces are combined in a fixed order
+regardless of how they are supplied: the starting byte is the raw value if one
+was given, otherwise the existing header byte, then the chip overlays bits
+0&ndash;2, the LynxSD flag bit 6, and the word size bit 7. Fields you do not set
+keep their existing bits, so you can flip one bit without touching the rest, and
+a command-line flag overrides the same field from the config (for example
+<code>--eeprom-lynxsd 0</code> clears a LynxSD bit the config set).</p>
+<p>lnx reads this config with a small built-in parser that accepts a single flat
+object of string and integer values (plus the <code>true</code>/<code>false</code>/<code>null</code> literals).
+Nested objects, arrays and fractional numbers are not supported and are
+reported as errors &mdash; the header has no use for them, and the restriction keeps
+lnx free of any third-party JSON dependency.</p>
+<h2 id="sect-5">5. Examples</h2>
+<p>Inspect the header a build produced:</p>
+<pre class="verb">        lnx info game.lnx</pre>
+<p>Stamp a checked-in per-game config onto the built image, in place:</p>
+<pre class="verb">        lnx patch --config game.json game.lnx</pre>
+<p>Use the config but override the cartridge name for a special build, writing to
+a separate file rather than in place:</p>
+<pre class="verb">        lnx patch --config game.json --cartname "Game (Beta)" -o beta.lnx game.lnx</pre>
+<p>Wrap a raw, headerless image with a fresh header described by a config:</p>
+<pre class="verb">        lnx create --config game.json -o game.lnx game.raw</pre>
+<p>A Makefile can apply the per-game header as a post-link step after cl65:</p>
+<pre class="verb">        game.lnx: src/main.c game.json
+        	cl65 -o $@ src/main.c
+        	lnx patch --config game.json $@</pre>
+<h2 id="sect-6">6. Copyright</h2>
+<p>lnx is part of the lynxcc Lynx Game Development SDK. The full license text is
+reproduced verbatim, together with every other copyright notice in the
+distribution, on the consolidated <a href="licenses.html">Licenses and copyright notices</a> page.</p></article></main><footer class="site-foot">lynxcc documentation &mdash; a fork of cc65 focused on the Atari Lynx target.</footer>
+<script src="doc.js"></script>
+</body></html>

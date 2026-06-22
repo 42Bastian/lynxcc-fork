@@ -19,5 +19,13 @@
         .asciiz "Manufacturer   "                       ; 16 bytes manufacturer
         .byte   0                                       ; rotation 1=left
                                                         ; rotation 2=right
-        .byte   0,0,0,0,0                               ; spare
+        .byte   0                                       ; AUDIN addressing 0=no 1=yes
+        .byte   0                                       ; EEPROM flag bit field
+                                                        ;   bits0-2 chip, b6 LynxSD,
+                                                        ;   b7 8-bit word size
+        .byte   0,0,0                                   ; spare (reserved)
+
+; The cart name, manufacturer, rotation, AUDIN and EEPROM fields above can be
+; rewritten per game after linking with the `lnx` tool (tools/lnx); see
+; doc/lnx.html and design/LYNX_LNX_TOOL_DESIGN.md.
 

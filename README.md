@@ -14,6 +14,10 @@ The tree is organised as a Lynx Game Development SDK
 
 - `compiler/` — the cc65 toolchain suite (cc65, ca65, ld65, ar65, co65, cl65,
   sp65, da65).
+- `tools/` — standalone SDK utilities outside the compiler suite. `tools/lnx`
+  inspects and patches the 64-byte `.lnx` cartridge header (per-game name,
+  manufacturer and rotation, via flags or a JSON config); see
+  [design/LYNX_LNX_TOOL_DESIGN.md](design/LYNX_LNX_TOOL_DESIGN.md).
 - `runtime/`, `libraries/` — the always-linked runtime plus the core and opt-in
   subsystem libraries (graphics, audio, math, compression), archived into
   `lib/lynx.lib` + `lib/lynx-*.lib`.

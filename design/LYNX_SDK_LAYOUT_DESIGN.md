@@ -386,6 +386,13 @@ would read as an oversight later.
 
 ## 8. Tools
 
+*Status: IMPLEMENTED 2026-06-22 (phase 8). `tools/lnx` ships as described below —
+`info`/`dump`/`patch`/`create` over the 64-byte header, driven by CLI flags and
+an optional per-game JSON config (flags overlay config), covering every header
+field including the AUDIN and EEPROM flag bytes. Source-of-truth note:
+`design/LYNX_LNX_TOOL_DESIGN.md`. Directory/segment listing and `.lnx`→raw strip
+are deferred there as deliberate non-goals.*
+
 `tools/` holds **new** standalone-binary utilities only. The cc65-derived
 `sp65` (sprite packer) and `da65` (disassembler) stay in `compiler/` with the
 rest of the suite (§5). Critical: do **not** build utilities that duplicate
@@ -393,7 +400,7 @@ existing toolchain capability — wrap or rename instead.
 
 | Tool | Status | Purpose | Overlap note |
 | --- | --- | --- | --- |
-| `lnx` | NEW | inspect/patch `.lnx` headers, list/extract segments, convert raw↔`.lnx`, set rotation/eeprom flags | `.lnx` *generation* already happens via `ld65` + `cfg/*.cfg`; `lnx` is a post-build inspector/editor, not a second linker. |
+| `lnx` | IMPLEMENTED (phase 8) | inspect/patch `.lnx` headers (`info`/`dump`/`patch`/`create`) — names, rotation, bank sizes, version, AUDIN and EEPROM flags — with per-game header config via CLI flags or JSON; raw→`.lnx` wrap. Segment list/extract and `.lnx`→raw strip deferred (see `design/LYNX_LNX_TOOL_DESIGN.md` §7). | `.lnx` *generation* already happens via `ld65` + `cfg/*.cfg`; `lnx` is a post-build inspector/editor, not a second linker. |
 
 Sprite/bitmap conversion is **not** a `tools/` entry: that is `sp65`, which
 already exists in the toolchain (`compiler/`). No duplicate sprite engine and no
@@ -610,7 +617,14 @@ and **docs in sync**. Ordering minimises the window where references dangle.
    `tests/` harness (host `unit/` + GearLynx `integration/` + `golden/`,
    `tests/run.sh`) wired to CI via `.github/workflows/ci.yml` and the root
    `make tests` target.
-8. **New tool**: implement `lnx` (separate `design/*_DESIGN.md` per `CLAUDE.md`).
+8. **New tool** (IMPLEMENTED 2026-06-22): `lnx` under `tools/lnx`, built into the
+   root `bin/` via a new `tools/Makefile` (no `compiler/common` dependency) and
+   the top-level `Makefile`'s `compiler → tools → libraries` order; MSVC
+   `tools/lnx.vcxproj` registered in `compiler/cc65.sln`. Commands
+   `info`/`dump`/`patch`/`create` over the 64-byte header, with an optional
+   per-game JSON config (CLI flags overlay config) for per-game cartridge
+   metadata. Source-of-truth note `design/LYNX_LNX_TOOL_DESIGN.md`; docs in
+   `doc/lnx.html` (carded on `index.html`).
 9. **License restructure** (§13.1): adopt the per-component licensing pattern
    common to game-development SDKs — **MPL-2.0** on the fork's own new
    SDK/toolchain files, **MIT** on `examples/` and `templates/`, and **CC-BY

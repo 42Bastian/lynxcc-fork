@@ -1,15 +1,23 @@
-.PHONY: all mostlyclean clean install zip avail unavail bin lib doc html info examples tests
+.PHONY: all mostlyclean clean install zip avail unavail bin lib doc html info examples tools tests
 
 .SUFFIXES:
 
+# Build order matters: the compiler suite first, then the standalone tools/
+# utilities (they may invoke the toolchain), then the runtime+libraries, then
+# everything that consumes them (LYNX_SDK_LAYOUT_DESIGN.md §12).
 all mostlyclean clean install zip:
 	@$(MAKE) -C compiler        --no-print-directory $@
+	@$(MAKE) -C tools           --no-print-directory $@
 	@$(MAKE) -f libraries.mk    --no-print-directory $@
 	@$(MAKE) -C doc             --no-print-directory $@
 	@$(MAKE) -C examples        --no-print-directory $@
 
 avail unavail bin:
 	@$(MAKE) -C compiler     --no-print-directory $@
+	@$(MAKE) -C tools        --no-print-directory $@
+
+tools:
+	@$(MAKE) -C tools --no-print-directory all
 
 lib:
 	@$(MAKE) -f libraries.mk --no-print-directory $@
