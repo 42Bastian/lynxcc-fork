@@ -1,3 +1,11 @@
+/*
+** SPDX-License-Identifier: MIT
+**
+** Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+** Provided under the MIT License; copy it into your own projects freely.
+** See the LICENSE file in this directory.
+*/
+
 /*****************************************************************************/
 /*                                                                           */
 /* ComLynx loopback self-test (design/LYNX_JOY_SER_DESIGN.md section 8.2)           */
@@ -113,7 +121,7 @@ void main (void)
 
         /* The §2.2 edge-detect idiom on the unified joy_read. */
         for (;;) {
-            now = joy_read (JOY_1);
+            now = joy_read ();
             pressed = now & ~prev;
             prev = now;
             if (pressed & JOY_BTN_A_MASK) {

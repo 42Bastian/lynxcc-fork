@@ -1,4 +1,12 @@
 ;
+; Karri Kaksonen, 2004
+;
+; Extracted and adapted from the lynx-160-102-16 TGI driver
+; (libsrc/lynx/tgi/lynx-160-102-16.s) that Karri Kaksonen wrote for cc65 in
+; 2004. This is original cc65 work and stays under the cc65 package license in
+; the root LICENSE file, not the SDK's MPL-2.0. See doc/licenses.html.
+
+;
 ; Lynx static TGI: collision detection.
 ;
 ; void __fastcall__ tgi_setcollisiondetection (unsigned char active);

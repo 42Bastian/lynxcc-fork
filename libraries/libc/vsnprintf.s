@@ -13,6 +13,7 @@
         .include        "errno.inc"
 
         .macpack        generic
+        .macpack        cpu
 
 .data
 
@@ -140,8 +141,14 @@ L0:     ldy     #EINVAL
         pla                     ; Drop ap
         pla
         tya
-        jsr     __directerrno   ; Return -1
-        jmp     incsp6          ; Drop parameters
+        jsr     __seterrno      ; Set errno (returns with .A = 0)
+.if (.cpu .bitand CPU_ISET_65SC02)
+        dec     a
+.else
+        lda     #$FF            ; Return -1
+.endif
+        tax
+        jmp     incsp6          ; Drop parameters, return -1
 
 
 ; ----------------------------------------------------------------------------

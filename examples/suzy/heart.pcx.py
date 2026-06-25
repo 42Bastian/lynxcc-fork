@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: MIT
+#
+# Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+# Provided under the MIT License; copy it into your own projects freely.
+# See the LICENSE file in this directory.
+
 from PIL import Image
 # 16x16, 4-index image: 0=bg(transparent), 1=body, 2=highlight, 3=outline
 # A heart with horizontal runs (good for RLE) and a detailed top (literal).

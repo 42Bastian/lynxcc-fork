@@ -1,3 +1,10 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
 # cl65 Automatic SDK Library Resolution Design
 
 Status: **IMPLEMENTED** (2026-06-21). This document is the source of truth for

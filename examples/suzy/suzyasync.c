@@ -1,4 +1,12 @@
 /*
+** SPDX-License-Identifier: MIT
+**
+** Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+** Provided under the MIT License; copy it into your own projects freely.
+** See the LICENSE file in this directory.
+*/
+
+/*
 ** suzyasync.c - realistic use of this fork's ASYNCHRONOUS Suzy math
 ** (start / poll / harvest; see design/LYNX_SUZY_ASYNC_MATH_DESIGN.md and
 ** <suzymath.h>).

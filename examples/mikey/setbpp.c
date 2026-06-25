@@ -1,4 +1,12 @@
 /*
+** SPDX-License-Identifier: MIT
+**
+** Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+** Provided under the MIT License; copy it into your own projects freely.
+** See the LICENSE file in this directory.
+*/
+
+/*
 ** tgi_setbpp() demo for cc65: the Lynx 2-bit/monochrome display mode.
 **
 ** DISPCTL B2 selects how Mikey's display DMA interprets the frame
@@ -188,7 +196,7 @@ void main (void)
     tgi_setpalette (mono_pal);
 
     for (;;) {
-        joy = joy_read (JOY_1);
+        joy = joy_read ();
         pressed = joy & (unsigned char) ~prev;
         prev = joy;
 

@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: MIT
+#
+# Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+# Provided under the MIT License; copy it into your own projects freely.
+# See the LICENSE file in this directory.
+
 # Makefile for a Lynx Game Development SDK project (the "basic" template).
 #
 # Requires GNU make and the lynxcc SDK: either put its bin/ on your PATH, or set

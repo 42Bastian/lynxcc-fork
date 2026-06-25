@@ -1,4 +1,12 @@
 /*
+** SPDX-License-Identifier: MIT
+**
+** Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+** Provided under the MIT License; copy it into your own projects freely.
+** See the LICENSE file in this directory.
+*/
+
+/*
 ** invaders.c - Single-file Space Invaders for the Atari Lynx.
 **
 ** A companion to breakout.c. Where that sample shows off the fork's
@@ -877,7 +885,7 @@ void main (void)
     prev_joy = 0;
 
     for (;;) {
-        joy = (unsigned char)joy_read (JOY_1);
+        joy = (unsigned char)joy_read ();
         pressed = joy & (unsigned char)~prev_joy;
         prev_joy = joy;
 

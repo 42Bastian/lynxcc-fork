@@ -1,3 +1,10 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
 # Design: Static joy and ser Libraries (De-driverization, Final Round)
 
 Companion to `LYNX_TGI_DESIGN.md`, which established the pattern (its §9 names this
@@ -111,7 +118,7 @@ returns all nine inputs, and the keyboard costume is deleted** (§2.2).
 One module, `libraries/core/joy-read.s`:
 
 ```asm
-; unsigned __fastcall__ joy_read (unsigned char joystick);
+; unsigned joy_read (void);
 _joy_read:
         lda     SWITCHES        ; Pause switch, bit 0
         and     #$01
@@ -123,9 +130,9 @@ _joy_read:
 10 bytes, leaf, no state, no init — `JOYSTICK`/`SWITCHES` are read-only Suzy
 registers, plain `LDA` (no RMW concern under TGI design §5). The return type widens
 `unsigned char` → `unsigned` so Pause fits in bit 8; on cc65's ABI the high byte rides
-in X for free, so one call snapshots the complete input state atomically. The joystick
-argument is ignored, exactly as the old driver's `READ` did; `JOY_1` stays defined for
-source compatibility, `JOY_2` is deleted.
+in X for free, so one call snapshots the complete input state atomically. There is no
+joystick argument: the Lynx has exactly one joypad, so the old per-stick selector carried
+no information. `JOY_1` and `JOY_2` are both deleted.
 
 `lynx/lynx.h` keeps its six existing masks/macros unchanged (the low byte is raw $FCB0, so
 they still match) and gains the three that the `#$F3` mask used to hide:
@@ -142,8 +149,7 @@ they still match) and gains the three that the `#$F3` mask used to hide:
 `lynx/joystick.h` rewritten (~30 lines):
 
 ```c
-#define JOY_1           0       /* joy_read argument, ignored */
-unsigned __fastcall__ joy_read (unsigned char joystick);
+unsigned joy_read (void);
 ```
 
 There is exactly one always-present joypad, so the old `joy_count()` query
@@ -168,7 +174,7 @@ there is nothing left to fail.
   the `lynx/joystick.h` comment says so.
 
 ```c
-unsigned now = joy_read (JOY_1);
+unsigned now = joy_read ();
 unsigned pressed = now & ~prev;          /* edge: new this frame */
 if (JOY_PAUSE (pressed)) { ... }
 prev = now;
@@ -387,7 +393,8 @@ Each step shippable:
 
 - `co65` and ld65's o65 *output* support are toolchain features, untouched — only the
   library-side module loading dies here.
-- A second-player joystick over ComLynx (`joy_read(JOY_2)` via redeye protocol) would
-  be a new feature on top of the static ser core, not part of this cleanup.
+- A second-player joystick over ComLynx (reading a remote pad via the redeye protocol)
+  would be a new feature on top of the static ser core, not part of this cleanup. It
+  would need its own entry point, not `joy_read`, which reports only the local pad.
 - TGI design §9's remaining items (text-scale exposure, collision readback) are
   unaffected.

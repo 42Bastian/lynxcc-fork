@@ -1,3 +1,10 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
 # Design: 2-byte heap block header (drop the `start` back-pointer)
 
 Scope: shrink the per-allocation administration header on the C heap from 4

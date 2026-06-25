@@ -1,3 +1,10 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
 # License Consolidation Design
 
 Status: **IMPLEMENTED** (2026-06-21). The per-manual *License* / *Copyright*
@@ -142,3 +149,14 @@ same change that adds it — the docs-track-code rule extended to licensing:
 
 This keeps `doc/licenses.html` a complete, single-glance inventory of the SDK's
 licensing as it grows, with no per-manual duplication to maintain.
+
+**Update (2026-06-23).** Phase 9 of the SDK layout design exercised this rule at
+scale: the fork's per-component licensing
+(`design/LYNX_LICENSE_POLICY_DESIGN.md`) added three further licenses on top of
+the zlib-style baseline — **MPL-2.0** for the fork's own toolchain/runtime/
+library/tool sources, **MIT** for `examples/` and `templates/`, and **CC-BY 4.0**
+for the documentation. Each is registered as its own verbatim section in
+`doc/licenses.html` (sections&nbsp;5&ndash;7) rather than under §4, since these
+are first-party SDK licenses, not bundled third-party notices. The inherited
+cc65 (zlib-style / Dunning) and bundled third-party notices in §§2&ndash;4 are
+unchanged, and every source file now carries an `SPDX-License-Identifier` tag.

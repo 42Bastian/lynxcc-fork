@@ -1,4 +1,12 @@
 ;
+; Karri Kaksonen, 17.09.2009
+;
+; Extracted and adapted from the lynx-comlynx ComLynx serial driver
+; (libsrc/lynx/ser/lynx-comlynx.s) that Karri Kaksonen wrote for cc65 in 2009.
+; This is original cc65 work and stays under the cc65 package license in the
+; root LICENSE file, not the SDK's MPL-2.0. See doc/licenses.html.
+
+;
 ; unsigned char ser_close (void);
 ; /* Close the port: disable serial interrupts, stop the baud timer, drop
 ; ** buffered data. (design/LYNX_JOY_SER_DESIGN.md section 3.1 -- behavior fix:

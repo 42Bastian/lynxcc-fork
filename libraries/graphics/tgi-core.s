@@ -1,11 +1,17 @@
 ;
+; Karri Kaksonen, 2004
+;
+; Extracted and adapted from the lynx-160-102-16 TGI driver
+; (libsrc/lynx/tgi/lynx-160-102-16.s) that Karri Kaksonen wrote for cc65 in
+; 2004. This is original cc65 work and stays under the cc65 package license in
+; the root LICENSE file, not the SDK's MPL-2.0. See doc/licenses.html.
+
+;
 ; Lynx static TGI: shared sprite-drawing core.
 ;
 ; This is the only module that every TGI-using program links. It owns the
 ; current drawing pen and the draw buffer address, and provides the one
 ; routine that talks to the Suzy sprite engine.
-;
-; Derived from the lynx-160-102-16 TGI driver by Karri Kaksonen, 2004.
 ;
 
         .include "lynx/lynx.inc"

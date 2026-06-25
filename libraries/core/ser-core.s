@@ -1,7 +1,14 @@
 ;
+; Karri Kaksonen, 17.09.2009
+;
+; Extracted and adapted from the lynx-comlynx ComLynx serial driver
+; (libsrc/lynx/ser/lynx-comlynx.s) that Karri Kaksonen wrote for cc65 in 2009.
+; This is original cc65 work and stays under the cc65 package license in the
+; root LICENSE file, not the SDK's MPL-2.0. See doc/licenses.html.
+
+;
 ; ComLynx serial core: buffers, state, and the serial IRQ handler.
-; (design/LYNX_JOY_SER_DESIGN.md section 3.3; IRQ logic from Karri Kaksonen's
-; lynx-comlynx driver, 17.09.2009.)
+; (design/LYNX_JOY_SER_DESIGN.md section 3.3.)
 ;
 ; This module links whenever any ser function is used. The IRQ handler is
 ; in the interruptor chain at priority 29 -- deliberately higher than the

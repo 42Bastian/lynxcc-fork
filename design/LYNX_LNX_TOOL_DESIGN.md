@@ -1,3 +1,10 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
 # `lnx` — `.lnx` Header Inspector / Patcher Tool Design
 
 Status: **IMPLEMENTED 2026-06-22** (phase 8 of `LYNX_SDK_LAYOUT_DESIGN.md`).

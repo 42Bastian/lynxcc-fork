@@ -1,4 +1,12 @@
 /*
+** SPDX-License-Identifier: MIT
+**
+** Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+** Provided under the MIT License; copy it into your own projects freely.
+** See the LICENSE file in this directory.
+*/
+
+/*
 ** suzybench.c - Suzy hardware math accuracy + speed test for the Atari Lynx.
 **
 ** This fork adds the operators  !*  !/  !%  which route int multiply, divide
@@ -766,8 +774,8 @@ static char buf[28];
 
 static void wait_a (void)
 {
-    while (!(joy_read (JOY_1) & JOY_BTN_1_MASK)) {}
-    while (joy_read (JOY_1) & JOY_BTN_1_MASK) {}
+    while (!(joy_read () & JOY_BTN_1_MASK)) {}
+    while (joy_read () & JOY_BTN_1_MASK) {}
 }
 
 static void show_accuracy (void)

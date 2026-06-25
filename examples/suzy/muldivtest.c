@@ -1,4 +1,12 @@
 /*
+** SPDX-License-Identifier: MIT
+**
+** Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+** Provided under the MIT License; copy it into your own projects freely.
+** See the LICENSE file in this directory.
+*/
+
+/*
 ** muldivtest.c - On-hardware correctness test for this fork's Suzy hardware
 ** math operators (see design/LYNX_CODEGEN_DESIGN.md 2.6).
 **
@@ -182,8 +190,8 @@ int main (void)
         tgi_updatedisplay ();
         while (tgi_busy ()) {}
 
-        while (!(joy_read (JOY_1) & JOY_BTN_1_MASK)) {}
-        while (joy_read (JOY_1) & JOY_BTN_1_MASK) {}
+        while (!(joy_read () & JOY_BTN_1_MASK)) {}
+        while (joy_read () & JOY_BTN_1_MASK) {}
     }
     return 0;
 }

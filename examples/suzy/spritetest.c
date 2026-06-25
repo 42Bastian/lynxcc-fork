@@ -1,4 +1,12 @@
 /*
+** SPDX-License-Identifier: MIT
+**
+** Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+** Provided under the MIT License; copy it into your own projects freely.
+** See the LICENSE file in this directory.
+*/
+
+/*
 ** Build-time packed sprite assets for cc65 (Atari Lynx).
 **
 ** Where packtest.c proves the PACKED and LITERAL encodings are equivalent by

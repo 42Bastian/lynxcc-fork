@@ -1,4 +1,12 @@
 ;
+; Karri Kaksonen, 17.09.2009
+;
+; Extracted and adapted from the lynx-comlynx ComLynx serial driver
+; (libsrc/lynx/ser/lynx-comlynx.s) that Karri Kaksonen wrote for cc65 in 2009.
+; This is original cc65 work and stays under the cc65 package license in the
+; root LICENSE file, not the SDK's MPL-2.0. See doc/licenses.html.
+
+;
 ; unsigned char __fastcall__ ser_get (char* b);
 ; /* Get a character from the receive buffer and store it into the variable
 ; ** pointed to by b. If no data is available, SER_ERR_NO_DATA is returned.

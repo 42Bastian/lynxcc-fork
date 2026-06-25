@@ -1,9 +1,16 @@
 ;
+; Karri Kaksonen, 17.09.2009
+;
+; Extracted and adapted from the lynx-comlynx ComLynx serial driver
+; (libsrc/lynx/ser/lynx-comlynx.s) that Karri Kaksonen wrote for cc65 in 2009.
+; This is original cc65 work and stays under the cc65 package license in the
+; root LICENSE file, not the SDK's MPL-2.0. See doc/licenses.html.
+
+;
 ; unsigned char __fastcall__ ser_open (const struct ser_params* params);
 ; /* Set the port parameters and enable interrupts. */
 ;
-; (design/LYNX_JOY_SER_DESIGN.md section 3.1; baud/format logic from Karri
-; Kaksonen's lynx-comlynx driver, 17.09.2009.)
+; (design/LYNX_JOY_SER_DESIGN.md section 3.1.)
 ;
 ; The Lynx has only two correct serial data formats:
 ; 8 bits, parity mark, 1 stop bit

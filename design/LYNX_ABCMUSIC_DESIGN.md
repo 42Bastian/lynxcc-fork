@@ -1,3 +1,10 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
 # ABCMusic for the Atari Lynx
 
 Reference documentation for `abcmusic.s` / `ABCMusic.h`, plus a design for moving

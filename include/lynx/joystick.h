@@ -14,12 +14,14 @@
 /* The JOY_*_MASK values and test macros live in <lynx.h>.                  */
 /*                                                                           */
 /* Behavior notes (changes from the old driver API):                        */
+/*  - joy_read takes no argument: the Lynx has exactly one joypad, so the   */
+/*    old per-stick selector is gone.                                       */
 /*  - Option 1/2 are no longer masked out of the low byte, and Pause is     */
 /*    reported in bit 8: code that treated the whole return value as a      */
 /*    boolean ("any input?") now also triggers on the switches.             */
 /*  - The old conio kbhit()/cgetc() keyboard emulation is gone. Edge        */
 /*    detection is the caller's one-liner:                                  */
-/*        now = joy_read (JOY_1); pressed = now & ~prev; prev = now;        */
+/*        now = joy_read (); pressed = now & ~prev; prev = now;             */
 /*  - The Lynx conventions Pause+Opt1 = restart and Pause+Opt2 = flip       */
 /*    screen are game conventions, not hardware: honor them yourself.       */
 /*                                                                           */
@@ -42,21 +44,16 @@
 
 
 
-/* Argument for joy_read (ignored, kept for source compatibility) */
-#define JOY_1                   0
-
-
-
 /*****************************************************************************/
 /*                                 Functions                                 */
 /*****************************************************************************/
 
 
 
-unsigned __fastcall__ joy_read (unsigned char joystick);
+unsigned joy_read (void);
 /* Read the joypad. Low byte: d-pad, Opt1, Opt2, B, A (raw $FCB0); bit 8:
 ** Pause. Use the JOY_*_MASK macros from <lynx.h> to test individual inputs.
-** The argument is ignored.
+** The Lynx has exactly one joypad, so this call takes no argument.
 */
 
 

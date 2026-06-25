@@ -1,3 +1,10 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
 # Lynx Suzy math: asynchronous (non-blocking) start / poll / harvest
 
 Status: IMPLEMENTED (2026-06-14). Runtime in `libraries/math/suzyasync.s`, API in

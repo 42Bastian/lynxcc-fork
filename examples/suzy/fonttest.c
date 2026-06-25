@@ -1,4 +1,12 @@
 /*
+** SPDX-License-Identifier: MIT
+**
+** Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+** Provided under the MIT License; copy it into your own projects freely.
+** See the LICENSE file in this directory.
+*/
+
+/*
 ** fonttest.c - Demonstrates the compact 5x5 TGI font on the Atari Lynx.
 **
 ** The compact font (TGI_FONT_COMPACT, see design/LYNX_TGI_FONT5X5_DESIGN.md) packs
@@ -39,7 +47,7 @@ void main (void)
     tgi_setfont (TGI_FONT_COMPACT);
 
     for (;;) {
-        joy     = joy_read (JOY_1);
+        joy     = joy_read ();
         pressed = joy & (unsigned char)~prev;
         prev    = joy;
 

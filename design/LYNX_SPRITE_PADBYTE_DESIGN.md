@@ -1,3 +1,10 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
 # Design: Sprite construction and the Suzy "last-pixel" pad-byte bug
 
 Scope: how hand-built sprites and the runtime TGI text strips are encoded against

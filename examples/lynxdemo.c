@@ -1,4 +1,12 @@
 /*
+** SPDX-License-Identifier: MIT
+**
+** Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+** Provided under the MIT License; copy it into your own projects freely.
+** See the LICENSE file in this directory.
+*/
+
+/*
 ** Minimal Atari Lynx sample for cc65.
 **
 ** Shows the static TGI library (design/LYNX_TGI_DESIGN.md): no driver install,
@@ -67,7 +75,7 @@ void main (void)
     tgi_settextscale (0x0180, 0x0180);  /* 1.5x text: true 8.8 scaling */
 
     for (;;) {
-        joy = joy_read (JOY_1);
+        joy = joy_read ();
         pressed = joy & (unsigned char)~prev;
         prev = joy;
 

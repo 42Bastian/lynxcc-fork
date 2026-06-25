@@ -1,4 +1,12 @@
 /*
+** SPDX-License-Identifier: MIT
+**
+** Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+** Provided under the MIT License; copy it into your own projects freely.
+** See the LICENSE file in this directory.
+*/
+
+/*
 ** zeropage.c - Demonstrates placing C variables in the zero page on the
 ** Atari Lynx with the __zeropage attribute (see <zeropage.h> and the
 ** "Variable storage" chapter of doc/cc65.html).
@@ -52,7 +60,7 @@ void main (void)
     tgi_setfont (TGI_FONT_COMPACT);
 
     for (;;) {
-        joy     = joy_read (JOY_1);
+        joy     = joy_read ();
         pressed = joy & (unsigned char)~prev;
         prev    = joy;
 

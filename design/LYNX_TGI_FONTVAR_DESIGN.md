@@ -1,3 +1,10 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
 # Lynx TGI: adding the proportional (variable-width) font
 
 Status: design (2026-06-14). Adds a third bitmap font to the static TGI text

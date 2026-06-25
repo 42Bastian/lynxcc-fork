@@ -1,3 +1,11 @@
+<!--
+SPDX-License-Identifier: MIT
+
+Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+Provided under the MIT License; copy it into your own projects freely.
+See the LICENSE file in this directory.
+-->
+
 # Basic Lynx SDK project template
 
 A minimal, complete starting point for a new Atari Lynx game built with the

@@ -30,6 +30,29 @@ The tree is organised as a Lynx Game Development SDK
   `make tests` (see [tests/README.md](tests/README.md)).
 - `doc/`, `design/` — HTML documentation and the source-of-truth design notes.
 
+## License
+
+The SDK uses a per-component licensing pattern on top of the inherited cc65
+zlib-style baseline; every source file carries an `SPDX-License-Identifier` tag.
+
+- **Inherited cc65 sources** keep their original zlib-style notices (root
+  [LICENSE](LICENSE)); this includes the static TGI graphics modules and the
+  ComLynx serial modules, which were extracted and adapted from Karri Kaksonen's
+  cc65 Lynx drivers and keep his copyright. The John R. Dunning and bundled
+  third-party (zlib/inflate, lz4) notices are unchanged.
+- **The fork's own toolchain, runtime, library and tool sources authored from
+  scratch** are licensed under the **Mozilla Public License 2.0**
+  ([LICENSE-MPL-2.0.txt](LICENSE-MPL-2.0.txt)).
+- **`examples/` and `templates/`** are licensed under the **MIT License** (a
+  `LICENSE` file in each directory) so you can copy starter code into your own
+  games freely.
+- **Documentation** (`doc/`, `design/`) is licensed under **CC-BY 4.0**
+  ([doc/LICENSE](doc/LICENSE)).
+
+All notices are inventoried in [doc/licenses.html](doc/licenses.html); the policy
+and exact file mapping are in
+[design/LYNX_LICENSE_POLICY_DESIGN.md](design/LYNX_LICENSE_POLICY_DESIGN.md).
+
 ## Lynx code-generation improvements
 
 See [LYNX_CODEGEN_DESIGN.md](design/LYNX_CODEGEN_DESIGN.md) for the full design,

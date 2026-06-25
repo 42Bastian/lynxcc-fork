@@ -1,4 +1,12 @@
 /*
+** SPDX-License-Identifier: MIT
+**
+** Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+** Provided under the MIT License; copy it into your own projects freely.
+** See the LICENSE file in this directory.
+*/
+
+/*
 ** Basic Lynx Game Development SDK project template.
 **
 ** A minimal but complete program. It brings up the static TGI graphics library
@@ -28,7 +36,7 @@ void main (void)
 
     for (;;) {
         /* --- input: move the label one pixel per frame --- */
-        joy = (unsigned char)joy_read (JOY_1);
+        joy = (unsigned char)joy_read ();
         if ((joy & JOY_LEFT_MASK)  && x > 0)            --x;
         if ((joy & JOY_RIGHT_MASK) && x < TGI_XRES - 1) ++x;
         if ((joy & JOY_UP_MASK)    && y > 0)            --y;

@@ -1,4 +1,12 @@
 /*
+** SPDX-License-Identifier: MIT
+**
+** Lynx Game Development SDK example/template, (c) 2026 the lynxcc authors.
+** Provided under the MIT License; copy it into your own projects freely.
+** See the LICENSE file in this directory.
+*/
+
+/*
 ** breakout.c - Single-file Breakout for the Atari Lynx.
 **
 ** Demonstrates this fork's Suzy hardware math operators !* !/ !%
@@ -313,7 +321,7 @@ void main (void)
     prev_joy = 0;
 
     for (;;) {
-        joy = joy_read (JOY_1);
+        joy = joy_read ();
         pressed = joy & (unsigned char)~prev_joy;
         prev_joy = joy;
 
