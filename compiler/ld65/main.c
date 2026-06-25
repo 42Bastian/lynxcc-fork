@@ -46,6 +46,7 @@
 #include "libdefs.h"
 #include "objdefs.h"
 #include "print.h"
+#include "strutil.h"
 #include "target.h"
 #include "version.h"
 #include "xmalloc.h"
@@ -121,6 +122,7 @@ static void Usage (void)
             "  -h\t\t\tHelp (this text)\n"
             "  -m name\t\tCreate a map file\n"
             "  -o name\t\tName the default output file\n"
+            "  -t sys\t\tSet the target system\n"
             "  -u sym\t\tForce an import of symbol 'sym'\n"
             "  -v\t\t\tVerbose mode\n"
             "  -vm\t\t\tVerbose map file\n"
@@ -143,6 +145,7 @@ static void Usage (void)
             "  --obj-path path\t\tSpecify an object file search path\n"
             "  --start-addr addr\t\tSet the default start address\n"
             "  --start-group\t\t\tStart a library group\n"
+            "  --target sys\t\t\tSet the target system\n"
             "  --version\t\t\tPrint the linker version\n",
             ProgName);
 }
@@ -327,6 +330,19 @@ static void OptConfig (const char* Opt attribute ((unused)), const char* Arg)
     /* Read the config */
     CfgSetName (PathName);
     CfgRead ();
+}
+
+
+
+static void OptTarget (const char* Opt attribute ((unused)), const char* Arg)
+/* Handle the --target/-t option */
+{
+    /* Accepted for backwards compatibility only. The linker always targets the
+    ** Atari Lynx, so any other target is rejected and "lynx" is a no-op.
+    */
+    if (StrCaseCmp (Arg, "lynx") != 0) {
+        Error ("No such target system: '%s' (only 'lynx' is supported)", Arg);
+    }
 }
 
 
@@ -607,6 +623,7 @@ static void ParseCommandLine(void)
         { "--obj-path",                  1,      OptObjPath              },
         { "--start-addr",                1,      OptStartAddr            },
         { "--start-group",               0,      CmdlOptStartGroup       },
+        { "--target",                    1,      OptTarget               },
         { "--version",                   0,      OptVersion              },
     };
 
@@ -652,6 +669,10 @@ static void ParseCommandLine(void)
 
                 case 'o':
                     OptOutputName (NULL, GetArg (&I, 2));
+                    break;
+
+                case 't':
+                    OptTarget (Arg, GetArg (&I, 2));
                     break;
 
                 case 'u':

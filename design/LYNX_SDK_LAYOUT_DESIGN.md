@@ -726,7 +726,7 @@ Source- and build-level changes:
 | Libraries | one `lynx.lib` | core `lynx.lib` + optional `lynx-graphics/audio/math/compress.lib` (§6) | usually none — `cl65` auto-pulls them (§6.6); only `ld65`-direct users add `-l` |
 | Tree layout | `src/ libsrc/ samples/` | `compiler/ runtime/ libraries/ examples/` (§3) | affects only those who build the toolchain or reference tree paths, not end-user game projects |
 | Header shims | — | **none** by design (§7) | a missing-header build error is the intended signal to run the include-rewrite |
-| CLI flags | `--target --cpu --memory-model --standard` | removed — hard-wired to Lynx + 65SC02; permanent cc65 dialect | drop these flags from build scripts |
+| CLI flags | `--target --cpu --memory-model --standard` | hard-wired to Lynx + 65SC02, permanent cc65 dialect. `--memory-model`/`--standard` removed; `-t`/`--target` and `--cpu` kept as validated no-ops (accept only `lynx`, resp. `65C02`/`65SC02`) for backwards compatibility | drop `--memory-model`/`--standard`; `-t`/`--cpu` may stay but have no effect |
 
 API and runtime changes:
 

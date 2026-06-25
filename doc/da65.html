@@ -66,6 +66,7 @@ Long options:
   --argument-column n   Specify argument start column
   --comment-column n    Specify comment start column
   --comments n          Set the comment level for the output
+  --cpu type            Set cpu type (65C02, 65SC02)
   --debug-info          Add debug info to object file
   --formfeeds           Add formfeeds to the output
   --help                Help (this text)
@@ -100,6 +101,14 @@ Long options:
 <p>Set the comment level for the output. Valid arguments are 0..4. Greater
   values will increase the level of additional information written to the
   output file in form of comments.</p>
+<a id="option--cpu"></a>
+</dd>
+<dt><code>--cpu type</code></dt>
+<dd>
+<p>Accepted for backwards compatibility only. The valid arguments are
+  <code>65C02</code> and <code>65SC02</code>; any other value is an error. The argument is
+  otherwise ignored, because the disassembler always uses the Lynx's 65SC02
+  opcode table.</p>
 <a id="option--formfeeds"></a>
 </dd>
 <dt><code>-F, --formfeeds</code></dt>

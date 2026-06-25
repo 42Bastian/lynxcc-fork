@@ -114,6 +114,7 @@ Short options:
   -j                            Default characters are signed
   -o name                       Name the output file
   -r                            Enable register variables
+  -t sys                        Set the target system
   -v                            Increase verbosity
 
 Long options:
@@ -123,6 +124,7 @@ Long options:
   --check-stack                 Generate stack overflow checks
   --code-name seg               Set the name of the CODE segment
   --codesize x                  Accept larger code by factor x
+  --cpu type                    Set cpu type (65C02, 65SC02)
   --create-dep name             Create a make dependency file
   --create-full-dep name        Create a full make dependency file
   --data-name seg               Set the name of the DATA segment
@@ -145,6 +147,7 @@ Long options:
   --rodata-name seg             Set the name of the RODATA segment
   --signed-chars                Default characters are signed
   --static-locals               Make local variables static
+  --target sys                  Set the target system
   --verbose                     Increase verbosity
   --version                     Print the compiler version number
   --writable-strings            Make string literals writable
@@ -183,6 +186,14 @@ Long options:
   generation and optimization phases. It gives the allowed size increase
   factor (in percent). The default is 100 when not using <code>-Oi</code> and 200 when
   using <code>-Oi</code> (<code>-Oi</code> is the same as <code>-O --codesize 200</code>).</p>
+<a id="option-cpu"></a>
+</dd>
+<dt><code>--cpu type</code></dt>
+<dd>
+<p>Accepted for backwards compatibility only. The valid arguments are
+  <code>65C02</code> and <code>65SC02</code>; any other value is an error. The argument is
+  otherwise ignored, because the compiler always generates code for the Lynx's
+  65SC02. See also <code><a href="#option-target">-t, --target</a></code>.</p>
 <a id="option-create-dep"></a>
 </dd>
 <dt><code>--create-dep name</code></dt>
@@ -424,6 +435,14 @@ Long options:
 <dd>
 <p>This include the source code as comments in the generated code. This is
   normally not needed.</p>
+<a id="option-target"></a>
+</dd>
+<dt><code>-t sys, --target sys</code></dt>
+<dd>
+<p>Accepted for backwards compatibility only. The only valid argument is
+  <code>lynx</code>; any other target system is an error. Because this build of cc65
+  always targets the Atari Lynx, the option has no effect on the generated
+  output. See also <code><a href="#option-cpu">--cpu</a></code>.</p>
 </dd>
 <dt><code>-V, --version</code></dt>
 <dd>

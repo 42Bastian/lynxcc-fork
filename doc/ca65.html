@@ -300,11 +300,13 @@ Short options:
   -l name                       Create a listing file if assembly was ok
   -o name                       Name the output file
   -s                            Enable smart mode
+  -t sys                        Set the target system
   -v                            Increase verbosity
 
 Long options:
   --auto-import                 Mark unresolved symbols as import
   --bin-include-dir dir         Set a search path for binary includes
+  --cpu type                    Set cpu type (65C02, 65SC02)
   --create-dep name             Create a make dependency file
   --create-full-dep name        Create a full make dependency file
   --debug                       Debug mode
@@ -319,6 +321,7 @@ Long options:
   --pagelength n                Set the page length for the listing
   --relax-checks                Relax some checks (see docs)
   --smart                       Enable smart mode
+  --target sys                  Set the target system
   --verbose                     Increase verbosity
   --version                     Print the assembler version
 ---------------------------------------------------------------------------</pre>
@@ -332,6 +335,14 @@ Long options:
   may be used more than once to specify more than one directory to search. The
   current directory is always searched first before considering any
   additional directories. See also the section about <a href="#search-paths">search paths</a>.</p>
+<a id="option-cpu"></a>
+</dd>
+<dt><code>--cpu type</code></dt>
+<dd>
+<p>Accepted for backwards compatibility only. The valid arguments are
+  <code>65C02</code> and <code>65SC02</code>; any other value is an error. The argument is
+  otherwise ignored, because the assembler always assembles for the Lynx's
+  65SC02. See also <code><a href="#option-target">-t, --target</a></code>.</p>
 <a id="option-create-dep"></a>
 </dd>
 <dt><code>--create-dep name</code></dt>
@@ -442,6 +453,14 @@ Long options:
   pseudo instruction) historically tracked the <code>REP</code> and <code>SEP</code>
   instructions in 65816 mode. Since the 65816 is no longer supported, smart mode
   has no effect in this tree. Smart mode is off by default.</p>
+<a id="option-target"></a>
+</dd>
+<dt><code>-t sys, --target sys</code></dt>
+<dd>
+<p>Accepted for backwards compatibility only. The only valid argument is
+  <code>lynx</code>; any other target system is an error. Because this build of ca65
+  always assembles for the Atari Lynx, the option has no effect on the
+  generated output. See also <code><a href="#option-cpu">--cpu</a></code>.</p>
 <a id="option-v"></a>
 </dd>
 <dt><code>-v, --verbose</code></dt>

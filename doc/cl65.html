@@ -40,6 +40,7 @@ Short options:
   -m name                       Create a map file
   -o name                       Name the output file
   -r                            Enable register variables
+  -t sys                        Set the target system
   -u sym                        Force an import of symbol 'sym'
   -v                            Verbose mode
   -vm                           Verbose map file
@@ -78,6 +79,7 @@ Long options:
   --code-name seg               Set the name of the CODE segment
   --codesize x                  Accept larger code by factor x
   --config name                 Use linker config file
+  --cpu type                    Set cpu type (65C02, 65SC02)
   --create-dep name             Create a make dependency file
   --create-full-dep name        Create a full make dependency file
   --data-label name             Define and export a DATA segment label
@@ -106,6 +108,7 @@ Long options:
   --signed-chars                Default characters are signed
   --start-addr addr             Set the default start address
   --static-locals               Make local variables static
+  --target sys                  Set the target system
   --version                     Print the version number
   --verbose                     Verbose mode
   --zeropage-label name         Define and export a ZEROPAGE segment label
@@ -149,6 +152,19 @@ switch.</p>
   files on the command line. In that case, the name given with -o will be
   used for all of them, which makes the option pretty useless. You
   shouldn't use <code>-o</code> when more than one output file is created.</p>
+</dd>
+<dt><code>-t sys, --target sys</code></dt>
+<dd>
+<p>Accepted for backwards compatibility only. The only valid argument is
+  <code>lynx</code>; any other target system is an error. Because this SDK always
+  targets the Atari Lynx, the option has no effect on the generated output.</p>
+</dd>
+<dt><code>--cpu type</code></dt>
+<dd>
+<p>Accepted for backwards compatibility only. The valid arguments are
+  <code>65C02</code> and <code>65SC02</code>; any other value is an error. The argument is
+  otherwise ignored, because the toolchain always builds for the Lynx's
+  65SC02.</p>
 </dd>
 <dt><code>--print-target-path</code></dt>
 <dd>

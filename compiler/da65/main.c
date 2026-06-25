@@ -46,6 +46,7 @@
 #include "cpu.h"
 #include "fname.h"
 #include "print.h"
+#include "strutil.h"
 #include "version.h"
 
 /* da65 */
@@ -89,6 +90,7 @@ static void Usage (void)
             "  --argument-column n\tSpecify argument start column\n"
             "  --comment-column n\tSpecify comment start column\n"
             "  --comments n\t\tSet the comment level for the output\n"
+            "  --cpu type\t\tSet cpu type (65C02, 65SC02)\n"
             "  --debug-info\t\tAdd debug info to object file\n"
             "  --formfeeds\t\tAdd formfeeds to the output\n"
             "  --help\t\tHelp (this text)\n"
@@ -204,6 +206,21 @@ static void OptComments (const char* Opt, const char* Arg)
 
     /* Use the value */
     Comments = (unsigned char) Val;
+}
+
+
+
+static void OptCPU (const char* Opt, const char* Arg)
+/* Handle the --cpu option */
+{
+    /* Accepted for backwards compatibility only. The disassembler always uses
+    ** the 65SC02 opcode table, so the argument is validated but otherwise
+    ** ignored. Only the CPUs that ever shipped in a Lynx (the 65C02 family)
+    ** are allowed.
+    */
+    if (StrCaseCmp (Arg, "65C02") != 0 && StrCaseCmp (Arg, "65SC02") != 0) {
+        AbEnd ("Invalid argument for %s: '%s'", Opt, Arg);
+    }
 }
 
 
@@ -529,6 +546,7 @@ int main (int argc, char* argv [])
         { "--bytes-per-line",   1,      OptBytesPerLine         },
         { "--comment-column",   1,      OptCommentColumn        },
         { "--comments",         1,      OptComments             },
+        { "--cpu",              1,      OptCPU                  },
         { "--debug-info",       0,      OptDebugInfo            },
         { "--formfeeds",        0,      OptFormFeeds            },
         { "--help",             0,      OptHelp                 },

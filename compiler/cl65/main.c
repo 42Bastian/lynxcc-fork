@@ -75,6 +75,7 @@
 #include "mmodel.h"
 #include "searchpath.h"
 #include "strbuf.h"
+#include "strutil.h"
 #include "target.h"
 #include "version.h"
 #include "xmalloc.h"
@@ -822,6 +823,7 @@ static void Usage (void)
             "  -m name\t\t\tCreate a map file\n"
             "  -o name\t\t\tName the output file\n"
             "  -r\t\t\t\tEnable register variables\n"
+            "  -t sys\t\t\tSet the target system\n"
             "  -u sym\t\t\tForce an import of symbol 'sym'\n"
             "  -v\t\t\t\tVerbose mode\n"
             "  -vm\t\t\t\tVerbose map file\n"
@@ -860,6 +862,7 @@ static void Usage (void)
             "  --code-name seg\t\tSet the name of the CODE segment\n"
             "  --codesize x\t\t\tAccept larger code by factor x\n"
             "  --config name\t\t\tUse linker config file\n"
+            "  --cpu type\t\t\tSet cpu type (65C02, 65SC02)\n"
             "  --create-dep name\t\tCreate a make dependency file\n"
             "  --create-full-dep name\tCreate a full make dependency file\n"
             "  --data-label name\t\tDefine and export a DATA segment label\n"
@@ -888,6 +891,7 @@ static void Usage (void)
             "  --signed-chars\t\tDefault characters are signed\n"
             "  --start-addr addr\t\tSet the default start address\n"
             "  --static-locals\t\tMake local variables static\n"
+            "  --target sys\t\t\tSet the target system\n"
             "  --version\t\t\tPrint the version number\n"
             "  --verbose\t\t\tVerbose mode\n"
             "  --zeropage-label name\t\tDefine and export a ZEROPAGE segment label\n"
@@ -1162,6 +1166,33 @@ static void OptMapFile (const char* Opt attribute ((unused)), const char* Arg)
 
 
 
+static void OptCPU (const char* Opt, const char* Arg)
+/* Handle the --cpu option */
+{
+    /* Accepted for backwards compatibility only. The toolchain always uses the
+    ** 65SC02, so the argument is validated but otherwise ignored. Only the CPUs
+    ** that ever shipped in a Lynx (the 65C02 family) are allowed.
+    */
+    if (StrCaseCmp (Arg, "65C02") != 0 && StrCaseCmp (Arg, "65SC02") != 0) {
+        Error ("Invalid argument for %s: '%s'", Opt, Arg);
+    }
+}
+
+
+
+static void OptTarget (const char* Opt attribute ((unused)), const char* Arg)
+/* Set the target system */
+{
+    /* Accepted for backwards compatibility only. The toolchain always targets
+    ** the Atari Lynx, so any other target is rejected and "lynx" is a no-op.
+    */
+    if (StrCaseCmp (Arg, "lynx") != 0) {
+        Error ("No such target system: '%s' (only 'lynx' is supported)", Arg);
+    }
+}
+
+
+
 static void OptNoTargetLib (const char* Opt attribute ((unused)),
                             const char* Arg attribute ((unused)))
 /* Disable the target library */
@@ -1348,6 +1379,7 @@ int main (int argc, char* argv [])
         { "--code-name",         1, OptCodeName       },
         { "--codesize",          1, OptCodeSize       },
         { "--config",            1, OptConfig         },
+        { "--cpu",               1, OptCPU            },
         { "--create-dep",        1, OptCreateDep      },
         { "--create-full-dep",   1, OptCreateFullDep  },
         { "--data-label",        1, OptDataLabel      },
@@ -1376,6 +1408,7 @@ int main (int argc, char* argv [])
         { "--signed-chars",      0, OptSignedChars    },
         { "--start-addr",        1, OptStartAddr      },
         { "--static-locals",     0, OptStaticLocals   },
+        { "--target",            1, OptTarget         },
         { "--verbose",           0, OptVerbose        },
         { "--version",           0, OptVersion        },
         { "--zeropage-label",    1, OptZeropageLabel  },
@@ -1548,6 +1581,11 @@ int main (int argc, char* argv [])
                 case 'r':
                     /* Enable register variables */
                     OptRegisterVars (Arg, 0);
+                    break;
+
+                case 't':
+                    /* Set the target system */
+                    OptTarget (Arg, GetArg (&I, 2));
                     break;
 
                 case 'u':

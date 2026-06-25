@@ -104,7 +104,10 @@ able to translate more than one file per run.</p>
 is usually a good idea, since it makes the code smaller. If you don't care
 about the size, but want to have slightly faster code, use <code>-Oi</code> to inline
 some runtime functions.</p>
-<p>The <code>-t</code> switch is followed by the target system name.</p>
+<p>The optional <code>-t</code> switch is followed by the target system name. It is
+accepted only for backwards compatibility &mdash; the only valid value is
+<code>lynx</code> &mdash; and has no effect, because this toolchain always targets
+the Atari Lynx.</p>
 <p>If the compiler does not complain about errors in our "hello world" program, we
 will have a file named "<code>hello.s</code>", in our directory, that contains the
 assembly source for the <strong>hello</strong> module.</p>
@@ -116,12 +119,12 @@ file per run.</p>
 <p>Let's translate the "hello.s" and "text.s" files from our example:</p>
 <pre class="verb">        ca65 hello.s
         ca65 text.s</pre>
-<p>The <code>-t</code> switch is needed when translating the <code>text.s</code> file, so the
-text is converted from the input character-set (usually ISO-8859-1) into the
-target character-set (ASCII, in this example) by the assembler. The
-compiler-generated file <code>hello.s</code> does not contain any character constants,
-so specification of a target is not necessary (it wouldn't do any harm,
-however).</p>
+<p>When translating the <code>text.s</code> file, the assembler converts the text from
+the input character-set (usually ISO-8859-1) into the target character-set
+(ASCII, in this example). This happens automatically, because the assembler
+always uses the Atari Lynx character map. The optional <code>-t lynx</code> switch is
+still accepted for backwards compatibility, but it is not needed and has no
+effect.</p>
 <p>If the assembler does not complain, we should now have two object files (named
 <code>hello.o</code> and <code>text.o</code>) in the current directory.</p>
 <p>For more information about the assembler, see <a href="ca65.html">ca65.html</a>.</p>
@@ -145,9 +148,11 @@ nothing). For example, a program that draws with the TGI and uses Suzy math:</p>
 <pre class="verb">        ld65 -o hello hello.o text.o lynx-graphics.lib lynx-math.lib lynx.lib</pre>
 <p>Let's link our files to get the final executable:</p>
 <pre class="verb">        ld65 -o hello hello.o text.o lynx.lib</pre>
-<p>The argument after <code>-o</code> specifies the name of the output file, the argument
-after <code>-t</code> gives the target system. The following arguments are object
-files or libraries. Since the target library resolves imports in <code>hello.o</code>
+<p>The argument after <code>-o</code> specifies the name of the output file. The
+following arguments are object files or libraries. (An optional <code>-t lynx</code>
+switch is accepted for backwards compatibility but has no effect; the linker
+always loads the Lynx configuration by default.) Since the target library
+resolves imports in <code>hello.o</code>
 and <code>text.o</code>, it must be specified <em>after</em> those files.</p>
 <p>After a successful linker run, we have a file named "<code>hello</code>", a bootable
 Lynx cart image!</p>

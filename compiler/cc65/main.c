@@ -49,6 +49,7 @@
 #include "print.h"
 #include "segnames.h"
 #include "strbuf.h"
+#include "strutil.h"
 #include "target.h"
 #include "tgttrans.h"
 #include "version.h"
@@ -98,6 +99,7 @@ static void Usage (void)
             "  -mm model\t\t\tSet the memory model\n"
             "  -o name\t\t\tName the output file\n"
             "  -r\t\t\t\tEnable register variables\n"
+            "  -t sys\t\t\tSet the target system\n"
             "  -v\t\t\t\tIncrease verbosity\n"
             "\n"
             "Long options:\n"
@@ -107,6 +109,7 @@ static void Usage (void)
             "  --check-stack\t\t\tGenerate stack overflow checks\n"
             "  --code-name seg\t\tSet the name of the CODE segment\n"
             "  --codesize x\t\t\tAccept larger code by factor x\n"
+            "  --cpu type\t\t\tSet cpu type (65C02, 65SC02)\n"
             "  --create-dep name\t\tCreate a make dependency file\n"
             "  --create-full-dep name\tCreate a full make dependency file\n"
             "  --data-name seg\t\tSet the name of the DATA segment\n"
@@ -128,6 +131,7 @@ static void Usage (void)
             "  --rodata-name seg\t\tSet the name of the RODATA segment\n"
             "  --signed-chars\t\tDefault characters are signed\n"
             "  --static-locals\t\tMake local variables static\n"
+            "  --target sys\t\t\tSet the target system\n"
             "  --verbose\t\t\tIncrease verbosity\n"
             "  --version\t\t\tPrint the compiler version number\n"
             "  --writable-strings\t\tMake string literals writable\n",
@@ -302,6 +306,20 @@ static void OptCreateFullDep (const char* Opt attribute ((unused)),
 /* Handle the --create-full-dep option */
 {
     FileNameOption (Opt, Arg, &FullDepName);
+}
+
+
+
+static void OptCPU (const char* Opt, const char* Arg)
+/* Handle the --cpu option */
+{
+    /* Accepted for backwards compatibility only. The toolchain always targets
+    ** the 65SC02, so the argument is validated but otherwise ignored. Only the
+    ** CPUs that ever shipped in a Lynx (the 65C02 family) are allowed.
+    */
+    if (StrCaseCmp (Arg, "65C02") != 0 && StrCaseCmp (Arg, "65SC02") != 0) {
+        AbEnd ("Invalid argument for %s: '%s'", Opt, Arg);
+    }
 }
 
 
@@ -559,6 +577,20 @@ static void OptStaticLocals (const char* Opt attribute ((unused)),
 
 
 
+static void OptTarget (const char* Opt, const char* Arg)
+/* Handle the --target/-t option */
+{
+    /* Accepted for backwards compatibility only. The toolchain always targets
+    ** the Atari Lynx, so any other target is rejected and "lynx" is a no-op.
+    */
+    if (StrCaseCmp (Arg, "lynx") != 0) {
+        AbEnd ("Invalid argument for %s: '%s' (only 'lynx' is supported)",
+               Opt, Arg);
+    }
+}
+
+
+
 static void OptVerbose (const char* Opt attribute ((unused)),
                         const char* Arg attribute ((unused)))
 /* Increase verbosity */
@@ -643,6 +675,7 @@ int main (int argc, char* argv[])
         { "--check-stack",          0,      OptCheckStack           },
         { "--code-name",            1,      OptCodeName             },
         { "--codesize",             1,      OptCodeSize             },
+        { "--cpu",                  1,      OptCPU                  },
         { "--create-dep",           1,      OptCreateDep            },
         { "--create-full-dep",      1,      OptCreateFullDep        },
         { "--data-name",            1,      OptDataName             },
@@ -665,6 +698,7 @@ int main (int argc, char* argv[])
         { "--rodata-name",          1,      OptRodataName           },
         { "--signed-chars",         0,      OptSignedChars          },
         { "--static-locals",        0,      OptStaticLocals         },
+        { "--target",               1,      OptTarget               },
         { "--verbose",              0,      OptVerbose              },
         { "--version",              0,      OptVersion              },
         { "--writable-strings",     0,      OptWritableStrings      },
@@ -728,6 +762,10 @@ int main (int argc, char* argv[])
 
                 case 'r':
                     OptRegisterVars (Arg, 0);
+                    break;
+
+                case 't':
+                    OptTarget (Arg, GetArg (&I, 2));
                     break;
 
                 case 'u':

@@ -47,6 +47,7 @@
 #include "print.h"
 #include "scopedefs.h"
 #include "strbuf.h"
+#include "strutil.h"
 #include "target.h"
 #include "tgttrans.h"
 #include "version.h"
@@ -104,11 +105,13 @@ static void Usage (void)
             "  -l name\t\t\tCreate a listing file if assembly was ok\n"
             "  -o name\t\t\tName the output file\n"
             "  -s\t\t\t\tEnable smart mode\n"
+            "  -t sys\t\t\tSet the target system\n"
             "  -v\t\t\t\tIncrease verbosity\n"
             "\n"
             "Long options:\n"
             "  --auto-import\t\t\tMark unresolved symbols as import\n"
             "  --bin-include-dir dir\t\tSet a search path for binary includes\n"
+            "  --cpu type\t\t\tSet cpu type (65C02, 65SC02)\n"
             "  --create-dep name\t\tCreate a make dependency file\n"
             "  --create-full-dep name\tCreate a full make dependency file\n"
             "  --debug\t\t\tDebug mode\n"
@@ -123,6 +126,7 @@ static void Usage (void)
             "  --pagelength n\t\tSet the page length for the listing\n"
             "  --relax-checks\t\tRelax some checks (see docs)\n"
             "  --smart\t\t\tEnable smart mode\n"
+            "  --target sys\t\t\tSet the target system\n"
             "  --verbose\t\t\tIncrease verbosity\n"
             "  --version\t\t\tPrint the assembler version\n",
             ProgName);
@@ -426,6 +430,33 @@ static void OptSmart (const char* Opt attribute ((unused)),
 
 
 
+static void OptCPU (const char* Opt, const char* Arg)
+/* Handle the --cpu option */
+{
+    /* Accepted for backwards compatibility only. The assembler always targets
+    ** the 65SC02, so the argument is validated but otherwise ignored. Only the
+    ** CPUs that ever shipped in a Lynx (the 65C02 family) are allowed.
+    */
+    if (StrCaseCmp (Arg, "65C02") != 0 && StrCaseCmp (Arg, "65SC02") != 0) {
+        AbEnd ("Invalid argument for %s: '%s'", Opt, Arg);
+    }
+}
+
+
+
+static void OptTarget (const char* Opt, const char* Arg)
+/* Handle the --target/-t option */
+{
+    /* Accepted for backwards compatibility only. The toolchain always targets
+    ** the Atari Lynx, so any other target is rejected and "lynx" is a no-op.
+    */
+    if (StrCaseCmp (Arg, "lynx") != 0) {
+        AbEnd ("Invalid argument for %s: '%s' (only 'lynx' is supported)",
+               Opt, Arg);
+    }
+}
+
+
 
 
 static void OptVerbose (const char* Opt attribute ((unused)),
@@ -712,6 +743,7 @@ int main (int argc, char* argv [])
     static const LongOpt OptTab[] = {
         { "--auto-import",      0,      OptAutoImport           },
         { "--bin-include-dir",  1,      OptBinIncludeDir        },
+        { "--cpu",              1,      OptCPU                  },
         { "--create-dep",       1,      OptCreateDep            },
         { "--create-full-dep",  1,      OptCreateFullDep        },
         { "--debug",            0,      OptDebug                },
@@ -726,6 +758,7 @@ int main (int argc, char* argv [])
         { "--pagelength",       1,      OptPageLength           },
         { "--relax-checks",     0,      OptRelaxChecks          },
         { "--smart",            0,      OptSmart                },
+        { "--target",           1,      OptTarget               },
         { "--verbose",          0,      OptVerbose              },
         { "--version",          0,      OptVersion              },
     };
@@ -801,6 +834,10 @@ int main (int argc, char* argv [])
 
                 case 's':
                     OptSmart (Arg, 0);
+                    break;
+
+                case 't':
+                    OptTarget (Arg, GetArg (&I, 2));
                     break;
 
                 case 'v':

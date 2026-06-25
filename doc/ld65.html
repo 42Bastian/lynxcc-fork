@@ -86,6 +86,7 @@ Short options:
   -h                    Help (this text)
   -m name               Create a map file
   -o name               Name the default output file
+  -t sys                Set the target system
   -u sym                Force an import of symbol 'sym'
   -v                    Verbose mode
   -vm                   Verbose map file
@@ -108,6 +109,7 @@ Long options:
   --obj-path path               Specify an object file search path
   --start-addr addr             Set the default start address
   --start-group                 Start a library group
+  --target sys                  Set the target system
   --version                     Print the linker version
 ---------------------------------------------------------------------------</pre>
 <h3 id="sect-2-2">2.2. Command-line options in detail</h3>
@@ -157,6 +159,14 @@ Long options:
   Depending on your output configuration, this name <em>might not</em> be used as the
   name for the output file. However, for the default configurations, this
   name is used for the output file name.</p>
+</dd>
+<dt><code>-t sys, --target sys</code></dt>
+<dd>
+<p>Accepted for backwards compatibility only. The only valid argument is
+  <code>lynx</code>; any other target system is an error. Because this build of ld65
+  always links for the Atari Lynx (loading <code>lynx.cfg</code> by default), the
+  option has no effect on the output.</p>
+</dd>
 <dt><code>-u sym[:addrsize], --force-import sym[:addrsize]</code></dt>
 <dd>
 <p>Force an import of a symbol. While object files are always linked to the
