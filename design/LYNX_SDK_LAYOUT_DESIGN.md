@@ -601,7 +601,7 @@ considered done — never a partial build.
 ## 13. Internal restructure phases (moving the tree)
 
 This section is how *we* restructure the tree; for how *users* port their code
-from upstream cc65 onto the lynxcc SDK, see §14.
+from upstream cc65 onto the **lynxcc** SDK, see §14.
 
 Each phase is a self-contained commit that leaves the tree **building green**
 and **docs in sync**. Ordering minimises the window where references dangle.
@@ -711,7 +711,7 @@ authored as part of this phase.
 
 ## 14. Migrating from upstream cc65 to lynxcc
 
-lynxcc is not a drop-in upstream cc65: it is the **Lynx Game Development SDK**,
+**lynxcc** is not a drop-in upstream cc65: it is the **Lynx Game Development SDK**,
 and code or build scripts carried over from stock cc65 (its Lynx target) need
 adjustment. This section catalogs every difference a porter meets and how to
 handle it; it is the source for a user-facing `doc/migrating.html` (§14.4).
@@ -720,7 +720,7 @@ handle it; it is the source for a user-facing `doc/migrating.html` (§14.4).
 
 Source- and build-level changes:
 
-| Area | Upstream cc65 | lynxcc SDK | Porting action |
+| Area | Upstream cc65 | **lynxcc** SDK | Porting action |
 | --- | --- | --- | --- |
 | Platform includes | `<lynx.h> <tgi.h> <suzymath.h> <serial.h> <joystick.h> <zlib.h> <lz4.h>` | same headers under `<lynx/…>` (§7) | rewrite those `#include` lines (script, §14.2); C-stdlib headers unchanged |
 | Libraries | one `lynx.lib` | core `lynx.lib` + optional `lynx-graphics/audio/math/compress.lib` (§6) | usually none — `cl65` auto-pulls them (§6.6); only `ld65`-direct users add `-l` |
@@ -731,8 +731,8 @@ Source- and build-level changes:
 API and runtime changes:
 
 - **Fork-only operators.** The Suzy hardware operators `!*`, `!/`, `!%` are
-  lynxcc extensions — source using them is *rejected* by stock cc65, so the move
-  is one-way. Nothing to do porting *into* lynxcc; relevant only if porting back
+  **lynxcc** extensions — source using them is *rejected* by stock cc65, so the move
+  is one-way. Nothing to do porting *into* **lynxcc**; relevant only if porting back
   out.
 - **Removed / trimmed APIs.** `assert.h`, `device.h`, `pen.h`, `locale.h`,
   `sys/`, and the user-facing `target.h` are removed; `time.h` is trimmed to

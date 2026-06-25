@@ -346,7 +346,7 @@ the difference.
 
 **Decision:** the compiler is a **separate, self-contained command-line tool**,
 developed and maintained **outside the cc65 codebase**. It is not a ca65 macro
-package, not a cc65 source file, and not built as part of the cc65 / lynxcc build.
+package, not a cc65 source file, and not built as part of the cc65 / **lynxcc** build.
 It is an independent utility that a project invokes (manually or from its own
 Makefile) to turn ABC tune text into a compiled event stream before the normal
 cc65 build runs.

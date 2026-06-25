@@ -207,7 +207,7 @@ See doc/licenses.html.
 
 | File | Purpose |
 | --- | --- |
-| `LICENSE` (root) | **Unchanged.** Authoritative copy of the cc65 zlib-style package license. |
+| `LICENSE` (root) | Authoritative copy of the cc65 zlib-style package license (the baseline that inherited cc65 and bundled third-party files point to), now prefaced by a short multi-license overview that names the MPL-2.0/MIT/CC-BY-4.0 layers and points to their files. The verbatim zlib-style body is preserved unchanged below that preamble. |
 | `LICENSE-MPL-2.0.txt` (root) | **NEW.** Full verbatim MPL-2.0 text — the copy referenced by every MPL file's Exhibit A notice. |
 | `examples/LICENSE` | **NEW.** MIT text covering `examples/`. |
 | `templates/LICENSE` | **NEW.** MIT text covering `templates/`. |
@@ -257,7 +257,8 @@ quoted licenses.
 - [x] `doc/*.html` and `design/*.md` carry `SPDX-License-Identifier: CC-BY-4.0`;
       `doc/LICENSE` present.
 - [x] `LICENSE-MPL-2.0.txt` and `doc/LICENSE` contain the full verbatim license
-      bodies; root `LICENSE` unchanged.
+      bodies; root `LICENSE` keeps its verbatim zlib-style body, now prefaced
+      by a multi-license overview.
 - [x] `doc/licenses.html` registers MPL-2.0, MIT and CC-BY-4.0 with verbatim
       text and an updated Contents list; cc65/Dunning/third-party notices intact.
 - [x] Full sandbox rebuild green; `make tests` pass; `.lnx` byte-identical.

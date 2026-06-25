@@ -1,9 +1,17 @@
-# cc65 for the Atari Lynx
+# lynxcc — Atari Lynx Game Development SDK
 
-This is cc65 2.19 stripped down to a single target — the Atari Lynx — and
-modified for faster 65SC02 code generation. All other machine targets,
-libraries, and configs have been removed. It includes the macro assembler,
-C compiler, linker, librarian, and the Lynx runtime library and drivers.
+**lynxcc** is a complete SDK for building Atari Lynx games. It bundles a C and
+assembly toolchain, an always-linked runtime, opt-in subsystem libraries
+(graphics, audio, math, compression), cartridge tooling, project templates,
+worked examples, host and emulator tests, and full HTML documentation — the
+whole path from source to a bootable `.lnx` cartridge.
+
+The **compiler toolchain is a component of the SDK**: a fork of cc65 2.19
+narrowed to the single Atari Lynx target and tuned for faster 65SC02 code
+generation, with all other machine targets, libraries and configs removed. It
+provides the macro assembler, C compiler, linker, librarian and related
+binaries. The SDK builds its own Lynx runtime, libraries, tools, templates,
+tests and documentation on top of that compiler core.
 
 Upstream cc65 documentation: [cc65.github.io/doc](https://cc65.github.io/doc)
 

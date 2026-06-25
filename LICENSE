@@ -1,3 +1,42 @@
+lynxcc — Lynx Game Development SDK
+==================================
+
+This distribution is multi-licensed. Different components carry different
+licenses; this file is the authoritative copy of the cc65 zlib-style package
+license that forms the baseline, and it points to the other licenses that layer
+on top of it. The complete, human-readable inventory of every notice in the
+distribution lives in doc/licenses.html, and the per-component policy is
+recorded in design/LYNX_LICENSE_POLICY_DESIGN.md.
+
+  - Package baseline (cc65) — the zlib-style permissive license reproduced
+    below. It covers the inherited cc65 toolchain, runtime and library sources,
+    including the static TGI graphics modules and the ComLynx serial modules
+    that were extracted from Karri Kaksonen's cc65 drivers (each such file keeps
+    its own copyright line and an extraction note pointing here). Bundled
+    third-party decompression code (include/lynx/zlib.h, include/lynx/lz4.h and
+    their libraries/compress/ sources) is provided under the same zlib-style
+    terms and additionally carries its own upstream notice.
+
+  - Fork-authored sources — files this fork wrote from scratch are licensed
+    under the Mozilla Public License 2.0 (MPL-2.0). The full text is in
+    LICENSE-MPL-2.0.txt, and each covered file carries an SPDX-License-Identifier
+    header.
+
+  - examples/ and templates/ — licensed under the MIT License (a LICENSE file
+    in each directory) so you can copy starter code into your own Atari Lynx
+    games with no copyleft reach.
+
+  - Documentation (doc/, design/) — licensed under Creative Commons Attribution
+    4.0 International (CC-BY-4.0). The full legal code is in doc/LICENSE.
+
+Every source file carries an SPDX-License-Identifier tag identifying which of
+the above applies to it. Where a documentation page reproduces a third party's
+license verbatim, that quoted text remains under its own terms.
+
+
+cc65 package license (zlib-style)
+---------------------------------
+
 This software is provided 'as-is', without any express or implied warranty.
 In no event will the authors be held liable for any damages arising from
 the use of this software.
