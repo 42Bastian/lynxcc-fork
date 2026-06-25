@@ -187,6 +187,120 @@ function is much more expensive than access to parameters in a "normal"
 function. Unfortunately, this additional code is also invisible to the
 programmer, so it is easy to forget.</p>
 <p>As a rule of thumb, if you access such a parameter more than once, you should
-think about copying it into a normal variable and using this variable instead.</p></article></main><footer class="site-foot"><strong>lynxcc</strong> documentation &mdash; a complete Atari Lynx Game Development SDK.</footer>
+think about copying it into a normal variable and using this variable instead.</p>
+<h2 id="sect-16">16. Prefer static allocation over the heap</h2>
+<p>The Lynx is a fixed-memory console: there is no operating system to grow a
+process, no virtual memory, and only 64&nbsp;KB of RAM shared between your code,
+data, the cc65 software stack and any screen buffers. On a machine like this the
+heap buys you very little and costs you a lot, so the single most important
+memory rule is to decide your storage at compile time and let the linker place
+it. The points below all follow from that.</p>
+<h3 id="sect-16-1">16.1. Use static arrays, not dynamic allocation</h3>
+<p>If you know &mdash; or can bound &mdash; the maximum number of elements, declare a
+fixed-size array at file scope. The linker reserves the space once in BSS, the
+address is known at compile time so every access uses fast absolute addressing,
+and there is no allocator code, no fragmentation, and no failure path to handle.</p>
+<p>Don't allocate a buffer whose size you already know:</p>
+<pre class="verb">        /* Don't: runtime allocation, can fail, needs freeing. */
+        Enemy *enemies = malloc(MAX_ENEMIES * sizeof(Enemy));
+        if (enemies == NULL) { /* now what? on a Lynx there is no recovery */ }
+        ...
+        free(enemies);</pre>
+<p>Reserve it statically instead:</p>
+<pre class="verb">        /* Do: reserved once by the linker, always present, nothing to free. */
+        #define MAX_ENEMIES 16
+        Enemy      enemies[MAX_ENEMIES];
+        unsigned char enemyCount;</pre>
+<p>The static form is also smaller and faster: indexing <code>enemies[i]</code> compiles
+to a fixed base address plus the index, whereas the pointer returned by
+<code>malloc</code> must be held in a variable and dereferenced.</p>
+<h3 id="sect-16-2">16.2. Use global variables for long-lived state</h3>
+<p>Anything that lives for the whole run of the program &mdash; the player, the
+score, the current level, hardware shadow registers &mdash; belongs in a file-scope
+(global or <code>static</code>) variable, not in a heap block carried around by a
+pointer. As described in <a href="cc65.html#var-storage">cc65 &sect;8</a>, such
+variables get a fixed address and exist for the entire program; an uninitialised
+one costs nothing but the BSS it occupies. Make a global <code>static</code> when it
+should stay private to one module; the storage is identical, only the linkage
+changes.</p>
+<pre class="verb">        /* Don't: a single, permanent object reached through an allocation. */
+        GameState *gs = malloc(sizeof(GameState));
+
+        /* Do: one fixed instance, zeroed at startup, addressable everywhere. */
+        GameState   gs;                 /* shared: visible to other modules   */
+        static int  frameCounter;       /* private to this translation unit   */</pre>
+<h3 id="sect-16-3">16.3. Put hot scalars and pointers in the zero page</h3>
+<p>The zero page is the fastest memory the 6502 has: instructions that address it
+are a byte shorter and a cycle faster than the absolute forms. cc65 lets you put
+a file-scope variable there with the <code>__zeropage</code> attribute or the
+<code>__zeropage__</code> keyword from <code>&lt;zeropage.h&gt;</code> (see
+<a href="cc65.html#zeropage-attr">cc65 &sect;8.1</a>). Reach for it on the few
+variables touched most often in your inner loops &mdash; tight-loop counters and
+the pointers you dereference every iteration.</p>
+<pre class="verb">        #include &lt;zeropage.h&gt;
+
+        /* Hot pointer walked every frame, and a hot loop counter: */
+        unsigned char *scanPtr __zeropage;
+        __zeropage__ unsigned char tick;</pre>
+<p>Zero page is a scarce 256-byte resource shared with the cc65 runtime, so spend
+it only on a handful of hot scalars and pointers, never on arrays or large
+structs. Over-allocating it is reported by <code><a href="ld65.html">ld65</a></code>
+as a <code>ZEROPAGE</code> segment overflow.</p>
+<h3 id="sect-16-4">16.4. Prefer a struct of arrays to an array of structs</h3>
+<p>When you have many copies of the same record &mdash; particles, enemies, sprite
+slots &mdash; you can lay them out as an array of structs (AoS) or as a struct of
+arrays (SoA). On the 6502 the SoA form is usually the better choice. Each field
+becomes its own flat array indexed by the same loop variable, so the compiler can
+walk it with a simple indexed access instead of multiplying the index by the
+whole struct size (recall <a href="#sect-7">hint 7</a>: keep element sizes to 1, 2,
+4 or 8). It also lets you process one field across all elements without dragging
+the others through memory, and keeps each element type small enough for 8-bit
+index math.</p>
+<p>Array of structs &mdash; every access scales the index by <code>sizeof(Enemy)</code>:</p>
+<pre class="verb">        typedef struct { unsigned char x, y, hp; } Enemy;
+        Enemy enemies[MAX_ENEMIES];
+
+        for (i = 0; i &lt; enemyCount; ++i)
+            enemies[i].x += 1;          /* offset = i * 3, then + field */</pre>
+<p>Struct of arrays &mdash; each field is a plain array, indexed directly:</p>
+<pre class="verb">        struct {
+            unsigned char x[MAX_ENEMIES];
+            unsigned char y[MAX_ENEMIES];
+            unsigned char hp[MAX_ENEMIES];
+        } enemies;
+
+        for (i = 0; i &lt; enemyCount; ++i)
+            enemies.x[i] += 1;          /* direct indexed load/store */</pre>
+<h3 id="sect-16-5">16.5. Avoid malloc, calloc, realloc and free</h3>
+<p>The heap functions <code><a href="funcref.html#malloc">malloc</a></code>,
+<code><a href="funcref.html#calloc">calloc</a></code>,
+<code><a href="funcref.html#realloc">realloc</a></code> and
+<code><a href="funcref.html#free">free</a></code> are linkable, but they are a poor
+fit for the Lynx and best avoided in new code. They pull in the allocator and its
+free-list bookkeeping, each call costs real cycles, long-running allocate/free
+patterns fragment the small heap until an allocation fails, and on a console there
+is no graceful way to recover from that failure. Every use also forces you to
+track ownership and remember to <code>free</code>, which is exactly the class of bug
+static allocation makes impossible.</p>
+<p>If you think you need the heap, you almost always want one of the patterns
+above instead: a fixed-size array sized to your worst case (&sect;16.1), a global
+for singleton state (&sect;16.2), or, when you genuinely must hand out and reclaim
+slots at runtime, a static pool with a free-list of indices that you manage
+yourself:</p>
+<pre class="verb">        /* A fixed pool replaces malloc/free for a bounded set of objects. */
+        #define POOL_SIZE 32
+        Particle      pool[POOL_SIZE];
+        unsigned char inUse[POOL_SIZE];
+
+        unsigned char alloc_slot(void) {
+            unsigned char i;
+            for (i = 0; i &lt; POOL_SIZE; ++i)
+                if (!inUse[i]) { inUse[i] = 1; return i; }
+            return 0xFF;                /* pool full - caller decides */
+        }
+        void free_slot(unsigned char i) { inUse[i] = 0; }</pre>
+<p>This keeps all the storage static and known to the linker while still letting
+you reuse slots, with none of the allocator's code size, fragmentation or
+failure modes.</p></article></main><footer class="site-foot"><strong>lynxcc</strong> documentation &mdash; a complete Atari Lynx Game Development SDK.</footer>
 <script src="doc.js"></script>
 </body></html>
