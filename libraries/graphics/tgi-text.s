@@ -22,14 +22,15 @@
 ; The string is built as one glyph-strip bitmap and drawn as a single
 ; sprite. At most 20 characters per call are drawn (pre-existing limit).
 ;
-; Two bitmap fonts are supported. tgi_outtext dispatches through the
+; Three bitmap fonts are supported. tgi_outtext dispatches through the
 ; indirect pointer tgi_buildptr to the active builder: build8x8 (the
-; default 8x8 system font) or build5x5 (the compact transparent 5x5 font
-; in tgi-text5x5.s). tgi_setfont (tgi-setfont.s) selects between them and
-; sets tgi_pitch / tgi_fontheight, the per-font metrics read by the width
-; and height queries. Programs that never call tgi_setfont(COMPACT) keep
-; the default 8x8 path and do not link the compact builder or its font.
-; See design/LYNX_TGI_FONT5X5_DESIGN.md.
+; default 8x8 system font), build5x5 (the compact transparent 5x5 font in
+; tgi-text5x5.s) or buildvar (the proportional caps font in tgi-textvar.s).
+; tgi_setfont (tgi-setfont.s) selects between them and sets tgi_pitch /
+; tgi_fontheight, the per-font metrics read by the width and height queries.
+; Programs that never call tgi_setfont keep the default 8x8 path and do not
+; link the other builders or fonts.
+; See design/LYNX_TGI_FONT5X5_DESIGN.md and design/LYNX_TGI_FONTVAR_DESIGN.md.
 ;
 ; Text scaling is a true 8.8 fixed point word per axis, stored straight
 ; into the text sprite's sx/sy fields - Suzy scales sprites natively in
@@ -38,7 +39,9 @@
 ; text direction only affects how the cursor advances; glyphs are never
 ; rotated (pre-existing behavior).
 ;
-; tgi_gettextwidth = (strlen(s) * tgi_pitch * scalew) >> 8 and
+; tgi_gettextwidth = (strlen(s) * tgi_pitch * scalew) >> 8 for the fixed-pitch
+; fonts; for the proportional font (tgi_advtab != 0) the strlen*pitch term is
+; replaced by the sum of the capped string's per-glyph advances (str_advance).
 ; tgi_gettextheight = (tgi_fontheight * scaleh) >> 8, computed on Suzy's
 ; 16x16 multiply. Safe because all drawing is synchronous, so neither the
 ; sprite engine nor a competing math operation can be in flight (spec ch.
@@ -79,6 +82,8 @@
         .export         tgi_buildptr
         .export         tgi_pitch
         .export         tgi_fontheight
+        .export         tgi_advtab
+        .export         str_advance
 
         .macpack        generic
 
@@ -143,6 +148,14 @@ text_c:
 tgi_buildptr:   .addr   build8x8
 tgi_pitch:      .byte   8       ; cursor advance per character (px)
 tgi_fontheight: .byte   8       ; glyph rows, for tgi_gettextheight
+
+; Proportional-width hook. 0 => fixed pitch (8x8, 5x5): tgi_gettextwidth uses
+; the strlen*pitch fast path. Non-zero => points at a per-glyph advance table
+; (tgi_fontadv), set only by tgi_setfont's variable-font branch, switching the
+; width query to the advance-sum path. Default 0 keeps the variable font and
+; its builder out of programs that never select it (the width query references
+; only this datum, never the font). See design/LYNX_TGI_FONTVAR_DESIGN.md sec. 5.
+tgi_advtab:     .addr   0
 
 .code
 
@@ -345,6 +358,11 @@ _tgi_settextdir:
 ; query needs no knowledge of which font is active.
 
 _tgi_gettextwidth:
+        pha                     ; save low(s); X holds high(s) throughout
+        lda     tgi_advtab      ; proportional font selected?
+        ora     tgi_advtab+1
+        bne     @var            ; yes -> sum per-glyph advances
+        pla                     ; no: fixed-pitch fast path
         jsr     _strlen         ; Length in A/X
         sta     MATHD           ; CD = len (low byte first)
         stx     MATHC
@@ -357,7 +375,26 @@ _tgi_gettextwidth:
         sta     MATHD           ; -> CD for the scale multiply
         lda     MATHG
         sta     MATHC
-        lda     text_sx
+        jmp     @scale          ; CD * text_sx >> 8
+
+        ; Proportional path: latch the string, cap its length at the 20-char
+        ; draw limit, then sum the advances. The single-byte total (max 120)
+        ; goes straight into CD with a zero high byte.
+@var:   pla
+        sta     STRPTR
+        stx     STRPTR+1
+        ldy     #<-1
+@cl:    iny
+        cpy     #20
+        beq     @cd
+        lda     (STRPTR),y
+        bne     @cl
+@cd:    sty     STRLEN
+        jsr     str_advance     ; A = total advance
+        sta     MATHD           ; CD = total
+        stz     MATHC
+
+@scale: lda     text_sx
         sta     MATHB           ; AB = width scale (low byte first)
         lda     text_sx+1
         sta     MATHA           ; Starts the multiply
@@ -365,6 +402,49 @@ _tgi_gettextwidth:
         bmi     @L2
         lda     MATHG           ; (EFGH >> 8), low
         ldx     MATHF           ; (EFGH >> 8), high
+        rts
+
+;-----------------------------------------------------------------------------
+; str_advance: sum the per-glyph advances of the capped string for the
+; proportional font. On entry STRPTR points at the string and STRLEN holds the
+; capped length (<= 20); the caller guarantees tgi_advtab != 0. Returns the
+; total advance in A (<= 120, always a single byte). Reads the advance table
+; through tgi_advtab, so it never force-links the variable font - the fixed
+; fonts simply never reach it. Shared by buildvar (tgi-textvar.s) and the
+; proportional branch of tgi_gettextwidth above.
+
+str_advance:
+        lda     tgi_advtab      ; ADVPTR (ptr2) = advance table base
+        sta     ptr2
+        lda     tgi_advtab+1
+        sta     ptr2+1
+        ldx     #0              ; running total
+        ldy     #0              ; char index
+@sa:    cpy     STRLEN
+        beq     @sd
+        lda     (STRPTR),y
+        cmp     #'a'            ; foldsplice(ch) -> table index (see buildvar)
+        bcc     @nf
+        cmp     #'z'+1
+        bcs     @nf
+        and     #$DF
+@nf:    sec
+        sbc     #32
+        cmp     #65
+        bcc     @ns
+        sbc     #26
+@ns:    sty     tmp1            ; save char index
+        tay                     ; Y = glyph index
+        lda     (ptr2),y        ; advance for this glyph
+        sta     tmp2
+        txa
+        clc
+        adc     tmp2            ; total += advance
+        tax
+        ldy     tmp1            ; restore char index
+        iny
+        bne     @sa             ; STRLEN <= 20, so this never wraps
+@sd:    txa
         rts
 
 ;-----------------------------------------------------------------------------

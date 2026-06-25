@@ -584,7 +584,7 @@ harvest the result. These are the start/poll/harvest counterpart of the
 </li>
 </ul>
 <h3 id="tgi.h">2.20. <code>lynx/tgi.h</code></h3>
-<p>Static Tiny Graphics Interface for the Lynx: one fixed 160x102x16 display mode, Suzy sprite drawing, pages, palette and bitmap/compact-font text.</p>
+<p>Static Tiny Graphics Interface for the Lynx: one fixed 160x102x16 display mode, Suzy sprite drawing, pages, palette and bitmap, compact and proportional font text.</p>
 <ul>
 <li>
 <p><a href="#tgi_busy">tgi_busy</a></p>
@@ -7573,6 +7573,9 @@ used in presence of a prototype.</p>
 <dd>
 <ul>
 <li>
+<p>For the fixed-pitch fonts (<code>TGI_FONT_BITMAP</code>, <code>TGI_FONT_COMPACT</code>) the width is <code>strlen&times;pitch</code> scaled; for the proportional font (<code>TGI_FONT_VARIABLE</code>) it is the sum of each glyph&rsquo;s advance, so it matches the spacing <code><a href="#tgi_outtext">tgi_outtext</a></code> actually draws. As with drawing, at most 20 characters are measured.</p>
+</li>
+<li>
 <p>The function is only available as a fastcall function, so it may only be used in presence of a prototype.</p>
 </li>
 </ul>
@@ -8036,13 +8039,13 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Description</dt>
 <dd>
-<p>Selects the active text font, one of the <code>TGI_FONT_XXX</code> constants. <code>TGI_FONT_BITMAP</code> is the system 8x8 font (the default); <code>TGI_FONT_COMPACT</code> is the 5x5 font with a transparent background, drawn in the current pen at a 6-pixel pitch.</p>
+<p>Selects the active text font, one of the <code>TGI_FONT_XXX</code> constants. <code>TGI_FONT_BITMAP</code> is the system 8x8 font (the default); <code>TGI_FONT_COMPACT</code> is the 5x5 font with a transparent background, drawn in the current pen at a 6-pixel pitch; <code>TGI_FONT_VARIABLE</code> is the proportional all-caps font (transparent background, current pen) whose glyphs are 1&ndash;5&nbsp;px wide with a 1-px gap, so each character advances by its own width and <code><a href="#tgi_gettextwidth">tgi_gettextwidth</a></code> sums per-glyph advances instead of <code>strlen&times;pitch</code>.</p>
 </dd>
 <dt>Notes</dt>
 <dd>
 <ul>
 <li>
-<p>Linking <code>tgi_setfont</code> pulls in the compact font; programs that stay with the 8x8 font need not call it.</p>
+<p>Linking <code>tgi_setfont</code> pulls in the compact and proportional fonts; programs that stay with the 8x8 font need not call it.</p>
 </li>
 <li>
 <p>The function is only available as a fastcall function, so it may only be used in presence of a prototype.</p>

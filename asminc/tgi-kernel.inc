@@ -40,11 +40,12 @@ TGI_FLIPOFFS_4BPP = 8159
 TGI_FLIPOFFS_2BPP = 4079
 
 ;------------------------------------------------------------------------------
-; Text constants. Vector fonts are gone; two bitmap fonts remain (8x8 and
-; the compact 5x5), selectable with tgi_setfont.
+; Text constants. Vector fonts are gone; three bitmap fonts remain (8x8, the
+; compact 5x5 and the proportional caps font), selectable with tgi_setfont.
 
 TGI_FONT_BITMAP         = 0
 TGI_FONT_COMPACT        = 1
+TGI_FONT_VARIABLE       = 2
 
 TGI_TEXT_HORIZONTAL     = 0
 TGI_TEXT_VERTICAL       = 1

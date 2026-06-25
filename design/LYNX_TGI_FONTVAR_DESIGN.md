@@ -7,7 +7,7 @@ See doc/licenses.html.
 
 # Lynx TGI: adding the proportional (variable-width) font
 
-Status: design (2026-06-14). Adds a third bitmap font to the static TGI text
+Status: implemented (2026-06-25). Adds a third bitmap font to the static TGI text
 path: an **all-caps, variable-width pixel font** recovered from `img_help.bmp`.
 It reuses the bit-packed strip builder introduced for the 5×5 compact font, so
 the only genuinely new machinery is a **per-glyph advance table** and a
@@ -277,20 +277,24 @@ reproduces both tables from `img_help.bmp`:
    fold `a–z` onto `A–Z`;
 6. emit `tgi-fontvar.s` and an ASCII-art proof sheet for visual check.
 
-Keeping it in-tree means the `[D]` glyphs can be revised and the table
-regenerated deterministically.
+The committed artifact is the generated data table (`tgi-fontvar.s`); the
+generator and its `img_help.bmp` source frame live with the development assets
+outside the repository, exactly as the 5×5 font's generator does. Regenerating
+the table is therefore a development-time step, and the `[D]` glyphs are revised
+by editing the generator there and re-emitting `tgi-fontvar.s`.
 
 ## 9. Files touched
 
 | File | Change |
 |------|--------|
-| `libraries/graphics/tgi-text.s` | add `tgi_advtab` (`.addr 0`); `tgi_gettextwidth` branches to the advance-sum path when `tgi_advtab≠0`; factor out the `str_advance` helper. 8×8 path otherwise byte-identical. |
-| `libraries/graphics/tgi-textvar.s` | **new**: `buildvar` — two-pass bit-packed strip with per-glyph advance (§4); shares the `build5x5` body shape and the shared epilogue. |
-| `libraries/graphics/tgi-fontvar.s` | **new**: `tgi_fontvar` (96×5) + `tgi_fontadv` (96) (§7). |
-| `libraries/graphics/tgi-setfont.s` | add the `TGI_FONT_VARIABLE` branch; `BITMAP`/`COMPACT` branches zero `tgi_advtab`. |
-| `include/tgi.h` | add `TGI_FONT_VARIABLE 2`. |
+| `libraries/graphics/tgi-textvar.s` | **new**: `buildvar` — two-pass bit-packed strip with per-glyph advance (§4); shares the `build5x5` body shape and the shared epilogue, and calls the shared `str_advance` helper for pass 1. |
+| `libraries/graphics/tgi-fontvar.s` | committed data table: `tgi_fontvar` (70×5 = 350 B) + `tgi_fontadv` (70 B) (§7). |
+| `libraries/graphics/tgi-text.s` | add `tgi_advtab` (`.addr 0`) + the `str_advance` helper; `tgi_gettextwidth` branches to the advance-sum path when `tgi_advtab≠0`. 8×8 path otherwise byte-identical. |
+| `libraries/graphics/tgi-setfont.s` | add the `TGI_FONT_VARIABLE` branch (sets `buildvar` + `tgi_advtab`); `BITMAP`/`COMPACT` branches zero `tgi_advtab`. |
+| `include/lynx/tgi.h` | add `TGI_FONT_VARIABLE 2` + the `tgi_setfont` doc text. |
 | `asminc/tgi-kernel.inc` | add `TGI_FONT_VARIABLE = 2`. |
-| `tools/genfontvar.py` | **new**: regenerates the tables from `img_help.bmp`. |
+| `examples/suzy/fontvar.c` | **new**: sample selecting `TGI_FONT_VARIABLE`, proving the advance-aware width query, scaling and switching all three fonts. |
+| `tools/genfontvar.py` | dev-only generator (kept with the assets outside the repo, §8); regenerates the table from `img_help.bmp`. |
 
 No change to `tgi-font.s` (8×8), `tgi-font5x5.s`, `tgi-text5x5.s`, or the
 sprite-draw core.
@@ -300,16 +304,22 @@ sprite-draw core.
 1. **Host round-trip** (done): BMP → tables → ASCII proof sheet reproduces all
    24 extracted glyphs and the proportional widths; `[D]` glyphs render legibly
    alongside them.
-2. **Build/link**: `tgi-fontvar.s` + `tgi-textvar.s` assemble; a sample using
-   only `TGI_FONT_BITMAP`/`COMPACT` links **neither** (check the `.map`); a
-   sample calling `tgi_setfont(TGI_FONT_VARIABLE)` pulls in `buildvar`,
-   `tgi_fontvar`, `tgi_fontadv`.
-3. **Regression**: an existing 8×8 (and 5×5) text program is byte-identical;
-   `tgi_advtab` defaults to 0 so the width fast path is unchanged.
-4. **Width correctness**: `tgi_gettextwidth("MIMI")` = adv(M)+adv(I)+adv(M)+adv(I)
-   = 6+2+6+2 = 16; `tgi_gettextwidth("III")` = 6; confirm `draw_and_advance`
-   leaves the cursor flush against the last glyph + gap.
-5. **Emulator/hardware**: print the full A–Z / 0–9 set over a non-black
+2. **Build/link** (done): `tgi-fontvar.s` + `tgi-textvar.s` assemble. A program
+   that never calls `tgi_setfont` (the default 8×8 path, e.g. `lynxdemo`) links
+   **none** of `build5x5`, `buildvar`, `tgi_font5x5`, `tgi_fontvar` (confirmed
+   in the `.map`). As with the pre-existing two-font selector, *referencing*
+   `tgi_setfont` links all three builders and fonts, so a `COMPACT`-only program
+   also carries `buildvar`/`tgi_fontvar`; the conditional-linking guarantee is
+   "don't call `tgi_setfont`", not "call it but pick a cheaper font". The width
+   query stays font-agnostic regardless: it touches only `tgi_advtab` +
+   `str_advance` and never force-links a font.
+3. **Regression** (done): `tgi_advtab` defaults to 0, so the 8×8 (and 5×5) width
+   fast path is unchanged.
+4. **Width correctness** (done): `tgi_gettextwidth("MIMI")` =
+   adv(M)+adv(I)+adv(M)+adv(I) = 6+2+6+2 = 16; `tgi_gettextwidth("III")` = 6,
+   verified against the committed `tgi_fontadv`; the `fontvar.c` caret sits flush
+   against the measured string, confirming `draw_and_advance` agrees.
+5. **Emulator** (done, GearLynx): `fontvar.c` prints the full A–Z / 0–9 set over a non-black
    background to confirm transparency, that the foreground tracks
    `tgi_setcolor`, that proportional spacing reads correctly (`I` tight, `M`
    wide), that `tgi_settextscale` scales glyphs *and* spacing together, and that

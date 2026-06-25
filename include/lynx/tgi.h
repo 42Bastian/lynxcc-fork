@@ -49,6 +49,7 @@
 /* Font constants for use with tgi_setfont */
 #define TGI_FONT_BITMAP         0       /* System 8x8 font            */
 #define TGI_FONT_COMPACT        1       /* Transparent 5x5 font, 6px  */
+#define TGI_FONT_VARIABLE       2       /* Proportional caps, 1..5px  */
 
 /* Direction constants for use with tgi_settextstyle */
 #define TGI_TEXT_HORIZONTAL     0
@@ -203,8 +204,11 @@ void __fastcall__ tgi_setfont (unsigned char font);
 /* Select the active text font: one of the TGI_FONT_XXX constants.
 ** TGI_FONT_BITMAP is the system 8x8 font (the default); TGI_FONT_COMPACT is
 ** the 5x5 font with a transparent background, drawn in the current pen at a
-** 6-px pitch. Linking tgi_setfont pulls in the compact font; programs that
-** stay with the 8x8 font need not call it.
+** 6-px pitch; TGI_FONT_VARIABLE is the proportional all-caps font (transparent
+** background, current pen, glyphs 1..5 px wide with a 1-px gap, so tgi_outtext
+** and tgi_gettextwidth space each character by its own width). Linking
+** tgi_setfont pulls in the compact and proportional fonts; programs that stay
+** with the 8x8 font need not call it.
 */
 
 void __fastcall__ tgi_settextdir (unsigned char dir);
