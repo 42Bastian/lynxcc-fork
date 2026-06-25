@@ -1,3 +1,10 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
 # Lynx Game Development SDK — Layout & Directory Restructure Design
 
 Status: **DESIGN** (2026-06-21). Source of truth for migrating this tree from a
@@ -97,7 +104,7 @@ lynxcc/                     # repo root == CC65_HOME (dev tree)
 │   └── Makefile
 ├── runtime/                # C runtime + startup (was libsrc/runtime + crt0)
 │   ├── rt/                 #   compiler runtime helpers (libsrc/runtime/*.s)
-│   └── lynx/               #   crt0.s, bootldr, exehdr, mainargs, irq, oserror
+│   └── lynx/               #   crt0.s, bootldr, exehdr, mainargs, irq
 ├── libraries/              # SDK libraries (was the rest of libsrc/)
 │   ├── core/               #   base platform: cart, load, lseek, clock, eeprom
 │   ├── libc/               #   C stdlib (was libsrc/common)
@@ -163,7 +170,7 @@ Deviations from the originally proposed layout, with rationale:
 | `src/*.vcxproj`, `cc65.sln` | `compiler/` | update relative paths only |
 | `libsrc/runtime/*.s` | `runtime/rt/` | compiler runtime helpers |
 | `libsrc/lynx/crt0.s bootldr.s exehdr.s bllhdr.s mainargs.s irq.s exec.s defdir.s uploader.s` | `runtime/lynx/` | startup/glue |
-| `libsrc/lynx/lynx-cart.s load.s lseek.s open.s read.s oserror.s clock.s eeprom*.s` | `libraries/core/` | base platform |
+| `libsrc/lynx/lynx-cart.s load.s lseek.s open.s read.s clock.s eeprom*.s` | `libraries/core/` | base platform |
 | `libsrc/lynx/tgi/*` | `libraries/graphics/` | TGI + fonts |
 | `libsrc/lynx/lynx-snd.s` | `libraries/audio/` | Mikey sound |
 | `libsrc/lynx/suzy*.s suzyasync.s` | `libraries/math/` | Suzy hw math |
@@ -531,18 +538,29 @@ directory is **not** added.
   `design/` cross-references re-pathed, new tool/library pages added. Per
   `CLAUDE.md`, doc updates ride along with each code move, and any new SVG
   diagrams follow `design/DOC_SVG_STYLE_DESIGN.md`.
-  - **SDK rebrand sweep.** The doc set still presents itself as "a fork of
-    cc65": the shared `site-foot` footer string repeated in every `doc/*.html`
-    ("lynxcc documentation — a fork of cc65 focused on the Atari Lynx target"),
-    the `index.html` hero ("A complete cross-development package for the Atari
-    Lynx…"), and the "fork of cc65" framing in `history.html` and `intro.html`
-    prose. Rebrand these to the **Lynx Game Development SDK** framing — the SDK
-    is the product; the cc65-derived toolchain is one component of it. Because
-    the footer is a single identical line across ~20 pages, do it as one
-    find-and-replace sweep (the hero and any per-page prose are individual
-    edits). This is a doc-only branding pass with no code impact; the licensing
-    re-pointing in `history.html` is tracked separately in
+  - **SDK rebrand sweep.** The shared `site-foot` footer string repeated in
+    every `doc/*.html` now reads "lynxcc documentation — a complete Atari Lynx
+    game development toolkit." (done as one find-and-replace across all pages),
+    replacing the old "a fork of cc65 focused on the Atari Lynx target." The
+    remaining "fork of cc65" framing in `history.html` and `intro.html` prose
+    still awaits the same **Lynx Game Development SDK** rebrand — the SDK is the
+    product; the cc65-derived toolchain is one component of it. This is a
+    doc-only branding pass with no code impact; the licensing re-pointing in
+    `history.html` is tracked separately in
     `design/LYNX_LICENSE_CONSOLIDATION_DESIGN.md`.
+  - **Brand chrome (done).** The `index.html` hero now opens with the SDK
+    wordmark (`doc/logo.svg`, also shipped as a Makefile asset) and SDK copy:
+    "lynxcc is a complete game development SDK for the Atari Lynx…". The hero is
+    full-bleed (no `max-width`/character cap) with the logo centred. A scaled
+    `logo.svg` sits in the shared `topbar` brand on every page, and the nine
+    command-line tools (`ar65`, `ca65`, `cc65`, `cl65`, `co65`, `da65`, `ld65`,
+    `lnx`, `sp65`) are collapsed into a single **Tools** dropdown there
+    (`doc.css` `.dropdown*`, `doc.js` toggle) instead of four loose links; the
+    `.nav` no longer wraps/scroll-clips, so the menu overlays page content
+    cleanly. `funcref.html` uses a javadoc-style two-pane layout — a sticky,
+    filterable function index in `.fn-aside` on the left, the reference body in
+    `.fn-main` on the right; the redundant alphabetical function list has been
+    dropped from the in-page contents `nav.toc` (the sidebar replaces it).
 
 ---
 
@@ -625,13 +643,16 @@ and **docs in sync**. Ordering minimises the window where references dangle.
    per-game JSON config (CLI flags overlay config) for per-game cartridge
    metadata. Source-of-truth note `design/LYNX_LNX_TOOL_DESIGN.md`; docs in
    `doc/lnx.html` (carded on `index.html`).
-9. **License restructure** (§13.1): adopt the per-component licensing pattern
-   common to game-development SDKs — **MPL-2.0** on the fork's own new
-   SDK/toolchain files, **MIT** on `examples/` and `templates/`, and **CC-BY
-   4.0** on `doc/` — register all three in `doc/licenses.html`, and capture the
-   policy in a new `design/LYNX_LICENSE_POLICY_DESIGN.md` (new design doc per
-   `CLAUDE.md`). No code behaviour changes: this phase touches license headers,
-   `LICENSE*` files, and the license registry only.
+9. **License restructure** (§13.1, IMPLEMENTED 2026-06-23): adopt the
+   per-component licensing pattern common to game-development SDKs — **MPL-2.0**
+   on the fork's own new SDK/toolchain files, **MIT** on `examples/` and
+   `templates/`, and **CC-BY 4.0** on `doc/` — register all three in
+   `doc/licenses.html`, and capture the policy in a new
+   `design/LYNX_LICENSE_POLICY_DESIGN.md` (new design doc per `CLAUDE.md`). No
+   code behaviour changes: this phase touches license headers, `LICENSE*` files,
+   and the license registry only. Fork-authored files were identified
+   mechanically against the `upstream/master` baseline (47 source files took the
+   MPL header; inherited cc65 and bundled third-party files were left untouched).
 
 Finally, as a separate **un-numbered** step taken once the numbered phases above
 have all landed:
@@ -644,6 +665,11 @@ and gets the most verification; phase 6 makes that contract automatic. Phases
 7–9 and the final release tag are additive.
 
 ### 13.1 License restructure (phase 9)
+
+*Status: IMPLEMENTED 2026-06-23. The full mapping, the per-file detection
+method, the SPDX header texts, the new `LICENSE*` files, and the
+`doc/licenses.html` edits are recorded in the source-of-truth note
+`design/LYNX_LICENSE_POLICY_DESIGN.md`.*
 
 The SDK is currently distributed entirely under the cc65 zlib-style license
 plus the inventory of upstream/third-party notices consolidated into
@@ -743,9 +769,9 @@ C stdlib and the core platform, built via `cl65`, may need **no** changes at all
 
 ### 14.4 Deliverable and versioning
 
-- **`doc/migrating.html`** is authored from this section during the scaffolding/
-  docs work (§13 phases 6–7), with a **Migrating** nav entry across the doc set
-  and a card on `index.html`.
+- **`doc/migrating.html`** is authored from this section (done 2026-06-24),
+  with a **Migrating** nav entry across the whole doc set and a card under the
+  **Usage** heading on `index.html`.
 - **Tag the SDK release** (a version bump) as the reference point users target
   when following this guide — its own un-numbered final step in the rollout,
   after the numbered phases (§13).

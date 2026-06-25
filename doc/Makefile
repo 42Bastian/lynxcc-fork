@@ -14,7 +14,7 @@ htmldir = $(PREFIX)/share/doc/cc65$(DESTPACKAGE_SUFFIX)/html
 INSTALL = install
 
 HTML = $(wildcard *.html)
-ASSETS = doc.css doc.js
+ASSETS = doc.css doc.js logo.svg
 
 # Nothing to generate any more: the HTML ships as source.
 all mostlyclean clean doc html info:

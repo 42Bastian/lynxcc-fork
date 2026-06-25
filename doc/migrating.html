@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Migrating from upstream cc65 to lynxcc</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html">Functions</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html" class="active">Migrating</a><a href="history.html">History</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>Migrating from upstream cc65 to <strong>lynxcc</strong></h1></header><div class="abstract">What changes when you move a project from stock cc65 (its Lynx target) to the <strong>lynxcc</strong> SDK, and how to handle each difference.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl1"><a href="#sect-2">2. Differences from upstream cc65</a></li>
+<li class="lvl2"><a href="#sect-2-1">2.1. Source- and build-level changes</a></li>
+<li class="lvl2"><a href="#sect-2-2">2.2. API and runtime changes</a></li>
+<li class="lvl1"><a href="#sect-3">3. Migration aids</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. The include-rewrite</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. Resolving the optional libraries</a></li>
+<li class="lvl2"><a href="#sect-3-3">3.3. Reference builds</a></li>
+<li class="lvl1"><a href="#sect-4">4. Checklist of concrete edits</a></li>
+<li class="lvl1"><a href="#sect-5">5. Compatibility deliberately preserved</a></li>
+</ul></nav>
+<h2 id="sect-1">1. Overview</h2>
+<p><strong>lynxcc</strong> is not a drop-in upstream cc65: it is the <strong>Lynx Game Development
+SDK</strong>. Code and build scripts carried over from stock cc65 — including its
+own Lynx target — generally need some adjustment. This guide catalogs every
+difference a porter meets and how to handle it.</p>
+<p>The good news first: the <code>CC65_HOME</code> discovery contract is unchanged. The
+<code>include/</code>, <code>asminc/</code>, <code>lib/</code> and <code>cfg/</code> directories keep
+their names and root locations, so existing project Makefiles that set
+<code>CC65_HOME</code> keep working without edits. A project that uses only the C
+standard library and the core platform, built through <code>cl65</code>, may need
+<strong>no</strong> changes at all (see <a href="#sect-5">section 5</a>).</p>
+<h2 id="sect-2">2. Differences from upstream cc65</h2>
+<h3 id="sect-2-1">2.1. Source- and build-level changes</h3>
+<table class="grid">
+<thead><tr><th>Area</th><th>Upstream cc65</th><th><strong>lynxcc</strong> SDK</th><th>Porting action</th></tr></thead>
+<tbody>
+<tr><td>Platform includes</td><td><code>&lt;lynx.h&gt; &lt;tgi.h&gt; &lt;suzymath.h&gt; &lt;serial.h&gt; &lt;joystick.h&gt; &lt;zlib.h&gt; &lt;lz4.h&gt;</code></td><td>same headers, now under <code>&lt;lynx/…&gt;</code></td><td>Rewrite those <code>#include</code> lines (see <a href="#sect-3-1">3.1</a>); C-stdlib headers are unchanged.</td></tr>
+<tr><td>Libraries</td><td>one <code>lynx.lib</code></td><td>core <code>lynx.lib</code> + optional <code>lynx-graphics</code>, <code>lynx-audio</code>, <code>lynx-math</code>, <code>lynx-compress</code></td><td>Usually none — <code>cl65</code> auto-pulls them. Only <code>ld65</code>-direct users add <code>-l</code> entries.</td></tr>
+<tr><td>Tree layout</td><td><code>src/ libsrc/ samples/</code></td><td><code>compiler/ runtime/ libraries/ examples/</code></td><td>Affects only those who build the toolchain or reference tree paths, not end-user game projects.</td></tr>
+<tr><td>Header shims</td><td>—</td><td><strong>none</strong> by design</td><td>A missing-header build error is the intended signal to run the include-rewrite.</td></tr>
+<tr><td>CLI flags</td><td><code>--target --cpu --memory-model --standard</code></td><td>removed — hard-wired to Lynx + 65SC02, permanent cc65 dialect</td><td>Drop these flags from build scripts.</td></tr>
+</tbody>
+</table>
+<h3 id="sect-2-2">2.2. API and runtime changes</h3>
+<p><strong>Fork-only operators.</strong> The Suzy hardware operators <code>!*</code>,
+<code>!/</code> and <code>!%</code> are <strong>lynxcc</strong> extensions. Source using them is
+<em>rejected</em> by stock cc65, so the move is one-way — nothing to do when
+porting <em>into</em> <strong>lynxcc</strong>; relevant only if you ever port back out.</p>
+<p><strong>Removed and trimmed APIs.</strong> Several headers and library areas are
+gone or reduced. Replace or remove these uses:</p>
+<ul>
+<li><code>assert.h</code>, <code>device.h</code>, <code>pen.h</code>, <code>locale.h</code>, <code>sys/</code> and the user-facing <code>target.h</code> are removed.</li>
+<li><code>time.h</code> is trimmed to <code>clock()</code> and <code>sleep()</code>.</li>
+<li>The stdio <em>output</em> family and the whole <code>FILE</code> stream layer are gone; the in-RAM <code>sprintf</code>, <code>snprintf</code> and <code>sscanf</code> are kept.</li>
+<li>Cart access is numbered-only (<code>openn</code>) — there is no <code>fopen</code>.</li>
+</ul>
+<p><strong>Static drivers.</strong> There is no dynamic driver loading
+(<code>modload</code>, <code>mouse</code>, <code>em</code> and <code>dbg</code> are removed).
+TGI, joystick and serial are direct-call static APIs. Drop any driver-load or
+driver-install calls and use the static entry points directly.</p>
+<h2 id="sect-3">3. Migration aids</h2>
+<h3 id="sect-3-1">3.1. The include-rewrite</h3>
+<p>Because the header move is mechanical and total (no shims), the supported path
+is a scripted rewrite that applies the fixed mapping below. The seven platform
+headers <code>lynx.h tgi.h suzymath.h serial.h joystick.h zlib.h lz4.h</code> each
+gain a <code>lynx/</code> prefix; every other header (the C standard library) is left
+alone.</p>
+<pre class="verb"># Rewrite lynxcc platform includes in-place across a source tree.
+for h in lynx tgi suzymath serial joystick zlib lz4; do
+  find . -name '*.c' -o -name '*.h' -o -name '*.s' | xargs -r sed -i \
+    -E "s@(#include[[:space:]]*[<\"])$h\.h([>\"])@\1lynx/$h.h\2@g"
+done</pre>
+<p>Run it once over your project; a clean rebuild afterwards should resolve all
+missing-header errors that flagged the move.</p>
+<h3 id="sect-3-2">3.2. Resolving the optional libraries</h3>
+<p>Whichever build path you use, the optional libraries must be resolved. The
+<code>cl65</code> driver auto-resolves them for you, so a quick <code>cl65</code>
+build needs no link-line change. When you build with the separate tools — the
+SDK's recommended path (see <a href="#sect-4">section 4</a>, item 7, and
+<a href="using-make.html">Using make</a>) — you list the optional libraries you
+use on the <code>ld65</code> link line with <code>-l</code>, dependents-first and
+the core <code>lynx.lib</code> last.</p>
+<h3 id="sect-3-3">3.3. Reference builds</h3>
+<p>Port against the updated <code>examples/</code> and <code>templates/</code>, which
+demonstrate the new include paths and zero-config linking. Where an emulator is
+available, verify on <code>tests/emu/gearlynx</code>.</p>
+<h2 id="sect-4">4. Checklist of concrete edits</h2>
+<p>The points below are the specific source and command-line changes most
+projects need. They expand on the differences in <a href="#sect-2">section 2</a>
+into an actionable list.</p>
+<ol>
+<li><strong>Drop <code>--standard</code> from <code>cc65</code> invocations.</strong> The only dialect now is <code>cc65</code> — <code>c89</code>/<code>c99</code> are no longer selectable — so the flag is removed.</li>
+<li><strong>Include <code>&lt;lynx/lynx.h&gt;</code> wherever you use the hardware defines.</strong> Constants such as <code>BPP_1</code>, <code>REHVST</code> and the rest of the Suzy/Mikey symbols live in the platform headers that <code>lynx/lynx.h</code> pulls in; a source file that references them must include it explicitly.</li>
+<li><strong>Remove the TGI driver-install calls.</strong> Delete every <code>tgi_install(…)</code> call, including the <code>tgi_static_stddrv</code> reference it took as its argument. The static TGI has no driver to install — call <code>tgi_init</code> instead.</li>
+<li><strong>Change <code>time_t</code> variables to <code>clock_t</code>.</strong> The Lynx has no wall-clock/calendar time; <code>time.h</code> provides only <code>clock()</code> and <code>sleep()</code>, and the calendar types (<code>time_t</code>, <code>struct tm</code>, …) are gone.</li>
+<li><strong>Replace <code>open()</code> with <code>openn()</code>.</strong> Lynx cart files are numbered, not named, so there is no <code>open()</code>/<code>fopen()</code>. Open a file by index with <code>openn(fileno)</code>, then <code>read()</code>/<code>lseek()</code> on it.</li>
+<li><strong>Use the chip-specific EEPROM functions.</strong> Replace the generic <code>lynx_eeread</code>/<code>lynx_eewrite</code> with the variant matching your cart's serial EEPROM: <code>lynx_eeread_93c46</code>/<code>_93c66</code>/<code>_93c86</code> and the corresponding <code>lynx_eewrite_93c46</code>/<code>_93c66</code>/<code>_93c86</code>.</li>
+<li><strong>Don't use <code>assert()</code>.</strong> <code>assert.h</code> has been removed; delete <code>assert()</code> calls and any code that relied on them.</li>
+<li><strong>Build with the separate tools, not <code>cl65</code>.</strong> Move from the one-shot <code>cl65</code> driver to invoking <code>cc65</code>, <code>ca65</code> and <code>ld65</code> as discrete steps; see <a href="using-make.html">Using make</a> for a worked build.</li>
+<li><strong>Drop the <code>-t lynx</code> option from every tool.</strong> The target is hard-wired to the Lynx, so the <code>-t</code>/<code>--target</code> selector no longer exists.</li>
+</ol>
+<h2 id="sect-5">5. Compatibility deliberately preserved</h2>
+<p>The following are kept on purpose, so most projects move with minimal churn:</p>
+<ul>
+<li><code>CC65_HOME</code> / WinBin discovery, and the <code>include</code>, <code>asminc</code>, <code>lib</code> and <code>cfg</code> directory names and locations.</li>
+<li>The basic <code>cl65</code> workflow.</li>
+<li><code>.lnx</code> output and cfg-driven memory layout.</li>
+<li>All standard C library headers at their flat paths.</li>
+</ul>
+<p>A project that uses only the C standard library and the core platform, built
+via <code>cl65</code>, may need no changes at all.</p>
+</article></main><footer class="site-foot"><strong>lynxcc</strong> documentation &mdash; a complete Atari Lynx Game Development SDK.</footer>
+<script src="doc.js"></script>
+</body></html>
