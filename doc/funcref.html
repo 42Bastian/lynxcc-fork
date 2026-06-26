@@ -8156,7 +8156,7 @@ used in presence of a prototype.</p>
 </dd>
 <dt>Description</dt>
 <dd>
-<p>Sets the direction in which the text cursor advances, one of the <code>GFX_TEXT_XXX</code> constants. It affects only how the cursor advances; the glyphs themselves are not rotated.</p>
+<p>Sets the direction in which the text cursor advances between <code>gfx_outtext</code> calls, one of the <code>GFX_TEXT_XXX</code> constants. It affects only how the cursor advances; the glyphs themselves are not rotated. <code>GFX_TEXT_HORIZONTAL</code> advances the cursor right by the string width; <code>GFX_TEXT_VERTICAL</code> advances it down by one text line (the scaled font height), so successive calls stack top to bottom.</p>
 </dd>
 <dt>Notes</dt>
 <dd>

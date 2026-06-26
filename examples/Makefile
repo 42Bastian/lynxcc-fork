@@ -49,7 +49,7 @@ endif
 
 ROOT_EXAMPLES = lynxdemo
 GAMES         = breakout invaders raycaster sybil
-SUZY          = muldivtest spritetest suzyasync suzyasyncbench suzybench packtest fonttest fontvar
+SUZY          = muldivtest spritetest suzyasync suzyasyncbench suzybench packtest fonttest fontvar textdir
 MIKEY         = setbpp
 MEMORY        = heaptest zeropage
 NETWORK       = comlynx

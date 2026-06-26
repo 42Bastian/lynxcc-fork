@@ -213,7 +213,10 @@ void __fastcall__ gfx_setfont (unsigned char font);
 
 void __fastcall__ gfx_settextdir (unsigned char dir);
 /* Set the direction for text output: one of the GFX_TEXT_XXX constants.
-** Affects only how the cursor advances; glyphs are not rotated.
+** Affects only how the cursor advances between gfx_outtext calls; glyphs are
+** not rotated. GFX_TEXT_HORIZONTAL advances the cursor right by the string
+** width; GFX_TEXT_VERTICAL advances it down by one text line (the scaled font
+** height), so chained calls stack top to bottom.
 */
 
 unsigned __fastcall__ gfx_gettextwidth (const char* s);

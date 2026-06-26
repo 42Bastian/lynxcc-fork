@@ -60,7 +60,7 @@
         .import         gfx_bgindex
         .import         gfx_font
         .import         _strlen
-        .import         popa, popax, negax
+        .import         popa, popax
 
         .export         _gfx_gotoxy
         .export         _gfx_outtext
@@ -302,23 +302,25 @@ build8x8:
         ; Run into draw_and_advance
 
 ;-----------------------------------------------------------------------------
-; draw_and_advance: Shared epilogue. Draw the strip sprite at the cursor,
-; then advance the cursor by the string width (GFX_TEXT_VERTICAL advances
-; upward).
+; draw_and_advance: Shared epilogue. Draw the strip sprite at the cursor, then
+; advance the cursor for the next gfx_outtext: GFX_TEXT_HORIZONTAL moves right
+; by the string width, GFX_TEXT_VERTICAL moves down by one text line (the
+; scaled font height), so chained calls stack top to bottom.
 
 draw_and_advance:
         lda     #<text_sprite
         ldx     #>text_sprite
         jsr     gfx_draw_sprite
 
-        lda     STRPTR
+        ldy     textdir         ; Horizontal text?
+        bne     @vert           ; No: vertical
+        lda     STRPTR          ; Horizontal: advance right by the string width
         ldx     STRPTR+1
         jsr     _gfx_gettextwidth
-        ldy     #0
-        cpy     textdir         ; Horizontal text?
-        beq     @L8             ; Jump if yes
-        jsr     negax           ; Vertical: move the cursor up
-        ldy     #2              ; ... and address cury
+        ldy     #0              ; ... addressing curx
+        jmp     @L8
+@vert:  jsr     _gfx_gettextheight ; Vertical: advance down by the line height
+        ldy     #2              ; ... addressing cury
 @L8:    clc
         adc     curx,y
         sta     curx,y
