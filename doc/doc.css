@@ -89,6 +89,11 @@ body{
   background:var(--panel);border:1px solid var(--border);
   border-radius:10px;box-shadow:var(--shadow);
 }
+/* invisible bridge across the 6px gap so a slow cursor keeps :hover
+   alive while travelling from the button to the menu */
+.topbar .nav .dropdown-menu::before{
+  content:"";position:absolute;left:0;right:0;top:-6px;height:6px;
+}
 .topbar .nav .dropdown.open .dropdown-menu,
 .topbar .nav .dropdown:hover .dropdown-menu,
 .topbar .nav .dropdown:focus-within .dropdown-menu{display:flex}
