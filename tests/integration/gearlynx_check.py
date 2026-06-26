@@ -44,6 +44,8 @@ import time
 EXAMPLES = [
     "lynxdemo",            # starter: scaled sprite + scaled text (graphics)
     "suzy/spritetest",     # Suzy sprite engine, packed vs literal
+    "suzy/spritesheet",    # sp65 --sprite-sheet driver: generated frame table
+    "suzy/spriteslice",    # sp65 --slice/--pop: hand-tabled frames
     "suzy/fonttest",       # TGI scaled fonts
     "mikey/setbpp",        # Mikey display-DMA bit depths
     "games/breakout",      # a complete game frame

@@ -21,6 +21,16 @@ examples/*/*.s
 examples/suzy/heart_packed.h
 examples/suzy/heart_literal.h
 
+# sp65-generated sprite-sheet headers (rebuilt from suzy/sheet.pcx)
+examples/suzy/sheet_anim.h
+examples/suzy/frame0.h
+examples/suzy/frame1.h
+examples/suzy/frame2.h
+examples/suzy/frame3.h
+
+# Python bytecode cache
+__pycache__/
+
 # Host-built unit-test binaries
 tests/unit/bin/
 

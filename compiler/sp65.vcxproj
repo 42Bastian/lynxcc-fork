@@ -92,6 +92,7 @@
     <ClCompile Include="sp65\palette.c" />
     <ClCompile Include="sp65\pcx.c" />
     <ClCompile Include="sp65\raw.c" />
+    <ClCompile Include="sp65\spritesheet.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sp65\asm.h" />
@@ -110,6 +111,7 @@
     <ClInclude Include="sp65\pcx.h" />
     <ClInclude Include="sp65\pixel.h" />
     <ClInclude Include="sp65\raw.h" />
+    <ClInclude Include="sp65\spritesheet.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

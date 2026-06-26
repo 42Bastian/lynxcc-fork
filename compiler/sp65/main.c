@@ -50,6 +50,7 @@
 #include "error.h"
 #include "input.h"
 #include "output.h"
+#include "spritesheet.h"
 
 
 
@@ -98,6 +99,7 @@ static void Usage (void)
             "  --pop\t\t\t\tRestore the original loaded image\n"
             "  --read file[,attrlist]\tRead an input file\n"
             "  --slice x,y,w,h\t\tGenerate a slice from the loaded bitmap\n"
+            "  --sprite-sheet attrlist\tSlice a grid of frames into a sprite-sheet header\n"
             "  --verbose\t\t\tIncrease verbosity\n"
             "  --version\t\t\tPrint the version number and exit\n"
             "  --write file[,attrlist]\tWrite the output to a file\n",
@@ -272,6 +274,20 @@ static void OptSlice (const char* Opt attribute ((unused)), const char* Arg)
 
 
 
+static void OptSpriteSheet (const char* Opt attribute ((unused)), const char* Arg)
+/* Slice the loaded bitmap into a grid of frames and write a sprite-sheet header */
+{
+    /* We must have a bitmap to slice */
+    if (C == 0) {
+        Error ("No bitmap loaded for --sprite-sheet");
+    }
+
+    /* Run the sheet driver on the current work bitmap */
+    SpriteSheet (C, Arg);
+}
+
+
+
 static void OptVerbose (const char* Opt attribute ((unused)),
                         const char* Arg attribute ((unused)))
 /* Increase verbosity */
@@ -328,6 +344,7 @@ int main (int argc, char* argv [])
         { "--pop",              0,      OptPop                  },
         { "--read",             1,      OptRead                 },
         { "--slice",            1,      OptSlice                },
+        { "--sprite-sheet",     1,      OptSpriteSheet          },
         { "--verbose",          0,      OptVerbose              },
         { "--version",          0,      OptVersion              },
         { "--write",            1,      OptWrite                },

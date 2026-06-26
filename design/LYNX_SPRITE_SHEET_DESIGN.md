@@ -10,8 +10,14 @@ See doc/licenses.html.
 Scope: how a game can author several sprite frames (animation cels, tile
 variants, a font of glyphs) as a **single sheet image** and have them turned
 into Lynx sprites, instead of carrying one `.pcx`/`.png` file per frame. This
-document is the source of truth for the sprite-sheet workflow. It is a design
-proposal; the recommended part (§5) is **not yet implemented**.
+document is the source of truth for the sprite-sheet workflow.
+
+> **Status — implemented 2026-06-26.** Both routes ship: the manual
+> `--slice`/`--pop` chain (§4) and the `--sprite-sheet` driver (§5A). Byte
+> neutrality and on-hardware pixel parity were measured on GearLynx (§7). The
+> as-built `--sprite-sheet` interface is a single self-contained option carrying
+> all attributes (see §5A), not the `-c`/`-w` split the first draft sketched;
+> the reason is recorded in §5A.
 
 > **TL;DR.** A runtime sprite sheet — one big Suzy sprite that the SCB indexes
 > into — is **impossible** on this hardware (§2). The right place to "unpack" a
@@ -132,15 +138,25 @@ the design recommends **5A**.
 ### 5A. A new write-side aggregator (recommended)
 
 Keep `GenLynxSprite` untouched (it stays a single-frame encoder) and add a
-**driver** that loops over a grid, calls the existing converter per cell, and
-writes a combined header. Surface it as new sp65 options:
+**driver** that loops over a grid, calls the existing encoder per cell, and
+writes a combined header. As built, it is one self-contained sp65 option whose
+attribute list carries the grid, the encoder settings and the output:
 
 ```
 sp65 -r walk.pcx \
-     --sprite-sheet fw=16,fh=16[,cols=N,rows=M,first=K,count=C,gap=G,margin=Mn] \
-     -c lynx-sprite,mode=packed \
-     -w walk.h,format=c,ident=walk
+     --sprite-sheet name=walk.h,ident=walk,fw=16,fh=16,mode=packed[,cols=N,rows=M,first=K,count=C,gap=G,margin=Mn,ax=..,ay=..,edge=..,format=c,bytesperline=..,base=..]
 ```
+
+A self-contained option was chosen over the first draft's `-c …`/`-w …` split
+because sp65's existing pipeline carries exactly **one** converted blob in the
+global `D` between `--convert-to` and `--write`; a sheet produces N blobs plus an
+offset table, which that single-blob plumbing cannot pass from convert to write
+without new global state. Folding read-grid → slice → encode → write into one
+option (`compiler/sp65/spritesheet.c`, `OptSpriteSheet` in `main.c`) keeps the
+existing convert/write path untouched and reuses `SliceBitmap` and the unchanged
+`GenLynxSprite`. The encoder attributes (`mode`, `ax`, `ay`, `edge`) are read
+straight from the same attribute list by `GenLynxSprite`, so a sheet frame is
+encoded identically to a lone sprite.
 
 Semantics:
 
@@ -156,9 +172,9 @@ Semantics:
   #define walk_WIDTH   16
   #define walk_HEIGHT  16
   #define walk_COLORS  3
-  static const unsigned char walk_data[] = { /* frame0 … frame3 back-to-back */ };
+  const unsigned char walk_data[] = { /* frame0 … frame3 back-to-back */ };
   const unsigned char* const walk[walk_COUNT] = {
-      walk_data + 0, walk_data + 41, walk_data + 79, walk_data + 120,
+      walk_data + 0, walk_data + 68, walk_data + 136, walk_data + 204,
   };
   ```
 
@@ -167,13 +183,15 @@ Semantics:
   ROM (`const`), costs `2*COUNT` bytes, and the frame *data* is byte-for-byte
   what the §4 chain produces — so this is **byte-neutral on the cart** apart from
   the small pointer table, and that table replaces one the author would have
-  hand-written anyway.
+  hand-written anyway. (Both symbols are emitted non-`static`, matching the
+  existing single-sprite headers, so a frame table can also be `extern`-declared
+  from another translation unit.)
 
-This is the smallest change that gives a real sprite-sheet asset: it touches only
-sp65's option parsing, a new `spritesheet.c` driver, and the `c.c`/`asm.c`
-writers (a table-emitting variant). The asm writer emits an equivalent `.word`
-table of labels so the feature is usable from assembly and from `.h`/`.inc`
-includes alike.
+This is a small, self-contained change: a new `spritesheet.c` (the driver plus
+its own C/asm table writers), one option in `main.c`, and no change to the
+existing converter or single-blob writers. The asm writer emits a parallel
+`.proc` with the data under a `data:` label and a `.word` frame table, so the
+feature is usable from assembly and from `.h`/`.inc` includes alike.
 
 ### 5B. A `mode=sheet` inside `lynx-sprite` (rejected)
 
@@ -213,45 +231,54 @@ for (;;) {
 
 The only SDK surface that grows is sp65 (the asset side) and the docs.
 
-## 7. Verification plan
+## 7. Verification — measured
 
-Per the project rule that emulator claims are measured on GearLynx
-(`tests/emu/gearlynx`), the implementation of §5 must show:
+All on the shared 4-frame `examples/suzy/sheet.pcx`; emulator results on the
+headless GearLynx (`tests/emu/gearlynx`), the method used for
+`spritetest`/`packtest`.
 
-1. **Byte-neutrality.** For a sample sheet, the concatenated frame data from
-   `--sprite-sheet` is byte-identical to the four blobs produced by the §4
-   `--slice`/`--pop` chain (diff the generated `.h` data sections). This proves
-   the driver only repackages, never re-encodes.
-2. **Pixel parity on hardware.** A new example (`examples/suzy/sheettest.c`, a
-   small walk-cycle) drawn from the table must render each frame identically to
-   the same frames drawn from individual `--slice` headers — verified by
-   GearLynx framebuffer readback, the same method used for `spritetest`/`packtest`.
-3. **Grid validation.** sp65 errors clearly when `cols*fw (+gaps/margin)` exceeds
-   the image, rather than silently cropping.
-4. **Golden ROM.** Add `sheettest.lnx` to the integration goldens
-   (`tests/integration`) so future converter changes can't regress it.
+1. **Byte-neutrality — PASS.** The driver's `sheet_anim_data[]` (1088 bytes,
+   frames at offsets 0/68/136/204) is byte-identical to the concatenation of the
+   four `frame0…frame3` headers produced by the `--slice`/`--pop` chain. The
+   driver only repackages; it never re-encodes.
+2. **Pixel parity on hardware — PASS.** `spritesheet.c` (table) and
+   `spriteslice.c` (manual headers) reset deterministically and, stepped the same
+   number of frames, draw the same animation frame at the same position; the
+   64×64 ball region is SHA-identical between the two screenshots. Only the
+   on-screen captions differ.
+3. **Grid validation — PASS.** `--sprite-sheet` errors clearly on an oversized
+   cell ("image 64x16 too small for … cell 20x20"), an out-of-range
+   `first`/`count`, a grid that overruns the image, and a missing/invalid
+   `ident`, instead of silently cropping.
+4. **Golden ROM — done.** `suzy/spritesheet` and `suzy/spriteslice` are in the
+   integration golden suite (`tests/integration/gearlynx_check.py`,
+   `tests/golden/*.sha256`) and pass in compare mode, so a future converter
+   change that perturbs either rendering is caught.
 
-## 8. Documentation tasks (kept in sync per CLAUDE.md)
+The asm writer was also checked: `format=asm` emits a `.proc` with the data
+under `data:` and a `.word data + offset` frame table.
 
-When §5 is implemented, update in the same pass:
+## 8. Documentation kept in sync (per CLAUDE.md)
 
-- `doc/sp65.html` — new `--sprite-sheet` section, document `--slice` properly,
-  and a sheet-vs-frames SVG (per `design/DOC_SVG_STYLE_DESIGN.md`).
-- `doc/samples.html` + `examples/Makefile` + `examples/suzy/sheettest.c` — the
-  new example and its build rule.
-- `compiler/sp65` `--help` text for the new option.
-- This file — drop the "not yet implemented" note and record the measured
-  byte-neutrality / GearLynx result, matching how the other design docs close.
+Updated in the same pass as the code:
 
-## 9. Recommendation
+- `doc/sp65.html` §6.2 — the Sprite-sheets section, `--slice` and
+  `--sprite-sheet` documented in the option reference, and a sheet→frames→table
+  SVG (per `design/DOC_SVG_STYLE_DESIGN.md`).
+- `doc/samples.html` + `examples/Makefile` — two examples and their build rules:
+  `examples/suzy/spritesheet.c` (driver) and `examples/suzy/spriteslice.c`
+  (manual chain), sharing `examples/suzy/sheet.pcx` (`sheet.pcx.py`).
+- `compiler/sp65` `--help` text and `sp65.vcxproj` for the new source file.
+- This file — status note (top) and the measured results below.
 
-Sprite sheets are worth supporting and the cost is modest because the hard part
-(`--slice`, the encoder) already exists. Recommended order:
+## 9. Outcome
 
-1. **Now, zero code:** document the §4 `--slice`/`--pop` chain and add one
-   example so the capability is discoverable.
-2. **Next:** implement §5A (`--sprite-sheet` driver + table-emitting writers),
-   keeping the on-cart bytes neutral, and verify on GearLynx per §7.
+Both routes shipped together: the documented `--slice`/`--pop` chain (§4) and
+the `--sprite-sheet` driver (§5A), each with a worked example sharing one sheet
+image. The driver's on-cart frame bytes are identical to the manual chain (§7);
+the only added bytes are the ROM pointer table that authors would otherwise write
+by hand.
 
-Per-frame action points (§5 open question) and any `.png` tilemap import are
-explicitly out of scope for v1.
+Per-frame action points (the §5 open question) and any `.png`/tilemap import
+remain out of scope; the emitted table format is forward-compatible with both
+because they change the encoded frame bytes, not the table shape.

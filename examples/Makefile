@@ -49,7 +49,7 @@ endif
 
 ROOT_EXAMPLES = lynxdemo
 GAMES         = breakout invaders raycaster sybil
-SUZY          = muldivtest spritetest suzyasync suzyasyncbench suzybench packtest fonttest fontvar textdir
+SUZY          = muldivtest spritetest spritesheet spriteslice suzyasync suzyasyncbench suzybench packtest fonttest fontvar textdir
 MIKEY         = setbpp
 MEMORY        = heaptest zeropage
 NETWORK       = comlynx
@@ -109,6 +109,32 @@ suzy/heart_literal.h: suzy/heart.pcx
 
 suzy/spritetest.o: suzy/spritetest.c $(SPRITETEST_HDRS)
 
+# Build-time sprite-sheet assets generated from suzy/sheet.pcx (a 4-frame strip
+# of 16x16 cells). Two examples consume the SAME image two ways, to contrast the
+# workflows (see design/LYNX_SPRITE_SHEET_DESIGN.md and doc/sp65.html sec. 6.5):
+#
+#  * spritesheet.c uses the --sprite-sheet driver: one call -> one header with a
+#    generated frame-pointer table (sheet_anim[]).
+#  * spriteslice.c uses the manual --slice/--pop chain: one call -> four
+#    standalone frame headers the program tables by hand.
+#
+# The frame data is byte-identical between the two; only the packaging differs.
+
+SHEET_FRAMES = suzy/frame0.h suzy/frame1.h suzy/frame2.h suzy/frame3.h
+
+suzy/sheet_anim.h: suzy/sheet.pcx
+	$(SP65) -r $< --sprite-sheet name=$@,ident=sheet_anim,fw=16,fh=16,mode=packed
+
+suzy/frame0.h suzy/frame1.h suzy/frame2.h suzy/frame3.h: suzy/sheet.pcx
+	$(SP65) -r $< \
+	  --slice  0,0,16,16 -c lynx-sprite,mode=packed -w suzy/frame0.h,format=c,ident=frame0 --pop \
+	  --slice 16,0,16,16 -c lynx-sprite,mode=packed -w suzy/frame1.h,format=c,ident=frame1 --pop \
+	  --slice 32,0,16,16 -c lynx-sprite,mode=packed -w suzy/frame2.h,format=c,ident=frame2 --pop \
+	  --slice 48,0,16,16 -c lynx-sprite,mode=packed -w suzy/frame3.h,format=c,ident=frame3
+
+suzy/spritesheet.o: suzy/spritesheet.c suzy/sheet_anim.h
+suzy/spriteslice.o: suzy/spriteslice.c $(SHEET_FRAMES)
+
 # --------------------------------------------------------------------------
 
 examples: $(EXELIST)
@@ -136,6 +162,7 @@ install:
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/suzy
 	$(INSTALL) -m0644 $(addprefix suzy/,$(addsuffix .c,$(SUZY))) $(DESTDIR)$(examplesdir)/suzy
 	$(INSTALL) -m0644 suzy/heart.pcx suzy/heart.pcx.py $(DESTDIR)$(examplesdir)/suzy
+	$(INSTALL) -m0644 suzy/sheet.pcx suzy/sheet.pcx.py $(DESTDIR)$(examplesdir)/suzy
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/mikey
 	$(INSTALL) -m0644 $(addprefix mikey/,$(addsuffix .c,$(MIKEY))) $(DESTDIR)$(examplesdir)/mikey
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/memory
@@ -153,7 +180,7 @@ zip:
 # Clean-up rules
 
 mostlyclean:
-	@$(DEL) $(EXELIST:.lnx=.map) $(EXELIST:.lnx=.o) $(EXELIST:.lnx=.s) $(SPRITETEST_HDRS) 2>$(NULLDEV)
+	@$(DEL) $(EXELIST:.lnx=.map) $(EXELIST:.lnx=.o) $(EXELIST:.lnx=.s) $(SPRITETEST_HDRS) suzy/sheet_anim.h $(SHEET_FRAMES) 2>$(NULLDEV)
 
 clean: mostlyclean
 	@$(DEL) $(EXELIST) 2>$(NULLDEV)
