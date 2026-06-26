@@ -27,7 +27,7 @@
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <lynx/joystick.h>
 #include <6502.h>
 #include <zeropage.h>
@@ -51,13 +51,13 @@ void main (void)
     unsigned char joy, prev = 0, pressed;
     char buf[4];
 
-    tgi_init ();
+    gfx_init ();
     CLI ();
-    while (tgi_busy ()) {}
-    tgi_setpalette (tgi_getdefpalette ());
-    tgi_setframerate (60);
-    tgi_setcollisiondetection (0);
-    tgi_setfont (TGI_FONT_COMPACT);
+    while (gfx_busy ()) {}
+    gfx_setpalette (gfx_getdefpalette ());
+    gfx_setframerate (60);
+    gfx_setcollisiondetection (0);
+    gfx_setfont (GFX_FONT_COMPACT);
 
     for (;;) {
         joy     = joy_read ();
@@ -74,32 +74,32 @@ void main (void)
         ++frame;                        /* inc <zp>  */
         ++ticks;                        /* 16-bit inc through zp */
 
-        while (tgi_busy ()) {}
+        while (gfx_busy ()) {}
 
-        tgi_setcolor (COLOR_BLUE);
-        tgi_clear ();
+        gfx_setcolor (COLOR_BLUE);
+        gfx_clear ();
 
-        tgi_setcolor (COLOR_WHITE);
-        tgi_outtextxy (4, 4, "ZEROPAGE VARS");
+        gfx_setcolor (COLOR_WHITE);
+        gfx_outtextxy (4, 4, "ZEROPAGE VARS");
 
-        tgi_setcolor (COLOR_GREEN);
+        gfx_setcolor (COLOR_GREEN);
         byte2dec (frame, buf);
-        tgi_outtextxy (4, 24, "FRAME");
-        tgi_outtextxy (60, 24, buf);
+        gfx_outtextxy (4, 24, "FRAME");
+        gfx_outtextxy (60, 24, buf);
 
-        tgi_setcolor (COLOR_RED);
+        gfx_setcolor (COLOR_RED);
         byte2dec (presses, buf);
-        tgi_outtextxy (4, 32, "PRESS");
-        tgi_outtextxy (60, 32, buf);
+        gfx_outtextxy (4, 32, "PRESS");
+        gfx_outtextxy (60, 32, buf);
 
-        tgi_setcolor (COLOR_WHITE);
+        gfx_setcolor (COLOR_WHITE);
         byte2dec ((unsigned char)(ticks >> 8), buf);
-        tgi_outtextxy (4, 40, "TICKH");
-        tgi_outtextxy (60, 40, buf);
+        gfx_outtextxy (4, 40, "TICKH");
+        gfx_outtextxy (60, 40, buf);
 
-        tgi_setcolor (COLOR_WHITE);
-        tgi_outtextxy (4, 76, "A = +   B = -");
+        gfx_setcolor (COLOR_WHITE);
+        gfx_outtextxy (4, 76, "A = +   B = -");
 
-        tgi_updatedisplay ();
+        gfx_updatedisplay ();
     }
 }

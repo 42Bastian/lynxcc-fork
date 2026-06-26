@@ -36,7 +36,7 @@
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <6502.h>
 
 #include "heart_packed.h"
@@ -72,17 +72,17 @@ static void show (const unsigned char *data, unsigned char ctl1,
     scb.sprctl1 = (unsigned char)(ctl1 | REHV);
     scb.hpos    = x;
     scb.vpos    = y;
-    tgi_sprite (&scb);
+    gfx_sprite (&scb);
 }
 
 static void draw (void)
 {
-    tgi_setcolor (0);
-    tgi_clear ();
+    gfx_setcolor (0);
+    gfx_clear ();
 
-    tgi_setcolor (15);
-    tgi_outtextxy (28, 14, "LITERAL");        /* over the left heart  */
-    tgi_outtextxy (104, 14, "PACKED");        /* over the right heart */
+    gfx_setcolor (15);
+    gfx_outtextxy (28, 14, "LITERAL");        /* over the left heart  */
+    gfx_outtextxy (104, 14, "PACKED");        /* over the right heart */
 
     /* Same source image, two offline encodings, drawn at 3x via the SCB so the
     ** 16x16 art is easy to eyeball. heart_*_HEIGHT confirm both are 16 tall.
@@ -91,20 +91,20 @@ static void draw (void)
     show (heart_literal, LITERAL, 32, 28);
     show (heart_packed,  PACKED,  104, 28);
 
-    tgi_setcolor (15);
-    tgi_outtextxy (12, 84, "PACKED == LITERAL");
+    gfx_setcolor (15);
+    gfx_outtextxy (12, 84, "PACKED == LITERAL");
 }
 
 void main (void)
 {
-    tgi_init ();
+    gfx_init ();
     CLI ();
-    tgi_setframerate (60);
-    tgi_setpalette (palette);
+    gfx_setframerate (60);
+    gfx_setpalette (palette);
 
     for (;;) {
-        while (tgi_busy ()) {}
+        while (gfx_busy ()) {}
         draw ();
-        tgi_updatedisplay ();
+        gfx_updatedisplay ();
     }
 }

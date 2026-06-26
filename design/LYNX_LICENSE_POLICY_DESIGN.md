@@ -75,7 +75,7 @@ mechanically, not by guesswork. A file is **fork-authored (MPL)** iff **both**:
 2. **It carries no pre-existing attribution.** The file contains no cc65/Dunning/
    third-party notice — no author/copyright line, no "This file is part of cc65"
    boilerplate, no `cc65.github.io` / `See "LICENSE" file` pointer, and no
-   credit to a named third party's prior work (e.g. the TGI modules extracted
+   credit to a named third party's prior work (e.g. the Lynx graphics modules extracted
    from Karri Kaksonen's lynx-160-102-16 driver and the serial modules extracted
    from his ComLynx driver keep his copyright line and an extraction note under
    the cc65 license, rather than being relicensed).
@@ -93,8 +93,8 @@ The practical consequences:
   instruction-table and codegen sources), so the compiler suite gets **no** new
   MPL headers — consistent with "existing files keep their notices unchanged."
 - **Files derived from Karri Kaksonen's cc65 drivers keep his copyright.** The
-  static TGI modules split out of his `lynx-160-102-16` driver
-  (`tgi-core/text/clear/collision/color/font/init/page/palette/rate.s`) and the
+  static Lynx graphics modules split out of his `lynx-160-102-16` driver
+  (`gfx-core/text/clear/collision/color/font/init/page/palette/rate.s`) and the
   ComLynx serial modules split out of his `lynx-comlynx` driver
   (`ser-core/open/close/get/put/status.s`) carry his copyright line and an
   "extracted and adapted from ..." note. They stay under the cc65 package
@@ -103,7 +103,7 @@ The practical consequences:
   behaviour fix).
 - **Genuinely new fork files get MPL.** The Suzy hardware-math routines, the
   static joystick read (`joy-read.s`, a clean reimplementation), the compact-font
-  additions to the TGI text system (`tgi-setfont/font5x5/text5x5/fontvar.s`), the
+  additions to the Lynx graphics text system (`gfx-setfont/font5x5/text5x5/fontvar.s`), the
   new public `lynx/suzymath.h` header, the `lnx` tool, the build orchestration
   (`libraries.mk`, `tools/Makefile`, `build-windows.ps1`), and the `tests/`
   harness.
@@ -116,10 +116,10 @@ build-windows.ps1
 include/lynx/suzymath.h
 libraries.mk
 libraries/core/joy-read.s
-libraries/graphics/tgi-font5x5.s
-libraries/graphics/tgi-fontvar.s
-libraries/graphics/tgi-setfont.s
-libraries/graphics/tgi-text5x5.s
+libraries/graphics/gfx-font5x5.s
+libraries/graphics/gfx-fontvar.s
+libraries/graphics/gfx-setfont.s
+libraries/graphics/gfx-text5x5.s
 libraries/math/suzyasync.s
 libraries/math/suzydiv.s
 libraries/math/suzymod.s
@@ -153,12 +153,12 @@ comment without breaking the test reader, so per MPL Exhibit A their notice live
 in `tests/golden/README.md` (the "LICENSE file in a relevant directory" path the
 MPL explicitly allows) instead of an in-file header.
 
-Every TGI and ComLynx serial module derived from Karri Kaksonen's cc65 drivers
-is **deliberately excluded** from the MPL set: the static TGI modules
-(`tgi-core/text/clear/collision/color/font/init/page/palette/rate.s`) and the
+Every Lynx graphics and ComLynx serial module derived from Karri Kaksonen's cc65 drivers
+is **deliberately excluded** from the MPL set: the static Lynx graphics modules
+(`gfx-core/text/clear/collision/color/font/init/page/palette/rate.s`) and the
 serial modules (`ser-core/open/close/get/put/status.s`) carry his copyright line
 and an extraction note, and stay under the cc65 package license. Only the
-compact-font additions (`tgi-setfont/font5x5/text5x5/fontvar.s`) and the
+compact-font additions (`gfx-setfont/font5x5/text5x5/fontvar.s`) and the
 clean-rewrite `joy-read.s`, which are fork-authored from scratch, are MPL. This
 exclusion is intentional — not an oversight — and recorded here so it does not
 later read as one.
@@ -250,7 +250,7 @@ quoted licenses.
       `SPDX-License-Identifier: MPL-2.0` header; the goldens are covered via
       `tests/golden/README.md`.
 - [x] No file bearing a cc65 / Dunning / third-party notice received an MPL
-      header (all TGI and ComLynx serial modules derived from Karri Kaksonen's
+      header (all Lynx graphics and ComLynx serial modules derived from Karri Kaksonen's
       drivers, and all moved cc65 sources, excluded).
 - [x] `examples/` and `templates/` source files carry `SPDX-License-Identifier:
       MIT`; each directory has a `LICENSE`.

@@ -7,17 +7,17 @@
 */
 
 /*
-** tgi_setbpp() demo for cc65: the Lynx 2-bit/monochrome display mode.
+** gfx_setbpp() demo for cc65: the Lynx 2-bit/monochrome display mode.
 **
 ** DISPCTL B2 selects how Mikey's display DMA interprets the frame
 ** buffer: 4bpp (normal, Suzy-rendered) or 2bpp. In 2bpp Mikey scans
 ** out 40 bytes/line x 102 lines = 4080 bytes/page, 4 pixels/byte
 ** (MSB-first, like the 4bpp nibble order), and the 2-bit pen numbers
 ** index palette entries 0-3. Suzy is unaffected: the sprite engine
-** always renders 4bpp, so tgi_sprite/tgi_outtext output scans out
+** always renders 4bpp, so gfx_sprite/gfx_outtext output scans out
 ** garbled in 2bpp - the mode is a CPU-rendered framebuffer, and this
 ** program writes the buffer itself. The upper 4080 bytes of each page
-** are free for application use. See design/LYNX_TGI_DESIGN.md sec. 2.7; the
+** are free for application use. See design/LYNX_GFX_DESIGN.md sec. 2.7; the
 ** mode relies on a DISPCTL bit outside spec guarantees and is
 ** unverified on real hardware.
 **
@@ -27,29 +27,29 @@
 ** grey, white. The 2bpp screen shows the four shades as solid bands,
 ** three ordered-dither fields (25/50/75% white from pens 0/3 only -
 ** classic monochrome shading), and a CPU-animated bouncing block.
-** The page-swap machinery (tgi_updatedisplay/tgi_busy) is depth-
+** The page-swap machinery (gfx_updatedisplay/gfx_busy) is depth-
 ** independent, so the 2bpp screen is double buffered like any other.
 **
 ** Controls: A toggles 4bpp/2bpp, pad up rotates the display 180
-** degrees (tgi_flip honors the 2bpp end-of-buffer offset).
+** degrees (gfx_flip honors the 2bpp end-of-buffer offset).
 **
 ** Build:  cl65 -Ors -o setbpp.lnx setbpp.c
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <lynx/joystick.h>
 #include <6502.h>
 #include <string.h>
 
 /* 2bpp framebuffer geometry */
 #define LINE2BPP        40                      /* Bytes per line   */
-#define SIZE2BPP        (LINE2BPP * TGI_YRES)   /* 4080 bytes/page  */
+#define SIZE2BPP        (LINE2BPP * GFX_YRES)   /* 4080 bytes/page  */
 
-/* TGI page base addresses (same in both depths) */
+/* Lynx graphics page base addresses (same in both depths) */
 static unsigned char* const page[2] = {
-    (unsigned char*) 0xE018,                    /* TGI page 0 */
-    (unsigned char*) 0xC038                     /* TGI page 1 */
+    (unsigned char*) 0xE018,                    /* Lynx graphics page 0 */
+    (unsigned char*) 0xC038                     /* Lynx graphics page 1 */
 };
 
 /* Greyscale ramp: pen n = grey n/15. Makes 2bpp a monochrome mode
@@ -159,8 +159,8 @@ static void render4 (void)
 {
     unsigned char pen;
 
-    tgi_setcolor (0);                   /* tgi_clear fills in draw color */
-    tgi_clear ();
+    gfx_setcolor (0);                   /* gfx_clear fills in draw color */
+    gfx_clear ();
 
     /* The same four shades as the 2bpp screen, drawn by the sprite
     ** engine this time
@@ -168,14 +168,14 @@ static void render4 (void)
     for (pen = 0; pen < 4; ++pen) {
         band.vpos = pen * 10;
         band.penpal[0] = (unsigned char) (pen << 4) | 0x03;
-        tgi_sprite (&band);
+        gfx_sprite (&band);
     }
 
-    tgi_setcolor (15);                  /* White in the grey ramp */
-    tgi_outtextxy (8, 48, "TGI_SETBPP DEMO");
-    tgi_setcolor (10);
-    tgi_outtextxy (8, 62, "MODE: 4BPP SPRITES");
-    tgi_outtextxy (8, 76, "A: 2BPP  UP: FLIP");
+    gfx_setcolor (15);                  /* White in the grey ramp */
+    gfx_outtextxy (8, 48, "GFX_SETBPP DEMO");
+    gfx_setcolor (10);
+    gfx_outtextxy (8, 62, "MODE: 4BPP SPRITES");
+    gfx_outtextxy (8, 76, "A: 2BPP  UP: FLIP");
 }
 
 void main (void)
@@ -189,11 +189,11 @@ void main (void)
     unsigned char prevx[2], prevy[2];   /* Block position per page      */
     unsigned char i;
 
-    tgi_init ();                        /* 4bpp, page 0 viewed + drawn  */
+    gfx_init ();                        /* 4bpp, page 0 viewed + drawn  */
     CLI ();
 
-    tgi_setframerate (60);
-    tgi_setpalette (mono_pal);
+    gfx_setframerate (60);
+    gfx_setpalette (mono_pal);
 
     for (;;) {
         joy = joy_read ();
@@ -202,11 +202,11 @@ void main (void)
 
         if (pressed & JOY_BTN_A_MASK) {
             /* Don't change depth or touch buffers mid-swap */
-            while (tgi_busy ()) {}
+            while (gfx_busy ()) {}
 
             if (bpp == 4) {
                 bpp = 2;
-                tgi_setbpp (2);
+                gfx_setbpp (2);
                 /* From here on Mikey reads 40 bytes/line; the CPU
                 ** owns the buffer. Prebuild the scene in both pages.
                 */
@@ -218,15 +218,15 @@ void main (void)
                 }
             } else {
                 bpp = 4;
-                tgi_setbpp (4);         /* Suzy output is valid again */
+                gfx_setbpp (4);         /* Suzy output is valid again */
             }
         }
         if (pressed & JOY_UP_MASK) {
-            tgi_flip ();                /* Honors the 2bpp flip offset */
+            gfx_flip ();                /* Honors the 2bpp flip offset */
         }
 
         /* Wait for the previous swap, then render into the back page */
-        while (tgi_busy ()) {}
+        while (gfx_busy ()) {}
 
         if (bpp == 4) {
             render4 ();
@@ -236,7 +236,7 @@ void main (void)
             */
             block2 (page[back], prevx[back], prevy[back], 0);
             x += dx;
-            if (x == 0 || x >= TGI_XRES - 8) {
+            if (x == 0 || x >= GFX_XRES - 8) {
                 dx = -dx;
                 bpen = (bpen == 3) ? 1 : bpen + 1;
             }
@@ -246,7 +246,7 @@ void main (void)
         }
 
         /* Depth-independent: swap pages at the next VBL either way */
-        tgi_updatedisplay ();
+        gfx_updatedisplay ();
         back ^= 1;
     }
 }

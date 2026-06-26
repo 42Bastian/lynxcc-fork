@@ -46,7 +46,7 @@
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <lynx/joystick.h>
 #include <6502.h>
 
@@ -673,12 +673,12 @@ static void draw_platform (unsigned char i)
     blk_scb.penpal[0] = (PEN_TRANS << 4) | PEN_BRICK;
     blk_scb.vpos    = plat_y[i] + 3;
     blk_scb.vsize   = (unsigned int)((h - 3) << 5);
-    tgi_sprite (&blk_scb);
+    gfx_sprite (&blk_scb);
 
     blk_scb.penpal[0] = (PEN_TRANS << 4) | PEN_GRASS;
     blk_scb.vpos    = plat_y[i];
     blk_scb.vsize   = (unsigned int)(3 << 5);
-    tgi_sprite (&blk_scb);
+    gfx_sprite (&blk_scb);
 }
 
 static void draw (void)
@@ -686,9 +686,9 @@ static void draw (void)
     unsigned char i;
     unsigned char* frame;
 
-    while (tgi_busy ()) {}
-    tgi_setcolor (PEN_SKY);
-    tgi_clear ();
+    while (gfx_busy ()) {}
+    gfx_setcolor (PEN_SKY);
+    gfx_clear ();
 
     for (i = 0; i < NPLAT; ++i) draw_platform (i);
 
@@ -697,7 +697,7 @@ static void draw (void)
         if (!coin_on[i]) continue;
         coin_scb.hpos = coin_sx[i];
         coin_scb.vpos = coin_sy[i];
-        tgi_sprite (&coin_scb);
+        gfx_sprite (&coin_scb);
     }
 
     /* Enemies */
@@ -706,7 +706,7 @@ static void draw (void)
         if (!en_alive[i]) continue;
         en_scb.hpos = en_x[i];
         en_scb.vpos = en_y[i];
-        tgi_sprite (&en_scb);
+        gfx_sprite (&en_scb);
     }
 
     /* Sybil (blink while invulnerable) */
@@ -717,38 +717,38 @@ static void draw (void)
         syb_scb.data = frame;
         syb_scb.hpos = px - SYB_DRAW;
         syb_scb.vpos = py;
-        tgi_sprite (&syb_scb);
+        gfx_sprite (&syb_scb);
     }
 
     /* HUD */
     fmt5 (score, hud_score);
     hud_coin[5] = '0' + (NCOIN - coins_left);
     hud_life[5] = '0' + lives;
-    tgi_setcolor (PEN_BLACK);
-    tgi_outtextxy (0, 0, hud_score);
-    tgi_outtextxy (56, 0, hud_coin);
-    tgi_outtextxy (112, 0, hud_life);
+    gfx_setcolor (PEN_BLACK);
+    gfx_outtextxy (0, 0, hud_score);
+    gfx_outtextxy (56, 0, hud_coin);
+    gfx_outtextxy (112, 0, hud_life);
 
     if (state == ST_CLEAR) {
-        tgi_setcolor (PEN_COIN);
-        tgi_outtextxy (36, 44, "LEVEL CLEAR");
+        gfx_setcolor (PEN_COIN);
+        gfx_outtextxy (36, 44, "LEVEL CLEAR");
     } else if (state == ST_OVER) {
-        tgi_setcolor (PEN_ENEMY);
-        tgi_outtextxy (44, 40, "GAME OVER");
-        tgi_setcolor (PEN_BLACK);
-        tgi_outtextxy (28, 56, "A = NEW GAME");
+        gfx_setcolor (PEN_ENEMY);
+        gfx_outtextxy (44, 40, "GAME OVER");
+        gfx_setcolor (PEN_BLACK);
+        gfx_outtextxy (28, 56, "A = NEW GAME");
     }
 
-    tgi_updatedisplay ();
+    gfx_updatedisplay ();
 }
 
 /* ------------------------------------------------------------------ */
 
 void main (void)
 {
-    tgi_init ();
+    gfx_init ();
     CLI ();
-    while (tgi_busy ()) {}
+    while (gfx_busy ()) {}
 
     MIKEY.mstereo = 0x00;
     snd_silence (&MIKEY.channel_a);
@@ -757,9 +757,9 @@ void main (void)
     snd_silence (&MIKEY.channel_d);
 
     pal_init ();
-    tgi_setpalette (pal);
-    tgi_setframerate (60);
-    tgi_setcollisiondetection (0);
+    gfx_setpalette (pal);
+    gfx_setframerate (60);
+    gfx_setcollisiondetection (0);
 
     new_game ();
     prev_joy = 0;
@@ -786,7 +786,7 @@ void main (void)
         pal_set (PEN_COIN, (shine & 16) ? 0xFE0 : 0xDF0);
 
         sfx_update ();
-        tgi_setpalette (pal);
+        gfx_setpalette (pal);
         draw ();
     }
 }

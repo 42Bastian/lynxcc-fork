@@ -17,7 +17,7 @@ it, and start editing `src/main.c`.
 ```
 basic/
 ├── Makefile        # one-step cl65 build; relies on automatic SDK libraries
-├── src/main.c      # init TGI, run a double-buffered main loop, read the joystick
+├── src/main.c      # init graphics, double-buffered main loop, read the joystick
 ├── README.md       # this file
 └── .gitignore      # ignores the build outputs (game.lnx, .map, .o, .s)
 ```
@@ -46,10 +46,10 @@ targets the Lynx by default.
 
 `src/main.c` is the canonical example of the SDK conventions:
 
-- the `<lynx/...>` include layout (`<lynx/lynx.h>`, `<lynx/tgi.h>`,
+- the `<lynx/...>` include layout (`<lynx/lynx.h>`, `<lynx/gfx.h>`,
   `<lynx/joystick.h>`);
-- the static TGI library — `tgi_init()` with no driver to load;
-- a double-buffered loop (`tgi_busy()` / `tgi_updatedisplay()`) reading the
+- the static Lynx graphics library — `gfx_init()` with no driver to load;
+- a double-buffered loop (`gfx_busy()` / `gfx_updatedisplay()`) reading the
   joystick with `joy_read()`.
 
 Run `game.lnx` on real hardware or an emulator; the label "HELLO, LYNX!" moves

@@ -28,7 +28,7 @@
 ;   - Exactly ONE async operation may be in flight at a time (single math
 ;     unit, single shared state block below).
 ;   - Between a *_start and its *_result the overlapped code must touch NO
-;     Suzy state: no TGI draw, no SPRGO, no other Suzy math, no SPRSYS write.
+;     Suzy state: no Lynx graphics draw, no SPRGO, no other Suzy math, no SPRSYS write.
 ;     The sprite engine shares these registers.
 ;   - Not interrupt-safe; sprite engine must be idle; the SPRSYS unsafe bit
 ;     may be set spuriously by any math op; divide-by-zero returns $FFFF.

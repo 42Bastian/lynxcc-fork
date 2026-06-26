@@ -44,7 +44,7 @@
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <lynx/joystick.h>
 #include <stdio.h>
 #include <6502.h>
@@ -784,36 +784,36 @@ static void show_accuracy (void)
     unsigned char y;
     unsigned char anyfail = 0;
 
-    tgi_setcolor (COLOR_BLACK);
-    tgi_clear ();
-    tgi_setcolor (COLOR_WHITE);
-    tgi_outtextxy (2, 2, "SUZY MATH ACCURACY");
-    tgi_setcolor (COLOR_GREEN);
-    tgi_outtextxy (2, 14, "       PASS   FAIL");
-    tgi_setcolor (COLOR_WHITE);
+    gfx_setcolor (COLOR_BLACK);
+    gfx_clear ();
+    gfx_setcolor (COLOR_WHITE);
+    gfx_outtextxy (2, 2, "SUZY MATH ACCURACY");
+    gfx_setcolor (COLOR_GREEN);
+    gfx_outtextxy (2, 14, "       PASS   FAIL");
+    gfx_setcolor (COLOR_WHITE);
 
     y = 24;
     for (op = 0; op < NOPS; ++op) {
         if (fail_cnt[op]) {
-            tgi_setcolor (COLOR_RED);
+            gfx_setcolor (COLOR_RED);
             anyfail = 1;
         } else {
-            tgi_setcolor (COLOR_WHITE);
+            gfx_setcolor (COLOR_WHITE);
         }
         sprintf (buf, "%-4s %6u %6u", opname[op], pass_cnt[op], fail_cnt[op]);
-        tgi_outtextxy (2, y, buf);
+        gfx_outtextxy (2, y, buf);
         y += 9;
     }
 
-    tgi_setcolor (COLOR_GREY);
+    gfx_setcolor (COLOR_GREY);
     sprintf (buf, "DIV0 !/=%04X !%%=%04X", div0_udiv, div0_umod);
-    tgi_outtextxy (2, y + 2, buf);
+    gfx_outtextxy (2, y + 2, buf);
 
-    tgi_setcolor (anyfail ? COLOR_RED : COLOR_YELLOW);
-    tgi_outtextxy (2, 92, anyfail ? "A = FAILURES" : "A = SPEED");
+    gfx_setcolor (anyfail ? COLOR_RED : COLOR_YELLOW);
+    gfx_outtextxy (2, 92, anyfail ? "A = FAILURES" : "A = SPEED");
 
-    tgi_updatedisplay ();
-    while (tgi_busy ()) {}
+    gfx_updatedisplay ();
+    while (gfx_busy ()) {}
     wait_a ();
 }
 
@@ -822,28 +822,28 @@ static void show_failures (void)
     unsigned char op;
     unsigned char y;
 
-    tgi_setcolor (COLOR_BLACK);
-    tgi_clear ();
-    tgi_setcolor (COLOR_RED);
-    tgi_outtextxy (2, 2, "FIRST FAILURES");
-    tgi_setcolor (COLOR_WHITE);
+    gfx_setcolor (COLOR_BLACK);
+    gfx_clear ();
+    gfx_setcolor (COLOR_RED);
+    gfx_outtextxy (2, 2, "FIRST FAILURES");
+    gfx_setcolor (COLOR_WHITE);
 
     y = 16;
     for (op = 0; op < NOPS; ++op) {
         if (!fail_have[op]) continue;
         sprintf (buf, "%s a=%04X b=%04X",
                  opname[op], fail_a[op], fail_b[op]);
-        tgi_outtextxy (2, y, buf);
+        gfx_outtextxy (2, y, buf);
         y += 9;
         sprintf (buf, "  exp=%04X got=%04X", fail_exp[op], fail_got[op]);
-        tgi_outtextxy (2, y, buf);
+        gfx_outtextxy (2, y, buf);
         y += 11;
     }
 
-    tgi_setcolor (COLOR_YELLOW);
-    tgi_outtextxy (2, 92, "A = SPEED");
-    tgi_updatedisplay ();
-    while (tgi_busy ()) {}
+    gfx_setcolor (COLOR_YELLOW);
+    gfx_outtextxy (2, 92, "A = SPEED");
+    gfx_updatedisplay ();
+    while (gfx_busy ()) {}
     wait_a ();
 }
 
@@ -863,13 +863,13 @@ static void show_speed (unsigned char w, const char* title, const char* prompt)
     unsigned char i;
     unsigned char y;
 
-    tgi_setcolor (COLOR_BLACK);
-    tgi_clear ();
-    tgi_setcolor (COLOR_WHITE);
-    tgi_outtextxy (2, 2, title);
-    tgi_setcolor (COLOR_GREEN);
-    tgi_outtextxy (2, 14, "        SOFT   SUZY");
-    tgi_setcolor (COLOR_WHITE);
+    gfx_setcolor (COLOR_BLACK);
+    gfx_clear ();
+    gfx_setcolor (COLOR_WHITE);
+    gfx_outtextxy (2, 2, title);
+    gfx_setcolor (COLOR_GREEN);
+    gfx_outtextxy (2, 14, "        SOFT   SUZY");
+    gfx_setcolor (COLOR_WHITE);
 
     y = 24;
     for (i = 0; i < NSPEED; ++i) {
@@ -878,14 +878,14 @@ static void show_speed (unsigned char w, const char* title, const char* prompt)
         fmt10 (cs, s10);
         fmt10 (ch, h10);
         sprintf (buf, "%-4s %7s %6s", speedname[i], cs, ch);
-        tgi_outtextxy (2, y, buf);
+        gfx_outtextxy (2, y, buf);
         y += 9;
     }
 
-    tgi_setcolor (COLOR_YELLOW);
-    tgi_outtextxy (2, 92, prompt);
-    tgi_updatedisplay ();
-    while (tgi_busy ()) {}
+    gfx_setcolor (COLOR_YELLOW);
+    gfx_outtextxy (2, 92, prompt);
+    gfx_updatedisplay ();
+    while (gfx_busy ()) {}
     wait_a ();
 }
 
@@ -897,13 +897,13 @@ static void show_opt (const char* prompt)
     unsigned char i;
     unsigned char y;
 
-    tgi_setcolor (COLOR_BLACK);
-    tgi_clear ();
-    tgi_setcolor (COLOR_WHITE);
-    tgi_outtextxy (2, 2, "CONST-OPT us/op");
-    tgi_setcolor (COLOR_GREEN);
-    tgi_outtextxy (2, 14, "        SOFT   SUZY");
-    tgi_setcolor (COLOR_WHITE);
+    gfx_setcolor (COLOR_BLACK);
+    gfx_clear ();
+    gfx_setcolor (COLOR_WHITE);
+    gfx_outtextxy (2, 2, "CONST-OPT us/op");
+    gfx_setcolor (COLOR_GREEN);
+    gfx_outtextxy (2, 14, "        SOFT   SUZY");
+    gfx_setcolor (COLOR_WHITE);
 
     y = 24;
     for (i = 0; i < NOPT; ++i) {
@@ -912,16 +912,16 @@ static void show_opt (const char* prompt)
         fmt10 (cs, s10);
         fmt10 (ch, h10);
         sprintf (buf, "%-4s %7s %6s", optname[i], cs, ch);
-        tgi_outtextxy (2, y, buf);
+        gfx_outtextxy (2, y, buf);
         y += 9;
     }
 
-    tgi_setcolor (COLOR_GREY);
-    tgi_outtextxy (2, 78, "SOFT = SHIFT/MASK");
-    tgi_setcolor (COLOR_YELLOW);
-    tgi_outtextxy (2, 92, prompt);
-    tgi_updatedisplay ();
-    while (tgi_busy ()) {}
+    gfx_setcolor (COLOR_GREY);
+    gfx_outtextxy (2, 78, "SOFT = SHIFT/MASK");
+    gfx_setcolor (COLOR_YELLOW);
+    gfx_outtextxy (2, 92, prompt);
+    gfx_updatedisplay ();
+    while (gfx_busy ()) {}
     wait_a ();
 }
 
@@ -935,22 +935,22 @@ static unsigned char any_failures (void)
 
 static void show_progress (const char* msg)
 {
-    tgi_setcolor (COLOR_BLACK);
-    tgi_clear ();
-    tgi_setcolor (COLOR_WHITE);
-    tgi_outtextxy (2, 10, "SUZY MATH BENCH");
-    tgi_setcolor (COLOR_YELLOW);
-    tgi_outtextxy (2, 40, msg);
-    tgi_updatedisplay ();
-    while (tgi_busy ()) {}
+    gfx_setcolor (COLOR_BLACK);
+    gfx_clear ();
+    gfx_setcolor (COLOR_WHITE);
+    gfx_outtextxy (2, 10, "SUZY MATH BENCH");
+    gfx_setcolor (COLOR_YELLOW);
+    gfx_outtextxy (2, 40, msg);
+    gfx_updatedisplay ();
+    while (gfx_busy ()) {}
 }
 
 void main (void)
 {
-    tgi_init ();
+    gfx_init ();
     CLI ();
-    while (tgi_busy ()) {}
-    tgi_setpalette (tgi_getdefpalette ());
+    while (gfx_busy ()) {}
+    gfx_setpalette (gfx_getdefpalette ());
 
     timer_init ();
 

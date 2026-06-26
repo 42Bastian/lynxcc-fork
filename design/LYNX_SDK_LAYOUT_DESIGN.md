@@ -108,7 +108,7 @@ lynxcc/                     # repo root == CC65_HOME (dev tree)
 ├── libraries/              # SDK libraries (was the rest of libsrc/)
 │   ├── core/               #   base platform: cart, load, lseek, clock, eeprom
 │   ├── libc/               #   C stdlib (was libsrc/common)
-│   ├── graphics/           #   TGI + fonts (was libsrc/lynx/tgi)
+│   ├── graphics/           #   Lynx graphics + fonts (was libsrc/lynx/tgi)
 │   ├── audio/              #   Mikey sound (was libsrc/lynx/lynx-snd.s + new)
 │   ├── math/               #   Suzy hw math (suzy*.s, async math)
 │   └── compress/           #   zlib + lz4 (was libsrc/zlib)
@@ -171,14 +171,14 @@ Deviations from the originally proposed layout, with rationale:
 | `libsrc/runtime/*.s` | `runtime/rt/` | compiler runtime helpers |
 | `libsrc/lynx/crt0.s bootldr.s exehdr.s bllhdr.s mainargs.s irq.s exec.s defdir.s uploader.s` | `runtime/lynx/` | startup/glue |
 | `libsrc/lynx/lynx-cart.s load.s lseek.s open.s read.s clock.s eeprom*.s` | `libraries/core/` | base platform |
-| `libsrc/lynx/tgi/*` | `libraries/graphics/` | TGI + fonts |
+| `libsrc/lynx/tgi/*` | `libraries/graphics/` | Lynx graphics + fonts |
 | `libsrc/lynx/lynx-snd.s` | `libraries/audio/` | Mikey sound |
 | `libsrc/lynx/suzy*.s suzyasync.s` | `libraries/math/` | Suzy hw math |
 | `libsrc/common/*` | `libraries/libc/` | C stdlib |
 | `libsrc/zlib/*` | `libraries/compress/` | + `lz4` glue |
 | `libsrc/lynx/joy libsrc/lynx/ser` | `libraries/core/` | static joy/ser drivers |
 | `include/*.h` (stdlib) | `include/` (flat) | unchanged path |
-| `include/lynx.h tgi.h suzymath.h serial.h joystick.h _suzy.h _mikey.h zlib.h lz4.h` | `include/lynx/` | becomes `<lynx/...>` (§6) |
+| `include/lynx.h gfx.h suzymath.h serial.h joystick.h _suzy.h _mikey.h zlib.h lz4.h` | `include/lynx/` | becomes `<lynx/...>` (§6) |
 | `asminc/lynx.inc extzp.inc` | `asminc/lynx/` | `.include "lynx/..."` |
 | `asminc/*.mac generic asm inc` | `asminc/` (flat) | unchanged |
 | `cfg/*.cfg` | `cfg/` | unchanged |
@@ -232,7 +232,7 @@ This is the core new capability: a small **always-linked core** plus
 | Startup | (in `lynx.lib`) | always | `runtime/lynx` crt0, bootldr, exehdr, irq |
 | Core platform | (in `lynx.lib`) | always | `libraries/core` cart, load, lseek, clock, eeprom, joy, ser |
 | C stdlib | (in `lynx.lib`) | always | `libraries/libc` |
-| Graphics | `lynx-graphics.lib` | opt-in | `libraries/graphics` TGI + fonts |
+| Graphics | `lynx-graphics.lib` | opt-in | `libraries/graphics` Lynx graphics + fonts |
 | Audio | `lynx-audio.lib` | opt-in | `libraries/audio` Mikey sound |
 | Math | `lynx-math.lib` | opt-in | `libraries/math` Suzy hw mul/div + async |
 | Compress | `lynx-compress.lib` | opt-in | `libraries/compress` zlib + lz4 |
@@ -374,7 +374,7 @@ under `include/lynx/`** and are included as `<lynx/...>`.
   stddef.h stdbool.h stdarg.h limits.h errno.h setjmp.h time.h
   iso646.h fcntl.h unistd.h dirent.h 6502.h peekpoke.h cc65.h zeropage.h
   ascii_charmap.h` and the `_heap.h` internal.
-- Moves to `include/lynx/`: `lynx.h tgi.h suzymath.h serial.h joystick.h
+- Moves to `include/lynx/`: `lynx.h gfx.h suzymath.h serial.h joystick.h
   zlib.h lz4.h` and the private `_suzy.h _mikey.h`. New subsystem headers
   (`lynx/audio.h`, `lynx/graphics.h`, `lynx/math.h`) are created here.
 - `asminc/` mirrors this lightly: Lynx-specific `lynx.inc`, `extzp.inc` move
@@ -384,8 +384,8 @@ Because the search root is unchanged, the compiler/assembler need **no source
 edit** (§2.3). The cost is a sweep of `#include`/`.include` lines across
 `examples/`, `runtime/`, `libraries/`, and every `doc/*.html` and
 `design/*.md` that names a moved header — done in the same pass as the move,
-per `CLAUDE.md`. A backward-compat shim (a flat `include/tgi.h` that just
-`#include <lynx/tgi.h>`) is **not** added; the project's standing convention is
+per `CLAUDE.md`. A backward-compat shim (a flat `include/gfx.h` that just
+`#include <lynx/gfx.h>`) is **not** added; the project's standing convention is
 to fix references rather than leave silent aliases, and an undocumented shim
 would read as an oversight later.
 
@@ -428,7 +428,7 @@ which is reserved for genuinely-vendored code that *does* ship.
 
 *Status: IMPLEMENTED 2026-06-22 (phase 7). `templates/basic/` exists as
 described; the `src/main.c` skeleton moves a label with the joystick because the
-static TGI exposes sprite + text, not a pixel/line primitive.*
+static Lynx graphics exposes sprite + text, not a pixel/line primitive.*
 
 `templates/` provides `cl65`/Make starting points so a user can scaffold a new
 game without copying an example. Minimum one template, structured to grow:
@@ -437,7 +437,7 @@ game without copying an example. Minimum one template, structured to grow:
 templates/
 └── basic/
     ├── Makefile          # CC65_HOME-aware; relies on cl65 auto-libs (§6.6)
-    ├── src/main.c        # init TGI, clear, main loop, read joystick
+    ├── src/main.c        # init graphics, clear, main loop, read joystick
     ├── README.md
     └── .gitignore
 ```
@@ -475,7 +475,7 @@ examples/
 
 Group meanings: `games/` complete playable demos; `suzy/` exercises of the Suzy
 sprite engine and hardware-math operators (`!*` `!/` `!%`, synchronous and
-async) plus build-time/runtime sprite packing and the scaled TGI fonts;
+async) plus build-time/runtime sprite packing and the scaled Lynx graphics fonts;
 `mikey/` Mikey display-DMA modes; `memory/` the heap allocator and zero-page
 placement; `network/` ComLynx serial. The `sprpack` sample is renamed to
 `spritetest`, and its `heart.*` assets live in `suzy/` alongside it.
@@ -722,7 +722,7 @@ Source- and build-level changes:
 
 | Area | Upstream cc65 | **lynxcc** SDK | Porting action |
 | --- | --- | --- | --- |
-| Platform includes | `<lynx.h> <tgi.h> <suzymath.h> <serial.h> <joystick.h> <zlib.h> <lz4.h>` | same headers under `<lynx/…>` (§7) | rewrite those `#include` lines (script, §14.2); C-stdlib headers unchanged |
+| Platform includes | `<lynx.h> <gfx.h> <suzymath.h> <serial.h> <joystick.h> <zlib.h> <lz4.h>` | same headers under `<lynx/…>` (§7) | rewrite those `#include` lines (script, §14.2); C-stdlib headers unchanged |
 | Libraries | one `lynx.lib` | core `lynx.lib` + optional `lynx-graphics/audio/math/compress.lib` (§6) | usually none — `cl65` auto-pulls them (§6.6); only `ld65`-direct users add `-l` |
 | Tree layout | `src/ libsrc/ samples/` | `compiler/ runtime/ libraries/ examples/` (§3) | affects only those who build the toolchain or reference tree paths, not end-user game projects |
 | Header shims | — | **none** by design (§7) | a missing-header build error is the intended signal to run the include-rewrite |
@@ -740,7 +740,7 @@ API and runtime changes:
   gone (`sprintf`/`snprintf`/`sscanf` kept); cart access is numbered-only
   (`openn`, no `fopen`). Replace or remove these uses.
 - **Static drivers.** No dynamic driver loading (`modload`/`mouse`/`em`/`dbg`
-  removed); TGI, joystick and serial are direct-call static APIs. Drop any
+  removed); Lynx graphics, joystick and serial are direct-call static APIs. Drop any
   driver-load/install calls and use the static entry points.
 
 The `CC65_HOME` discovery contract is **unchanged** (§2): `include/ asminc/ lib/
@@ -751,7 +751,7 @@ cfg/` keep their names and root locations, so existing project Makefiles that se
 
 - **Include-rewrite script.** Because the header move is mechanical and total
   (no shims), the supported path is a scripted rewrite — a `sed`/Python one-shot
-  applying the fixed mapping (`lynx.h tgi.h suzymath.h serial.h joystick.h zlib.h
+  applying the fixed mapping (`lynx.h gfx.h suzymath.h serial.h joystick.h zlib.h
   lz4.h` → `lynx/<same>`), shipped under `tools/` or alongside `doc/migrating.html`.
 - **Prefer `cl65`.** It auto-resolves the optional libraries (§6.6), so most
   projects need no link-line change. `ld65`-direct builds consult the dependency
@@ -802,7 +802,7 @@ C stdlib and the core platform, built via `cl65`, may need **no** changes at all
 For each phase, before it is "done":
 
 - [ ] `include/*.h` / `asminc/*.inc` doc comments updated for moved symbols.
-- [ ] `doc/*.html` (function reference, TGI, samples, tool pages) re-pathed and
+- [ ] `doc/*.html` (function reference, Lynx graphics, samples, tool pages) re-pathed and
       re-linked; new tool/library pages added.
 - [ ] `design/*_DESIGN.md` cross-references updated to new paths; new tools get
       their own `*_DESIGN.md` in `design/`.

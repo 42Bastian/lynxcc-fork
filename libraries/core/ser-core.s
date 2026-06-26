@@ -12,11 +12,11 @@
 ;
 ; This module links whenever any ser function is used. The IRQ handler is
 ; in the interruptor chain at priority 29 -- deliberately higher than the
-; TGI VBL swap handler, so a pending serial byte is drained before a frame
+; Lynx graphics VBL swap handler, so a pending serial byte is drained before a frame
 ; swap burns cycles. When the port has never been opened, timer 4 is never
 ; started, the INTSET bit stays clear, and the handler exits immediately.
 ;
-; Invariant (TGI design section 5): SERCTL is write-only -- its read view
+; Invariant (Lynx graphics design section 5): SERCTL is write-only -- its read view
 ; is the status register. Every SERCTL store is composed from the ser_ctl
 ; shadow; never read SERCTL to "preserve bits".
 ;

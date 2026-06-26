@@ -44,7 +44,7 @@ The SDK uses a per-component licensing pattern on top of the inherited cc65
 zlib-style baseline; every source file carries an `SPDX-License-Identifier` tag.
 
 - **Inherited cc65 sources** keep their original zlib-style notices (root
-  [LICENSE](LICENSE)); this includes the static TGI graphics modules and the
+  [LICENSE](LICENSE)); this includes the static Lynx graphics modules and the
   ComLynx serial modules, which were extracted and adapted from Karri Kaksonen's
   cc65 Lynx drivers and keep his copyright. The John R. Dunning and bundled
   third-party (zlib/inflate, lz4) notices are unchanged.

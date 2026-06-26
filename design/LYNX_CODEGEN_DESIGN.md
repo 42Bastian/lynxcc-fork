@@ -129,7 +129,7 @@ compiler's register tracking in `codeinfo.c` must be updated to match).
    argument to match exactly and A to be dead. Extend to accept `INC mem`-adjacent forms and
    `LDX/STX` shapes; also emit `TRB/TSB` when the *value* (not the mask) is the loop
    invariant.
-   **Suzy-address hazard** (hardware spec ch. 3.1.2; see `LYNX_TGI_DESIGN.md` §5): one
+   **Suzy-address hazard** (hardware spec ch. 3.1.2; see `LYNX_GFX_DESIGN.md` §5): one
    instruction performing two Suzy accesses breaks Suzy, so RMW opcodes — including
    `TRB/TSB` — must never target $FC00–$FCFF. The *stock* pass already had this latent
    bug for `*(volatile uint8_t*)0xFCxx |= m`. **Guard done (2026-06-12):**
@@ -274,16 +274,16 @@ the stock software routines in `runtime/rt/` remain the `*`/`/`/`%` implementati
    only — its sign-math mode applies solely to multiply (and is buggy there: $8000 is
    treated as positive and 0 as negative, and signed mode destroys input operands
    in-place).
-4. `umul16x16r32`/`udiv32by16r16` (used by `lz4`, `tgi` scaling and others): natural fits,
+4. `umul16x16r32`/`udiv32by16r16` (used by `lz4`, graphics scaling and others): natural fits,
    the hardware is exactly these widths. These are library-internal helpers, not reached
    by the `!*` operators — switching them to Suzy is a separate per-helper decision (via
-   the normal vpath override) and is safe for `tgi` since its drawing is synchronous.
+   the normal vpath override) and is safe for graphics since its drawing is synchronous.
 
 **Constraints that the implementation must respect:**
 
 - **Sprite-engine contention**: Suzy's sprite engine uses the same math unit during scaled
   sprite rendering. The routines must only run while the sprite engine is idle. Since
-  cc65's TGI driver draws synchronously (the CPU waits for sprite completion), this holds
+  the Lynx graphics library draws synchronously (the CPU waits for sprite completion), this holds
   by construction, but the limitation must be documented in the routine headers — custom
   asynchronous sprite code combined with C arithmetic would corrupt results.
 - **Not interrupt-safe**: the math registers are global hardware state. An IRQ handler
@@ -357,18 +357,18 @@ library must hold so neither breaks.
 
 **What already uses it (safe by construction).** Two places in `libraries/math` touch the
 math unit: the `tossuzy*` routines themselves (`suzymul/div/mod/muldiv/udiv/umod.s`),
-linked only when a program uses `!*`/`!/`/`!%`; and `tgi/tgi-text.s`, where
-`tgi_gettextwidth` computes `strlen*8*scale >> 8` as an inline unsigned Suzy multiply and
+linked only when a program uses `!*`/`!/`/`!%`; and `graphics/gfx-text.s`, where
+`gfx_gettextwidth` computes `strlen*8*scale >> 8` as an inline unsigned Suzy multiply and
 text scaling writes 8.8 values straight into the sprite's sx/sy fields. Both are safe
-because TGI draws synchronously — the CPU waits for sprite completion, so the sprite
+because Lynx graphics draws synchronously — the CPU waits for sprite completion, so the sprite
 engine (which shares the math unit) is provably idle when these run, and the math-working
 bit is polled before any result is read. That synchronous-draw assumption is load-bearing
 for everything below.
 
 **What would change if it were pushed deeper.** The candidates are the internal helpers
-of §2.6 point 4 — `umul16x16r32` / `udiv32by16r16` used by `lz4` and TGI scaling — which
+of §2.6 point 4 — `umul16x16r32` / `udiv32by16r16` used by `lz4` and Lynx graphics scaling — which
 are exact width matches for the hardware. Converting them via a vpath override would give
-the documented 3–8× on those ops with no change at the call sites. For TGI scaling that is
+the documented 3–8× on those ops with no change at the call sites. For Lynx graphics scaling that is
 safe for the same synchronous-draw reason. For `lz4` it requires a per-helper audit that
 the routine is never entered mid-sprite or from an IRQ. The win stays concentrated and the
 surface small precisely *because* the switch is not automatic; the cost is that every
@@ -382,28 +382,28 @@ save/restore protocol), so any library use imposes invariants on the rest of the
 - *No Suzy math in IRQ handlers.* `irq.s`, `ser/*`, `clock.s`, and `joy/*` do no
   multiply/divide today, and this must stay true: an interrupt doing hardware math mid
   mainline operation would silently corrupt the result.
-- *Sprite engine idle.* Holds for TGI because drawing is synchronous. A future
+- *Sprite engine idle.* Holds for Lynx graphics because drawing is synchronous. A future
   *asynchronous* sprite library combined with C `!*` arithmetic would corrupt both — the
   one architectural door that deeper adoption closes.
 - *Accumulate off / `__sprsys` shadow discipline.* The Suzy routines AND-mask the
   `__sprsys` shadow (`& $3F`) to force sign-math and accumulate off while preserving the
   sprite control bits, and `CLR_UNSAFE` in the shadow resets the unsafe-access bit.
-  `tgi-page.s`, `tgi-collision.s`, and `tgi-init.s` all route their SPRSYS writes through
+  `gfx-page.s`, `gfx-collision.s`, and `gfx-init.s` all route their SPRSYS writes through
   that same shadow, so the two coexist correctly; any new SPRSYS writer must keep using
   the shadow or it will desync.
 - *Unsafe-access bit pollution.* Every math op may spuriously set the SPRSYS unsafe bit
-  (hardware bug). `tgi-collision.s` reads SPRSYS for collision state, so collision or
+  (hardware bug). `gfx-collision.s` reads SPRSYS for collision state, so collision or
   sprite-debug code running after hardware math must reset that bit — the interaction to
   watch if math use spreads.
 
 **Bottom line.** For the library as it stands the effect is contained and benign: a faster
-`tgi_gettextwidth`, free fractional text scaling, and operator-only routines that do not
+`gfx_gettextwidth`, free fractional text scaling, and operator-only routines that do not
 link unless used. No C library routine changed behavior and the interrupt-driven
 subsystems are clean. The cost is a library-wide contract (sprite engine idle, no math in
 IRQs, SPRSYS only via the shadow) that is satisfied everywhere today but becomes harder to
 guarantee the deeper the hardware unit is folded into general-purpose helpers such as
 `lz4`. The conservative course — and what the design already follows — is to keep Suzy
-math at explicit, auditable call sites plus the synchronous TGI paths, and to treat each
+math at explicit, auditable call sites plus the synchronous Lynx graphics paths, and to treat each
 internal-helper conversion as its own reentrancy audit.
 
 #### 2.6.3 Small-divisor normalization (shift both operands up by 8)

@@ -5,15 +5,15 @@ licensed under Creative Commons Attribution 4.0 International.
 See doc/licenses.html.
 -->
 
-# Lynx TGI: adding the proportional (variable-width) font
+# Lynx graphics: adding the proportional (variable-width) font
 
-Status: implemented (2026-06-25). Adds a third bitmap font to the static TGI text
+Status: implemented (2026-06-25). Adds a third bitmap font to the static Lynx graphics text
 path: an **all-caps, variable-width pixel font** recovered from `img_help.bmp`.
 It reuses the bit-packed strip builder introduced for the 5×5 compact font, so
 the only genuinely new machinery is a **per-glyph advance table** and a
 **proportional width query**. Programs that never select it link neither its
 builder nor its data. This is the realisation of the future option noted in
-`LYNX_TGI_FONT5X5_DESIGN.md` §9.
+`LYNX_GFX_FONT5X5_DESIGN.md` §9.
 
 ## 1. Source image analysis
 
@@ -60,12 +60,12 @@ must be authored to match. They are flagged `[D]` (designed) versus `[X]`
 ## 2. Relationship to the existing font infrastructure
 
 The compact-font work already paid for the hard part. From
-`LYNX_TGI_FONT5X5_DESIGN.md` and the current `tgi-text.s` / `tgi-text5x5.s`:
+`LYNX_GFX_FONT5X5_DESIGN.md` and the current `gfx-text.s` / `gfx-text5x5.s`:
 
-* `tgi_outtext` runs a shared prologue, then `jmp (tgi_buildptr)` to the active
+* `gfx_outtext` runs a shared prologue, then `jmp (gfx_buildptr)` to the active
   builder; every builder ends in the shared `draw_and_advance` epilogue.
-* `tgi_setfont` swaps `tgi_buildptr` plus the metric bytes `tgi_pitch` /
-  `tgi_fontheight`, and force-links a builder/font only on the branch that
+* `gfx_setfont` swaps `gfx_buildptr` plus the metric bytes `gfx_pitch` /
+  `gfx_fontheight`, and force-links a builder/font only on the branch that
   selects it — so conditional linking is preserved.
 * `build5x5` already packs glyphs into a **bit-shifted literal 1-bpp sprite**
   at an arbitrary bit position (`bit = i*PITCH`, `byteidx = bit>>3`,
@@ -85,7 +85,7 @@ No third inner loop, no change to the sprite-draw core, no change to the 8×8 or
 
 ## 3. Data format
 
-Two parallel tables (`tgi_fontvar` bitmaps and `tgi_fontadv` advances) share
+Two parallel tables (`gfx_fontvar` bitmaps and `gfx_fontadv` advances) share
 one index. Since this font is caps-only, lower-case `a`–`z` are byte-identical
 to `A`–`Z`, so — exactly as the 5×5 font now does — the builder **folds**
 `a`–`z` onto `A`–`Z` and **splices** the freed slots out instead of storing the
@@ -104,7 +104,7 @@ Stored layout (**70 entries** per table):
 * index `65..68` = ASCII `123..126` (`{ | } ~`)
 * index `69` = ASCII `127` (DEL, blank)
 
-### 3.1 `tgi_fontvar` — glyph bitmaps (5 bytes/glyph)
+### 3.1 `gfx_fontvar` — glyph bitmaps (5 bytes/glyph)
 
 5 rows per glyph, one byte per row, **ink left-aligned starting at bit 7**,
 **bit value 1 = foreground** (identical to the 5×5 convention). A 5-px glyph
@@ -115,7 +115,7 @@ builder relies on.
 
 `70 glyphs × 5 bytes = 350 bytes`.
 
-### 3.2 `tgi_fontadv` — advance table (1 byte/glyph)
+### 3.2 `gfx_fontadv` — advance table (1 byte/glyph)
 
 `advance = ink_width + 1` (the 1-px inter-glyph gap), i.e. the amount the
 cursor and the pack position move per character. Range 2 (`I`) … 6 (`M`/`W`).
@@ -129,7 +129,7 @@ always fits in a single byte — important for the width query (§5).
 
 ## 4. The new builder `buildvar`
 
-A near-clone of `build5x5` (`tgi-textvar.s`), differing only in how the per-
+A near-clone of `build5x5` (`gfx-textvar.s`), differing only in how the per-
 character bit position is derived. `build5x5` computes `bit = i*6`; `buildvar`
 keeps a **running accumulator** seeded from the advance table.
 
@@ -139,7 +139,7 @@ For an `N`-char string (capped at the existing 20):
 ; foldsplice(ch) -> t : fold a-z onto A-Z then drop the freed slots (see §3)
 ; pass 1: total advance -> strip byte width
 total = 0
-for i in 0..N-1:  total += tgi_fontadv[foldsplice(s[i])]
+for i in 0..N-1:  total += gfx_fontadv[foldsplice(s[i])]
 W     = (total + 7) >> 3                 ; strip byte-width (<= 15)
 strip = 5 rows of [offset=W+1][W pixel bytes], then a 0 terminator
                                          ; 5*(1+15)+1 = 81 bytes -> reuse text_bitmap
@@ -149,27 +149,27 @@ for i in 0..N-1:
     t       = foldsplice(s[i])
     byteidx = bitpos >> 3
     shift   = bitpos & 7
-    gp      = tgi_fontvar + t*5
+    gp      = gfx_fontvar + t*5
     for r in 0..4:
         strip[row r][byteidx]   |= gp[r] >> shift
         strip[row r][byteidx+1] |= gp[r] << (8-shift)
-    bitpos += tgi_fontadv[t]
-; sprite type $04, pen byte = tgi_drawindex, height 5  (as build5x5)
+    bitpos += gfx_fontadv[t]
+; sprite type $04, pen byte = gfx_drawindex, height 5  (as build5x5)
 draw_and_advance
 ```
 
 The two passes share one subroutine — *sum the advances of the capped string* —
 which is exactly what the width query needs (§5), so factor it into a helper
-(`str_advance`) called by both `buildvar` and `tgi_gettextwidth`.
+(`str_advance`) called by both `buildvar` and `gfx_gettextwidth`.
 
 Everything else — zeroing the strip, writing each row's `W+1` offset byte, the
-5-row shift/OR, the transparent normal sprite with pen byte `tgi_drawindex`,
+5-row shift/OR, the transparent normal sprite with pen byte `gfx_drawindex`,
 the single scaled draw — is `build5x5` verbatim. The whole string is still one
 sprite scaled once, so glyph spacing scales with the text.
 
 ## 5. Proportional width query
 
-`tgi_gettextwidth` currently returns `strlen × tgi_pitch × scale >> 8`. That is
+`gfx_gettextwidth` currently returns `strlen × gfx_pitch × scale >> 8`. That is
 wrong for a proportional font, and it is also the value `draw_and_advance` uses
 to step the cursor — so it must become advance-aware **without** force-linking
 the variable font into fixed-pitch programs.
@@ -177,51 +177,51 @@ the variable font into fixed-pitch programs.
 Add one indirect datum beside the existing metric bytes:
 
 ```asm
-; tgi-text.s (.data)
-tgi_advtab:     .addr   0       ; 0 => fixed pitch; else -> advance table
+; gfx-text.s (.data)
+gfx_advtab:     .addr   0       ; 0 => fixed pitch; else -> advance table
 ```
 
-`tgi_gettextwidth` branches on it:
+`gfx_gettextwidth` branches on it:
 
-* `tgi_advtab == 0` (8×8, 5×5): unchanged fast path,
-  `strlen × tgi_pitch × scale >> 8`.
-* `tgi_advtab != 0` (variable): walk the capped string, sum
-  `tgi_advtab[foldsplice(ch)]` into a byte `total` (the shared `str_advance`
+* `gfx_advtab == 0` (8×8, 5×5): unchanged fast path,
+  `strlen × gfx_pitch × scale >> 8`.
+* `gfx_advtab != 0` (variable): walk the capped string, sum
+  `gfx_advtab[foldsplice(ch)]` into a byte `total` (the shared `str_advance`
   helper, which applies the same fold+splice as the builder), then
   `total × scale >> 8` on Suzy's multiplier exactly as today.
 
-Because the default `tgi_advtab` is 0 and only `tgi_setfont`'s variable branch
-ever stores `tgi_fontadv` into it, the advance table and `buildvar` link **only**
-when a program selects the variable font. `tgi_gettextheight` is unchanged
-(`tgi_fontheight × scale >> 8`, with height 5).
+Because the default `gfx_advtab` is 0 and only `gfx_setfont`'s variable branch
+ever stores `gfx_fontadv` into it, the advance table and `buildvar` link **only**
+when a program selects the variable font. `gfx_gettextheight` is unchanged
+(`gfx_fontheight × scale >> 8`, with height 5).
 
 ## 6. Switching mechanism / public API
 
 Extend the existing scheme with one font id.
 
 ```c
-/* include/tgi.h */
-#define TGI_FONT_BITMAP    0    /* system 8x8 (default)            */
-#define TGI_FONT_COMPACT   1    /* transparent 5x5, 6px fixed      */
-#define TGI_FONT_VARIABLE  2    /* proportional caps, 1..5px + gap */
-void __fastcall__ tgi_setfont (unsigned char font);
+/* include/gfx.h */
+#define GFX_FONT_BITMAP    0    /* system 8x8 (default)            */
+#define GFX_FONT_COMPACT   1    /* transparent 5x5, 6px fixed      */
+#define GFX_FONT_VARIABLE  2    /* proportional caps, 1..5px + gap */
+void __fastcall__ gfx_setfont (unsigned char font);
 ```
 
 ```asm
-; tgi-setfont.s, new branch
-@var:   lda #<buildvar  : sta tgi_buildptr
-        lda #>buildvar  : sta tgi_buildptr+1
-        lda #<tgi_fontadv : sta tgi_advtab     ; enables proportional width
-        lda #>tgi_fontadv : sta tgi_advtab+1
-        lda #6          : sta tgi_pitch        ; fallback / unused when advtab set
-        lda #5          : sta tgi_fontheight
+; gfx-setfont.s, new branch
+@var:   lda #<buildvar  : sta gfx_buildptr
+        lda #>buildvar  : sta gfx_buildptr+1
+        lda #<gfx_fontadv : sta gfx_advtab     ; enables proportional width
+        lda #>gfx_fontadv : sta gfx_advtab+1
+        lda #6          : sta gfx_pitch        ; fallback / unused when advtab set
+        lda #5          : sta gfx_fontheight
         rts
 ```
 
-The `BITMAP` and `COMPACT` branches must additionally `stz tgi_advtab` /
-`stz tgi_advtab+1` so switching *back* from the variable font restores the
-fixed-pitch width path. Add `TGI_FONT_VARIABLE = 2` to
-`asminc/tgi-kernel.inc`.
+The `BITMAP` and `COMPACT` branches must additionally `stz gfx_advtab` /
+`stz gfx_advtab+1` so switching *back* from the variable font restores the
+fixed-pitch width path. Add `GFX_FONT_VARIABLE = 2` to
+`asminc/gfx.inc`.
 
 ## 7. Font data (extracted + designed)
 
@@ -232,7 +232,7 @@ Lower-case `a`–`z` are **not stored**: the builder folds them onto `A`–`Z`
 DEL). Excerpt of the 70-entry table emitted by the generator (§8):
 
 ```asm
-tgi_fontvar:
+gfx_fontvar:
         .byte $00, $00, $00, $00, $00   ; 32 ' '  [D]
         .byte $80, $80, $80, $00, $80   ; 33 '!'  [X]  w1
         .byte $80, $80, $00, $00, $00   ; 39 '\'' [X]  w1
@@ -253,7 +253,7 @@ tgi_fontvar:
         .byte $A0, $A0, $40, $A0, $A0   ; 88 'X'  [D]  w3
         .byte $E0, $20, $40, $80, $E0   ; 90 'Z'  [D]  w3
 
-tgi_fontadv:    ; ink width + 1, same fold+spliced index as tgi_fontvar
+gfx_fontadv:    ; ink width + 1, same fold+spliced index as gfx_fontvar
         .byte 4,2,4,4,4,4,4,2,4,4,4,4,2,2,2,4
         .byte 4,4,4,4,4,4,4,4,4,4,2,4,4,4,4,4
         .byte 4,4,4,3,4,4,3,4,4,2,4,4,3,6,5,4   ; @ A B C D E F G H I J K L M N O
@@ -275,28 +275,28 @@ reproduces both tables from `img_help.bmp`:
    width + 1;
 5. splice in the `[D]` designs for `K Q W X Z`, digits and extra punctuation;
    fold `a–z` onto `A–Z`;
-6. emit `tgi-fontvar.s` and an ASCII-art proof sheet for visual check.
+6. emit `gfx-fontvar.s` and an ASCII-art proof sheet for visual check.
 
-The committed artifact is the generated data table (`tgi-fontvar.s`); the
+The committed artifact is the generated data table (`gfx-fontvar.s`); the
 generator and its `img_help.bmp` source frame live with the development assets
 outside the repository, exactly as the 5×5 font's generator does. Regenerating
 the table is therefore a development-time step, and the `[D]` glyphs are revised
-by editing the generator there and re-emitting `tgi-fontvar.s`.
+by editing the generator there and re-emitting `gfx-fontvar.s`.
 
 ## 9. Files touched
 
 | File | Change |
 |------|--------|
-| `libraries/graphics/tgi-textvar.s` | **new**: `buildvar` — two-pass bit-packed strip with per-glyph advance (§4); shares the `build5x5` body shape and the shared epilogue, and calls the shared `str_advance` helper for pass 1. |
-| `libraries/graphics/tgi-fontvar.s` | committed data table: `tgi_fontvar` (70×5 = 350 B) + `tgi_fontadv` (70 B) (§7). |
-| `libraries/graphics/tgi-text.s` | add `tgi_advtab` (`.addr 0`) + the `str_advance` helper; `tgi_gettextwidth` branches to the advance-sum path when `tgi_advtab≠0`. 8×8 path otherwise byte-identical. |
-| `libraries/graphics/tgi-setfont.s` | add the `TGI_FONT_VARIABLE` branch (sets `buildvar` + `tgi_advtab`); `BITMAP`/`COMPACT` branches zero `tgi_advtab`. |
-| `include/lynx/tgi.h` | add `TGI_FONT_VARIABLE 2` + the `tgi_setfont` doc text. |
-| `asminc/tgi-kernel.inc` | add `TGI_FONT_VARIABLE = 2`. |
-| `examples/suzy/fontvar.c` | **new**: sample selecting `TGI_FONT_VARIABLE`, proving the advance-aware width query, scaling and switching all three fonts. |
+| `libraries/graphics/gfx-textvar.s` | **new**: `buildvar` — two-pass bit-packed strip with per-glyph advance (§4); shares the `build5x5` body shape and the shared epilogue, and calls the shared `str_advance` helper for pass 1. |
+| `libraries/graphics/gfx-fontvar.s` | committed data table: `gfx_fontvar` (70×5 = 350 B) + `gfx_fontadv` (70 B) (§7). |
+| `libraries/graphics/gfx-text.s` | add `gfx_advtab` (`.addr 0`) + the `str_advance` helper; `gfx_gettextwidth` branches to the advance-sum path when `gfx_advtab≠0`. 8×8 path otherwise byte-identical. |
+| `libraries/graphics/gfx-setfont.s` | add the `GFX_FONT_VARIABLE` branch (sets `buildvar` + `gfx_advtab`); `BITMAP`/`COMPACT` branches zero `gfx_advtab`. |
+| `include/lynx/gfx.h` | add `GFX_FONT_VARIABLE 2` + the `gfx_setfont` doc text. |
+| `asminc/gfx.inc` | add `GFX_FONT_VARIABLE = 2`. |
+| `examples/suzy/fontvar.c` | **new**: sample selecting `GFX_FONT_VARIABLE`, proving the advance-aware width query, scaling and switching all three fonts. |
 | `tools/genfontvar.py` | dev-only generator (kept with the assets outside the repo, §8); regenerates the table from `img_help.bmp`. |
 
-No change to `tgi-font.s` (8×8), `tgi-font5x5.s`, `tgi-text5x5.s`, or the
+No change to `gfx-font.s` (8×8), `gfx-font5x5.s`, `gfx-text5x5.s`, or the
 sprite-draw core.
 
 ## 10. Verification plan
@@ -304,26 +304,26 @@ sprite-draw core.
 1. **Host round-trip** (done): BMP → tables → ASCII proof sheet reproduces all
    24 extracted glyphs and the proportional widths; `[D]` glyphs render legibly
    alongside them.
-2. **Build/link** (done): `tgi-fontvar.s` + `tgi-textvar.s` assemble. A program
-   that never calls `tgi_setfont` (the default 8×8 path, e.g. `lynxdemo`) links
-   **none** of `build5x5`, `buildvar`, `tgi_font5x5`, `tgi_fontvar` (confirmed
+2. **Build/link** (done): `gfx-fontvar.s` + `gfx-textvar.s` assemble. A program
+   that never calls `gfx_setfont` (the default 8×8 path, e.g. `lynxdemo`) links
+   **none** of `build5x5`, `buildvar`, `gfx_font5x5`, `gfx_fontvar` (confirmed
    in the `.map`). As with the pre-existing two-font selector, *referencing*
-   `tgi_setfont` links all three builders and fonts, so a `COMPACT`-only program
-   also carries `buildvar`/`tgi_fontvar`; the conditional-linking guarantee is
-   "don't call `tgi_setfont`", not "call it but pick a cheaper font". The width
-   query stays font-agnostic regardless: it touches only `tgi_advtab` +
+   `gfx_setfont` links all three builders and fonts, so a `COMPACT`-only program
+   also carries `buildvar`/`gfx_fontvar`; the conditional-linking guarantee is
+   "don't call `gfx_setfont`", not "call it but pick a cheaper font". The width
+   query stays font-agnostic regardless: it touches only `gfx_advtab` +
    `str_advance` and never force-links a font.
-3. **Regression** (done): `tgi_advtab` defaults to 0, so the 8×8 (and 5×5) width
+3. **Regression** (done): `gfx_advtab` defaults to 0, so the 8×8 (and 5×5) width
    fast path is unchanged.
-4. **Width correctness** (done): `tgi_gettextwidth("MIMI")` =
-   adv(M)+adv(I)+adv(M)+adv(I) = 6+2+6+2 = 16; `tgi_gettextwidth("III")` = 6,
-   verified against the committed `tgi_fontadv`; the `fontvar.c` caret sits flush
+4. **Width correctness** (done): `gfx_gettextwidth("MIMI")` =
+   adv(M)+adv(I)+adv(M)+adv(I) = 6+2+6+2 = 16; `gfx_gettextwidth("III")` = 6,
+   verified against the committed `gfx_fontadv`; the `fontvar.c` caret sits flush
    against the measured string, confirming `draw_and_advance` agrees.
 5. **Emulator** (done, GearLynx): `fontvar.c` prints the full A–Z / 0–9 set over a non-black
    background to confirm transparency, that the foreground tracks
-   `tgi_setcolor`, that proportional spacing reads correctly (`I` tight, `M`
-   wide), that `tgi_settextscale` scales glyphs *and* spacing together, and that
-   `tgi_setfont` toggles cleanly among all three fonts mid-screen with the
+   `gfx_setcolor`, that proportional spacing reads correctly (`I` tight, `M`
+   wide), that `gfx_settextscale` scales glyphs *and* spacing together, and that
+   `gfx_setfont` toggles cleanly among all three fonts mid-screen with the
    cursor advancing by each font's metric. Reproduce the original `img_help`
    intro text and compare pixel-for-pixel against the source frame.
 
@@ -333,7 +333,7 @@ sprite-draw core.
   bottom row (as the 5×5 font does for `,` `;`), so height remains 5 and
   `buildvar` reuses the 5-row loop unchanged. If true descenders are wanted
   later, widen the cell to 6 rows — a localized change to the builder's row
-  count and `tgi_fontheight`.
+  count and `gfx_fontheight`.
 * **`[D]` glyphs are provisional.** `K Q W X Z` and the digits are not in the
   source art; the shapes here match the 3-px caps rhythm but the original
   designer's versions are unknown. They live in the generator so they are easy

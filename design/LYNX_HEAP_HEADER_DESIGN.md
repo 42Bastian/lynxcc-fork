@@ -21,7 +21,7 @@ was bolted on. That provenance is the main reason the risk is low.
 ## 1. Motivation
 
 On a 64 KB Lynx the usable heap is only the gap between BSS-end and the C-stack
-reservation, with ~16 KB at the top of RAM already taken by the two TGI display
+reservation, with ~16 KB at the top of RAM already taken by the two Lynx graphics display
 framebuffers. Every byte of per-block overhead is multiplied by the live object
 count, so on a workload with many small allocations the header is a real tax.
 

@@ -7,30 +7,30 @@
 ; the root LICENSE file, not the SDK's MPL-2.0. See doc/licenses.html.
 
 ;
-; Lynx static TGI: palette.
+; Lynx graphics: palette.
 ;
-; void __fastcall__ tgi_setpalette (const unsigned char* palette);
-; const unsigned char* tgi_getpalette (void);
-; const unsigned char* tgi_getdefpalette (void);
+; void __fastcall__ gfx_setpalette (const unsigned char* palette);
+; const unsigned char* gfx_getpalette (void);
+; const unsigned char* gfx_getdefpalette (void);
 ;
 ; The palette is 32 bytes: 16 green bytes, then 16 blue/red bytes
-; (GCOLMAP hardware layout). GCOLMAP is readable, so tgi_getpalette
+; (GCOLMAP hardware layout). GCOLMAP is readable, so gfx_getpalette
 ; returns the hardware palette itself. The default palette table lives
-; in tgi-init.s (which is always linked and loads it).
+; in gfx-init.s (which is always linked and loads it).
 ;
 
         .include "lynx/lynx.inc"
 
         .importzp       ptr1
-        .import         tgi_defpalette
+        .import         gfx_defpalette
 
-        .export         _tgi_setpalette
-        .export         _tgi_getpalette
-        .export         _tgi_getdefpalette
+        .export         _gfx_setpalette
+        .export         _gfx_getpalette
+        .export         _gfx_getdefpalette
 
 .code
 
-_tgi_setpalette:
+_gfx_setpalette:
         sta     ptr1
         stx     ptr1+1
         ldy     #31
@@ -40,12 +40,12 @@ _tgi_setpalette:
         bpl     @L1
         rts
 
-_tgi_getpalette:
+_gfx_getpalette:
         lda     #<GCOLMAP
         ldx     #>GCOLMAP
         rts
 
-_tgi_getdefpalette:
-        lda     #<tgi_defpalette
-        ldx     #>tgi_defpalette
+_gfx_getdefpalette:
+        lda     #<gfx_defpalette
+        ldx     #>gfx_defpalette
         rts

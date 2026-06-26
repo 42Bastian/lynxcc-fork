@@ -7,19 +7,19 @@
 ; the root LICENSE file, not the SDK's MPL-2.0. See doc/licenses.html.
 
 ;
-; Lynx static TGI: tgi_clear, tgi_clearrows.
+; Lynx graphics: gfx_clear, gfx_clearrows.
 ;
-; void tgi_clear (void);
-; void __fastcall__ tgi_clearrows (unsigned char first, unsigned char count);
+; void gfx_clear (void);
+; void __fastcall__ gfx_clearrows (unsigned char first, unsigned char count);
 ;
 ; Clears the whole draw page, or the rows [first, first+count), by drawing
 ; one hardware-scaled pen-fill sprite. Both fill with the CURRENT draw
-; color (tgi_setcolor), not a hard-wired pen (design/LYNX_TGI_DESIGN.md sec. 2.8).
+; color (gfx_setcolor), not a hard-wired pen (design/LYNX_GFX_DESIGN.md sec. 2.8).
 ; The color is written into both nibbles of the 1bpp pen table so the
 ; result does not depend on which pixel index the stretched source pixel
 ; carries.
 ;
-; tgi_cls_sprite is exported because tgi-collision.s rewrites its type
+; gfx_cls_sprite is exported because gfx-collision.s rewrites its type
 ; and collision bytes when collision detection is toggled; since both
 ; entry points share the sprite, a partial clear also erases the matching
 ; rows of the collision buffer when collision detection is on.
@@ -33,15 +33,15 @@
 ;
 
         .include "lynx/lynx.inc"
-        .include        "tgi-kernel.inc"
+        .include        "gfx.inc"
 
-        .import         tgi_draw_sprite
-        .import         tgi_drawindex
+        .import         gfx_draw_sprite
+        .import         gfx_drawindex
         .import         popa
 
-        .export         _tgi_clear
-        .export         _tgi_clearrows
-        .export         tgi_cls_sprite
+        .export         _gfx_clear
+        .export         _gfx_clearrows
+        .export         gfx_cls_sprite
 
 .rodata
 
@@ -54,7 +54,7 @@ pixel_bitmap:
 
 cls_coll:
         .byte   0
-tgi_cls_sprite:
+gfx_cls_sprite:
         .byte   %00000001               ; SPRCTL0 (collision off default)
         .byte   %00010000               ; SPRCTL1
         .byte   %00100000               ; SPRCOLL: no-collide (default)
@@ -68,16 +68,16 @@ cls_pen:
 
 .code
 
-; void __fastcall__ tgi_clearrows (unsigned char first, unsigned char count);
+; void __fastcall__ gfx_clearrows (unsigned char first, unsigned char count);
 
-_tgi_clearrows:
+_gfx_clearrows:
         tax                             ; X = count
         jsr     popa                    ; A = first row
         bra     common
 
-; void tgi_clear (void);
+; void gfx_clear (void);
 
-_tgi_clear:
+_gfx_clear:
         lda     #0                      ; first row 0
         ldx     #102                    ; full height
 
@@ -86,15 +86,15 @@ common: sta     cls_y                   ; y = first (high byte stays 0)
         beq     done                    ; count 0: draw nothing
         stx     cls_sy+1                ; sy = count.0 (8.8)
         stz     cls_sy
-        lda     tgi_drawindex           ; pen byte = (c << 4) | c
+        lda     gfx_drawindex           ; pen byte = (c << 4) | c
         asl     a                       ; (c is 0..15, so its high nibble is
         asl     a                       ; 0 and the low nibble survives the
         asl     a                       ; OR with the unshifted variable)
         asl     a
-        ora     tgi_drawindex
+        ora     gfx_drawindex
         sta     cls_pen
-        lda     #<tgi_cls_sprite
-        ldx     #>tgi_cls_sprite
-        jmp     tgi_draw_sprite
+        lda     #<gfx_cls_sprite
+        ldx     #>gfx_cls_sprite
+        jmp     gfx_draw_sprite
 
 done:   rts

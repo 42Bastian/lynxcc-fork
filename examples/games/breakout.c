@@ -18,10 +18,10 @@
 ** All sprite image data, pen palettes and sprite control blocks
 ** (SCBs) are defined below in this file. The whole scene - 32
 ** bricks, paddle and ball - is one SCB chain drawn with a single
-** tgi_sprite() call; dead bricks are skipped with the SKIP bit.
+** gfx_sprite() call; dead bricks are skipped with the SKIP bit.
 **
 ** Suzy math contract (section 2.6): all !* !/ !% sites are in the
-** main loop only - never in IRQ context - and the TGI driver draws
+** main loop only - never in IRQ context - and the Lynx graphics library draws
 ** sprites synchronously, so the math unit is never contended.
 **
 ** Controls: pad left/right moves, A serves/restarts.
@@ -30,7 +30,7 @@
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <lynx/joystick.h>
 #include <6502.h>
 #include <string.h>
@@ -279,43 +279,43 @@ static void move_ball (void)
 
 static void draw (void)
 {
-    while (tgi_busy ()) {}
-    tgi_setcolor (COLOR_BLACK);         /* tgi_clear fills in draw color */
-    tgi_clear ();
+    while (gfx_busy ()) {}
+    gfx_setcolor (COLOR_BLACK);         /* gfx_clear fills in draw color */
+    gfx_clear ();
 
     paddle_scb.hpos = px;
     ball_scb.hpos   = PIX (x);
     ball_scb.vpos   = PIX (y);
 
     /* Whole scene: one chained sprite engine run */
-    tgi_sprite (&bricks[0]);
+    gfx_sprite (&bricks[0]);
 
     fmt5 (score, hud + 6);
     hud[14] = '0' + lives;
     hud[17] = '0' + (char)(level !% 10);
-    tgi_setcolor (COLOR_WHITE);
-    tgi_outtextxy (0, 0, hud);
+    gfx_setcolor (COLOR_WHITE);
+    gfx_outtextxy (0, 0, hud);
 
     if (state == ST_SERVE) {
-        tgi_outtextxy (52, 60, "PRESS A");
+        gfx_outtextxy (52, 60, "PRESS A");
     } else if (state == ST_OVER) {
-        tgi_setcolor (COLOR_RED);
-        tgi_outtextxy (44, 50, "GAME OVER");
-        tgi_setcolor (COLOR_WHITE);
-        tgi_outtextxy (28, 64, "A = NEW GAME");
+        gfx_setcolor (COLOR_RED);
+        gfx_outtextxy (44, 50, "GAME OVER");
+        gfx_setcolor (COLOR_WHITE);
+        gfx_outtextxy (28, 64, "A = NEW GAME");
     }
 
-    tgi_updatedisplay ();
+    gfx_updatedisplay ();
 }
 
 void main (void)
 {
-    tgi_init ();
+    gfx_init ();
     CLI ();
-    while (tgi_busy ()) {}
-    tgi_setpalette (tgi_getdefpalette ());
-    tgi_setframerate (60);
-    tgi_setcollisiondetection (0);
+    while (gfx_busy ()) {}
+    gfx_setpalette (gfx_getdefpalette ());
+    gfx_setframerate (60);
+    gfx_setcollisiondetection (0);
 
     new_game ();
     prev_joy = 0;

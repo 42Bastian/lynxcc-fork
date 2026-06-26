@@ -272,7 +272,7 @@ updated when the feature landed:
   row for `__zeropage` globals, a TOC entry, and a cross-reference from the
   `#pragma zpsym` section (§7.20).
 - `examples/zeropage/zeropage.c`: a runnable sample with three `__zeropage` counters shown
-  through the TGI text harness; added to `examples/Makefile` (`EXELIST_lynx`) and
+  through the Lynx graphics text harness; added to `examples/Makefile` (`EXELIST_lynx`) and
   to `doc/samples.html` under a new "Compiler features" heading.
 - `doc/funcref.html` was intentionally **not** touched: it is a per-function
   reference and `zeropage.h` declares a macro, not functions.

@@ -68,7 +68,7 @@
 **   - INPUT:  fopen/fread/fgetc/fgets, fscanf/scanf/vfscanf/vscanf,
 **     fseek/ftell/fgetpos/fsetpos/rewind, getchar/gets/ungetc,
 **     feof/ferror/clearerr/fflush, fdopen/fileno.
-** For on-screen text use tgi_outtext() from <tgi.h>.  Only the in-RAM string
+** For on-screen text use gfx_outtext() from <lynx/gfx.h>.  Only the in-RAM string
 ** functions below remain: sprintf()/snprintf() format into a buffer and
 ** sscanf() parses one.  To stream raw bytes from the cart use read()/lseek()
 ** on a handle from openn() (see <unistd.h> and <lynx.h>).

@@ -7,13 +7,13 @@
 ; the root LICENSE file, not the SDK's MPL-2.0. See doc/licenses.html.
 
 ;
-; Lynx static TGI: display frame rate.
+; Lynx graphics: display frame rate.
 ;
-; unsigned char __fastcall__ tgi_setframerate (unsigned char rate);
+; unsigned char __fastcall__ gfx_setframerate (unsigned char rate);
 ;
 ; rate is 50, 60 or 75 (Hz). Returns 0 on success, nonzero for an
 ; invalid rate (the only fallible call left in the library - the error
-; model is gone, see design/LYNX_TGI_DESIGN.md sec. 2.5).
+; model is gone, see design/LYNX_GFX_DESIGN.md sec. 2.5).
 ;
 ; Only the timer backup registers are written, which is the safe subset
 ; of timer handling (spec ch. 3.3).
@@ -21,11 +21,11 @@
 
         .include "lynx/lynx.inc"
 
-        .export         _tgi_setframerate
+        .export         _gfx_setframerate
 
 .code
 
-_tgi_setframerate:
+_gfx_setframerate:
         cmp     #75
         beq     @r75
         cmp     #60

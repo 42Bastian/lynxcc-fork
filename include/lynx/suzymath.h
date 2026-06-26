@@ -25,9 +25,9 @@
 /*                                                                           */
 /* RULES (the operators' 2.6 contracts plus one more):                       */
 /*   - At most ONE async operation in flight at any time.                     */
-/*   - Between a *_start and its *_result, touch NO Suzy state: no TGI draw,  */
-/*     no sprite launch, no other Suzy math, no SPRSYS write. (The sprite     */
-/*     engine shares the math registers.)                                     */
+/*   - Between a *_start and its *_result, touch NO Suzy state: no Lynx       */
+/*     graphics draw, no sprite launch, no other Suzy math, no SPRSYS write.  */
+/*     (The sprite engine shares the math registers.)                         */
 /*   - Not interrupt-safe; sprite engine must be idle; divide-by-zero        */
 /*     yields $FFFF, as with the operators.                                   */
 /*                                                                           */

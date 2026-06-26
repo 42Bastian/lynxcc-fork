@@ -7,30 +7,30 @@
 ; the root LICENSE file, not the SDK's MPL-2.0. See doc/licenses.html.
 
 ;
-; Lynx static TGI: pages, flipping, double buffering, display depth.
+; Lynx graphics: pages, flipping, double buffering, display depth.
 ;
-; void __fastcall__ tgi_setviewpage (unsigned char page);
-; void __fastcall__ tgi_setdrawpage (unsigned char page);
-; void tgi_flip (void);
-; unsigned char tgi_busy (void);
-; void tgi_updatedisplay (void);
-; void __fastcall__ tgi_setbpp (unsigned char bpp);
+; void __fastcall__ gfx_setviewpage (unsigned char page);
+; void __fastcall__ gfx_setdrawpage (unsigned char page);
+; void gfx_flip (void);
+; unsigned char gfx_busy (void);
+; void gfx_updatedisplay (void);
+; void __fastcall__ gfx_setbpp (unsigned char bpp);
 ;
 ; The VBL page-swap handler lives here as an .interruptor, so it enters
 ; the interrupt chain exactly when a program links this module - i.e.
-; when it actually uses pages/double buffering. tgi_init does not
-; reference this module (design/LYNX_TGI_DESIGN.md sec. 2.4).
+; when it actually uses pages/double buffering. gfx_init does not
+; reference this module (design/LYNX_GFX_DESIGN.md sec. 2.4).
 ;
-; tgi_flip is a 180-degree screen rotation (left-handed mode), not a page
-; flip. tgi_busy reports a *pending swap request*, not sprite-engine
+; gfx_flip is a 180-degree screen rotation (left-handed mode), not a page
+; flip. gfx_busy reports a *pending swap request*, not sprite-engine
 ; business (pre-existing semantics, kept).
 ;
-; tgi_setbpp selects how Mikey's display DMA interprets the buffer via
+; gfx_setbpp selects how Mikey's display DMA interprets the buffer via
 ; DISPCTL B2: 4 (default) or 2 bits/pixel. 2bpp is a CPU-rendered frame-
 ; buffer mode: Suzy always renders 4bpp, so sprite/text output scans out
 ; garbled in 2bpp - caller responsibility, by design unguarded. The mode
 ; uses a DISPCTL bit outside spec guarantees and is unverified on
-; hardware (design/LYNX_TGI_DESIGN.md sec. 2.7).
+; hardware (design/LYNX_GFX_DESIGN.md sec. 2.7).
 ;
 ; DISPCTL and SPRSYS are write-only/read-back-differently: all writes go
 ; through the __viddma/__sprsys shadows first (spec ch. 3.1.3).
@@ -38,25 +38,25 @@
 
         .include "lynx/lynx.inc"
         .include        "lynx/extzp.inc"
-        .include        "tgi-kernel.inc"
+        .include        "gfx.inc"
 
-        .import         tgi_drawpage
+        .import         gfx_drawpage
 
-        .export         _tgi_setviewpage
-        .export         _tgi_setdrawpage
-        .export         _tgi_flip
-        .export         _tgi_busy
-        .export         _tgi_updatedisplay
-        .export         _tgi_setbpp
+        .export         _gfx_setviewpage
+        .export         _gfx_setdrawpage
+        .export         _gfx_flip
+        .export         _gfx_busy
+        .export         _gfx_updatedisplay
+        .export         _gfx_setbpp
 
-        .interruptor    tgi_vbl_irq     ; Page-swap VBL handler
+        .interruptor    gfx_vbl_irq     ; Page-swap VBL handler
 
 .data
 
 ; View page address shadow (DISPADR is write-only). Statically page 0,
-; matching tgi_init's display reset.
+; matching gfx_init's display reset.
 
-viewpage:       .byte   <TGI_PAGE0_ADDR, >TGI_PAGE0_ADDR
+viewpage:       .byte   <GFX_PAGE0_ADDR, >GFX_PAGE0_ADDR
 
 drawpagenum:    .byte   0       ; Number (0/1) of the current draw page
 swaprequest:    .byte   0       ; Flag: swap pages at next VBL
@@ -64,17 +64,17 @@ swaprequest:    .byte   0       ; Flag: swap pages at next VBL
 .code
 
 ;-----------------------------------------------------------------------------
-; tgi_setviewpage: Set the visible page (0/1). Calling this in the middle of
-; the screen update tears; prefer tgi_updatedisplay for clean swaps.
+; gfx_setviewpage: Set the visible page (0/1). Calling this in the middle of
+; the screen update tears; prefer gfx_updatedisplay for clean swaps.
 
-_tgi_setviewpage:
+_gfx_setviewpage:
         cmp     #1
         beq     @L1
-        ldy     #<TGI_PAGE0_ADDR
-        ldx     #>TGI_PAGE0_ADDR
+        ldy     #<GFX_PAGE0_ADDR
+        ldx     #>GFX_PAGE0_ADDR
         bra     @L2
-@L1:    ldy     #<TGI_PAGE1_ADDR
-        ldx     #>TGI_PAGE1_ADDR
+@L1:    ldy     #<GFX_PAGE1_ADDR
+        ldx     #>GFX_PAGE1_ADDR
 @L2:    sty     viewpage
         stx     viewpage+1
 
@@ -93,44 +93,44 @@ set_dispadr:
         beq     @bpp2
         clc
         tya
-        adc     #<TGI_FLIPOFFS_4BPP
+        adc     #<GFX_FLIPOFFS_4BPP
         tay
         txa
-        adc     #>TGI_FLIPOFFS_4BPP
+        adc     #>GFX_FLIPOFFS_4BPP
         tax
         bra     @store
 @bpp2:  clc
         tya
-        adc     #<TGI_FLIPOFFS_2BPP
+        adc     #<GFX_FLIPOFFS_2BPP
         tay
         txa
-        adc     #>TGI_FLIPOFFS_2BPP
+        adc     #>GFX_FLIPOFFS_2BPP
         tax
 @store: sty     DISPADRL        ; $FD94
         stx     DISPADRH        ; $FD95
         rts
 
 ;-----------------------------------------------------------------------------
-; tgi_setdrawpage: Set the page (0/1) that sprites are rendered into.
+; gfx_setdrawpage: Set the page (0/1) that sprites are rendered into.
 
-_tgi_setdrawpage:
+_gfx_setdrawpage:
         cmp     #1
         beq     @L1
-        lda     #<TGI_PAGE0_ADDR
-        ldx     #>TGI_PAGE0_ADDR
+        lda     #<GFX_PAGE0_ADDR
+        ldx     #>GFX_PAGE0_ADDR
         bra     @L2
-@L1:    lda     #<TGI_PAGE1_ADDR
-        ldx     #>TGI_PAGE1_ADDR
-@L2:    sta     tgi_drawpage
-        stx     tgi_drawpage+1
+@L1:    lda     #<GFX_PAGE1_ADDR
+        ldx     #>GFX_PAGE1_ADDR
+@L2:    sta     gfx_drawpage
+        stx     gfx_drawpage+1
         rts
 
 ;-----------------------------------------------------------------------------
-; tgi_flip: Rotate the display 180 degrees (left-handed mode). Toggles the
+; gfx_flip: Rotate the display 180 degrees (left-handed mode). Toggles the
 ; sprite coordinate flip and the display DMA direction, then re-issues the
 ; view page address.
 
-_tgi_flip:
+_gfx_flip:
         lda     __sprsys
         eor     #8
         sta     __sprsys
@@ -142,9 +142,9 @@ _tgi_flip:
         bra     set_dispadr
 
 ;-----------------------------------------------------------------------------
-; tgi_setbpp: Select the display depth, 4 (default) or 2 bits/pixel.
+; gfx_setbpp: Select the display depth, 4 (default) or 2 bits/pixel.
 
-_tgi_setbpp:
+_gfx_setbpp:
         cmp     #2
         beq     @L1
         lda     __viddma        ; 4bpp: set DISPCTL B2
@@ -157,17 +157,17 @@ _tgi_setbpp:
         bra     set_dispadr     ; Re-issue DISPADR (flip offset depends on bpp)
 
 ;-----------------------------------------------------------------------------
-; tgi_busy: Return the pending-swap flag.
+; gfx_busy: Return the pending-swap flag.
 
-_tgi_busy:
+_gfx_busy:
         lda     swaprequest
         ldx     #0
         rts
 
 ;-----------------------------------------------------------------------------
-; tgi_updatedisplay: Request a draw/view page swap at the next VBL.
+; gfx_updatedisplay: Request a draw/view page swap at the next VBL.
 
-_tgi_updatedisplay:
+_gfx_updatedisplay:
         lda     #1
         sta     swaprequest
         rts
@@ -176,7 +176,7 @@ _tgi_updatedisplay:
 ; VBL interruptor: perform a pending page swap. Linked (via the interruptor
 ; table) only when this module is.
 
-tgi_vbl_irq:
+gfx_vbl_irq:
         lda     INTSET          ; Poll all pending interrupts
         and     #VBL_INTERRUPT
         beq     @L0             ; Exit if not a VBL interrupt
@@ -184,11 +184,11 @@ tgi_vbl_irq:
         lda     swaprequest
         beq     @L0
         lda     drawpagenum     ; View the page just drawn
-        jsr     _tgi_setviewpage
+        jsr     _gfx_setviewpage
         lda     drawpagenum     ; Draw into the other one
         eor     #1
         sta     drawpagenum
-        jsr     _tgi_setdrawpage
+        jsr     _gfx_setdrawpage
         stz     swaprequest
 @L0:    clc                     ; Never claim the interrupt
         rts

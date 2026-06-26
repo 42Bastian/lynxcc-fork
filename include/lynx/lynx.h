@@ -69,23 +69,46 @@
 #define COLOR_LIGHTBLUE         0x0E
 #define COLOR_WHITE             0x0F
 
-/* TGI color defines (default palette) */
-#define TGI_COLOR_BLACK         COLOR_BLACK
-#define TGI_COLOR_RED           COLOR_RED
-#define TGI_COLOR_PINK          COLOR_PINK
-#define TGI_COLOR_LIGHTGREY     COLOR_LIGHTGREY
-#define TGI_COLOR_GREY          COLOR_GREY
-#define TGI_COLOR_DARKGREY      COLOR_DARKGREY
-#define TGI_COLOR_BROWN         COLOR_BROWN
-#define TGI_COLOR_PEACH         COLOR_PEACH
-#define TGI_COLOR_YELLOW        COLOR_YELLOW
-#define TGI_COLOR_LIGHTGREEN    COLOR_LIGHTGREEN
-#define TGI_COLOR_GREEN         COLOR_GREEN
-#define TGI_COLOR_DARKBROWN     COLOR_DARKBROWN
-#define TGI_COLOR_VIOLET        COLOR_VIOLET
-#define TGI_COLOR_BLUE          COLOR_BLUE
-#define TGI_COLOR_LIGHTBLUE     COLOR_LIGHTBLUE
-#define TGI_COLOR_WHITE         COLOR_WHITE
+/* Lynx graphics color defines (default palette) */
+#define GFX_COLOR_BLACK         COLOR_BLACK
+#define GFX_COLOR_RED           COLOR_RED
+#define GFX_COLOR_PINK          COLOR_PINK
+#define GFX_COLOR_LIGHTGREY     COLOR_LIGHTGREY
+#define GFX_COLOR_GREY          COLOR_GREY
+#define GFX_COLOR_DARKGREY      COLOR_DARKGREY
+#define GFX_COLOR_BROWN         COLOR_BROWN
+#define GFX_COLOR_PEACH         COLOR_PEACH
+#define GFX_COLOR_YELLOW        COLOR_YELLOW
+#define GFX_COLOR_LIGHTGREEN    COLOR_LIGHTGREEN
+#define GFX_COLOR_GREEN         COLOR_GREEN
+#define GFX_COLOR_DARKBROWN     COLOR_DARKBROWN
+#define GFX_COLOR_VIOLET        COLOR_VIOLET
+#define GFX_COLOR_BLUE          COLOR_BLUE
+#define GFX_COLOR_LIGHTBLUE     COLOR_LIGHTBLUE
+#define GFX_COLOR_WHITE         COLOR_WHITE
+
+/* DEPRECATED palette aliases: the TGI_COLOR_* names are retained for backward
+** compatibility and map to the GFX_COLOR_* names above. Define
+** LYNX_NO_TGI_COMPAT before including to drop them (see <lynx/gfx.h>).
+*/
+#ifndef LYNX_NO_TGI_COMPAT
+#define TGI_COLOR_BLACK         GFX_COLOR_BLACK
+#define TGI_COLOR_RED           GFX_COLOR_RED
+#define TGI_COLOR_PINK          GFX_COLOR_PINK
+#define TGI_COLOR_LIGHTGREY     GFX_COLOR_LIGHTGREY
+#define TGI_COLOR_GREY          GFX_COLOR_GREY
+#define TGI_COLOR_DARKGREY      GFX_COLOR_DARKGREY
+#define TGI_COLOR_BROWN         GFX_COLOR_BROWN
+#define TGI_COLOR_PEACH         GFX_COLOR_PEACH
+#define TGI_COLOR_YELLOW        GFX_COLOR_YELLOW
+#define TGI_COLOR_LIGHTGREEN    GFX_COLOR_LIGHTGREEN
+#define TGI_COLOR_GREEN         GFX_COLOR_GREEN
+#define TGI_COLOR_DARKBROWN     GFX_COLOR_DARKBROWN
+#define TGI_COLOR_VIOLET        GFX_COLOR_VIOLET
+#define TGI_COLOR_BLUE          GFX_COLOR_BLUE
+#define TGI_COLOR_LIGHTBLUE     GFX_COLOR_LIGHTBLUE
+#define TGI_COLOR_WHITE         GFX_COLOR_WHITE
+#endif /* LYNX_NO_TGI_COMPAT */
 
 /* Masks for joy_read. The low byte is the raw JOYSTICK register; Pause
 ** (a Mikey-side switch) is reported in bit 8 of the joy_read result.
@@ -198,15 +221,20 @@ void __fastcall__ lynx_eewrite_93c86 (unsigned addr, unsigned val);
 
 
 /*****************************************************************************/
-/*                           TGI extras                                      */
+/*                              Lynx graphics                                */
 /*****************************************************************************/
 
 
 
-/* The former tgi_ioctl macros (tgi_sprite, tgi_flip, tgi_setbgcolor,
-** tgi_setframerate, tgi_busy, tgi_updatedisplay, tgi_setcollisiondetection)
-** are now real functions declared in <tgi.h>; existing call sites compile
-** unchanged. tgi_ioctl itself is gone.
+/* Pull in the Lynx graphics API so that programs including <lynx.h> get the
+** gfx_ names by default (not the deprecated tgi_ shim in <lynx/gfx.h>).
+*/
+#include <lynx/gfx.h>
+
+/* The former upstream tgi_ioctl macros (now gfx_sprite, gfx_flip,
+** gfx_setbgcolor, gfx_setframerate, gfx_busy, gfx_updatedisplay,
+** gfx_setcollisiondetection) are real functions declared in <lynx/gfx.h>;
+** existing call sites compile unchanged. The ioctl dispatcher itself is gone.
 */
 
 /* Define Hardware */

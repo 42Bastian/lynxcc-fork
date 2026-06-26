@@ -8,8 +8,8 @@ macros, functions, headers, build targets, examples), update every place that
 documents it before considering the task done:
 
 - `include/*.h` and `asminc/*.inc` doc comments
-- `doc/*.html` (TGI, fonts, function reference, samples, etc.)
-- `design/LYNX_TGI_DESIGN.md` and any other `design/*_DESIGN.md` source-of-truth docs
+- `doc/*.html` (Lynx graphics, fonts, function reference, samples, etc.)
+- `design/LYNX_GFX_DESIGN.md` and any other `design/*_DESIGN.md` source-of-truth docs
 - relevant `README`/comments in `examples/`
 
 All `*_DESIGN.md` design documents live in the `design/` directory. New design

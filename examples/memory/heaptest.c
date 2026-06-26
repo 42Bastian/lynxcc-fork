@@ -31,7 +31,7 @@
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <stdlib.h>
 #include <string.h>
 #include <_heap.h>
@@ -237,8 +237,8 @@ static void draw_cell (unsigned char i)
     else           { line[k++] = 'X'; }
     line[k] = 0;
 
-    tgi_setcolor (result[i] ? COLOR_GREEN : COLOR_RED);
-    tgi_outtextxy (x, y, line);
+    gfx_setcolor (result[i] ? COLOR_GREEN : COLOR_RED);
+    gfx_outtextxy (x, y, line);
 }
 
 void main (void)
@@ -246,13 +246,13 @@ void main (void)
     unsigned char i, pass = 0, firstfail = 0;
     unsigned base;
 
-    tgi_init ();
+    gfx_init ();
     CLI ();
-    while (tgi_busy ()) {}
-    tgi_setpalette (tgi_getdefpalette ());
-    tgi_setframerate (60);
-    tgi_setcollisiondetection (0);
-    tgi_setfont (TGI_FONT_COMPACT);
+    while (gfx_busy ()) {}
+    gfx_setpalette (gfx_getdefpalette ());
+    gfx_setframerate (60);
+    gfx_setcollisiondetection (0);
+    gfx_setfont (GFX_FONT_COMPACT);
 
     base = _heapmemavail ();
     run_tests ();
@@ -263,44 +263,44 @@ void main (void)
     }
 
     for (;;) {
-        while (tgi_busy ()) {}
+        while (gfx_busy ()) {}
 
-        tgi_setcolor (COLOR_BLACK);
-        tgi_clear ();
+        gfx_setcolor (COLOR_BLACK);
+        gfx_clear ();
 
-        tgi_setcolor (COLOR_WHITE);
-        tgi_outtextxy (2, 2, "HEAP 2B-HEADER SELFTEST");
+        gfx_setcolor (COLOR_WHITE);
+        gfx_outtextxy (2, 2, "HEAP 2B-HEADER SELFTEST");
 
         /* Direct-memory facts, read straight from the runtime heap vars. */
-        tgi_setcolor (COLOR_LIGHTBLUE);
-        tgi_outtextxy (2, 10, "ADMIN:");
-        tgi_outtextxy (40, 10, dec (HEAP_ADMIN_SPACE));
-        tgi_outtextxy (60, 10, "MEM:");
-        tgi_outtextxy (92, 10, hex16 (base));
+        gfx_setcolor (COLOR_LIGHTBLUE);
+        gfx_outtextxy (2, 10, "ADMIN:");
+        gfx_outtextxy (40, 10, dec (HEAP_ADMIN_SPACE));
+        gfx_outtextxy (60, 10, "MEM:");
+        gfx_outtextxy (92, 10, hex16 (base));
 
-        tgi_outtextxy (2, 18, "ORG:");
-        tgi_outtextxy (30, 18, hex16 (ADDR (_heaporg)));
-        tgi_outtextxy (64, 18, "PTR:");
-        tgi_outtextxy (92, 18, hex16 (ADDR (_heapptr)));
-        tgi_outtextxy (126, 18, hex16 (ADDR (_heapend)));
+        gfx_outtextxy (2, 18, "ORG:");
+        gfx_outtextxy (30, 18, hex16 (ADDR (_heaporg)));
+        gfx_outtextxy (64, 18, "PTR:");
+        gfx_outtextxy (92, 18, hex16 (ADDR (_heapptr)));
+        gfx_outtextxy (126, 18, hex16 (ADDR (_heapend)));
 
         for (i = 0; i < NTESTS; ++i) draw_cell (i);
 
-        tgi_setcolor ((pass == NTESTS) ? COLOR_GREEN : COLOR_RED);
-        tgi_outtextxy (2, 78, "PASS");
-        tgi_outtextxy (32, 78, dec (pass));
-        tgi_outtextxy (48, 78, "/");
-        tgi_outtextxy (56, 78, dec (NTESTS));
+        gfx_setcolor ((pass == NTESTS) ? COLOR_GREEN : COLOR_RED);
+        gfx_outtextxy (2, 78, "PASS");
+        gfx_outtextxy (32, 78, dec (pass));
+        gfx_outtextxy (48, 78, "/");
+        gfx_outtextxy (56, 78, dec (NTESTS));
 
         if (pass == NTESTS) {
-            tgi_setcolor (COLOR_GREEN);
-            tgi_outtextxy (2, 88, "ALL CHECKS PASSED");
+            gfx_setcolor (COLOR_GREEN);
+            gfx_outtextxy (2, 88, "ALL CHECKS PASSED");
         } else {
-            tgi_setcolor (COLOR_RED);
-            tgi_outtextxy (2, 88, "1ST FAIL T");
-            tgi_outtextxy (62, 88, dec (firstfail));
+            gfx_setcolor (COLOR_RED);
+            gfx_outtextxy (2, 88, "1ST FAIL T");
+            gfx_outtextxy (62, 88, dec (firstfail));
         }
 
-        tgi_updatedisplay ();
+        gfx_updatedisplay ();
     }
 }

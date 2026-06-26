@@ -12,7 +12,7 @@ See doc/licenses.html.
 <link rel="stylesheet" href="doc.css">
 <script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
 </head><body>
-<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html" class="active">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html">Functions</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html">Migrating</a><a href="history.html">History</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>cc65 Compiler Intro</h1></header><div class="abstract">How to use the cc65 C language system -- an introduction.</div><nav class="toc"><h2>Contents</h2><ul>
+<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html" class="active">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html">Functions</a><a href="lynx_gfx_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html">Migrating</a><a href="history.html">History</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>cc65 Compiler Intro</h1></header><div class="abstract">How to use the cc65 C language system -- an introduction.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Overview</a></li>
 <li class="lvl2"><a href="#sect-1-1">1.1. Before we start</a></li>
 <li class="lvl2"><a href="#sect-1-2">1.2. The sample modules</a></li>
@@ -56,7 +56,7 @@ installed cc65.</p>
         {
             /* The Lynx has no text console, so there is nothing to print
                here; this module only demonstrates the build flow.  For
-               on-screen text, see the TGI "Hello World" in the Lynx docs. */
+               on-screen text, see the Lynx graphics "Hello World" in the Lynx docs. */
             return (int) strlen (text);
         }</pre>
 <p>text.s:</p>
@@ -137,14 +137,14 @@ without a big impact on code size. Those runtime functions, together with the
 C library, are in an object-file archive named after the system, in this case,
 "<code>lynx.lib</code>". We have to specify that file on the command line, so that the
 linker can resolve those functions.</p>
-<p>Code that uses an optional subsystem &mdash; the TGI graphics, Mikey audio,
+<p>Code that uses an optional subsystem &mdash; the Lynx graphics, Mikey audio,
 Suzy hardware math, or the compression routines &mdash; also names the matching
 archive (<code>lynx-graphics.lib</code>, <code>lynx-audio.lib</code>,
 <code>lynx-math.lib</code>, <code>lynx-compress.lib</code>). List the optional
 libraries <em>before</em> the core <code>lynx.lib</code>, so a single in-order
 linker pass resolves every cross-reference (the linker pulls in only the modules
 a program actually references, so naming a subsystem it doesn't use costs
-nothing). For example, a program that draws with the TGI and uses Suzy math:</p>
+nothing). For example, a program that draws with Lynx graphics and uses Suzy math:</p>
 <pre class="verb">        ld65 -o hello hello.o text.o lynx-graphics.lib lynx-math.lib lynx.lib</pre>
 <p>Let's link our files to get the final executable:</p>
 <pre class="verb">        ld65 -o hello hello.o text.o lynx.lib</pre>
@@ -174,7 +174,7 @@ have to care about that.</p>
 the explicit <code>ld65</code> invocation above &mdash; where you list
 <code>lynx-graphics.lib</code>, <code>lynx-math.lib</code> and the rest yourself
 &mdash; cl65 appends the whole SDK set for you (in the correct dependents-first,
-core-last order), so a program that draws with the TGI or uses Suzy math links
+core-last order), so a program that draws with Lynx graphics or uses Suzy math links
 with <em>no</em> <code>-l</code> flags at all. The linker still pulls in only
 the modules a program actually references, so unused subsystems cost nothing.
 Pass <code>--no-sdk-libs</code> if you would rather name the optional libraries
@@ -185,17 +185,17 @@ the current directory.</p>
 <p>To start a real project rather than this tutorial, copy the
 <code>templates/basic</code> directory out of the SDK: it is a minimal, complete
 game (a <code>Makefile</code> that uses the automatic SDK libraries plus a
-<code>src/main.c</code> that brings up the TGI and reads the joystick) and is the
+<code>src/main.c</code> that brings up Lynx graphics and reads the joystick) and is the
 canonical example of the <code>&lt;lynx/...&gt;</code> include layout and the
 zero-config link path. See its <code>README.md</code> for details.</p>
 <h2 id="sect-6">6. Running The Executable</h2>
 <p>The Lynx has no operating system or text screen: the linker output is a
-bootable cart image, and text output requires the TGI graphics driver.
+bootable cart image, and text output requires the Lynx graphics library.
 The program in the tutorial above therefore produces no visible
 output on the Lynx - it demonstrates the build mechanics only. For a
 program that actually displays text on the Lynx screen, see the Hello
 World example in the <a href="lynx.html">Lynx-specific
-documentation</a>, which uses TGI. By convention, give the output file a
+documentation</a>, which uses Lynx graphics. By convention, give the output file a
 <code>.lnx</code> extension:</p>
 <pre class="verb">cl65 -O -o hello.lnx hello.c text.s</pre>
 <h3 id="sect-6-1">6.1. Emulators</h3>

@@ -7,12 +7,12 @@
 ; Part of the Lynx Game Development SDK (lynxcc). See doc/licenses.html.
 
 ;
-; Lynx static TGI: the 5x5 compact bitmap font.
+; Lynx graphics: the 5x5 compact bitmap font.
 ;
 ; 70 stored glyphs, 5 bytes each, one byte per pixel row. The 5 ink pixels
 ; occupy bits 7..3 (left-aligned); bit value 1 = foreground (opposite the 8x8
 ; font), so the builder ORs glyphs into a zero (= transparent) strip with no
-; inversion. See design/LYNX_TGI_FONT5X5_DESIGN.md sec. 3 & 5.
+; inversion. See design/LYNX_GFX_FONT5X5_DESIGN.md sec. 3 & 5.
 ;
 ; Table order is NOT a plain (ch-32): build5x5 folds lower-case a-z onto A-Z
 ; and splices the freed slots out, so the 26 duplicate a-z glyphs are not
@@ -22,13 +22,13 @@
 ;   index    69  = ASCII 127       ( DEL, blank )
 ;
 ; Source: img_font5x5.bmp (ASCII 32-96, caps only). Referenced only when the
-; program selects TGI_FONT_COMPACT, so it links only on demand.
+; program selects GFX_FONT_COMPACT, so it links only on demand.
 
-        .export         tgi_font5x5
+        .export         gfx_font5x5
 
 .rodata
 
-tgi_font5x5:
+gfx_font5x5:
         .byte $00, $00, $00, $00, $00   ;  32 'space'
         .byte $20, $20, $20, $00, $20   ;  33 '!'
         .byte $50, $50, $00, $00, $00   ;  34 'dquote'

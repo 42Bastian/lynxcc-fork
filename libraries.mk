@@ -13,7 +13,7 @@
 #
 #   lib/lynx.lib            core, always linked: runtime/rt + runtime/lynx +
 #                           libraries/core + libraries/libc
-#   lib/lynx-graphics.lib   opt-in: libraries/graphics (TGI + fonts)
+#   lib/lynx-graphics.lib   opt-in: libraries/graphics (Lynx graphics + fonts)
 #   lib/lynx-audio.lib      opt-in: libraries/audio (Mikey sound)
 #   lib/lynx-math.lib       opt-in: libraries/math (Suzy hw mul/div + async)
 #   lib/lynx-compress.lib   opt-in: libraries/compress (zlib + lz4)
@@ -163,7 +163,7 @@ lib/lynx-compress.lib: $(COMPRESS_OBJS) | dirs
 # Written with one echo per line rather than make's $(file ...) function, which
 # needs GNU make 4.0+ — the macOS system make is still 3.81, where $(file ...)
 # silently writes nothing and cl65 would then fall back to linking only
-# lynx.lib (leaving e.g. the TGI graphics symbols unresolved). No space before
+# lynx.lib (leaving e.g. the Lynx graphics symbols unresolved). No space before
 # ">>" so Windows cmd does not append a trailing blank to each archive name.
 $(MANIFEST): libraries.mk | dirs
 	$(if $(QUIET),,@echo $(TARGET) - $@)

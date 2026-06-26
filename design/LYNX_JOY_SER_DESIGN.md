@@ -7,7 +7,7 @@ See doc/licenses.html.
 
 # Design: Static joy and ser Libraries (De-driverization, Final Round)
 
-Companion to `LYNX_TGI_DESIGN.md`, which established the pattern (its §9 names this
+Companion to `LYNX_GFX_DESIGN.md`, which established the pattern (its §9 names this
 work). Same premise: this is a Lynx-only tree, each driver type has exactly one driver
 that is always present, so the loadable-driver machinery is pure overhead. Same rules:
 direct-call static modules under `libraries/core/`, clean API break, no shims, compile
@@ -98,11 +98,11 @@ which are joypad inputs, not a keyboard — they move into `joy_read` (§2), and
 Nothing else in the tree references them (only the equally-deleted `vcscanf` and
 `dbg.c` did; stdio does not route through `cgetc` on this target).
 
-*Alternative considered and rejected:* implementing `cputc` over the TGI text path
-to revive full conio. TGI text draws sprites with no character-cell grid, no
+*Alternative considered and rejected:* implementing `cputc` over the Lynx graphics text path
+to revive full conio. Lynx graphics text draws sprites with no character-cell grid, no
 cursor model, and no scrolling; conio semantics would demand a CPU-rendered text
-console, contradicting the sprite-only premise of `LYNX_TGI_DESIGN.md`.
-`tgi_outtext`/`tgi_outtextxy` are the supported text output.
+console, contradicting the sprite-only premise of `LYNX_GFX_DESIGN.md`.
+`gfx_outtext`/`gfx_outtextxy` are the supported text output.
 
 ## 2. New joy architecture: one call for every input
 
@@ -128,7 +128,7 @@ _joy_read:
 ```
 
 10 bytes, leaf, no state, no init — `JOYSTICK`/`SWITCHES` are read-only Suzy
-registers, plain `LDA` (no RMW concern under TGI design §5). The return type widens
+registers, plain `LDA` (no RMW concern under Lynx graphics design §5). The return type widens
 `unsigned char` → `unsigned` so Pause fits in bit 8; on cc65's ABI the high byte rides
 in X for free, so one call snapshots the complete input state atomically. There is no
 joystick argument: the Lynx has exactly one joypad, so the old per-stick selector carried
@@ -196,7 +196,7 @@ logic — this is a re-packaging, with two deliberate fixes noted below.
 | `ser_put(b)` | Unchanged ring-buffer push + Tx-IRQ kick; `SER_ERR_OVERFLOW` when full. |
 | `ser_status(&s)` | Unchanged: copies `SerialStat` (error/overflow bits accumulated by the IRQ). |
 
-Return-code error model is kept — unlike TGI, these calls are genuinely fallible at
+Return-code error model is kept — unlike Lynx graphics, these calls are genuinely fallible at
 runtime. `ser_ioctl` (dead on Lynx), `ser_install`, `ser_uninstall`,
 `ser_load_driver`, `ser_unload`, and `_ser_drv` are deleted.
 
@@ -212,10 +212,10 @@ SER_ERR_OVERFLOW, SER_ERR_INIT_FAILED
 
 ### 3.2 IRQ hook
 
-Mirror of TGI §2.4: the handler is exported directly with
+Mirror of Lynx graphics design §2.4: the handler is exported directly with
 `.interruptor ser_irq, 29` from the core module. The kernel's self-modifying
 `RTS`↔`JMP` stub and its install/uninstall patching disappear. **Priority 29 is kept
-explicitly** — it must run before default-priority interruptors (e.g. `tgi_vbl_irq`)
+explicitly** — it must run before default-priority interruptors (e.g. `gfx_vbl_irq`)
 because a serial byte must be drained before a frame-swap handler burns cycles. The
 handler's first action (poll `INTSET` for `SERIAL_INTERRUPT`, `clc`/`rts` if clear)
 already makes it safe when linked but the port never opened: timer 4 is never started,
@@ -243,7 +243,7 @@ Buffer size stays 256 per direction: the ring arithmetic relies on natural 8-bit
 pointer wraparound. Not tunable without rewriting the pointer logic; documented in
 `ser-core.s`.
 
-### 3.4 Hardware rules (TGI design §5 applied)
+### 3.4 Hardware rules (Lynx graphics design §5 applied)
 
 - `SERCTL` is write-only (its read view is status bits). Every write already goes
   through the `contrl` shadow — the new modules keep that pattern and state it as an
@@ -252,7 +252,7 @@ pointer wraparound. Not tunable without rewriting the pointer logic; documented 
 - The Tx/Rx interrupts are level-sensitive (hardware bug, noted in the existing IRQ
   comment): the disable-before-clear dance in the handler is load-bearing; preserved
   byte-for-byte.
-- Timer 4 is the hardware-designated baud generator; only ser touches it (TGI uses the
+- Timer 4 is the hardware-designated baud generator; only ser touches it (Lynx graphics uses the
   VBL timer). `uploader.s` reads `SERCTL` status directly during BLL upload — it runs
   before main, never concurrent with an open port; unchanged.
 
@@ -269,7 +269,7 @@ a received break drops all four buffer pointers; only 8 data bits / 1 stop bit.
 
 ## 4. The payoff: module loader and libref leave the library
 
-With tgi (done), joy, and ser static, nothing constructs or loads o65 modules and
+With graphics (done), joy, and ser static, nothing constructs or loads o65 modules and
 nothing needs a library back-reference:
 
 - `libsrc/common/modload.s`, `modfree.s`; `include/modload.h`; `asminc/modload.inc` —
@@ -363,14 +363,14 @@ compile unchanged.
    further IRQs fire (INTSET bit stays clear). Emulator first, redeye hardware second.
 3. `.map` diffs: (a) joy-only program links 7 bytes of joy and **no** interruptor, no
    buffers; (b) ser program shows `ser_irq` in the interruptor chain and no
-   `_ser_install`/`_ser_drv`/`mod_load` symbols; (c) a tgi-only program links neither.
+   `_ser_install`/`_ser_drv`/`mod_load` symbols; (c) a graphics-only program links neither.
 4. Grep audit: zero remaining references to `module_header`, `MOD_CTRL`, `mod_load`,
    `mod_free`, `libref`, `JOY_HDR`, `SER_HDR`, `DRVTYPES`, `_cputc`, `kbhit`,
    `cgetc`, `conio`, `em_`, `mouse_`, `_dbg` anywhere in `libsrc/`, `asminc/`,
    `include/`, `cfg/`, `samples/`.
 5. Perniciousness audit: every `SERCTL` store preceded by a `contrl` shadow
    composition; no RMW opcode targets $FCxx (joy reads $FCB0 with plain `LDA`).
-6. IRQ-order check: confirm `ser_irq` precedes `tgi_vbl_irq` in the generated
+6. IRQ-order check: confirm `ser_irq` precedes `gfx_vbl_irq` in the generated
    interruptor table (priority 29 honored) when both link.
 
 ## 9. Implementation order
@@ -396,5 +396,5 @@ Each step shippable:
 - A second-player joystick over ComLynx (reading a remote pad via the redeye protocol)
   would be a new feature on top of the static ser core, not part of this cleanup. It
   would need its own entry point, not `joy_read`, which reports only the local pad.
-- TGI design §9's remaining items (text-scale exposure, collision readback) are
+- Lynx graphics design §9's remaining items (text-scale exposure, collision readback) are
   unaffected.

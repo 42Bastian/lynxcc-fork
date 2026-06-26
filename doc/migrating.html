@@ -12,7 +12,7 @@ See doc/licenses.html.
 <link rel="stylesheet" href="doc.css">
 <script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
 </head><body>
-<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html">Functions</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html" class="active">Migrating</a><a href="history.html">History</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>Migrating from upstream cc65 to <strong>lynxcc</strong></h1></header><div class="abstract">What changes when you move a project from stock cc65 (its Lynx target) to the <strong>lynxcc</strong> SDK, and how to handle each difference.</div><nav class="toc"><h2>Contents</h2><ul>
+<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html">Functions</a><a href="lynx_gfx_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html" class="active">Migrating</a><a href="history.html">History</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>Migrating from upstream cc65 to <strong>lynxcc</strong></h1></header><div class="abstract">What changes when you move a project from stock cc65 (its Lynx target) to the <strong>lynxcc</strong> SDK, and how to handle each difference.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Overview</a></li>
 <li class="lvl1"><a href="#sect-2">2. Differences from upstream cc65</a></li>
 <li class="lvl2"><a href="#sect-2-1">2.1. Source- and build-level changes</a></li>
@@ -23,6 +23,7 @@ See doc/licenses.html.
 <li class="lvl2"><a href="#sect-3-3">3.3. Reference builds</a></li>
 <li class="lvl1"><a href="#sect-4">4. Checklist of concrete edits</a></li>
 <li class="lvl1"><a href="#sect-5">5. Compatibility deliberately preserved</a></li>
+<li class="lvl1"><a href="#sect-tgi-deprecation">6. TGI Deprecation</a></li>
 </ul></nav>
 <h2 id="sect-1">1. Overview</h2>
 <p><strong>lynxcc</strong> is not a drop-in upstream cc65: it is the <strong>Lynx Game Development
@@ -62,7 +63,7 @@ gone or reduced. Replace or remove these uses:</p>
 </ul>
 <p><strong>Static drivers.</strong> There is no dynamic driver loading
 (<code>modload</code>, <code>mouse</code>, <code>em</code> and <code>dbg</code> are removed).
-TGI, joystick and serial are direct-call static APIs. Drop any driver-load or
+Lynx graphics, joystick and serial are direct-call static APIs. Drop any driver-load or
 driver-install calls and use the static entry points directly.</p>
 <h2 id="sect-3">3. Migration aids</h2>
 <h3 id="sect-3-1">3.1. The include-rewrite</h3>
@@ -97,7 +98,7 @@ into an actionable list.</p>
 <ol>
 <li><strong>Drop <code>--standard</code> from <code>cc65</code> invocations.</strong> The only dialect now is <code>cc65</code> — <code>c89</code>/<code>c99</code> are no longer selectable — so the flag is removed.</li>
 <li><strong>Include <code>&lt;lynx/lynx.h&gt;</code> wherever you use the hardware defines.</strong> Constants such as <code>BPP_1</code>, <code>REHVST</code> and the rest of the Suzy/Mikey symbols live in the platform headers that <code>lynx/lynx.h</code> pulls in; a source file that references them must include it explicitly.</li>
-<li><strong>Remove the TGI driver-install calls.</strong> Delete every <code>tgi_install(…)</code> call, including the <code>tgi_static_stddrv</code> reference it took as its argument. The static TGI has no driver to install — call <code>tgi_init</code> instead.</li>
+<li><strong>Remove the TGI driver-install calls.</strong> Delete every <code>tgi_install(…)</code> call, including the <code>tgi_static_stddrv</code> reference it took as its argument. Lynx graphics has no driver to install — call <code>gfx_init</code> instead.</li>
 <li><strong>Change <code>time_t</code> variables to <code>clock_t</code>.</strong> The Lynx has no wall-clock/calendar time; <code>time.h</code> provides only <code>clock()</code> and <code>sleep()</code>, and the calendar types (<code>time_t</code>, <code>struct tm</code>, …) are gone.</li>
 <li><strong>Replace <code>open()</code> with <code>openn()</code>.</strong> Lynx cart files are numbered, not named, so there is no <code>open()</code>/<code>fopen()</code>. Open a file by index with <code>openn(fileno)</code>, then <code>read()</code>/<code>lseek()</code> on it.</li>
 <li><strong>Use the chip-specific EEPROM functions.</strong> Replace the generic <code>lynx_eeread</code>/<code>lynx_eewrite</code> with the variant matching your cart's serial EEPROM: <code>lynx_eeread_93c46</code>/<code>_93c66</code>/<code>_93c86</code> and the corresponding <code>lynx_eewrite_93c46</code>/<code>_93c66</code>/<code>_93c86</code>.</li>
@@ -115,6 +116,86 @@ into an actionable list.</p>
 </ul>
 <p>A project that uses only the C standard library and the core platform, built
 via <code>cl65</code>, may need no changes at all.</p>
+<h2 id="sect-tgi-deprecation">6. TGI Deprecation</h2>
+<p>The Lynx graphics API was historically named with the <code>tgi_</code> /
+<code>TGI_</code> prefix, after the cc65 "Tiny Graphics Interface" loadable-driver
+framework it was extracted from. That framework no longer exists in this tree —
+the graphics library is a direct-call static library for the one fixed Lynx
+display mode — so the public surface has moved to a plain <code>gfx_</code> /
+<code>GFX_</code> ("Lynx graphics") prefix.</p>
+<p>The old names are <strong>deprecated but still work.</strong> Including
+<code>&lt;lynx/gfx.h&gt;</code> (or <code>&lt;lynx.h&gt;</code>, which pulls it in)
+gives you the canonical <code>gfx_</code> names. Including
+<code>&lt;lynx/tgi.h&gt;</code> additionally defines one <code>tgi_</code> alias per
+symbol; these are pure preprocessor macros that expand to the <code>gfx_</code>
+names, so they add no code or data and do not defeat <code>ld65</code> smart
+linking. The aliases will be removed in a future release.</p>
+<p>To prove a project is already clean, define <code>LYNX_NO_TGI_COMPAT</code>
+before including the headers: the compatibility aliases are then suppressed and
+any lingering <code>tgi_</code> / <code>TGI_</code> use becomes a compile error.
+Once your sources build with that switch, you are ready for the eventual removal
+of <code>&lt;lynx/tgi.h&gt;</code>.</p>
+<p>The full old&rarr;new equivalence is below; every old name maps to exactly one
+new name with unchanged semantics, arguments and return values.</p>
+<h3 id="sect-tgi-deprecation-fns">6.1. Functions</h3>
+<table class="grid">
+<tr><th>Deprecated (<code>tgi_*</code>)</th><th>Replacement (<code>gfx_*</code>)</th></tr>
+<tr><td><code>tgi_init</code></td><td><code>gfx_init</code></td></tr>
+<tr><td><code>tgi_clear</code></td><td><code>gfx_clear</code></td></tr>
+<tr><td><code>tgi_clearrows</code></td><td><code>gfx_clearrows</code></td></tr>
+<tr><td><code>tgi_sprite</code></td><td><code>gfx_sprite</code></td></tr>
+<tr><td><code>tgi_flip</code></td><td><code>gfx_flip</code></td></tr>
+<tr><td><code>tgi_setviewpage</code></td><td><code>gfx_setviewpage</code></td></tr>
+<tr><td><code>tgi_setdrawpage</code></td><td><code>gfx_setdrawpage</code></td></tr>
+<tr><td><code>tgi_busy</code></td><td><code>gfx_busy</code></td></tr>
+<tr><td><code>tgi_updatedisplay</code></td><td><code>gfx_updatedisplay</code></td></tr>
+<tr><td><code>tgi_setframerate</code></td><td><code>gfx_setframerate</code></td></tr>
+<tr><td><code>tgi_setcollisiondetection</code></td><td><code>gfx_setcollisiondetection</code></td></tr>
+<tr><td><code>tgi_setbpp</code></td><td><code>gfx_setbpp</code></td></tr>
+<tr><td><code>tgi_setcolor</code></td><td><code>gfx_setcolor</code></td></tr>
+<tr><td><code>tgi_getcolor</code></td><td><code>gfx_getcolor</code></td></tr>
+<tr><td><code>tgi_setbgcolor</code></td><td><code>gfx_setbgcolor</code></td></tr>
+<tr><td><code>tgi_setpalette</code></td><td><code>gfx_setpalette</code></td></tr>
+<tr><td><code>tgi_getpalette</code></td><td><code>gfx_getpalette</code></td></tr>
+<tr><td><code>tgi_getdefpalette</code></td><td><code>gfx_getdefpalette</code></td></tr>
+<tr><td><code>tgi_gotoxy</code></td><td><code>gfx_gotoxy</code></td></tr>
+<tr><td><code>tgi_outtext</code></td><td><code>gfx_outtext</code></td></tr>
+<tr><td><code>tgi_outtextxy</code></td><td><code>gfx_outtextxy</code></td></tr>
+<tr><td><code>tgi_settextscale</code></td><td><code>gfx_settextscale</code></td></tr>
+<tr><td><code>tgi_settextstyle</code></td><td><code>gfx_settextstyle</code></td></tr>
+<tr><td><code>tgi_setfont</code></td><td><code>gfx_setfont</code></td></tr>
+<tr><td><code>tgi_settextdir</code></td><td><code>gfx_settextdir</code></td></tr>
+<tr><td><code>tgi_gettextwidth</code></td><td><code>gfx_gettextwidth</code></td></tr>
+<tr><td><code>tgi_gettextheight</code></td><td><code>gfx_gettextheight</code></td></tr>
+</table>
+<h3 id="sect-tgi-deprecation-macros">6.2. Query macros</h3>
+<table class="grid">
+<tr><th>Deprecated</th><th>Replacement</th></tr>
+<tr><td><code>tgi_getxres</code></td><td><code>gfx_getxres</code></td></tr>
+<tr><td><code>tgi_getmaxx</code></td><td><code>gfx_getmaxx</code></td></tr>
+<tr><td><code>tgi_getyres</code></td><td><code>gfx_getyres</code></td></tr>
+<tr><td><code>tgi_getmaxy</code></td><td><code>gfx_getmaxy</code></td></tr>
+<tr><td><code>tgi_getcolorcount</code></td><td><code>gfx_getcolorcount</code></td></tr>
+<tr><td><code>tgi_getmaxcolor</code></td><td><code>gfx_getmaxcolor</code></td></tr>
+<tr><td><code>tgi_getpagecount</code></td><td><code>gfx_getpagecount</code></td></tr>
+</table>
+<h3 id="sect-tgi-deprecation-consts">6.3. Constants</h3>
+<table class="grid">
+<tr><th>Deprecated</th><th>Replacement</th></tr>
+<tr><td><code>TGI_XRES</code></td><td><code>GFX_XRES</code></td></tr>
+<tr><td><code>TGI_YRES</code></td><td><code>GFX_YRES</code></td></tr>
+<tr><td><code>TGI_COLORCOUNT</code></td><td><code>GFX_COLORCOUNT</code></td></tr>
+<tr><td><code>TGI_PAGECOUNT</code></td><td><code>GFX_PAGECOUNT</code></td></tr>
+<tr><td><code>TGI_FONT_BITMAP</code></td><td><code>GFX_FONT_BITMAP</code></td></tr>
+<tr><td><code>TGI_FONT_COMPACT</code></td><td><code>GFX_FONT_COMPACT</code></td></tr>
+<tr><td><code>TGI_FONT_VARIABLE</code></td><td><code>GFX_FONT_VARIABLE</code></td></tr>
+<tr><td><code>TGI_TEXT_HORIZONTAL</code></td><td><code>GFX_TEXT_HORIZONTAL</code></td></tr>
+<tr><td><code>TGI_TEXT_VERTICAL</code></td><td><code>GFX_TEXT_VERTICAL</code></td></tr>
+<tr><td><code>TGI_COLOR_*</code> (e.g. <code>TGI_COLOR_WHITE</code>)</td><td><code>GFX_COLOR_*</code> (e.g. <code>GFX_COLOR_WHITE</code>), declared in <code>&lt;lynx/lynx.h&gt;</code></td></tr>
+</table>
+<p>Header: include <code>&lt;lynx/gfx.h&gt;</code> instead of
+<code>&lt;lynx/tgi.h&gt;</code> (or just <code>&lt;lynx.h&gt;</code>, which now pulls
+in <code>gfx.h</code>).</p>
 </article></main><footer class="site-foot"><strong>lynxcc</strong> documentation &mdash; a complete Atari Lynx Game Development SDK.</footer>
 <script src="doc.js"></script>
 </body></html>

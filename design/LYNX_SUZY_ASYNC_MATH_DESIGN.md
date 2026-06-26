@@ -100,7 +100,7 @@ time**, process-wide. The model is a three-state machine:
 This adds one contract on top of the §2.6 list, and it is the load-bearing one:
 
 > **Between `start` and the matching `result`, the overlapped code must touch no
-> Suzy state at all** — no TGI draw, no sprite launch (`SPRGO`), no other Suzy
+> Suzy state at all** — no Lynx graphics draw, no sprite launch (`SPRGO`), no other Suzy
 > math (`!*`/`!/`/`!%` or another async start), and no `SPRSYS` write. Any of
 > these either corrupts the in-flight operation or is corrupted by it, because
 > the sprite engine shares the very same math registers.
@@ -265,7 +265,7 @@ contract (§3).
   the floor, not the expectation.
 * **Harvest never** (start with no matching result): the unit is left in DONE
   with stale registers. Harmless until the *next* `start`, which overwrites them.
-  The only hazard is the forbidden-Suzy-use contract (§3) — e.g. a TGI draw in
+  The only hazard is the forbidden-Suzy-use contract (§3) — e.g. a Lynx graphics draw in
   the gap — which is a programmer error the grep-audit is meant to catch.
 * **Two starts without a harvest:** the second start overwrites the first; the
   first result is lost. Defined but a logic bug; "one in flight" forbids it.
@@ -290,7 +290,7 @@ Extend `examples/muldivtest/muldivtest.c` (or a sibling `asyncmathtest.c`) with:
    start + N cycles of real work + result, showing the divide latency is hidden
    when the interleaved work is ≥ the divide time.
 5. **Contract negative-check (manual/doc).** A commented example that violates
-   the gap contract (a TGI draw between start and result) and shows the
+   the gap contract (a Lynx graphics draw between start and result) and shows the
    corruption, kept as a cautionary sample, not a passing test.
 
 Host pre-validation as in §2.6: model the exact byte stores and the

@@ -37,7 +37,7 @@
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <lynx/joystick.h>
 #include <6502.h>
 #include <string.h>
@@ -442,7 +442,7 @@ static unsigned char rng = 0x2B;
 static unsigned char joy, prev_joy, pressed;
 static unsigned char cyc_phase, cyc_div;
 
-/* HUD is split so each tgi_outtext stays within the 20-char/line cap
+/* HUD is split so each gfx_outtext stays within the 20-char/line cap
 ** (the 8x8 font makes 20 glyphs exactly one 160px row). */
 static char hud_sc[] = "SCORE 00000";       /* score digits at +6  */
 static char hud_lv[] = "SHIPS 3";           /* lives digit  at +6  */
@@ -787,12 +787,12 @@ static void draw (void)
 {
     unsigned char b, s;
 
-    while (tgi_busy ()) {}
-    tgi_setcolor (COLOR_BLACK);
-    tgi_clear ();
+    while (gfx_busy ()) {}
+    gfx_setcolor (COLOR_BLACK);
+    gfx_clear ();
 
     /* invaders: one chained engine run */
-    if (alive) tgi_sprite (&inv[0]);
+    if (alive) gfx_sprite (&inv[0]);
 
     /* bunkers (recolour as they take damage: green -> brown -> dark) */
     for (b = 0; b < NBUNKERS; ++b) {
@@ -801,20 +801,20 @@ static void draw (void)
         if      (bunk_hp[b] >= 5) bunker_scb.penpal[0] = (PEN_BG << 4) | PEN_BUNKER;
         else if (bunk_hp[b] >= 3) bunker_scb.penpal[0] = (PEN_BG << 4) | 5; /* yellow */
         else                      bunker_scb.penpal[0] = (PEN_BG << 4) | 6; /* red   */
-        tgi_sprite (&bunker_scb);
+        gfx_sprite (&bunker_scb);
     }
 
     /* UFO */
     if (ufo_on) {
         ufo_scb.hpos = ufox;
-        tgi_sprite (&ufo_scb);
+        gfx_sprite (&ufo_scb);
     }
 
     /* explosion */
     if (boom_on) {
         boom_scb.hpos = boomx;
         boom_scb.vpos = boomy;
-        tgi_sprite (&boom_scb);
+        gfx_sprite (&boom_scb);
         --boom_on;
     }
 
@@ -823,51 +823,51 @@ static void draw (void)
         if (!bomb_on[s]) continue;
         bomb_scb.hpos = bombx[s];
         bomb_scb.vpos = bomby[s];
-        tgi_sprite (&bomb_scb);
+        gfx_sprite (&bomb_scb);
     }
 
     /* cannon (hidden during the death pause flash) */
     if (state != ST_DEAD || (dead_timer & 4)) {
         ship_scb.hpos = px;
-        tgi_sprite (&ship_scb);
+        gfx_sprite (&ship_scb);
     }
 
     /* player bullet */
     if (bullet_on) {
         pbullet_scb.hpos = blx;
         pbullet_scb.vpos = bly;
-        tgi_sprite (&pbullet_scb);
+        gfx_sprite (&pbullet_scb);
     }
 
     /* HUD (top row) */
     if (score > hiscore) hiscore = score;
     fmt5 (score, hud_sc + 6);
     hud_lv[6] = '0' + lives;
-    tgi_setcolor (COLOR_WHITE);
-    tgi_outtextxy (0, 0, hud_sc);
-    tgi_outtextxy (104, 0, hud_lv);
+    gfx_setcolor (COLOR_WHITE);
+    gfx_outtextxy (0, 0, hud_sc);
+    gfx_outtextxy (104, 0, hud_lv);
 
     if (state == ST_OVER) {
         fmt5 (hiscore, hud_hi + 3);
-        tgi_setcolor (COLOR_RED);
-        tgi_outtextxy (44, 40, "GAME OVER");
-        tgi_setcolor (COLOR_YELLOW);
-        tgi_outtextxy (48, 54, hud_hi);
-        tgi_setcolor (COLOR_WHITE);
-        tgi_outtextxy (28, 66, "A = NEW GAME");
+        gfx_setcolor (COLOR_RED);
+        gfx_outtextxy (44, 40, "GAME OVER");
+        gfx_setcolor (COLOR_YELLOW);
+        gfx_outtextxy (48, 54, hud_hi);
+        gfx_setcolor (COLOR_WHITE);
+        gfx_outtextxy (28, 66, "A = NEW GAME");
     } else if (state == ST_WIN) {
-        tgi_setcolor (COLOR_GREEN);
-        tgi_outtextxy (36, 44, "WAVE CLEAR");
+        gfx_setcolor (COLOR_GREEN);
+        gfx_outtextxy (36, 44, "WAVE CLEAR");
     }
 
-    tgi_updatedisplay ();
+    gfx_updatedisplay ();
 }
 
 void main (void)
 {
-    tgi_init ();
+    gfx_init ();
     CLI ();
-    while (tgi_busy ()) {}
+    while (gfx_busy ()) {}
 
     /* sound: enable all channels to both ears */
     MIKEY.mstereo = 0x00;
@@ -877,9 +877,9 @@ void main (void)
     snd_silence (&MIKEY.channel_d);
 
     pal_init ();
-    tgi_setpalette (pal);
-    tgi_setframerate (60);
-    tgi_setcollisiondetection (0);
+    gfx_setpalette (pal);
+    gfx_setframerate (60);
+    gfx_setcollisiondetection (0);
 
     new_game ();
     prev_joy = 0;
@@ -913,7 +913,7 @@ void main (void)
 
         sfx_update ();
         cycle_colours ();
-        tgi_setpalette (pal);
+        gfx_setpalette (pal);
         draw ();
     }
 }

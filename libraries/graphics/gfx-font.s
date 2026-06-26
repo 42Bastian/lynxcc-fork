@@ -7,18 +7,18 @@
 ; the root LICENSE file, not the SDK's MPL-2.0. See doc/licenses.html.
 
 ;
-; Lynx static TGI: the 8x8 bitmap font.
+; Lynx graphics: the 8x8 bitmap font.
 ;
 ; 96 glyphs (ASCII 32-127) plus 64 high glyphs, 8 bytes each, one byte
 ; per pixel row; bit value 0 = foreground, 1 = background/transparent.
-; Referenced only by tgi-text.s, so text-free programs do not link it.
+; Referenced only by gfx-text.s, so text-free programs do not link it.
 ;
 
-        .export         tgi_font
+        .export         gfx_font
 
 .rodata
 
-tgi_font:
+gfx_font:
 ; VERSAIL
         .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF  ;32
         .byte $FF, $E7, $FF, $FF, $E7, $E7, $E7, $E7  ;33

@@ -12,7 +12,7 @@ See doc/licenses.html.
 <link rel="stylesheet" href="doc.css">
 <script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
 </head><body>
-<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html">Functions</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html" class="active">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html">Migrating</a><a href="history.html">History</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>Atari Lynx specific information for cc65</h1></header><div class="abstract">An overview over the Atari Lynx runtime system as it is implemented for the
+<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html">Functions</a><a href="lynx_gfx_fonts.html">Fonts</a><a href="lynx.html" class="active">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html">Migrating</a><a href="history.html">History</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>Atari Lynx specific information for cc65</h1></header><div class="abstract">An overview over the Atari Lynx runtime system as it is implemented for the
 cc65 C compiler.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Overview</a></li>
 <li class="lvl1"><a href="#sect-2">2. Building your first Hello World application</a></li>
@@ -29,7 +29,7 @@ cc65 C compiler.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl2"><a href="#sect-7-2">7.2. Hardware access</a></li>
 <li class="lvl2"><a href="#sect-7-3">7.3. Constants and macros</a></li>
 <li class="lvl1"><a href="#sect-8">8. Device support</a></li>
-<li class="lvl2"><a href="#sect-8-1">8.1. Graphics (TGI)</a></li>
+<li class="lvl2"><a href="#sect-8-1">8.1. Graphics</a></li>
 <li class="lvl2"><a href="#sect-8-2">8.2. Joypad input</a></li>
 <li class="lvl2"><a href="#sect-8-3">8.3. ComLynx serial</a></li>
 <li class="lvl2"><a href="#sect-8-4">8.4. Audio</a></li>
@@ -51,23 +51,23 @@ information.</p>
 <h2 id="sect-2">2. Building your first Hello World application</h2>
 <p>Here is a small traditional Hello World program for the Atari Lynx.</p>
 <pre class="verb">#include &lt;lynx/lynx.h&gt;
-#include &lt;lynx/tgi.h&gt;
+#include &lt;lynx/gfx.h&gt;
 #include &lt;6502.h&gt; 
 
 void main(void) {
-  tgi_init();
+  gfx_init();
   CLI();
-  while (tgi_busy())
+  while (gfx_busy())
     ;
-  tgi_clear();
-  tgi_setcolor(COLOR_GREEN);
-  tgi_outtextxy(0, 0, "Hello World");
-  tgi_updatedisplay();
+  gfx_clear();
+  gfx_setcolor(COLOR_GREEN);
+  gfx_outtextxy(0, 0, "Hello World");
+  gfx_updatedisplay();
   while (1)
     ;
 }</pre>
 <p>The lynx.h contains all kind of system dependent things.</p>
-<p>The tgi.h contains the graphics functions.</p>
+<p>The gfx.h contains the graphics functions.</p>
 <p>The 6502.h is needed for executing the CLI() command.</p>
 <p>As the Atari Lynx does not have ASCII characters available you need to use
 the Tiny Graphics Interface library for producing letters on the screen.</p>
@@ -216,7 +216,7 @@ area and the top of the C&nbsp;stack move down to <code>$A057</code>:</p>
 <dt>Text screen</dt>
 <dd>
 <p>There is no conio support: the Lynx has no text mode. Text output goes
-  through the TGI bitmap-font functions (<code>tgi_outtext</code>, <code>tgi_outtextxy</code>).</p>
+  through the Lynx graphics bitmap-font functions (<code>gfx_outtext</code>, <code>gfx_outtextxy</code>).</p>
 </dd>
 <dt>Keyboard</dt>
 <dd>
@@ -634,7 +634,7 @@ structures, accessing the struct fields will access the chip registers.</p>
 </dl>
 <h3 id="sect-7-3">7.3. Constants and macros</h3>
 <p><code>lynx/lynx.h</code> also defines the palette-index colour constants. They number
-the 16 entries of the default palette loaded by <code><a href="funcref.html#tgi_init">tgi_init</a></code>:</p>
+the 16 entries of the default palette loaded by <code><a href="funcref.html#gfx_init">gfx_init</a></code>:</p>
 <pre class="verb">COLOR_BLACK      0x00   COLOR_YELLOW      0x08
 COLOR_RED        0x01   COLOR_LIGHTGREEN  0x09
 COLOR_PINK       0x02   COLOR_GREEN       0x0A
@@ -643,9 +643,9 @@ COLOR_GREY       0x04   COLOR_VIOLET      0x0C
 COLOR_DARKGREY   0x05   COLOR_BLUE        0x0D
 COLOR_BROWN      0x06   COLOR_LIGHTBLUE   0x0E
 COLOR_PEACH      0x07   COLOR_WHITE       0x0F</pre>
-<p>A matching set of <code>TGI_COLOR_*</code> aliases (for example
-<code>TGI_COLOR_WHITE</code>) is provided for use with the TGI functions; each
-<code>TGI_COLOR_x</code> is simply equal to the corresponding <code>COLOR_x</code>.</p>
+<p>A matching set of <code>GFX_COLOR_*</code> aliases (for example
+<code>GFX_COLOR_WHITE</code>) is provided for use with the Lynx graphics functions; each
+<code>GFX_COLOR_x</code> is simply equal to the corresponding <code>COLOR_x</code>.</p>
 <p>The joypad bit masks describe the value returned by
 <code><a href="#sect-8-2">joy_read()</a></code>. The low byte is the raw hardware
 register; the Pause switch (a Mikey-side button) is reported in bit&nbsp;8:</p>
@@ -663,30 +663,30 @@ JOY_RIGHT_MASK  0x10    JOY_BTN_2_MASK   0x02
 <p>This tree has no loadable drivers at all. Graphics, joypad input, ComLynx
 serial, audio, EEPROM cart save data and cart data reading are each provided as a
 static, smart-linked library, described below.</p>
-<h3 id="sect-8-1">8.1. Graphics (TGI)</h3>
-<p>TGI on the Lynx is a direct-call static library, not a loadable driver:
+<h3 id="sect-8-1">8.1. Graphics</h3>
+<p>Lynx graphics is a direct-call static library, not a loadable driver:
   there is exactly one display mode (160×102 in 16 colors) and all
-  drawing is done by the Suzy sprite engine. No tgi_install() call is
-  needed; just call tgi_init(). See design/LYNX_TGI_DESIGN.md for the design.</p>
+  drawing is done by the Suzy sprite engine. No driver-install call is
+  needed; just call gfx_init(). See design/LYNX_GFX_DESIGN.md for the design.</p>
 <p>The library is implemented as an interrupt driven dual buffering device.
   To use it as a single-buffer device set draw page and view page to the same
   value 0 or 1;</p>
-<p>Calling tgi_sprite(spr) will display a standard Lynx sprite on screen.</p>
-<p>Calling tgi_flip() will do a flip screen (180-degree rotation for
+<p>Calling gfx_sprite(spr) will display a standard Lynx sprite on screen.</p>
+<p>Calling gfx_flip() will do a flip screen (180-degree rotation for
   left-handed use).</p>
-<p>Calling tgi_setbgcolor(bgindex) will set the text background color to the
+<p>Calling gfx_setbgcolor(bgindex) will set the text background color to the
   index defined by bgindex. If bgindex is 0 then the background color is
   transparent.</p>
-<p>To set the framerate of the display hardware call tgi_setframerate(rate).
+<p>To set the framerate of the display hardware call gfx_setframerate(rate).
   The supported framerates are 50, 60 and 75 frames per second. Actually
   there is no real reason to use anything else than 75 frames per second.</p>
 <p>To check if the drawing engine is busy with the previous swap you can
-  call tgi_busy(). It returns 0 if idle and 1 if busy.</p>
-<p>To update displays you can call tgi_updatedisplay(). It will wait for the
+  call gfx_busy(). It returns 0 if idle and 1 if busy.</p>
+<p>To update displays you can call gfx_updatedisplay(). It will wait for the
   next VBL interrupt and set the draw buffer to the view buffer. The draw
   buffer is also changed to (drawbuffer xor 1).</p>
 <p>You can also enable or disable collision detection by a call to
-  tgi_setcollisiondetection(active). The collision result is located before
+  gfx_setcollisiondetection(active). The collision result is located before
   the sprite structure by default.</p>
 <p>In order to reserve memory for the collision detection buffer you need to
   specify lynx-coll.cfg as the configuration file to the linker.</p>

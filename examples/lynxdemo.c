@@ -9,8 +9,8 @@
 /*
 ** Minimal Atari Lynx sample for cc65.
 **
-** Shows the static TGI library (design/LYNX_TGI_DESIGN.md): no driver install,
-** just tgi_init(). A hardware-scaled sprite bounces around the screen,
+** Shows the static Lynx graphics library (design/LYNX_GFX_DESIGN.md): no driver install,
+** just gfx_init(). A hardware-scaled sprite bounces around the screen,
 ** double buffered, with fractionally scaled text on top.
 **
 ** Controls: A grows the ball, B shrinks it, pad left/right changes
@@ -20,7 +20,7 @@
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <lynx/joystick.h>
 #include <6502.h>
 
@@ -68,11 +68,11 @@ void main (void)
     unsigned char joy, prev = 0, pressed;
     unsigned char size;                 /* ball size in pixels  */
 
-    tgi_init ();
+    gfx_init ();
     CLI ();
 
-    tgi_setframerate (60);
-    tgi_settextscale (0x0180, 0x0180);  /* 1.5x text: true 8.8 scaling */
+    gfx_setframerate (60);
+    gfx_settextscale (0x0180, 0x0180);  /* 1.5x text: true 8.8 scaling */
 
     for (;;) {
         joy = joy_read ();
@@ -89,9 +89,9 @@ void main (void)
         x += dx;
         y += dy;
         if (x <= 0)                  { x = 0; dx = 2; }
-        if (x >= TGI_XRES - size)    { x = TGI_XRES - size; dx = -2; }
+        if (x >= GFX_XRES - size)    { x = GFX_XRES - size; dx = -2; }
         if (y <= 10)                 { y = 10; dy = 1; }
-        if (y >= TGI_YRES - size)    { y = TGI_YRES - size; dy = -1; }
+        if (y >= GFX_YRES - size)    { y = GFX_YRES - size; dy = -1; }
 
         ball.hpos  = x;
         ball.vpos  = y;
@@ -100,12 +100,12 @@ void main (void)
         ball.penpal[0] = pen;           /* value 1 (body) -> selected pen */
 
         /* Render into the back buffer, then request the swap */
-        while (tgi_busy ()) {}
-        tgi_setcolor (COLOR_BLACK);     /* tgi_clear fills in draw color */
-        tgi_clear ();
-        tgi_sprite (&ball);
-        tgi_setcolor (COLOR_WHITE);
-        tgi_outtextxy (4, 0, "HELLO, LYNX!");
-        tgi_updatedisplay ();
+        while (gfx_busy ()) {}
+        gfx_setcolor (COLOR_BLACK);     /* gfx_clear fills in draw color */
+        gfx_clear ();
+        gfx_sprite (&ball);
+        gfx_setcolor (COLOR_WHITE);
+        gfx_outtextxy (4, 0, "HELLO, LYNX!");
+        gfx_updatedisplay ();
     }
 }

@@ -41,7 +41,7 @@
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <lynx/joystick.h>
 #include <lynx/suzymath.h>
 #include <stdio.h>
@@ -314,7 +314,7 @@ static void wait_a (void)
     while (joy_read () & JOY_BTN_1_MASK) {}
 }
 
-/* The TGI text renderer draws at most 20 chars per call, so every column is
+/* The Lynx graphics text renderer draws at most 20 chars per call, so every column is
 ** emitted as its own short call at a fixed x rather than one wide sprintf.
 ** Column x's are tuned for the 5x5 compact font (6px pitch): a 6-char value
 ** is 36px, so the rightmost column ends well within the 160px screen. */
@@ -327,14 +327,14 @@ static void show_div (void)
 {
     unsigned char w, y;
 
-    tgi_setcolor (COLOR_BLACK);
-    tgi_clear ();
-    tgi_setcolor (COLOR_WHITE);
-    tgi_outtextxy (CX_LBL, 2, "UDIV+WORK us/op");
-    tgi_setcolor (COLOR_GREEN);
-    tgi_outtextxy (CX_SOFT, 14, "SOFT");
-    tgi_outtextxy (CX_SYNC, 14, "SYNC");
-    tgi_outtextxy (CX_ASY,  14, "ASYNC");
+    gfx_setcolor (COLOR_BLACK);
+    gfx_clear ();
+    gfx_setcolor (COLOR_WHITE);
+    gfx_outtextxy (CX_LBL, 2, "UDIV+WORK us/op");
+    gfx_setcolor (COLOR_GREEN);
+    gfx_outtextxy (CX_SOFT, 14, "SOFT");
+    gfx_outtextxy (CX_SYNC, 14, "SYNC");
+    gfx_outtextxy (CX_ASY,  14, "ASYNC");
 
     y = 26;
     for (w = 0; w < NWORK; ++w) {
@@ -342,22 +342,22 @@ static void show_div (void)
         fmt10 (cy2, us_sync[w]);
         fmt10 (ca, us_async[w]);
         /* Highlight green when async beats sync (work hidden under divide). */
-        tgi_setcolor (us_async[w] < us_sync[w] ? COLOR_GREEN : COLOR_WHITE);
-        tgi_outtextxy (CX_LBL,  y, worklabel[w]);
-        tgi_outtextxy (CX_SOFT, y, cs);
-        tgi_outtextxy (CX_SYNC, y, cy2);
-        tgi_outtextxy (CX_ASY,  y, ca);
+        gfx_setcolor (us_async[w] < us_sync[w] ? COLOR_GREEN : COLOR_WHITE);
+        gfx_outtextxy (CX_LBL,  y, worklabel[w]);
+        gfx_outtextxy (CX_SOFT, y, cs);
+        gfx_outtextxy (CX_SYNC, y, cy2);
+        gfx_outtextxy (CX_ASY,  y, ca);
         y += 11;
     }
 
-    tgi_setcolor (COLOR_GREY);
-    tgi_outtextxy (CX_LBL, 66, "GREEN: ASYNC < SYNC");
-    tgi_outtextxy (CX_LBL, 76, "OVERLAP HIDES WORK");
+    gfx_setcolor (COLOR_GREY);
+    gfx_outtextxy (CX_LBL, 66, "GREEN: ASYNC < SYNC");
+    gfx_outtextxy (CX_LBL, 76, "OVERLAP HIDES WORK");
 
-    tgi_setcolor (mism ? COLOR_RED : COLOR_YELLOW);
-    tgi_outtextxy (CX_LBL, 92, mism ? "MISMATCH! A=NEXT" : "RESULTS OK  A=NEXT");
-    tgi_updatedisplay ();
-    while (tgi_busy ()) {}
+    gfx_setcolor (mism ? COLOR_RED : COLOR_YELLOW);
+    gfx_outtextxy (CX_LBL, 92, mism ? "MISMATCH! A=NEXT" : "RESULTS OK  A=NEXT");
+    gfx_updatedisplay ();
+    while (gfx_busy ()) {}
     wait_a ();
 }
 
@@ -371,54 +371,54 @@ static void show_spot (void)
 {
     unsigned char i, y;
 
-    tgi_setcolor (COLOR_BLACK);
-    tgi_clear ();
-    tgi_setcolor (COLOR_WHITE);
-    tgi_outtextxy (SX_LBL, 2, "OPS +W=20 us/op");
-    tgi_setcolor (COLOR_GREEN);
-    tgi_outtextxy (SX_SYNC, 14, "SYNC");
-    tgi_outtextxy (SX_ASY,  14, "ASYNC");
+    gfx_setcolor (COLOR_BLACK);
+    gfx_clear ();
+    gfx_setcolor (COLOR_WHITE);
+    gfx_outtextxy (SX_LBL, 2, "OPS +W=20 us/op");
+    gfx_setcolor (COLOR_GREEN);
+    gfx_outtextxy (SX_SYNC, 14, "SYNC");
+    gfx_outtextxy (SX_ASY,  14, "ASYNC");
 
     y = 26;
     for (i = 0; i < 3; ++i) {
         fmt10 (cy2, sp_sync[i]);
         fmt10 (ca, sp_async[i]);
-        tgi_setcolor (sp_async[i] < sp_sync[i] ? COLOR_GREEN : COLOR_WHITE);
-        tgi_outtextxy (SX_LBL,  y, spname[i]);
-        tgi_outtextxy (SX_SYNC, y, cy2);
-        tgi_outtextxy (SX_ASY,  y, ca);
+        gfx_setcolor (sp_async[i] < sp_sync[i] ? COLOR_GREEN : COLOR_WHITE);
+        gfx_outtextxy (SX_LBL,  y, spname[i]);
+        gfx_outtextxy (SX_SYNC, y, cy2);
+        gfx_outtextxy (SX_ASY,  y, ca);
         y += 11;
     }
 
-    tgi_setcolor (COLOR_GREY);
-    tgi_outtextxy (SX_LBL, 64, "MDIV = (A*B)/C");
-    tgi_outtextxy (SX_LBL, 74, "DIV PART OVERLAPS");
-    tgi_setcolor (COLOR_YELLOW);
-    tgi_outtextxy (SX_LBL, 92, "A = RUN AGAIN");
-    tgi_updatedisplay ();
-    while (tgi_busy ()) {}
+    gfx_setcolor (COLOR_GREY);
+    gfx_outtextxy (SX_LBL, 64, "MDIV = (A*B)/C");
+    gfx_outtextxy (SX_LBL, 74, "DIV PART OVERLAPS");
+    gfx_setcolor (COLOR_YELLOW);
+    gfx_outtextxy (SX_LBL, 92, "A = RUN AGAIN");
+    gfx_updatedisplay ();
+    while (gfx_busy ()) {}
     wait_a ();
 }
 
 static void show_progress (const char* msg)
 {
-    tgi_setcolor (COLOR_BLACK);
-    tgi_clear ();
-    tgi_setcolor (COLOR_WHITE);
-    tgi_outtextxy (2, 10, "ASYNC SUZY BENCH");
-    tgi_setcolor (COLOR_YELLOW);
-    tgi_outtextxy (2, 40, msg);
-    tgi_updatedisplay ();
-    while (tgi_busy ()) {}
+    gfx_setcolor (COLOR_BLACK);
+    gfx_clear ();
+    gfx_setcolor (COLOR_WHITE);
+    gfx_outtextxy (2, 10, "ASYNC SUZY BENCH");
+    gfx_setcolor (COLOR_YELLOW);
+    gfx_outtextxy (2, 40, msg);
+    gfx_updatedisplay ();
+    while (gfx_busy ()) {}
 }
 
 void main (void)
 {
-    tgi_init ();
+    gfx_init ();
     CLI ();
-    while (tgi_busy ()) {}
-    tgi_setpalette (tgi_getdefpalette ());
-    tgi_setfont (TGI_FONT_COMPACT);     /* 5x5 font (6px pitch): all the
+    while (gfx_busy ()) {}
+    gfx_setpalette (gfx_getdefpalette ());
+    gfx_setfont (GFX_FONT_COMPACT);     /* 5x5 font (6px pitch): all the
                                         ** number columns fit on screen */
     timer_init ();
 

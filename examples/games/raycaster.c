@@ -46,7 +46,7 @@
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <lynx/joystick.h>
 #include <6502.h>
 #include <string.h>
@@ -743,7 +743,7 @@ static void draw_enemies (void)
         guard_scb.vpos  = (SCREEN_H - sh) / 2;
         guard_scb.hsize = scale;
         guard_scb.vsize = scale;
-        tgi_sprite (&guard_scb);
+        gfx_sprite (&guard_scb);
     }
 }
 
@@ -751,50 +751,50 @@ static void draw_enemies (void)
 
 static void draw (void)
 {
-    while (tgi_busy ()) {}
+    while (gfx_busy ()) {}
 
     /* floor fills the screen, sky band over the top half */
-    tgi_setcolor (PEN_FLOOR);
-    tgi_clear ();
-    tgi_sprite (&sky_scb);
+    gfx_setcolor (PEN_FLOOR);
+    gfx_clear ();
+    gfx_sprite (&sky_scb);
 
     /* one chained engine run paints all 80 wall columns */
-    tgi_sprite (&wallscb[0]);
+    gfx_sprite (&wallscb[0]);
 
     draw_enemies ();
 
     /* gun viewmodel (kicks down on recoil) */
     gun_scb.vpos = 62 + (gunkick ? 4 : 0);
-    tgi_sprite (&gun_scb);
+    gfx_sprite (&gun_scb);
     if (flash_t) {
-        tgi_sprite (&flash_scb);
+        gfx_sprite (&flash_scb);
         --flash_t;
     }
 
     /* crosshair */
-    tgi_setcolor (PEN_TEXT);
-    tgi_outtextxy (SCREEN_W / 2 - 4, SCREEN_H / 2 - 4, "+");
+    gfx_setcolor (PEN_TEXT);
+    gfx_outtextxy (SCREEN_W / 2 - 4, SCREEN_H / 2 - 4, "+");
 
     /* HUD */
     fmt3 ((unsigned)health, hud_hp + 3);
     fmt3 (score, hud_sc + 6);
-    tgi_setcolor (health <= 25 ? PEN_WARN : PEN_TEXT);
-    tgi_outtextxy (2, 0, hud_hp);
-    tgi_setcolor (PEN_TEXT);
-    tgi_outtextxy (100, 0, hud_sc);
+    gfx_setcolor (health <= 25 ? PEN_WARN : PEN_TEXT);
+    gfx_outtextxy (2, 0, hud_hp);
+    gfx_setcolor (PEN_TEXT);
+    gfx_outtextxy (100, 0, hud_sc);
 
     if (state == ST_OVER) {
-        tgi_setcolor (PEN_WARN);
-        tgi_outtextxy (44, 42, "GAME OVER");
-        tgi_setcolor (PEN_TEXT);
-        tgi_outtextxy (28, 56, "A = NEW GAME");
+        gfx_setcolor (PEN_WARN);
+        gfx_outtextxy (44, 42, "GAME OVER");
+        gfx_setcolor (PEN_TEXT);
+        gfx_outtextxy (28, 56, "A = NEW GAME");
     } else if (state == ST_WIN) {
-        tgi_setcolor (PEN_TEXT);
-        tgi_outtextxy (32, 42, "WAVE CLEAR!");
-        tgi_outtextxy (28, 56, "A = NEXT WAVE");
+        gfx_setcolor (PEN_TEXT);
+        gfx_outtextxy (32, 42, "WAVE CLEAR!");
+        gfx_outtextxy (28, 56, "A = NEXT WAVE");
     }
 
-    tgi_updatedisplay ();
+    gfx_updatedisplay ();
 }
 
 /* ------------------------------------------------------------------ */
@@ -803,9 +803,9 @@ void main (void)
 {
     unsigned char i;
 
-    tgi_init ();
+    gfx_init ();
     CLI ();
-    while (tgi_busy ()) {}
+    while (gfx_busy ()) {}
 
     /* chain the wall SCBs once; fields are rewritten each frame */
     for (i = 0; i < NCOL; ++i)
@@ -818,9 +818,9 @@ void main (void)
     snd_silence (&MIKEY.channel_d);
 
     pal_init ();
-    tgi_setpalette (pal);
-    tgi_setframerate (60);
-    tgi_setcollisiondetection (0);
+    gfx_setpalette (pal);
+    gfx_setframerate (60);
+    gfx_setcollisiondetection (0);
 
     new_game ();
     prev_joy = 0;

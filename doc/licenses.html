@@ -12,7 +12,7 @@ See doc/licenses.html.
 <link rel="stylesheet" href="doc.css">
 <script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
 </head><body>
-<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html">Functions</a><a href="lynx_tgi_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html">Migrating</a><a href="history.html">History</a><a href="licenses.html" class="active">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>Licenses and copyright notices</h1></header><div class="abstract">A single, authoritative home for every license and copyright notice that
+<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html">Functions</a><a href="lynx_gfx_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html">Migrating</a><a href="history.html">History</a><a href="licenses.html" class="active">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>Licenses and copyright notices</h1></header><div class="abstract">A single, authoritative home for every license and copyright notice that
 applies to the <strong>lynxcc</strong> / Lynx Game Development SDK distribution. The notices
 below are reproduced verbatim and must not be removed or altered from any
 source distribution.</div><nav class="toc"><h2>Contents</h2><ul>
@@ -155,8 +155,8 @@ and the notice is not removed from any source distribution.</p>
 <h2 id="sect-5">5. SDK toolchain &mdash; Mozilla Public License 2.0</h2>
 <p>The source files this fork has <em>authored from scratch</em> &mdash; the Suzy
 hardware-math routines, the static joypad read (<code>joy-read.s</code>), the
-compact bitmap-font modules of the static TGI text system
-(<code>tgi-setfont/font5x5/text5x5/textvar/fontvar.s</code>), the
+compact bitmap-font modules of the static Lynx graphics text system
+(<code>gfx-setfont/font5x5/text5x5/textvar/fontvar.s</code>), the
 <code>&lt;lynx/suzymath.h&gt;</code> header, the
 <code>lnx</code> cartridge tool, the SDK build orchestration, and the test
 harness &mdash; are licensed under the <strong>Mozilla Public License,
@@ -165,7 +165,7 @@ version&nbsp;2.0</strong>. Each such file carries
 notice. The MPL is file-scoped: it applies only to the files that carry its
 notice, so inherited cc65 sources (zlib-style) and bundled third-party sources
 keep their own notices and are unaffected.</p>
-<p>In particular, the static TGI graphics modules and the ComLynx serial modules
+<p>In particular, the static Lynx graphics modules and the ComLynx serial modules
 were <em>extracted and adapted from Karri Kaksonen's cc65 Lynx drivers</em>
 (the <code>lynx-160-102-16</code> TGI driver and the <code>lynx-comlynx</code>
 serial driver). As derived cc65 work they keep his copyright and an extraction

@@ -7,7 +7,7 @@ See doc/licenses.html.
 
 # Design: Sprite construction and the Suzy "last-pixel" pad-byte bug
 
-Scope: how hand-built sprites and the runtime TGI text strips are encoded against
+Scope: how hand-built sprites and the runtime Lynx graphics text strips are encoded against
 Suzy's end-of-line sprite-data bug. This document is the source of truth for the
 pad-byte rule. Every claim here was checked on **GearLynx** (drhelius'
 accuracy-focused emulator) running the built `.lnx` ROMs headless in the sandbox
@@ -144,8 +144,8 @@ runtime to prove the two encodings interchangeable (§5–6):
 | `examples/invaders/invaders.c` | `inv_a/inv_b/inv_boom`, `ship_img`, bullets, bomb, bunker, ufo | 4bpp | pen 0 | `$00` |
 | `examples/raycaster/raycaster.c` | `solid_img`, `guard_img`, `guard_img2`, `gun_img`, `flash_img` | 4bpp | pen 0 (`PEN_NONE`) | `$00` |
 | `examples/sybil/sybil.c` | `syb0..syb2(+l)`, `en_a/en_b`, `coin_img`, `blk_img` | 4bpp | pen 0 (identity penpal) | `$00` |
-| `libraries/graphics/tgi-text.s` | runtime 8×8 glyph strip (`build8x8`) | 1bpp | draw pen (active-low) | `$FF` |
-| `libraries/graphics/tgi-text5x5.s` | runtime 5×5 glyph strip (`build5x5`) | 1bpp | — | exempt (§4) |
+| `libraries/graphics/gfx-text.s` | runtime 8×8 glyph strip (`build8x8`) | 1bpp | draw pen (active-low) | `$FF` |
+| `libraries/graphics/gfx-text5x5.s` | runtime 5×5 glyph strip (`build5x5`) | 1bpp | — | exempt (§4) |
 | `examples/packtest/packtest.c` (literal control) | `litdata[]` rainbow/bands | 1/2/3/4bpp | pen 0 (identity penpal) | `$00` |
 | `examples/packtest/packtest.c` (packed copy) | `packdata[]` rainbow/bands | 1/2/3/4bpp | pen 0 (identity penpal) | `00000` marker (§5) |
 

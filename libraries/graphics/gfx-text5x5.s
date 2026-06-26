@@ -7,12 +7,12 @@
 ; Part of the Lynx Game Development SDK (lynxcc). See doc/licenses.html.
 
 ;
-; Lynx static TGI: compact 5x5 bitmap text builder.
+; Lynx graphics: compact 5x5 bitmap text builder.
 ;
-; build5x5 is an alternate body for tgi_outtext, reached through tgi_buildptr
-; when the program has called tgi_setfont(TGI_FONT_COMPACT). It shares the
+; build5x5 is an alternate body for gfx_outtext, reached through gfx_buildptr
+; when the program has called gfx_setfont(GFX_FONT_COMPACT). It shares the
 ; prologue (string pointer, start position, capped length) and the epilogue
-; (draw + cursor advance) with the 8x8 builder in tgi-text.s.
+; (draw + cursor advance) with the 8x8 builder in gfx-text.s.
 ;
 ; Unlike the 8x8 font, glyphs are packed at a 6-px pitch (5 ink + 1 gap), so
 ; they are not byte-aligned: each glyph's 5-bit rows are shifted into a
@@ -21,19 +21,19 @@
 ;
 ;   sprite type = $04 (normal) -> pixel value 0 maps to pen 0, which a
 ;   normal sprite does not draw (transparent).
-;   pen byte = tgi_drawindex    -> high nibble 0 (pixel value 0 -> pen 0,
+;   pen byte = gfx_drawindex    -> high nibble 0 (pixel value 0 -> pen 0,
 ;   transparent), low nibble = current pen (pixel value 1 -> foreground).
 ;
 ; The font stores foreground as bit value 1 (5 ink bits in bits 7..3), so a
 ; glyph row ORs straight into a zero-initialised (= transparent) strip with
-; no inversion. See design/LYNX_TGI_FONT5X5_DESIGN.md sec. 3-5.
+; no inversion. See design/LYNX_GFX_FONT5X5_DESIGN.md sec. 3-5.
 ;
 
         .include        "zeropage.inc"
         .include "lynx/lynx.inc"
 
-        .import         tgi_drawindex
-        .import         tgi_font5x5
+        .import         gfx_drawindex
+        .import         gfx_font5x5
         .import         text_sprite
         .import         text_c
         .import         text_bitmap
@@ -43,7 +43,7 @@
 
 PITCH           = 6
 
-; Zero page aliases (zp slots are global; STRPTR/STRLEN match tgi-text.s).
+; Zero page aliases (zp slots are global; STRPTR/STRLEN match gfx-text.s).
 
 STRPTR          := ptr3
 STRLEN          := tmp4
@@ -65,7 +65,7 @@ b5_idx:         .res    1       ; current character index
 build5x5:
         lda     #$04            ; normal sprite -> pen 0 transparent
         sta     text_sprite
-        lda     tgi_drawindex   ; pen byte = (0 << 4) | drawindex
+        lda     gfx_drawindex   ; pen byte = (0 << 4) | drawindex
         sta     text_c
 
 ; W = (N * 6 + 7) >> 3 ; N = STRLEN (1..20) -> W in 1..15
@@ -142,10 +142,10 @@ build5x5:
         adc     #0
         sta     DST+1
 
-        ; GP = tgi_font5x5 + t * 5, where t is the glyph index after folding
+        ; GP = gfx_font5x5 + t * 5, where t is the glyph index after folding
         ; lower-case a-z onto A-Z and splicing the freed a-z slots out of the
         ; table - so those 26 duplicate glyphs are never stored. See the table
-        ; layout note in tgi-font5x5.s.
+        ; layout note in gfx-font5x5.s.
         ldy     b5_idx
         lda     (STRPTR),y
         cmp     #'a'            ; fold a-z -> A-Z (clear bit 5)
@@ -173,10 +173,10 @@ build5x5:
         inc     GP+1
 @nc:    clc
         lda     GP
-        adc     #<tgi_font5x5
+        adc     #<gfx_font5x5
         sta     GP
         lda     GP+1
-        adc     #>tgi_font5x5
+        adc     #>gfx_font5x5
         sta     GP+1
 
         ; For each of the 5 rows: shift the glyph row right by b5_shift and

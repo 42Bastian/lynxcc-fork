@@ -18,7 +18,7 @@
 ;
 ; Contracts (see design/LYNX_CODEGEN_DESIGN.md 2.6):
 ;   - The Suzy sprite engine must be idle (it shares the math unit during
-;     scaled sprite rendering). TGI draws synchronously, so this holds by
+;     scaled sprite rendering). Lynx graphics draws synchronously, so this holds by
 ;     construction unless custom asynchronous sprite code is used.
 ;   - NOT interrupt-safe: the math registers are global hardware state and
 ;     there is no safe save/restore protocol (rewriting the inputs starts a

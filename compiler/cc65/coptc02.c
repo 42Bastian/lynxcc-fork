@@ -62,7 +62,7 @@ static int IsSuzyHwAddr (const CodeEntry* E)
 /* Return true if the entry's argument is a constant address within the Lynx
 ** Suzy hardware register range $FC00-$FCFF. Suzy breaks if one instruction
 ** performs two Suzy accesses (hardware spec ch. 3.1.2; design/LYNX_CODEGEN_DESIGN.md
-** §2.2, design/LYNX_TGI_DESIGN.md §5), so read-modify-write opcodes such as TRB/TSB
+** §2.2, design/LYNX_GFX_DESIGN.md §5), so read-modify-write opcodes such as TRB/TSB
 ** must never target this range. Only checked for the Lynx target.
 */
 {

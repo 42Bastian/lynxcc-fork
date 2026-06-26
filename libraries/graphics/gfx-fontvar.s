@@ -7,11 +7,11 @@
 ; Part of the Lynx Game Development SDK (lynxcc). See doc/licenses.html.
 
 ;
-; Lynx static TGI: the proportional (variable-width) caps font.
+; Lynx graphics: the proportional (variable-width) caps font.
 ;
 ; 70 stored glyphs, 5 bytes each, one byte per pixel row. Ink bits are
 ; LEFT-aligned from bit 7; bit value 1 = foreground (same convention as the
-; 5x5 font, opposite the 8x8 font). The companion table tgi_fontadv gives each
+; 5x5 font, opposite the 8x8 font). The companion table gfx_fontadv gives each
 ; glyph's cursor advance (ink width + 1-px gap).
 ;
 ; Table order is NOT a plain (ch-32): the builder folds lower-case a-z onto
@@ -19,17 +19,17 @@
 ;   index  0..64 = ASCII  32..96   (space .. backtick)
 ;   index 65..68 = ASCII 123..126  ( { | } ~ )
 ;   index    69  = ASCII 127       ( DEL, blank )
-; The index math (fold + splice) lives in buildvar; see design/LYNX_TGI_FONTVAR_DESIGN.md.
+; The index math (fold + splice) lives in buildvar; see design/LYNX_GFX_FONTVAR_DESIGN.md.
 ;
 ; Recovered from img_help.bmp (EggSavier intro screen); glyphs absent from that
 ; art (K Q W X Z, digits, most punctuation) are designed to match.
 
-        .export         tgi_fontvar
-        .export         tgi_fontadv
+        .export         gfx_fontvar
+        .export         gfx_fontadv
 
 .rodata
 
-tgi_fontvar:
+gfx_fontvar:
         .byte $00, $00, $00, $00, $00   ;  32 'space'
         .byte $80, $80, $80, $00, $80   ;  33 '!'
         .byte $A0, $A0, $00, $00, $00   ;  34 'dquote'
@@ -102,7 +102,7 @@ tgi_fontvar:
         .byte $00, $00, $00, $00, $00   ; 127 'DEL'
 
 ; Cursor advance per glyph (ink width + 1), same index order.
-tgi_fontadv:
+gfx_fontadv:
         .byte 4, 2, 4, 6, 4, 5, 4, 2, 3, 3, 4, 4, 2, 4, 2, 4
         .byte 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 4, 4, 4, 4
         .byte 6, 4, 4, 3, 4, 4, 3, 4, 4, 2, 4, 4, 3, 6, 5, 4

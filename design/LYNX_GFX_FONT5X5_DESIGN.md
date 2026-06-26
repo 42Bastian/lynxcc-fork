@@ -5,9 +5,9 @@ licensed under Creative Commons Attribution 4.0 International.
 See doc/licenses.html.
 -->
 
-# Lynx TGI: adding the 5×5 compact font + runtime font switching
+# Lynx graphics: adding the 5×5 compact font + runtime font switching
 
-Status: design (2026-06-14). Adds a second bitmap font to the static TGI text
+Status: design (2026-06-14). Adds a second bitmap font to the static Lynx graphics text
 path with its own **narrow-pitch, new builder**, a **transparent background**,
 and **foreground in the current pen colour**, plus a mechanism to switch between
 it and the existing 8×8 font at runtime. Programs that never select the compact
@@ -27,7 +27,7 @@ only, no lowercase**.
 
 ## 2. Why a new builder (not the 8×8 path)
 
-The existing `tgi-text.s` is locked to the 8×8 cell: it copies exactly 8 bytes
+The existing `gfx-text.s` is locked to the 8×8 cell: it copies exactly 8 bytes
 per glyph, each glyph occupying one **byte-aligned** column of an 8-px-wide
 literal sprite, advances the cursor by `strlen*8`, and reports height `8*scale`.
 That byte-alignment is the whole reason it is cheap — and the whole reason it
@@ -56,13 +56,13 @@ For a 1-bpp sprite the pen buffer is one byte: high nibble = colour for pixel
 value 0, low nibble = colour for pixel value 1. The compact builder sets:
 
 ```
-pen byte = tgi_drawindex            ; high nibble 0, low nibble = current pen
+pen byte = gfx_drawindex            ; high nibble 0, low nibble = current pen
 sprite type = $04                   ; normal -> pen 0 is transparent
 ```
 
-So pixel value 0 → pen 0 → **transparent**, pixel value 1 → `tgi_drawindex` →
-**current pen colour**. `tgi_bgindex` is ignored entirely for this font. Foreground
-follows whatever `tgi_setcolor` last set, exactly as asked.
+So pixel value 0 → pen 0 → **transparent**, pixel value 1 → `gfx_drawindex` →
+**current pen colour**. `gfx_bgindex` is ignored entirely for this font. Foreground
+follows whatever `gfx_setcolor` last set, exactly as asked.
 
 Note this flips the bit convention relative to the 8×8 font: in the compact font
 **bit value 1 = foreground**. That is why the font data is stored fg = 1 (§5),
@@ -72,10 +72,10 @@ transparent) with no inversion.
 **The 8×8 font is now transparent too.** `build8x8` previously special-cased a
 background pen of 0 by switching to a *background* sprite type, forcing pen 0 to
 paint a solid black box. That special case is removed: `build8x8` always uses the
-normal sprite type ($04), so with the default `tgi_bgindex` of 0 the background
-(bit value 1) maps to pen 0 and is transparent. A non-zero `tgi_setbgcolor` still
+normal sprite type ($04), so with the default `gfx_bgindex` of 0 the background
+(bit value 1) maps to pen 0 and is transparent. A non-zero `gfx_setbgcolor` still
 produces an opaque coloured box, since the pen byte stays
-`(tgi_drawindex << 4) | tgi_bgindex` (the 8×8 font keeps bit 0 = foreground).
+`(gfx_drawindex << 4) | gfx_bgindex` (the 8×8 font keeps bit 0 = foreground).
 Caveat shared with the compact font: drawing in pen 0 itself yields invisible
 text on a normal sprite.
 
@@ -98,12 +98,12 @@ Build:
 1. Zero the `W` pixel bytes of all 5 rows (0 = background = transparent).
 2. Write each row's leading offset byte = `W+1`.
 3. For each char `i`, `bit = i*PITCH`, `byteidx = bit>>3`, `shift = bit & 7`:
-   * `t = foldsplice(ch)` (fold `a`–`z`→`A`–`Z`, then drop the freed slots — see §5); `gp = tgi_font5x5 + t*5`
+   * `t = foldsplice(ch)` (fold `a`–`z`→`A`–`Z`, then drop the freed slots — see §5); `gp = gfx_font5x5 + t*5`
    * for each of 5 rows `r`, take `src = gp[r]` (5 ink bits in bits 7..3):
      `strip[row r][byteidx]   |= src >> shift`
      `strip[row r][byteidx+1] |= src << (8-shift)`   (carry into next byte;
      `src`'s low 3 bits are 0 so the shift never loses ink)
-4. Set sprite type `$04` and pen byte `tgi_drawindex` (§3).
+4. Set sprite type `$04` and pen byte `gfx_drawindex` (§3).
 5. Draw once, sprite height 5, scaled by `text_sx/text_sy` like today.
 6. Advance the cursor by the string width (§6).
 
@@ -112,7 +112,7 @@ The whole strip is one sprite scaled once, so glyph spacing scales with the text
 
 ## 5. The compact font module
 
-New file `libraries/graphics/tgi-font5x5.s` exporting `tgi_font5x5`: **5 bytes per
+New file `libraries/graphics/gfx-font5x5.s` exporting `gfx_font5x5`: **5 bytes per
 glyph**, 5 ink bits left-aligned in bits 7..3, **bit 1 = foreground**.
 
 Because the source is caps-only, lower-case `a`–`z` would be byte-identical
@@ -151,68 +151,68 @@ linking (don't pull the compact code/data unless used), dispatch through an
 indirect builder pointer plus two metric bytes rather than a branch:
 
 ```asm
-; tgi-text.s (.data)
-tgi_buildptr:   .addr   build8x8        ; active builder; default = system 8x8
-tgi_pitch:      .byte   8               ; cursor advance per char
-tgi_fontheight: .byte   8               ; rows, for tgi_gettextheight
+; gfx-text.s (.data)
+gfx_buildptr:   .addr   build8x8        ; active builder; default = system 8x8
+gfx_pitch:      .byte   8               ; cursor advance per char
+gfx_fontheight: .byte   8               ; rows, for gfx_gettextheight
 ```
 
-* `_tgi_outtext` keeps the shared prologue (save string ptr, copy cursor to
-  `text_x/text_y`, compute capped `STRLEN`) then `jmp (tgi_buildptr)`.
+* `_gfx_outtext` keeps the shared prologue (save string ptr, copy cursor to
+  `text_x/text_y`, compute capped `STRLEN`) then `jmp (gfx_buildptr)`.
 * `build8x8` is the current builder body (unchanged); `build5x5` is §4. Both end
   in the shared draw-and-advance epilogue.
-* `tgi_gettextwidth` becomes `strlen * tgi_pitch * scale >> 8` (reads the byte
-  instead of a literal 8); `tgi_gettextheight` is `tgi_fontheight * scale >> 8`.
+* `gfx_gettextwidth` becomes `strlen * gfx_pitch * scale >> 8` (reads the byte
+  instead of a literal 8); `gfx_gettextheight` is `gfx_fontheight * scale >> 8`.
   Both are now font-agnostic and force-link neither builder.
 
-Because the default `tgi_buildptr` is `build8x8`, today's behaviour is
+Because the default `gfx_buildptr` is `build8x8`, today's behaviour is
 unchanged and only the 8×8 path links until the program asks for the compact
-font. `build5x5`/`tgi_font5x5` are referenced solely by `tgi_setfont`'s compact
+font. `build5x5`/`gfx_font5x5` are referenced solely by `gfx_setfont`'s compact
 branch, so they link only when that path is taken.
 
-Public API (`include/tgi.h`, `asminc/tgi-kernel.inc`):
+Public API (`include/gfx.h`, `asminc/gfx.inc`):
 
 ```c
-#define TGI_FONT_BITMAP   0     /* existing system 8x8           */
-#define TGI_FONT_COMPACT  1     /* new transparent 5x5, 6px pitch */
-void __fastcall__ tgi_setfont (unsigned char font);     /* tgi-setfont.s */
+#define GFX_FONT_BITMAP   0     /* existing system 8x8           */
+#define GFX_FONT_COMPACT  1     /* new transparent 5x5, 6px pitch */
+void __fastcall__ gfx_setfont (unsigned char font);     /* gfx-setfont.s */
 ```
 
-`tgi_setfont(TGI_FONT_BITMAP)`  → `buildptr=build8x8, pitch=8, height=8`.
-`tgi_setfont(TGI_FONT_COMPACT)` → `buildptr=build5x5, pitch=6, height=5`.
+`gfx_setfont(GFX_FONT_BITMAP)`  → `buildptr=build8x8, pitch=8, height=8`.
+`gfx_setfont(GFX_FONT_COMPACT)` → `buildptr=build5x5, pitch=6, height=5`.
 
-Optionally the already-ignored `font` argument of `tgi_settextstyle` can be
-forwarded to `tgi_setfont` so existing call sites gain switching for free; this
+Optionally the already-ignored `font` argument of `gfx_settextstyle` can be
+forwarded to `gfx_setfont` so existing call sites gain switching for free; this
 changes a currently-ignored argument's behaviour, so it is offered as a
-secondary convenience and would require the `lynx/tgi.h` comment to be updated.
+secondary convenience and would require the `lynx/gfx.h` comment to be updated.
 
 ## 7. Files touched
 
 | File | Change |
 |------|--------|
-| `libraries/graphics/tgi-text.s` | extract shared prologue/epilogue; add `tgi_buildptr`/`tgi_pitch`/`tgi_fontheight`; `build8x8` = current body (logic unchanged); `gettextwidth`/`gettextheight` read the metric bytes. |
-| `libraries/graphics/tgi-text5x5.s` | **new**: `build5x5` (§4) — packed strip, transparent normal sprite, pen = `tgi_drawindex`, height 5. |
-| `libraries/graphics/tgi-font5x5.s` | **new**: `tgi_font5x5`, 96 glyphs × 5 bytes, fg = bit 1. |
-| `libraries/graphics/tgi-setfont.s` | **new**: set `buildptr`/`pitch`/`fontheight` from the font id. |
-| `include/tgi.h` | add `TGI_FONT_COMPACT` + `tgi_setfont` prototype. |
-| `asminc/tgi-kernel.inc` | add `TGI_FONT_COMPACT = 1`. |
+| `libraries/graphics/gfx-text.s` | extract shared prologue/epilogue; add `gfx_buildptr`/`gfx_pitch`/`gfx_fontheight`; `build8x8` = current body (logic unchanged); `gettextwidth`/`gettextheight` read the metric bytes. |
+| `libraries/graphics/gfx-text5x5.s` | **new**: `build5x5` (§4) — packed strip, transparent normal sprite, pen = `gfx_drawindex`, height 5. |
+| `libraries/graphics/gfx-font5x5.s` | **new**: `gfx_font5x5`, 96 glyphs × 5 bytes, fg = bit 1. |
+| `libraries/graphics/gfx-setfont.s` | **new**: set `buildptr`/`pitch`/`fontheight` from the font id. |
+| `include/gfx.h` | add `GFX_FONT_COMPACT` + `gfx_setfont` prototype. |
+| `asminc/gfx.inc` | add `GFX_FONT_COMPACT = 1`. |
 
-No change to `tgi-font.s` (8×8 data) or to the sprite-draw core.
+No change to `gfx-font.s` (8×8 data) or to the sprite-draw core.
 
 ## 8. Verification plan
 
 1. **Host round-trip** (done): BMP → packed bytes → ASCII art reproduces every
    source glyph; `ascii = 32 + index` confirmed; `A/B/M/0` verified.
-2. **Build/link**: `tgi-font5x5.s` + `tgi-text5x5.s` assemble; a sample using
-   only `TGI_FONT_BITMAP` links neither (check the map file); a sample calling
-   `tgi_setfont(TGI_FONT_COMPACT)` pulls them in.
+2. **Build/link**: `gfx-font5x5.s` + `gfx-text5x5.s` assemble; a sample using
+   only `GFX_FONT_BITMAP` links neither (check the map file); a sample calling
+   `gfx_setfont(GFX_FONT_COMPACT)` pulls them in.
 3. **Regression**: an existing 8×8 text program is byte-identical (default
    `buildptr`/`pitch`/`height`).
 4. **Emulator/hardware**: print the full 32–96 range in the compact font over a
    non-black background to confirm the background shows through (transparency),
-   that the foreground tracks `tgi_setcolor`, that the 6-px pitch reads tightly,
-   and that `tgi_settextscale` scales both glyphs and spacing; toggle fonts
-   mid-screen with `tgi_setfont` to confirm switching and that `gettextwidth`
+   that the foreground tracks `gfx_setcolor`, that the 6-px pitch reads tightly,
+   and that `gfx_settextscale` scales both glyphs and spacing; toggle fonts
+   mid-screen with `gfx_setfont` to confirm switching and that `gettextwidth`
    advance matches each font's pitch.
 
 ## 9. Future option (not in scope)

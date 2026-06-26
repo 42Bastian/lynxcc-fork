@@ -33,7 +33,7 @@
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <lynx/joystick.h>
 #include <stdio.h>
 #include <6502.h>
@@ -65,9 +65,9 @@ static void cap (const char* tag, long a, long b, long c, long got, long exp)
 static void row (unsigned char y, const char* tag,
                  unsigned fail, unsigned pass, unsigned total)
 {
-    tgi_setcolor (fail ? COLOR_RED : COLOR_GREEN);
+    gfx_setcolor (fail ? COLOR_RED : COLOR_GREEN);
     sprintf (buf, "%s %u/%u", tag, pass, total);
-    tgi_outtextxy (4, y, buf);
+    gfx_outtextxy (4, y, buf);
 }
 
 int main (void)
@@ -79,19 +79,19 @@ int main (void)
     unsigned mos_t, mos_p, mou_t, mou_p;
     unsigned char mds_f, mdu_f, dvs_f, dvu_f, mos_f, mou_f;
 
-    tgi_init ();
+    gfx_init ();
     CLI ();
-    while (tgi_busy ()) {}
-    tgi_setpalette (tgi_getdefpalette ());
+    while (gfx_busy ()) {}
+    gfx_setpalette (gfx_getdefpalette ());
 
     for (;;) {
 
-        tgi_setcolor (COLOR_BLACK);
-        tgi_clear ();
-        tgi_setcolor (COLOR_YELLOW);
-        tgi_outtextxy (4, 4, "RUNNING...");
-        tgi_updatedisplay ();
-        while (tgi_busy ()) {}
+        gfx_setcolor (COLOR_BLACK);
+        gfx_clear ();
+        gfx_setcolor (COLOR_YELLOW);
+        gfx_outtextxy (4, 4, "RUNNING...");
+        gfx_updatedisplay ();
+        while (gfx_busy ()) {}
 
         anyfail = 0;
         mds_t = mds_p = mdu_t = mdu_p = 0;
@@ -165,10 +165,10 @@ int main (void)
         }
 
         /* -------- results -------- */
-        tgi_setcolor (COLOR_BLACK);
-        tgi_clear ();
-        tgi_setcolor (COLOR_WHITE);
-        tgi_outtextxy (4, 2, "SUZY MATH TEST");
+        gfx_setcolor (COLOR_BLACK);
+        gfx_clear ();
+        gfx_setcolor (COLOR_WHITE);
+        gfx_outtextxy (4, 2, "SUZY MATH TEST");
 
         row (14, "MDS", mds_f, mds_p, mds_t);
         row (23, "MDU", mdu_f, mdu_p, mdu_t);
@@ -177,18 +177,18 @@ int main (void)
         row (50, "MOS", mos_f, mos_p, mos_t);
         row (59, "MOU", mou_f, mou_p, mou_t);
 
-        tgi_setcolor (anyfail ? COLOR_RED : COLOR_GREEN);
-        tgi_outtextxy (4, 72, anyfail ? "FAIL:" : "ALL PASS");
+        gfx_setcolor (anyfail ? COLOR_RED : COLOR_GREEN);
+        gfx_outtextxy (4, 72, anyfail ? "FAIL:" : "ALL PASS");
         if (anyfail) {
-            tgi_setcolor (COLOR_WHITE);
-            tgi_outtextxy (4, 82, fbuf1);
-            tgi_outtextxy (4, 91, fbuf2);
+            gfx_setcolor (COLOR_WHITE);
+            gfx_outtextxy (4, 82, fbuf1);
+            gfx_outtextxy (4, 91, fbuf2);
         } else {
-            tgi_setcolor (COLOR_YELLOW);
-            tgi_outtextxy (4, 91, "A = AGAIN");
+            gfx_setcolor (COLOR_YELLOW);
+            gfx_outtextxy (4, 91, "A = AGAIN");
         }
-        tgi_updatedisplay ();
-        while (tgi_busy ()) {}
+        gfx_updatedisplay ();
+        while (gfx_busy ()) {}
 
         while (!(joy_read () & JOY_BTN_1_MASK)) {}
         while (joy_read () & JOY_BTN_1_MASK) {}

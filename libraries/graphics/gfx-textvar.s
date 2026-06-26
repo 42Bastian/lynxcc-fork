@@ -7,41 +7,41 @@
 ; Part of the Lynx Game Development SDK (lynxcc). See doc/licenses.html.
 
 ;
-; Lynx static TGI: proportional (variable-width) text builder.
+; Lynx graphics: proportional (variable-width) text builder.
 ;
-; buildvar is an alternate body for tgi_outtext, reached through tgi_buildptr
-; when the program has called tgi_setfont(TGI_FONT_VARIABLE). It shares the
+; buildvar is an alternate body for gfx_outtext, reached through gfx_buildptr
+; when the program has called gfx_setfont(GFX_FONT_VARIABLE). It shares the
 ; prologue (string pointer, start position, capped length) and the epilogue
-; (draw + cursor advance) with the 8x8 and 5x5 builders in tgi-text.s.
+; (draw + cursor advance) with the 8x8 and 5x5 builders in gfx-text.s.
 ;
-; It is a near-clone of build5x5 (tgi-text5x5.s) and uses the same storage
+; It is a near-clone of build5x5 (gfx-text5x5.s) and uses the same storage
 ; convention: a bit-shifted literal 1-bpp sprite, transparent background
 ; (TYPE_NORMAL, pixel value 0 -> pen 0), foreground in the current pen, glyph
 ; rows stored fg = bit value 1 and ink left-aligned in the high bits so each
 ; row ORs straight into a zero-filled strip with no inversion. The two builders
 ; differ in only one thing: build5x5 packs every glyph at a fixed 6-px pitch
 ; (bit = idx*6), while buildvar keeps a running bit accumulator stepped by the
-; per-glyph advance read from tgi_fontadv (ink width + 1-px gap). This is what
+; per-glyph advance read from gfx_fontadv (ink width + 1-px gap). This is what
 ; makes the font proportional - an 'I' eats 2 px, an 'M' eats 6.
 ;
 ; Two passes over the (capped) string:
 ;   pass 1: total = sum of advances -> strip byte width W = (total + 7) >> 3.
-;           The summation is the shared str_advance helper in tgi-text.s, which
-;           is also what tgi_gettextwidth uses, so the drawn width and the
+;           The summation is the shared str_advance helper in gfx-text.s, which
+;           is also what gfx_gettextwidth uses, so the drawn width and the
 ;           queried width can never disagree.
 ;   pass 2: pack each glyph at its accumulated bit position.
 ;
 ; The folding of lower-case a-z onto A-Z and the splicing-out of the freed
-; slots are identical to the 5x5 font (see tgi-fontvar.s and
-; design/LYNX_TGI_FONTVAR_DESIGN.md sec. 3-5).
+; slots are identical to the 5x5 font (see gfx-fontvar.s and
+; design/LYNX_GFX_FONTVAR_DESIGN.md sec. 3-5).
 ;
 
         .include        "zeropage.inc"
         .include        "lynx/lynx.inc"
 
-        .import         tgi_drawindex
-        .import         tgi_fontvar
-        .import         tgi_fontadv
+        .import         gfx_drawindex
+        .import         gfx_fontvar
+        .import         gfx_fontadv
         .import         text_sprite
         .import         text_c
         .import         text_bitmap
@@ -50,7 +50,7 @@
 
         .export         buildvar
 
-; Zero page aliases (zp slots are global; STRPTR/STRLEN match tgi-text.s).
+; Zero page aliases (zp slots are global; STRPTR/STRLEN match gfx-text.s).
 
 STRPTR          := ptr3
 STRLEN          := tmp4
@@ -74,11 +74,11 @@ bv_t:           .res    1       ; folded+spliced glyph index of current char
 buildvar:
         lda     #$04            ; normal sprite -> pen 0 transparent
         sta     text_sprite
-        lda     tgi_drawindex   ; pen byte = (0 << 4) | drawindex
+        lda     gfx_drawindex   ; pen byte = (0 << 4) | drawindex
         sta     text_c
 
 ; Pass 1: W = (total_advance + 7) >> 3 ; total <= 20*6 = 120, fits a byte.
-; str_advance sums tgi_advtab[foldsplice(ch)] over the capped string already
+; str_advance sums gfx_advtab[foldsplice(ch)] over the capped string already
 ; latched in STRPTR / STRLEN by the shared prologue.
 
         jsr     str_advance     ; A = total advance (<= 120)
@@ -94,7 +94,7 @@ buildvar:
 
 ; Zero the working area (5 rows * up to 16 + terminator = 81 bytes). The strip
 ; is shorter for short strings; zeroing a fixed safe span is simplest and the
-; shared text_bitmap buffer is large enough (see tgi-text.s).
+; shared text_bitmap buffer is large enough (see gfx-text.s).
 
         ldx     #0
         lda     #0
@@ -163,7 +163,7 @@ buildvar:
 @noslice:
         sta     bv_t            ; t, for the advance lookup below
 
-        ; GP = tgi_fontvar + t*5  (A still = t across the asl/rol on GP)
+        ; GP = gfx_fontvar + t*5  (A still = t across the asl/rol on GP)
         sta     GP
         stz     GP+1
         asl     GP
@@ -177,10 +177,10 @@ buildvar:
         inc     GP+1
 @nc:    clc
         lda     GP
-        adc     #<tgi_fontvar
+        adc     #<gfx_fontvar
         sta     GP
         lda     GP+1
-        adc     #>tgi_fontvar
+        adc     #>gfx_fontvar
         sta     GP+1
 
         ; For each of the 5 rows: shift the glyph row right by bv_shift and OR
@@ -222,7 +222,7 @@ buildvar:
 
         ; bitpos += advance(t)
         ldy     bv_t
-        lda     tgi_fontadv,y
+        lda     gfx_fontadv,y
         clc
         adc     bv_bitpos
         sta     bv_bitpos

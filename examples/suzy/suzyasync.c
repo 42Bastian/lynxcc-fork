@@ -31,7 +31,7 @@
 **
 ** The math phase (above) touches no Suzy sprite state, so the contract
 ** "no Suzy work between start and result" holds; ALL drawing happens in a
-** separate phase afterwards (tgi_outtextxy uses the sprite engine, which
+** separate phase afterwards (gfx_outtextxy uses the sprite engine, which
 ** shares the math unit, so it must not run inside an async window).
 **
 ** A one-time self-check compares the async results against the stock
@@ -42,7 +42,7 @@
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <lynx/joystick.h>
 #include <lynx/suzymath.h>
 #include <stdio.h>
@@ -180,23 +180,23 @@ static void draw_frame (unsigned frame, unsigned char ok)
 {
     unsigned char i;
 
-    tgi_setcolor (COLOR_BLACK);
-    tgi_clear ();
+    gfx_setcolor (COLOR_BLACK);
+    gfx_clear ();
 
     for (i = 0; i < NSTARS; ++i) {
         if (!vis[i]) continue;
-        tgi_setcolor (glyphcol[depthchar[i]]);
-        tgi_outtextxy (px[i], py[i], glyph[depthchar[i]]);
+        gfx_setcolor (glyphcol[depthchar[i]]);
+        gfx_outtextxy (px[i], py[i], glyph[depthchar[i]]);
     }
 
-    tgi_setcolor (ok ? COLOR_GREEN : COLOR_RED);
-    tgi_outtextxy (2, 2, ok ? "ASYNC SUZY  MATH OK" : "ASYNC SUZY MATH FAIL");
-    tgi_setcolor (COLOR_GREY);
+    gfx_setcolor (ok ? COLOR_GREEN : COLOR_RED);
+    gfx_outtextxy (2, 2, ok ? "ASYNC SUZY  MATH OK" : "ASYNC SUZY MATH FAIL");
+    gfx_setcolor (COLOR_GREY);
     sprintf (buf, "FRAME %u", frame);
-    tgi_outtextxy (2, 94, buf);
+    gfx_outtextxy (2, 94, buf);
 
-    tgi_updatedisplay ();
-    while (tgi_busy ()) {}
+    gfx_updatedisplay ();
+    while (gfx_busy ()) {}
 }
 
 void main (void)
@@ -204,10 +204,10 @@ void main (void)
     unsigned frame = 0;
     unsigned char ok;
 
-    tgi_init ();
+    gfx_init ();
     CLI ();
-    while (tgi_busy ()) {}
-    tgi_setpalette (tgi_getdefpalette ());
+    while (gfx_busy ()) {}
+    gfx_setpalette (gfx_getdefpalette ());
 
     ok = self_check ();
     init_stars ();

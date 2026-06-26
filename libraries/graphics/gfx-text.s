@@ -7,42 +7,42 @@
 ; the root LICENSE file, not the SDK's MPL-2.0. See doc/licenses.html.
 
 ;
-; Lynx static TGI: bitmap text output.
+; Lynx graphics: bitmap text output.
 ;
-; void __fastcall__ tgi_gotoxy (int x, int y);
-; void __fastcall__ tgi_outtext (const char* s);
-; void __fastcall__ tgi_outtextxy (int x, int y, const char* s);
-; void __fastcall__ tgi_settextstyle (unsigned width, unsigned height,
+; void __fastcall__ gfx_gotoxy (int x, int y);
+; void __fastcall__ gfx_outtext (const char* s);
+; void __fastcall__ gfx_outtextxy (int x, int y, const char* s);
+; void __fastcall__ gfx_settextstyle (unsigned width, unsigned height,
 ;                                     unsigned char dir, unsigned char font);
-; void __fastcall__ tgi_settextscale (unsigned width, unsigned height);
-; void __fastcall__ tgi_settextdir (unsigned char dir);
-; unsigned __fastcall__ tgi_gettextwidth (const char* s);
-; unsigned __fastcall__ tgi_gettextheight (const char* s);
+; void __fastcall__ gfx_settextscale (unsigned width, unsigned height);
+; void __fastcall__ gfx_settextdir (unsigned char dir);
+; unsigned __fastcall__ gfx_gettextwidth (const char* s);
+; unsigned __fastcall__ gfx_gettextheight (const char* s);
 ;
 ; The string is built as one glyph-strip bitmap and drawn as a single
 ; sprite. At most 20 characters per call are drawn (pre-existing limit).
 ;
-; Three bitmap fonts are supported. tgi_outtext dispatches through the
-; indirect pointer tgi_buildptr to the active builder: build8x8 (the
+; Three bitmap fonts are supported. gfx_outtext dispatches through the
+; indirect pointer gfx_buildptr to the active builder: build8x8 (the
 ; default 8x8 system font), build5x5 (the compact transparent 5x5 font in
-; tgi-text5x5.s) or buildvar (the proportional caps font in tgi-textvar.s).
-; tgi_setfont (tgi-setfont.s) selects between them and sets tgi_pitch /
-; tgi_fontheight, the per-font metrics read by the width and height queries.
-; Programs that never call tgi_setfont keep the default 8x8 path and do not
+; gfx-text5x5.s) or buildvar (the proportional caps font in gfx-textvar.s).
+; gfx_setfont (gfx-setfont.s) selects between them and sets gfx_pitch /
+; gfx_fontheight, the per-font metrics read by the width and height queries.
+; Programs that never call gfx_setfont keep the default 8x8 path and do not
 ; link the other builders or fonts.
-; See design/LYNX_TGI_FONT5X5_DESIGN.md and design/LYNX_TGI_FONTVAR_DESIGN.md.
+; See design/LYNX_GFX_FONT5X5_DESIGN.md and design/LYNX_GFX_FONTVAR_DESIGN.md.
 ;
 ; Text scaling is a true 8.8 fixed point word per axis, stored straight
 ; into the text sprite's sx/sy fields - Suzy scales sprites natively in
-; 8.8, so fractional text scaling is free (design/LYNX_TGI_DESIGN.md sec. 2.3).
-; The font argument of tgi_settextstyle is ignored (use tgi_setfont). The
+; 8.8, so fractional text scaling is free (design/LYNX_GFX_DESIGN.md sec. 2.3).
+; The font argument of gfx_settextstyle is ignored (use gfx_setfont). The
 ; text direction only affects how the cursor advances; glyphs are never
 ; rotated (pre-existing behavior).
 ;
-; tgi_gettextwidth = (strlen(s) * tgi_pitch * scalew) >> 8 for the fixed-pitch
-; fonts; for the proportional font (tgi_advtab != 0) the strlen*pitch term is
+; gfx_gettextwidth = (strlen(s) * gfx_pitch * scalew) >> 8 for the fixed-pitch
+; fonts; for the proportional font (gfx_advtab != 0) the strlen*pitch term is
 ; replaced by the sum of the capped string's per-glyph advances (str_advance).
-; tgi_gettextheight = (tgi_fontheight * scaleh) >> 8, computed on Suzy's
+; gfx_gettextheight = (gfx_fontheight * scaleh) >> 8, computed on Suzy's
 ; 16x16 multiply. Safe because all drawing is synchronous, so neither the
 ; sprite engine nor a competing math operation can be in flight (spec ch.
 ; 3.1.1; design/LYNX_CODEGEN_DESIGN.md sec. 2.6); the math-working bit is polled
@@ -53,36 +53,36 @@
 
         .include        "zeropage.inc"
         .include "lynx/lynx.inc"
-        .include        "tgi-kernel.inc"
+        .include        "gfx.inc"
 
-        .import         tgi_draw_sprite
-        .import         tgi_drawindex
-        .import         tgi_bgindex
-        .import         tgi_font
+        .import         gfx_draw_sprite
+        .import         gfx_drawindex
+        .import         gfx_bgindex
+        .import         gfx_font
         .import         _strlen
         .import         popa, popax, negax
 
-        .export         _tgi_gotoxy
-        .export         _tgi_outtext
-        .export         _tgi_outtextxy
-        .export         _tgi_settextstyle
-        .export         _tgi_settextscale
-        .export         _tgi_settextdir
-        .export         _tgi_gettextwidth
-        .export         _tgi_gettextheight
+        .export         _gfx_gotoxy
+        .export         _gfx_outtext
+        .export         _gfx_outtextxy
+        .export         _gfx_settextstyle
+        .export         _gfx_settextscale
+        .export         _gfx_settextdir
+        .export         _gfx_gettextwidth
+        .export         _gfx_gettextheight
 
-; Shared with the compact builder (tgi-text5x5.s) and the selector
-; (tgi-setfont.s).
+; Shared with the compact builder (gfx-text5x5.s) and the selector
+; (gfx-setfont.s).
 
         .export         build8x8
         .export         draw_and_advance
         .export         text_sprite
         .export         text_c
         .export         text_bitmap
-        .export         tgi_buildptr
-        .export         tgi_pitch
-        .export         tgi_fontheight
-        .export         tgi_advtab
+        .export         gfx_buildptr
+        .export         gfx_pitch
+        .export         gfx_fontheight
+        .export         gfx_advtab
         .export         str_advance
 
         .macpack        generic
@@ -102,7 +102,7 @@ STRLEN          := tmp4
 curx:           .res    2
 cury:           .res    2
 
-textdir:        .res    1       ; TGI_TEXT_HORIZONTAL is 0
+textdir:        .res    1       ; GFX_TEXT_HORIZONTAL is 0
 
 ; 8 rows of (one offset-byte plus up to 20 character bytes plus one
 ; trailing pad byte) plus one 0-offset-byte terminator. Also large enough
@@ -120,7 +120,7 @@ textdir:        .res    1       ; TGI_TEXT_HORIZONTAL is 0
 ; (all value-1 pixels), NOT $00 - a $00 pad would paint a solid box after
 ; the text. The compact 5x5 builder needs no pad: its rows always end on
 ; the inter-glyph gap or byte padding, both transparent (see
-; tgi-text5x5.s). See design/LYNX_SPRITE_PADBYTE_DESIGN.md.
+; gfx-text5x5.s). See design/LYNX_SPRITE_PADBYTE_DESIGN.md.
 
 text_bitmap:    .res    8*(1+20+1)+1
 
@@ -136,33 +136,33 @@ text_x:
 text_y:
         .word   0
 text_sx:
-        .word   $100            ; Width scale, 8.8 (set by tgi_settextscale)
+        .word   $100            ; Width scale, 8.8 (set by gfx_settextscale)
 text_sy:
         .word   $100            ; Height scale, 8.8
 text_c:
         .byte   0
 
 ; Active text builder and its metrics. Default = system 8x8 font; only the
-; 8x8 path links until tgi_setfont selects the compact font.
+; 8x8 path links until gfx_setfont selects the compact font.
 
-tgi_buildptr:   .addr   build8x8
-tgi_pitch:      .byte   8       ; cursor advance per character (px)
-tgi_fontheight: .byte   8       ; glyph rows, for tgi_gettextheight
+gfx_buildptr:   .addr   build8x8
+gfx_pitch:      .byte   8       ; cursor advance per character (px)
+gfx_fontheight: .byte   8       ; glyph rows, for gfx_gettextheight
 
-; Proportional-width hook. 0 => fixed pitch (8x8, 5x5): tgi_gettextwidth uses
+; Proportional-width hook. 0 => fixed pitch (8x8, 5x5): gfx_gettextwidth uses
 ; the strlen*pitch fast path. Non-zero => points at a per-glyph advance table
-; (tgi_fontadv), set only by tgi_setfont's variable-font branch, switching the
+; (gfx_fontadv), set only by gfx_setfont's variable-font branch, switching the
 ; width query to the advance-sum path. Default 0 keeps the variable font and
 ; its builder out of programs that never select it (the width query references
-; only this datum, never the font). See design/LYNX_TGI_FONTVAR_DESIGN.md sec. 5.
-tgi_advtab:     .addr   0
+; only this datum, never the font). See design/LYNX_GFX_FONTVAR_DESIGN.md sec. 5.
+gfx_advtab:     .addr   0
 
 .code
 
 ;-----------------------------------------------------------------------------
-; tgi_gotoxy: Position the text cursor for tgi_outtext.
+; gfx_gotoxy: Position the text cursor for gfx_outtext.
 
-_tgi_gotoxy:
+_gfx_gotoxy:
         sta     cury            ; Y
         stx     cury+1
         jsr     popax
@@ -171,9 +171,9 @@ _tgi_gotoxy:
         rts
 
 ;-----------------------------------------------------------------------------
-; tgi_outtextxy: Position the cursor, then output.
+; gfx_outtextxy: Position the cursor, then output.
 
-_tgi_outtextxy:
+_gfx_outtextxy:
         pha                     ; Save s
         txa
         pha
@@ -186,15 +186,15 @@ _tgi_outtextxy:
         pla                     ; Restore s
         tax
         pla
-        ; Run into _tgi_outtext
+        ; Run into _gfx_outtext
 
 ;-----------------------------------------------------------------------------
-; tgi_outtext: Shared prologue - latch the string pointer and the start
+; gfx_outtext: Shared prologue - latch the string pointer and the start
 ; position, measure the string (capped at the 20-char draw limit), then
 ; dispatch to the active builder. Each builder fills text_bitmap, then runs
 ; into draw_and_advance.
 
-_tgi_outtext:
+_gfx_outtext:
         sta     STRPTR
         stx     STRPTR+1
 
@@ -217,7 +217,7 @@ _tgi_outtext:
         tya
         bne     @L4
         rts                     ; Zero-length string
-@L4:    jmp     (tgi_buildptr)
+@L4:    jmp     (gfx_buildptr)
 
 ;-----------------------------------------------------------------------------
 ; build8x8: Build the glyph strip for the 8x8 system font. Each glyph is one
@@ -228,12 +228,12 @@ build8x8:
         lda     #$04            ; TYPE_NORMAL: pen 0 is transparent. The font
         sta     text_sprite     ; is active-low (ink = pixel value 0).
 
-        lda     tgi_drawindex   ; Pen byte: draw pen (ink, pixel value 0) in
+        lda     gfx_drawindex   ; Pen byte: draw pen (ink, pixel value 0) in
         asl                     ; the high nibble, bgindex (pixel value 1) in
         asl                     ; the low nibble. The default bgindex 0 -> pen 0
         asl                     ; -> transparent background; a non-zero
-        asl                     ; tgi_setbgcolor gives an opaque coloured box.
-        ora     tgi_bgindex
+        asl                     ; gfx_setbgcolor gives an opaque coloured box.
+        ora     gfx_bgindex
         sta     text_c
 
         ldy     STRLEN          ; offset byte = 1 + len + 1 pad byte
@@ -269,10 +269,10 @@ build8x8:
         asl
         rol     FONTOFF+1
         ;clc                    ; (cleared by rol)
-        adc     #<tgi_font
+        adc     #<gfx_font
         sta     FONTOFF
         lda     FONTOFF+1
-        adc     #>tgi_font
+        adc     #>gfx_font
         sta     FONTOFF+1
 
 ; And now, copy the 8 bytes of that glyph.
@@ -303,17 +303,17 @@ build8x8:
 
 ;-----------------------------------------------------------------------------
 ; draw_and_advance: Shared epilogue. Draw the strip sprite at the cursor,
-; then advance the cursor by the string width (TGI_TEXT_VERTICAL advances
+; then advance the cursor by the string width (GFX_TEXT_VERTICAL advances
 ; upward).
 
 draw_and_advance:
         lda     #<text_sprite
         ldx     #>text_sprite
-        jsr     tgi_draw_sprite
+        jsr     gfx_draw_sprite
 
         lda     STRPTR
         ldx     STRPTR+1
-        jsr     _tgi_gettextwidth
+        jsr     _gfx_gettextwidth
         ldy     #0
         cpy     textdir         ; Horizontal text?
         beq     @L8             ; Jump if yes
@@ -328,17 +328,17 @@ draw_and_advance:
         rts
 
 ;-----------------------------------------------------------------------------
-; tgi_settextstyle / tgi_settextscale / tgi_settextdir
+; gfx_settextstyle / gfx_settextscale / gfx_settextdir
 ;
 ; The scaling factors are 8.8 fixed point; $100 = 1.0. The font argument
-; is ignored (use tgi_setfont to select a font).
+; is ignored (use gfx_setfont to select a font).
 
-_tgi_settextstyle:
+_gfx_settextstyle:
         jsr     popa            ; Direction (font in A is ignored)
         sta     textdir
-        jsr     popax           ; Height scale; run into tgi_settextscale
+        jsr     popax           ; Height scale; run into gfx_settextscale
 
-_tgi_settextscale:
+_gfx_settextscale:
         sta     text_sy         ; Height (in A/X on entry)
         stx     text_sy+1
         jsr     popax           ; Width
@@ -346,27 +346,27 @@ _tgi_settextscale:
         stx     text_sx+1
         rts
 
-_tgi_settextdir:
+_gfx_settextdir:
         sta     textdir
         rts
 
 ;-----------------------------------------------------------------------------
-; tgi_gettextwidth: (strlen (s) * tgi_pitch * scalew) >> 8, on Suzy's
+; gfx_gettextwidth: (strlen (s) * gfx_pitch * scalew) >> 8, on Suzy's
 ; multiplier. The product AB * CD -> EFGH (H low); writing MATHA starts the
 ; multiply; SPRSYS bit 7 is the math-working flag. __sprsys keeps sign-math
 ; off, so these are unsigned multiplies. The pitch is a per-font byte so the
 ; query needs no knowledge of which font is active.
 
-_tgi_gettextwidth:
+_gfx_gettextwidth:
         pha                     ; save low(s); X holds high(s) throughout
-        lda     tgi_advtab      ; proportional font selected?
-        ora     tgi_advtab+1
+        lda     gfx_advtab      ; proportional font selected?
+        ora     gfx_advtab+1
         bne     @var            ; yes -> sum per-glyph advances
         pla                     ; no: fixed-pitch fast path
         jsr     _strlen         ; Length in A/X
         sta     MATHD           ; CD = len (low byte first)
         stx     MATHC
-        lda     tgi_pitch
+        lda     gfx_pitch
         sta     MATHB           ; AB = pitch
         stz     MATHA           ; (pitch high = 0) starts the multiply
 @L1:    lda     SPRSYS
@@ -407,16 +407,16 @@ _tgi_gettextwidth:
 ;-----------------------------------------------------------------------------
 ; str_advance: sum the per-glyph advances of the capped string for the
 ; proportional font. On entry STRPTR points at the string and STRLEN holds the
-; capped length (<= 20); the caller guarantees tgi_advtab != 0. Returns the
+; capped length (<= 20); the caller guarantees gfx_advtab != 0. Returns the
 ; total advance in A (<= 120, always a single byte). Reads the advance table
-; through tgi_advtab, so it never force-links the variable font - the fixed
-; fonts simply never reach it. Shared by buildvar (tgi-textvar.s) and the
-; proportional branch of tgi_gettextwidth above.
+; through gfx_advtab, so it never force-links the variable font - the fixed
+; fonts simply never reach it. Shared by buildvar (gfx-textvar.s) and the
+; proportional branch of gfx_gettextwidth above.
 
 str_advance:
-        lda     tgi_advtab      ; ADVPTR (ptr2) = advance table base
+        lda     gfx_advtab      ; ADVPTR (ptr2) = advance table base
         sta     ptr2
-        lda     tgi_advtab+1
+        lda     gfx_advtab+1
         sta     ptr2+1
         ldx     #0              ; running total
         ldy     #0              ; char index
@@ -448,11 +448,11 @@ str_advance:
         rts
 
 ;-----------------------------------------------------------------------------
-; tgi_gettextheight: (tgi_fontheight * scaleh) >> 8. The argument is
+; gfx_gettextheight: (gfx_fontheight * scaleh) >> 8. The argument is
 ; irrelevant for the single-line bitmap font.
 
-_tgi_gettextheight:
-        lda     tgi_fontheight
+_gfx_gettextheight:
+        lda     gfx_fontheight
         sta     MATHD           ; CD = height
         stz     MATHC
         lda     text_sy

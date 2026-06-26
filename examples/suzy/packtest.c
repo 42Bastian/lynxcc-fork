@@ -42,7 +42,7 @@
 */
 
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <6502.h>
 #include <string.h>
 
@@ -202,12 +202,12 @@ static void draw (void)
     unsigned char b;
     signed int    y;
 
-    tgi_setcolor (0);
-    tgi_clear ();
+    gfx_setcolor (0);
+    gfx_clear ();
 
-    tgi_setcolor (1);
-    tgi_outtextxy (40, 1, "LITERAL");
-    tgi_outtextxy (100, 1, "PACKED");
+    gfx_setcolor (1);
+    gfx_outtextxy (40, 1, "LITERAL");
+    gfx_outtextxy (100, 1, "PACKED");
 
     for (b = 0; b < 4; ++b) {
         y = 12 + b * 22;
@@ -220,15 +220,15 @@ static void draw (void)
         pak.data    = packdata[b];
         pak.hpos    = 104; pak.vpos = y;
 
-        tgi_sprite (&lit);
-        tgi_sprite (&pak);
+        gfx_sprite (&lit);
+        gfx_sprite (&pak);
 
-        tgi_setcolor (14);
+        gfx_setcolor (14);
         switch (b) {
-            case 0: tgi_outtextxy (4, y + 4, "1BPP"); break;
-            case 1: tgi_outtextxy (4, y + 4, "2BPP"); break;
-            case 2: tgi_outtextxy (4, y + 4, "3BPP"); break;
-            case 3: tgi_outtextxy (4, y + 4, "4BPP"); break;
+            case 0: gfx_outtextxy (4, y + 4, "1BPP"); break;
+            case 1: gfx_outtextxy (4, y + 4, "2BPP"); break;
+            case 2: gfx_outtextxy (4, y + 4, "3BPP"); break;
+            case 3: gfx_outtextxy (4, y + 4, "4BPP"); break;
         }
     }
 }
@@ -237,16 +237,16 @@ void main (void)
 {
     unsigned char b;
 
-    tgi_init ();
+    gfx_init ();
     CLI ();
-    tgi_setframerate (60);
-    tgi_setpalette (rainbow);
+    gfx_setframerate (60);
+    gfx_setpalette (rainbow);
 
     for (b = 0; b < 4; ++b) build_depth (b);
 
     for (;;) {
-        while (tgi_busy ()) {}          /* let the pending swap finish first, */
+        while (gfx_busy ()) {}          /* let the pending swap finish first, */
         draw ();                        /* so we never draw the visible page  */
-        tgi_updatedisplay ();           /* (avoids tearing/flicker)           */
+        gfx_updatedisplay ();           /* (avoids tearing/flicker)           */
     }
 }

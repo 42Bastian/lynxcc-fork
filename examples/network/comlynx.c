@@ -22,7 +22,7 @@
 
 #include <stdio.h>
 #include <lynx/lynx.h>
-#include <lynx/tgi.h>
+#include <lynx/gfx.h>
 #include <6502.h>
 #include <lynx/serial.h>
 #include <lynx/joystick.h>
@@ -57,27 +57,27 @@ void main (void)
     unsigned now, prev = 0, pressed;
     char in;
 
-    tgi_init ();
+    gfx_init ();
     CLI ();
-    while (tgi_busy ()) {}
-    tgi_setpalette (tgi_getdefpalette ());
+    while (gfx_busy ()) {}
+    gfx_setpalette (gfx_getdefpalette ());
 
     for (;;) {
 
-        tgi_setcolor (COLOR_BLACK);     /* tgi_clear fills in draw color */
-        tgi_clear ();
-        tgi_setcolor (COLOR_WHITE);
-        tgi_outtextxy (4, 2, "COMLYNX LOOPBACK");
-        tgi_updatedisplay ();
-        while (tgi_busy ()) {}
+        gfx_setcolor (COLOR_BLACK);     /* gfx_clear fills in draw color */
+        gfx_clear ();
+        gfx_setcolor (COLOR_WHITE);
+        gfx_outtextxy (4, 2, "COMLYNX LOOPBACK");
+        gfx_updatedisplay ();
+        while (gfx_busy ()) {}
 
         ok = bad = lost = 0;
 
         res = ser_open (&params);
         if (res != SER_ERR_OK) {
             sprintf (buf, "OPEN FAILED: %u", res);
-            tgi_setcolor (COLOR_RED);
-            tgi_outtextxy (4, 16, buf);
+            gfx_setcolor (COLOR_RED);
+            gfx_outtextxy (4, 16, buf);
         } else {
             /* Send 0..255; the open collector bus echoes each byte back. */
             for (i = 0; i < 256U; ++i) {
@@ -101,23 +101,23 @@ void main (void)
             in = 0;
             res = get_with_timeout (&in);
 
-            tgi_setcolor (COLOR_GREEN);
+            gfx_setcolor (COLOR_GREEN);
             sprintf (buf, "OK   %3u", ok);
-            tgi_outtextxy (4, 16, buf);
-            tgi_setcolor ((ok == 256U) ? COLOR_GREEN : COLOR_RED);
+            gfx_outtextxy (4, 16, buf);
+            gfx_setcolor ((ok == 256U) ? COLOR_GREEN : COLOR_RED);
             sprintf (buf, "BAD  %3u  LOST %3u", bad, lost);
-            tgi_outtextxy (4, 26, buf);
-            tgi_setcolor (COLOR_WHITE);
+            gfx_outtextxy (4, 26, buf);
+            gfx_setcolor (COLOR_WHITE);
             sprintf (buf, "STATUS %02X", status);
-            tgi_outtextxy (4, 36, buf);
+            gfx_outtextxy (4, 36, buf);
             sprintf (buf, "CLOSED: %s", res ? "RX!? FAIL" : "QUIET OK");
-            tgi_outtextxy (4, 46, buf);
+            gfx_outtextxy (4, 46, buf);
         }
 
-        tgi_setcolor (COLOR_YELLOW);
-        tgi_outtextxy (4, 70, "A=AGAIN OPT1+PAUSE=?");
-        tgi_updatedisplay ();
-        while (tgi_busy ()) {}
+        gfx_setcolor (COLOR_YELLOW);
+        gfx_outtextxy (4, 70, "A=AGAIN OPT1+PAUSE=?");
+        gfx_updatedisplay ();
+        while (gfx_busy ()) {}
 
         /* The §2.2 edge-detect idiom on the unified joy_read. */
         for (;;) {
@@ -129,10 +129,10 @@ void main (void)
             }
             if (JOY_PAUSE (now) && JOY_OPT1 (now)) {
                 /* Restart convention is the game's job now: demo it. */
-                tgi_setcolor (COLOR_RED);
-                tgi_outtextxy (4, 84, "RESTART CHORD!");
-                tgi_updatedisplay ();
-                while (tgi_busy ()) {}
+                gfx_setcolor (COLOR_RED);
+                gfx_outtextxy (4, 84, "RESTART CHORD!");
+                gfx_updatedisplay ();
+                while (gfx_busy ()) {}
             }
         }
     }
