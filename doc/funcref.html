@@ -12,7 +12,7 @@ See doc/licenses.html.
 <link rel="stylesheet" href="doc.css">
 <script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
 </head><body>
-<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html" class="active">Functions</a><a href="lynx_gfx_fonts.html">Fonts</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html">Migrating</a><a href="history.html">History</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><div class="javadoc"><aside class="fn-aside"><h2>Functions</h2><input id="fnFilter" class="fn-filter" type="search" placeholder="Filter functions…" autocomplete="off" aria-label="Filter functions"><ul id="fnIndex" class="fn-index"><li data-name="_de_isdir"><a href="#_DE_ISDIR">_DE_ISDIR</a></li><li data-name="_de_islbl"><a href="#_DE_ISLBL">_DE_ISLBL</a></li><li data-name="_de_islnk"><a href="#_DE_ISLNK">_DE_ISLNK</a></li><li data-name="_de_isreg"><a href="#_DE_ISREG">_DE_ISREG</a></li><li data-name="_heapadd"><a href="#_heapadd">_heapadd</a></li><li data-name="_heapblocksize"><a href="#_heapblocksize">_heapblocksize</a></li><li data-name="_heapmaxavail"><a href="#_heapmaxavail">_heapmaxavail</a></li><li data-name="_heapmemavail"><a href="#_heapmemavail">_heapmemavail</a></li><li data-name="_randomize"><a href="#_randomize">_randomize</a></li><li data-name="_stroserror"><a href="#_stroserror">_stroserror</a></li><li data-name="_swap"><a href="#_swap">_swap</a></li><li data-name="_sys"><a href="#_sys">_sys</a></li><li data-name="brk"><a href="#BRK">BRK</a></li><li data-name="cli"><a href="#CLI">CLI</a></li><li data-name="peek"><a href="#PEEK">PEEK</a></li><li data-name="peekw"><a href="#PEEKW">PEEKW</a></li><li data-name="poke"><a href="#POKE">POKE</a></li><li data-name="pokew"><a href="#POKEW">POKEW</a></li><li data-name="sei"><a href="#SEI">SEI</a></li><li data-name="abs"><a href="#abs">abs</a></li><li data-name="atexit"><a href="#atexit">atexit</a></li><li data-name="atoi"><a href="#atoi">atoi</a></li><li data-name="atol"><a href="#atol">atol</a></li><li data-name="bsearch"><a href="#bsearch">bsearch</a></li><li data-name="bzero"><a href="#bzero">bzero</a></li><li data-name="calloc"><a href="#calloc">calloc</a></li><li data-name="clock"><a href="#clock">clock</a></li><li data-name="decompress_lz4"><a href="#decompress_lz4">decompress_lz4</a></li><li data-name="div"><a href="#div">div</a></li><li data-name="doesclrscrafterexit"><a href="#doesclrscrafterexit">doesclrscrafterexit</a></li><li data-name="exit"><a href="#exit">exit</a></li><li data-name="free"><a href="#free">free</a></li><li data-name="gfx_busy"><a href="#gfx_busy">gfx_busy</a></li><li data-name="gfx_clear"><a href="#gfx_clear">gfx_clear</a></li><li data-name="gfx_clearrows"><a href="#gfx_clearrows">gfx_clearrows</a></li><li data-name="gfx_flip"><a href="#gfx_flip">gfx_flip</a></li><li data-name="gfx_getcolor"><a href="#gfx_getcolor">gfx_getcolor</a></li><li data-name="gfx_getcolorcount"><a href="#gfx_getcolorcount">gfx_getcolorcount</a></li><li data-name="gfx_getdefpalette"><a href="#gfx_getdefpalette">gfx_getdefpalette</a></li><li data-name="gfx_getmaxcolor"><a href="#gfx_getmaxcolor">gfx_getmaxcolor</a></li><li data-name="gfx_getmaxx"><a href="#gfx_getmaxx">gfx_getmaxx</a></li><li data-name="gfx_getmaxy"><a href="#gfx_getmaxy">gfx_getmaxy</a></li><li data-name="gfx_getpagecount"><a href="#gfx_getpagecount">gfx_getpagecount</a></li><li data-name="gfx_getpalette"><a href="#gfx_getpalette">gfx_getpalette</a></li><li data-name="gfx_gettextheight"><a href="#gfx_gettextheight">gfx_gettextheight</a></li><li data-name="gfx_gettextwidth"><a href="#gfx_gettextwidth">gfx_gettextwidth</a></li><li data-name="gfx_getxres"><a href="#gfx_getxres">gfx_getxres</a></li><li data-name="gfx_getyres"><a href="#gfx_getyres">gfx_getyres</a></li><li data-name="gfx_gotoxy"><a href="#gfx_gotoxy">gfx_gotoxy</a></li><li data-name="gfx_init"><a href="#gfx_init">gfx_init</a></li><li data-name="gfx_outtext"><a href="#gfx_outtext">gfx_outtext</a></li><li data-name="gfx_outtextxy"><a href="#gfx_outtextxy">gfx_outtextxy</a></li><li data-name="gfx_setbgcolor"><a href="#gfx_setbgcolor">gfx_setbgcolor</a></li><li data-name="gfx_setbpp"><a href="#gfx_setbpp">gfx_setbpp</a></li><li data-name="gfx_setcollisiondetection"><a href="#gfx_setcollisiondetection">gfx_setcollisiondetection</a></li><li data-name="gfx_setcolor"><a href="#gfx_setcolor">gfx_setcolor</a></li><li data-name="gfx_setdrawpage"><a href="#gfx_setdrawpage">gfx_setdrawpage</a></li><li data-name="gfx_setfont"><a href="#gfx_setfont">gfx_setfont</a></li><li data-name="gfx_setframerate"><a href="#gfx_setframerate">gfx_setframerate</a></li><li data-name="gfx_setpalette"><a href="#gfx_setpalette">gfx_setpalette</a></li><li data-name="gfx_settextdir"><a href="#gfx_settextdir">gfx_settextdir</a></li><li data-name="gfx_settextscale"><a href="#gfx_settextscale">gfx_settextscale</a></li><li data-name="gfx_settextstyle"><a href="#gfx_settextstyle">gfx_settextstyle</a></li><li data-name="gfx_setviewpage"><a href="#gfx_setviewpage">gfx_setviewpage</a></li><li data-name="gfx_sprite"><a href="#gfx_sprite">gfx_sprite</a></li><li data-name="gfx_updatedisplay"><a href="#gfx_updatedisplay">gfx_updatedisplay</a></li><li data-name="isalnum"><a href="#isalnum">isalnum</a></li><li data-name="isalpha"><a href="#isalpha">isalpha</a></li><li data-name="isascii"><a href="#isascii">isascii</a></li><li data-name="isblank"><a href="#isblank">isblank</a></li><li data-name="iscntrl"><a href="#iscntrl">iscntrl</a></li><li data-name="isdigit"><a href="#isdigit">isdigit</a></li><li data-name="isgraph"><a href="#isgraph">isgraph</a></li><li data-name="islower"><a href="#islower">islower</a></li><li data-name="isprint"><a href="#isprint">isprint</a></li><li data-name="ispunct"><a href="#ispunct">ispunct</a></li><li data-name="isspace"><a href="#isspace">isspace</a></li><li data-name="isupper"><a href="#isupper">isupper</a></li><li data-name="isxdigit"><a href="#isxdigit">isxdigit</a></li><li data-name="itoa"><a href="#itoa">itoa</a></li><li data-name="joy_read"><a href="#joy_read">joy_read</a></li><li data-name="labs"><a href="#labs">labs</a></li><li data-name="ltoa"><a href="#ltoa">ltoa</a></li><li data-name="longjmp"><a href="#longjmp">longjmp</a></li><li data-name="lynx_eeread_93c46"><a href="#lynx_eeread_93c46">lynx_eeread_93c46</a></li><li data-name="lynx_eeread_93c66"><a href="#lynx_eeread_93c66">lynx_eeread_93c66</a></li><li data-name="lynx_eeread_93c86"><a href="#lynx_eeread_93c86">lynx_eeread_93c86</a></li><li data-name="lynx_eewrite_93c46"><a href="#lynx_eewrite_93c46">lynx_eewrite_93c46</a></li><li data-name="lynx_eewrite_93c66"><a href="#lynx_eewrite_93c66">lynx_eewrite_93c66</a></li><li data-name="lynx_eewrite_93c86"><a href="#lynx_eewrite_93c86">lynx_eewrite_93c86</a></li><li data-name="lynx_exec"><a href="#lynx_exec">lynx_exec</a></li><li data-name="lynx_load"><a href="#lynx_load">lynx_load</a></li><li data-name="lynx_snd_active"><a href="#lynx_snd_active">lynx_snd_active</a></li><li data-name="lynx_snd_continue"><a href="#lynx_snd_continue">lynx_snd_continue</a></li><li data-name="lynx_snd_init"><a href="#lynx_snd_init">lynx_snd_init</a></li><li data-name="lynx_snd_pause"><a href="#lynx_snd_pause">lynx_snd_pause</a></li><li data-name="lynx_snd_play"><a href="#lynx_snd_play">lynx_snd_play</a></li><li data-name="lynx_snd_stop"><a href="#lynx_snd_stop">lynx_snd_stop</a></li><li data-name="lynx_snd_stop_channel"><a href="#lynx_snd_stop_channel">lynx_snd_stop_channel</a></li><li data-name="malloc"><a href="#malloc">malloc</a></li><li data-name="memchr"><a href="#memchr">memchr</a></li><li data-name="memcmp"><a href="#memcmp">memcmp</a></li><li data-name="memcpy"><a href="#memcpy">memcpy</a></li><li data-name="memmove"><a href="#memmove">memmove</a></li><li data-name="memset"><a href="#memset">memset</a></li><li data-name="offsetof"><a href="#offsetof">offsetof</a></li><li data-name="openn"><a href="#openn">openn</a></li><li data-name="qsort"><a href="#qsort">qsort</a></li><li data-name="rand"><a href="#rand">rand</a></li><li data-name="realloc"><a href="#realloc">realloc</a></li><li data-name="reset_irq"><a href="#reset_irq">reset_irq</a></li><li data-name="ser_close"><a href="#ser_close">ser_close</a></li><li data-name="ser_get"><a href="#ser_get">ser_get</a></li><li data-name="ser_open"><a href="#ser_open">ser_open</a></li><li data-name="ser_put"><a href="#ser_put">ser_put</a></li><li data-name="ser_status"><a href="#ser_status">ser_status</a></li><li data-name="set_irq"><a href="#set_irq">set_irq</a></li><li data-name="setjmp"><a href="#setjmp">setjmp</a></li><li data-name="sleep"><a href="#sleep">sleep</a></li><li data-name="snprintf"><a href="#snprintf">snprintf</a></li><li data-name="sprintf"><a href="#sprintf">sprintf</a></li><li data-name="srand"><a href="#srand">srand</a></li><li data-name="sscanf"><a href="#sscanf">sscanf</a></li><li data-name="strcasecmp"><a href="#strcasecmp">strcasecmp</a></li><li data-name="strcat"><a href="#strcat">strcat</a></li><li data-name="strchr"><a href="#strchr">strchr</a></li><li data-name="strcmp"><a href="#strcmp">strcmp</a></li><li data-name="strcoll"><a href="#strcoll">strcoll</a></li><li data-name="strcpy"><a href="#strcpy">strcpy</a></li><li data-name="strcspn"><a href="#strcspn">strcspn</a></li><li data-name="strdup"><a href="#strdup">strdup</a></li><li data-name="strerror"><a href="#strerror">strerror</a></li><li data-name="stricmp"><a href="#stricmp">stricmp</a></li><li data-name="strlen"><a href="#strlen">strlen</a></li><li data-name="strlower"><a href="#strlower">strlower</a></li><li data-name="strlwr"><a href="#strlwr">strlwr</a></li><li data-name="strncasecmp"><a href="#strncasecmp">strncasecmp</a></li><li data-name="strncat"><a href="#strncat">strncat</a></li><li data-name="strncmp"><a href="#strncmp">strncmp</a></li><li data-name="strncpy"><a href="#strncpy">strncpy</a></li><li data-name="strnicmp"><a href="#strnicmp">strnicmp</a></li><li data-name="strpbrk"><a href="#strpbrk">strpbrk</a></li><li data-name="strqtok"><a href="#strqtok">strqtok</a></li><li data-name="strrchr"><a href="#strrchr">strrchr</a></li><li data-name="strspn"><a href="#strspn">strspn</a></li><li data-name="strstr"><a href="#strstr">strstr</a></li><li data-name="strtok"><a href="#strtok">strtok</a></li><li data-name="strxfrm"><a href="#strxfrm">strxfrm</a></li><li data-name="strupper"><a href="#strupper">strupper</a></li><li data-name="strupr"><a href="#strupr">strupr</a></li><li data-name="suzy_div_result"><a href="#suzy_div_result">suzy_div_result</a></li><li data-name="suzy_div_start"><a href="#suzy_div_start">suzy_div_start</a></li><li data-name="suzy_math_busy"><a href="#suzy_math_busy">suzy_math_busy</a></li><li data-name="suzy_mod_result"><a href="#suzy_mod_result">suzy_mod_result</a></li><li data-name="suzy_mod_start"><a href="#suzy_mod_start">suzy_mod_start</a></li><li data-name="suzy_mul_result"><a href="#suzy_mul_result">suzy_mul_result</a></li><li data-name="suzy_mul_start"><a href="#suzy_mul_start">suzy_mul_start</a></li><li data-name="suzy_muldiv_result"><a href="#suzy_muldiv_result">suzy_muldiv_result</a></li><li data-name="suzy_muldiv_start"><a href="#suzy_muldiv_start">suzy_muldiv_start</a></li><li data-name="suzy_udiv_result"><a href="#suzy_udiv_result">suzy_udiv_result</a></li><li data-name="suzy_udiv_start"><a href="#suzy_udiv_start">suzy_udiv_start</a></li><li data-name="suzy_umod_result"><a href="#suzy_umod_result">suzy_umod_result</a></li><li data-name="suzy_umod_start"><a href="#suzy_umod_start">suzy_umod_start</a></li><li data-name="suzy_umul_result"><a href="#suzy_umul_result">suzy_umul_result</a></li><li data-name="suzy_umul_start"><a href="#suzy_umul_start">suzy_umul_start</a></li><li data-name="suzy_umuldiv_result"><a href="#suzy_umuldiv_result">suzy_umuldiv_result</a></li><li data-name="suzy_umuldiv_start"><a href="#suzy_umuldiv_start">suzy_umuldiv_start</a></li><li data-name="tolower"><a href="#tolower">tolower</a></li><li data-name="toupper"><a href="#toupper">toupper</a></li><li data-name="ultoa"><a href="#ultoa">ultoa</a></li><li data-name="utoa"><a href="#utoa">utoa</a></li><li data-name="vsnprintf"><a href="#vsnprintf">vsnprintf</a></li><li data-name="vsprintf"><a href="#vsprintf">vsprintf</a></li><li data-name="vsscanf"><a href="#vsscanf">vsscanf</a></li></ul><div class="fn-empty">No matches.</div></aside><main class="doc fn-main"><article><header class="doc-header"><h1>cc65 function reference</h1></header><div class="abstract">cc65 is a C compiler for 6502 based systems. This function reference describes
+<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html" class="active">Functions</a><a href="lynx_gfx_fonts.html">Fonts</a><a href="sound.html">Sound</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html">Migrating</a><a href="history.html">History</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><div class="javadoc"><aside class="fn-aside"><h2>Functions</h2><input id="fnFilter" class="fn-filter" type="search" placeholder="Filter functions…" autocomplete="off" aria-label="Filter functions"><ul id="fnIndex" class="fn-index"><li data-name="_de_isdir"><a href="#_DE_ISDIR">_DE_ISDIR</a></li><li data-name="_de_islbl"><a href="#_DE_ISLBL">_DE_ISLBL</a></li><li data-name="_de_islnk"><a href="#_DE_ISLNK">_DE_ISLNK</a></li><li data-name="_de_isreg"><a href="#_DE_ISREG">_DE_ISREG</a></li><li data-name="_heapadd"><a href="#_heapadd">_heapadd</a></li><li data-name="_heapblocksize"><a href="#_heapblocksize">_heapblocksize</a></li><li data-name="_heapmaxavail"><a href="#_heapmaxavail">_heapmaxavail</a></li><li data-name="_heapmemavail"><a href="#_heapmemavail">_heapmemavail</a></li><li data-name="_randomize"><a href="#_randomize">_randomize</a></li><li data-name="_stroserror"><a href="#_stroserror">_stroserror</a></li><li data-name="_swap"><a href="#_swap">_swap</a></li><li data-name="_sys"><a href="#_sys">_sys</a></li><li data-name="brk"><a href="#BRK">BRK</a></li><li data-name="cli"><a href="#CLI">CLI</a></li><li data-name="peek"><a href="#PEEK">PEEK</a></li><li data-name="peekw"><a href="#PEEKW">PEEKW</a></li><li data-name="poke"><a href="#POKE">POKE</a></li><li data-name="pokew"><a href="#POKEW">POKEW</a></li><li data-name="sei"><a href="#SEI">SEI</a></li><li data-name="abs"><a href="#abs">abs</a></li><li data-name="atexit"><a href="#atexit">atexit</a></li><li data-name="atoi"><a href="#atoi">atoi</a></li><li data-name="atol"><a href="#atol">atol</a></li><li data-name="bsearch"><a href="#bsearch">bsearch</a></li><li data-name="bzero"><a href="#bzero">bzero</a></li><li data-name="calloc"><a href="#calloc">calloc</a></li><li data-name="clock"><a href="#clock">clock</a></li><li data-name="decompress_lz4"><a href="#decompress_lz4">decompress_lz4</a></li><li data-name="div"><a href="#div">div</a></li><li data-name="doesclrscrafterexit"><a href="#doesclrscrafterexit">doesclrscrafterexit</a></li><li data-name="exit"><a href="#exit">exit</a></li><li data-name="free"><a href="#free">free</a></li><li data-name="gfx_busy"><a href="#gfx_busy">gfx_busy</a></li><li data-name="gfx_clear"><a href="#gfx_clear">gfx_clear</a></li><li data-name="gfx_clearrows"><a href="#gfx_clearrows">gfx_clearrows</a></li><li data-name="gfx_flip"><a href="#gfx_flip">gfx_flip</a></li><li data-name="gfx_getcolor"><a href="#gfx_getcolor">gfx_getcolor</a></li><li data-name="gfx_getcolorcount"><a href="#gfx_getcolorcount">gfx_getcolorcount</a></li><li data-name="gfx_getdefpalette"><a href="#gfx_getdefpalette">gfx_getdefpalette</a></li><li data-name="gfx_getmaxcolor"><a href="#gfx_getmaxcolor">gfx_getmaxcolor</a></li><li data-name="gfx_getmaxx"><a href="#gfx_getmaxx">gfx_getmaxx</a></li><li data-name="gfx_getmaxy"><a href="#gfx_getmaxy">gfx_getmaxy</a></li><li data-name="gfx_getpagecount"><a href="#gfx_getpagecount">gfx_getpagecount</a></li><li data-name="gfx_getpalette"><a href="#gfx_getpalette">gfx_getpalette</a></li><li data-name="gfx_gettextheight"><a href="#gfx_gettextheight">gfx_gettextheight</a></li><li data-name="gfx_gettextwidth"><a href="#gfx_gettextwidth">gfx_gettextwidth</a></li><li data-name="gfx_getxres"><a href="#gfx_getxres">gfx_getxres</a></li><li data-name="gfx_getyres"><a href="#gfx_getyres">gfx_getyres</a></li><li data-name="gfx_gotoxy"><a href="#gfx_gotoxy">gfx_gotoxy</a></li><li data-name="gfx_init"><a href="#gfx_init">gfx_init</a></li><li data-name="gfx_outtext"><a href="#gfx_outtext">gfx_outtext</a></li><li data-name="gfx_outtextxy"><a href="#gfx_outtextxy">gfx_outtextxy</a></li><li data-name="gfx_setbgcolor"><a href="#gfx_setbgcolor">gfx_setbgcolor</a></li><li data-name="gfx_setbpp"><a href="#gfx_setbpp">gfx_setbpp</a></li><li data-name="gfx_setcollisiondetection"><a href="#gfx_setcollisiondetection">gfx_setcollisiondetection</a></li><li data-name="gfx_setcolor"><a href="#gfx_setcolor">gfx_setcolor</a></li><li data-name="gfx_setdrawpage"><a href="#gfx_setdrawpage">gfx_setdrawpage</a></li><li data-name="gfx_setfont"><a href="#gfx_setfont">gfx_setfont</a></li><li data-name="gfx_setframerate"><a href="#gfx_setframerate">gfx_setframerate</a></li><li data-name="gfx_setpalette"><a href="#gfx_setpalette">gfx_setpalette</a></li><li data-name="gfx_settextdir"><a href="#gfx_settextdir">gfx_settextdir</a></li><li data-name="gfx_settextscale"><a href="#gfx_settextscale">gfx_settextscale</a></li><li data-name="gfx_settextstyle"><a href="#gfx_settextstyle">gfx_settextstyle</a></li><li data-name="gfx_setviewpage"><a href="#gfx_setviewpage">gfx_setviewpage</a></li><li data-name="gfx_sprite"><a href="#gfx_sprite">gfx_sprite</a></li><li data-name="gfx_updatedisplay"><a href="#gfx_updatedisplay">gfx_updatedisplay</a></li><li data-name="isalnum"><a href="#isalnum">isalnum</a></li><li data-name="isalpha"><a href="#isalpha">isalpha</a></li><li data-name="isascii"><a href="#isascii">isascii</a></li><li data-name="isblank"><a href="#isblank">isblank</a></li><li data-name="iscntrl"><a href="#iscntrl">iscntrl</a></li><li data-name="isdigit"><a href="#isdigit">isdigit</a></li><li data-name="isgraph"><a href="#isgraph">isgraph</a></li><li data-name="islower"><a href="#islower">islower</a></li><li data-name="isprint"><a href="#isprint">isprint</a></li><li data-name="ispunct"><a href="#ispunct">ispunct</a></li><li data-name="isspace"><a href="#isspace">isspace</a></li><li data-name="isupper"><a href="#isupper">isupper</a></li><li data-name="isxdigit"><a href="#isxdigit">isxdigit</a></li><li data-name="itoa"><a href="#itoa">itoa</a></li><li data-name="joy_read"><a href="#joy_read">joy_read</a></li><li data-name="labs"><a href="#labs">labs</a></li><li data-name="ltoa"><a href="#ltoa">ltoa</a></li><li data-name="longjmp"><a href="#longjmp">longjmp</a></li><li data-name="lynx_eeread_93c46"><a href="#lynx_eeread_93c46">lynx_eeread_93c46</a></li><li data-name="lynx_eeread_93c66"><a href="#lynx_eeread_93c66">lynx_eeread_93c66</a></li><li data-name="lynx_eeread_93c86"><a href="#lynx_eeread_93c86">lynx_eeread_93c86</a></li><li data-name="lynx_eewrite_93c46"><a href="#lynx_eewrite_93c46">lynx_eewrite_93c46</a></li><li data-name="lynx_eewrite_93c66"><a href="#lynx_eewrite_93c66">lynx_eewrite_93c66</a></li><li data-name="lynx_eewrite_93c86"><a href="#lynx_eewrite_93c86">lynx_eewrite_93c86</a></li><li data-name="lynx_exec"><a href="#lynx_exec">lynx_exec</a></li><li data-name="lynx_load"><a href="#lynx_load">lynx_load</a></li><li data-name="mikey_snd_integrate"><a href="#mikey_snd_integrate">mikey_snd_integrate</a></li><li data-name="mikey_snd_octave"><a href="#mikey_snd_octave">mikey_snd_octave</a></li><li data-name="mikey_snd_pitch"><a href="#mikey_snd_pitch">mikey_snd_pitch</a></li><li data-name="mikey_snd_taps"><a href="#mikey_snd_taps">mikey_snd_taps</a></li><li data-name="mikey_snd_volume"><a href="#mikey_snd_volume">mikey_snd_volume</a></li><li data-name="malloc"><a href="#malloc">malloc</a></li><li data-name="memchr"><a href="#memchr">memchr</a></li><li data-name="memcmp"><a href="#memcmp">memcmp</a></li><li data-name="memcpy"><a href="#memcpy">memcpy</a></li><li data-name="memmove"><a href="#memmove">memmove</a></li><li data-name="memset"><a href="#memset">memset</a></li><li data-name="offsetof"><a href="#offsetof">offsetof</a></li><li data-name="openn"><a href="#openn">openn</a></li><li data-name="qsort"><a href="#qsort">qsort</a></li><li data-name="rand"><a href="#rand">rand</a></li><li data-name="realloc"><a href="#realloc">realloc</a></li><li data-name="reset_irq"><a href="#reset_irq">reset_irq</a></li><li data-name="ser_close"><a href="#ser_close">ser_close</a></li><li data-name="ser_get"><a href="#ser_get">ser_get</a></li><li data-name="ser_open"><a href="#ser_open">ser_open</a></li><li data-name="ser_put"><a href="#ser_put">ser_put</a></li><li data-name="ser_status"><a href="#ser_status">ser_status</a></li><li data-name="set_irq"><a href="#set_irq">set_irq</a></li><li data-name="setjmp"><a href="#setjmp">setjmp</a></li><li data-name="sleep"><a href="#sleep">sleep</a></li><li data-name="snd_active"><a href="#snd_active">snd_active</a></li><li data-name="snd_continue"><a href="#snd_continue">snd_continue</a></li><li data-name="snd_init"><a href="#snd_init">snd_init</a></li><li data-name="snd_pause"><a href="#snd_pause">snd_pause</a></li><li data-name="snd_play"><a href="#snd_play">snd_play</a></li><li data-name="snd_stop"><a href="#snd_stop">snd_stop</a></li><li data-name="snd_stop_channel"><a href="#snd_stop_channel">snd_stop_channel</a></li><li data-name="snprintf"><a href="#snprintf">snprintf</a></li><li data-name="sprintf"><a href="#sprintf">sprintf</a></li><li data-name="srand"><a href="#srand">srand</a></li><li data-name="sscanf"><a href="#sscanf">sscanf</a></li><li data-name="strcasecmp"><a href="#strcasecmp">strcasecmp</a></li><li data-name="strcat"><a href="#strcat">strcat</a></li><li data-name="strchr"><a href="#strchr">strchr</a></li><li data-name="strcmp"><a href="#strcmp">strcmp</a></li><li data-name="strcoll"><a href="#strcoll">strcoll</a></li><li data-name="strcpy"><a href="#strcpy">strcpy</a></li><li data-name="strcspn"><a href="#strcspn">strcspn</a></li><li data-name="strdup"><a href="#strdup">strdup</a></li><li data-name="strerror"><a href="#strerror">strerror</a></li><li data-name="stricmp"><a href="#stricmp">stricmp</a></li><li data-name="strlen"><a href="#strlen">strlen</a></li><li data-name="strlower"><a href="#strlower">strlower</a></li><li data-name="strlwr"><a href="#strlwr">strlwr</a></li><li data-name="strncasecmp"><a href="#strncasecmp">strncasecmp</a></li><li data-name="strncat"><a href="#strncat">strncat</a></li><li data-name="strncmp"><a href="#strncmp">strncmp</a></li><li data-name="strncpy"><a href="#strncpy">strncpy</a></li><li data-name="strnicmp"><a href="#strnicmp">strnicmp</a></li><li data-name="strpbrk"><a href="#strpbrk">strpbrk</a></li><li data-name="strqtok"><a href="#strqtok">strqtok</a></li><li data-name="strrchr"><a href="#strrchr">strrchr</a></li><li data-name="strspn"><a href="#strspn">strspn</a></li><li data-name="strstr"><a href="#strstr">strstr</a></li><li data-name="strtok"><a href="#strtok">strtok</a></li><li data-name="strxfrm"><a href="#strxfrm">strxfrm</a></li><li data-name="strupper"><a href="#strupper">strupper</a></li><li data-name="strupr"><a href="#strupr">strupr</a></li><li data-name="suzy_div_result"><a href="#suzy_div_result">suzy_div_result</a></li><li data-name="suzy_div_start"><a href="#suzy_div_start">suzy_div_start</a></li><li data-name="suzy_math_busy"><a href="#suzy_math_busy">suzy_math_busy</a></li><li data-name="suzy_mod_result"><a href="#suzy_mod_result">suzy_mod_result</a></li><li data-name="suzy_mod_start"><a href="#suzy_mod_start">suzy_mod_start</a></li><li data-name="suzy_mul_result"><a href="#suzy_mul_result">suzy_mul_result</a></li><li data-name="suzy_mul_start"><a href="#suzy_mul_start">suzy_mul_start</a></li><li data-name="suzy_muldiv_result"><a href="#suzy_muldiv_result">suzy_muldiv_result</a></li><li data-name="suzy_muldiv_start"><a href="#suzy_muldiv_start">suzy_muldiv_start</a></li><li data-name="suzy_udiv_result"><a href="#suzy_udiv_result">suzy_udiv_result</a></li><li data-name="suzy_udiv_start"><a href="#suzy_udiv_start">suzy_udiv_start</a></li><li data-name="suzy_umod_result"><a href="#suzy_umod_result">suzy_umod_result</a></li><li data-name="suzy_umod_start"><a href="#suzy_umod_start">suzy_umod_start</a></li><li data-name="suzy_umul_result"><a href="#suzy_umul_result">suzy_umul_result</a></li><li data-name="suzy_umul_start"><a href="#suzy_umul_start">suzy_umul_start</a></li><li data-name="suzy_umuldiv_result"><a href="#suzy_umuldiv_result">suzy_umuldiv_result</a></li><li data-name="suzy_umuldiv_start"><a href="#suzy_umuldiv_start">suzy_umuldiv_start</a></li><li data-name="tolower"><a href="#tolower">tolower</a></li><li data-name="toupper"><a href="#toupper">toupper</a></li><li data-name="ultoa"><a href="#ultoa">ultoa</a></li><li data-name="utoa"><a href="#utoa">utoa</a></li><li data-name="vsnprintf"><a href="#vsnprintf">vsnprintf</a></li><li data-name="vsprintf"><a href="#vsprintf">vsprintf</a></li><li data-name="vsscanf"><a href="#vsscanf">vsscanf</a></li></ul><div class="fn-empty">No matches.</div></aside><main class="doc fn-main"><article><header class="doc-header"><h1>cc65 function reference</h1></header><div class="abstract">cc65 is a C compiler for 6502 based systems. This function reference describes
 the C functions available in the standard library.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Introduction</a></li>
 <li class="lvl1"><a href="#sect-2">2. Functions by header file</a></li>
@@ -235,25 +235,40 @@ read-only cart access, then <code>read</code>/<code>lseek</code>.</p>
 <p><a href="#lynx_load">lynx_load</a></p>
 </li>
 <li>
-<p><a href="#lynx_snd_active">lynx_snd_active</a></p>
+<p><a href="#mikey_snd_integrate">mikey_snd_integrate</a></p>
 </li>
 <li>
-<p><a href="#lynx_snd_continue">lynx_snd_continue</a></p>
+<p><a href="#mikey_snd_octave">mikey_snd_octave</a></p>
 </li>
 <li>
-<p><a href="#lynx_snd_init">lynx_snd_init</a></p>
+<p><a href="#mikey_snd_pitch">mikey_snd_pitch</a></p>
 </li>
 <li>
-<p><a href="#lynx_snd_pause">lynx_snd_pause</a></p>
+<p><a href="#mikey_snd_taps">mikey_snd_taps</a></p>
 </li>
 <li>
-<p><a href="#lynx_snd_play">lynx_snd_play</a></p>
+<p><a href="#mikey_snd_volume">mikey_snd_volume</a></p>
 </li>
 <li>
-<p><a href="#lynx_snd_stop">lynx_snd_stop</a></p>
+<p><a href="#snd_active">snd_active</a></p>
 </li>
 <li>
-<p><a href="#lynx_snd_stop_channel">lynx_snd_stop_channel</a></p>
+<p><a href="#snd_continue">snd_continue</a></p>
+</li>
+<li>
+<p><a href="#snd_init">snd_init</a></p>
+</li>
+<li>
+<p><a href="#snd_pause">snd_pause</a></p>
+</li>
+<li>
+<p><a href="#snd_play">snd_play</a></p>
+</li>
+<li>
+<p><a href="#snd_stop">snd_stop</a></p>
+</li>
+<li>
+<p><a href="#snd_stop_channel">snd_stop_channel</a></p>
 </li>
 <li>
 <p><a href="#openn">openn</a></p>
@@ -4871,7 +4886,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="lynx_snd_active">3.93. lynx_snd_active</h3>
+<h3 id="snd_active">3.93. snd_active</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -4884,7 +4899,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Declaration</dt>
 <dd>
-<p><code>unsigned char lynx_snd_active (void);</code></p>
+<p><code>unsigned char snd_active (void);</code></p>
 </dd>
 <dt>Description</dt>
 <dd>
@@ -4902,7 +4917,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>See also</dt>
 <dd>
-<p><a href="#lynx_snd_play">lynx_snd_play</a></p>
+<p><a href="#snd_play">snd_play</a></p>
 </dd>
 <dt>Example</dt>
 <dd>
@@ -4910,7 +4925,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="lynx_snd_continue">3.94. lynx_snd_continue</h3>
+<h3 id="snd_continue">3.94. snd_continue</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -4923,11 +4938,11 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Declaration</dt>
 <dd>
-<p><code>void lynx_snd_continue (void);</code></p>
+<p><code>void snd_continue (void);</code></p>
 </dd>
 <dt>Description</dt>
 <dd>
-<p>Resumes playback previously suspended with <code><a href="#lynx_snd_pause">lynx_snd_pause</a></code>.</p>
+<p>Resumes playback previously suspended with <code><a href="#snd_pause">snd_pause</a></code>.</p>
 </dd>
 <dt>Notes</dt>
 <dd>
@@ -4941,7 +4956,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>See also</dt>
 <dd>
-<p><a href="#lynx_snd_pause">lynx_snd_pause</a></p>
+<p><a href="#snd_pause">snd_pause</a></p>
 </dd>
 <dt>Example</dt>
 <dd>
@@ -4949,12 +4964,12 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="lynx_snd_init">3.95. lynx_snd_init</h3>
+<h3 id="snd_init">3.95. snd_init</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
 <dd>
-<p>Initialize the sound driver.</p>
+<p>Initialize the sound engine.</p>
 </dd>
 <dt>Header</dt>
 <dd>
@@ -4962,17 +4977,17 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Declaration</dt>
 <dd>
-<p><code>void lynx_snd_init (void);</code></p>
+<p><code>void snd_init (void);</code></p>
 </dd>
 <dt>Description</dt>
 <dd>
-<p>Sets up the four Mikey audio channels and installs the vertical-blank interrupt handler that drives playback. Call once before any other <code>lynx_snd_*</code> function.</p>
+<p>Sets up the four Mikey audio channels, programs the dedicated sound timer (~240&nbsp;Hz) and installs the sound-interrupt handler that drives playback. Call once before any other <code>snd_*</code> function.</p>
 </dd>
 <dt>Notes</dt>
 <dd>
 <ul>
 <li>
-<p>The driver runs from the VBL interrupt; it is installed as an interruptor and stays resident.</p>
+<p>Playback runs from a dedicated Mikey timer interrupt (not the VBL); the handler is installed as an interruptor and stays resident. See <a href="sound.html">the Sound page</a> and <code>design/LYNX_SND_ENGINE_DESIGN.md</code>.</p>
 </li>
 </ul>
 </dd>
@@ -4982,8 +4997,8 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>See also</dt>
 <dd>
-<p><a href="#lynx_snd_play">lynx_snd_play</a>,
-<a href="#lynx_snd_stop">lynx_snd_stop</a></p>
+<p><a href="#snd_play">snd_play</a>,
+<a href="#snd_stop">snd_stop</a></p>
 </dd>
 <dt>Example</dt>
 <dd>
@@ -4991,7 +5006,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="lynx_snd_pause">3.96. lynx_snd_pause</h3>
+<h3 id="snd_pause">3.96. snd_pause</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5004,11 +5019,11 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Declaration</dt>
 <dd>
-<p><code>void lynx_snd_pause (void);</code></p>
+<p><code>void snd_pause (void);</code></p>
 </dd>
 <dt>Description</dt>
 <dd>
-<p>Suspends playback on all channels. Resume with <code><a href="#lynx_snd_continue">lynx_snd_continue</a></code>.</p>
+<p>Suspends playback on all channels. Resume with <code><a href="#snd_continue">snd_continue</a></code>.</p>
 </dd>
 <dt>Notes</dt>
 <dd>
@@ -5022,7 +5037,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>See also</dt>
 <dd>
-<p><a href="#lynx_snd_continue">lynx_snd_continue</a></p>
+<p><a href="#snd_continue">snd_continue</a></p>
 </dd>
 <dt>Example</dt>
 <dd>
@@ -5030,12 +5045,12 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="lynx_snd_play">3.97. lynx_snd_play</h3>
+<h3 id="snd_play">3.97. snd_play</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
 <dd>
-<p>Play a tune on a channel.</p>
+<p>Play a compiled tune stream on a channel.</p>
 </dd>
 <dt>Header</dt>
 <dd>
@@ -5043,11 +5058,11 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Declaration</dt>
 <dd>
-<p><code>void __fastcall__ lynx_snd_play (unsigned char channel, unsigned char* music);</code></p>
+<p><code>void __fastcall__ snd_play (unsigned char channel, const unsigned char* stream);</code></p>
 </dd>
 <dt>Description</dt>
 <dd>
-<p>Starts playing the note-string tune <code>music</code> on <code>channel</code> (0&ndash;3). If that channel is busy a free one is chosen. Playback then proceeds automatically under the VBL interrupt.</p>
+<p>Starts playing the compiled event <code>stream</code> on <code>channel</code> (0&ndash;3); if that channel is busy a free one is chosen. The stream is produced offline by the <code>abccc</code> tune compiler (see <a href="sound.html">the Sound page</a>). Playback then proceeds automatically under the sound-timer interrupt.</p>
 </dd>
 <dt>Notes</dt>
 <dd>
@@ -5063,8 +5078,8 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>See also</dt>
 <dd>
-<p><a href="#lynx_snd_stop_channel">lynx_snd_stop_channel</a>,
-<a href="#lynx_snd_active">lynx_snd_active</a></p>
+<p><a href="#snd_stop_channel">snd_stop_channel</a>,
+<a href="#snd_active">snd_active</a></p>
 </dd>
 <dt>Example</dt>
 <dd>
@@ -5072,7 +5087,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="lynx_snd_stop">3.98. lynx_snd_stop</h3>
+<h3 id="snd_stop">3.98. snd_stop</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5085,7 +5100,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Declaration</dt>
 <dd>
-<p><code>void lynx_snd_stop (void);</code></p>
+<p><code>void snd_stop (void);</code></p>
 </dd>
 <dt>Description</dt>
 <dd>
@@ -5103,7 +5118,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>See also</dt>
 <dd>
-<p><a href="#lynx_snd_stop_channel">lynx_snd_stop_channel</a></p>
+<p><a href="#snd_stop_channel">snd_stop_channel</a></p>
 </dd>
 <dt>Example</dt>
 <dd>
@@ -5111,7 +5126,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="lynx_snd_stop_channel">3.99. lynx_snd_stop_channel</h3>
+<h3 id="snd_stop_channel">3.99. snd_stop_channel</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5124,7 +5139,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Declaration</dt>
 <dd>
-<p><code>void __fastcall__ lynx_snd_stop_channel (unsigned char channel);</code></p>
+<p><code>void __fastcall__ snd_stop_channel (unsigned char channel);</code></p>
 </dd>
 <dt>Description</dt>
 <dd>
@@ -5144,7 +5159,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>See also</dt>
 <dd>
-<p><a href="#lynx_snd_stop">lynx_snd_stop</a></p>
+<p><a href="#snd_stop">snd_stop</a></p>
 </dd>
 <dt>Example</dt>
 <dd>
@@ -8701,6 +8716,213 @@ used in presence of a prototype.</p>
 <p><a href="#sprintf">sprintf</a>,
 <a href="#sscanf">sscanf</a>,
 <a href="#vsnprintf">vsnprintf</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="mikey_snd_integrate">3.175. mikey_snd_integrate</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Set or clear a Mikey channel's integrate (waveform-shape) bit.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ mikey_snd_integrate (unsigned char chan, unsigned char val);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Writes the integrate bit (CONTROL bit&nbsp;5) of channel <code>chan</code> (0&ndash;3): <code>val</code>&nbsp;0 selects the square wave, non-zero the integrated (smoother) wave. A direct register helper, independent of the stream engine; the other control bits are preserved.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#mikey_snd_volume">mikey_snd_volume</a>,
+<a href="#snd_play">snd_play</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="mikey_snd_octave">3.176. mikey_snd_octave</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Set a Mikey channel's clock-divider (octave) band.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ mikey_snd_octave (unsigned char chan, unsigned char val);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Writes the clock-divider bits (CONTROL bits&nbsp;0&ndash;2) of channel <code>chan</code> (0&ndash;3) to <code>val</code> (0&ndash;6), selecting the octave band, <strong>and</strong> sets the timer-enable bits (<code>$18</code> = reload + count) so the channel's poly counter is actually clocked. A direct register helper; integrate (bit&nbsp;5) and the 9th tap (bit&nbsp;7) are preserved. The channel still needs a non-zero feedback tap (<a href="#mikey_snd_taps"><code>mikey_snd_taps</code></a>) to oscillate; with no taps it emits only a DC level, i.e. silence.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#mikey_snd_pitch">mikey_snd_pitch</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="mikey_snd_pitch">3.177. mikey_snd_pitch</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Set a Mikey channel's timer reload (pitch within the octave).</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ mikey_snd_pitch (unsigned char chan, unsigned char val);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Writes the BACKUP (timer reload) register of channel <code>chan</code> (0&ndash;3) to <code>val</code> (0&ndash;255). Together with <code><a href="#mikey_snd_octave">mikey_snd_octave</a></code> this fixes the channel's frequency. A direct register helper.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#mikey_snd_octave">mikey_snd_octave</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="mikey_snd_taps">3.178. mikey_snd_taps</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Select a Mikey channel's LFSR feedback taps (timbre / noise colour).</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ mikey_snd_taps (unsigned char chan, unsigned int val);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Programs the 9-bit feedback-tap selection of channel <code>chan</code> (0&ndash;3): the low 8 taps go to the FEEDBACK register and the 9th tap to CONTROL bit&nbsp;7. <code>val</code> ranges 0&ndash;511; small tap sets give pure tones, wider sets give buzzy or noisy timbres. A direct register helper.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#mikey_snd_integrate">mikey_snd_integrate</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="mikey_snd_volume">3.179. mikey_snd_volume</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Set a Mikey channel's output volume.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ mikey_snd_volume (unsigned char chan, unsigned char val);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Writes the signed VOLUME register of channel <code>chan</code> (0&ndash;3) to <code>val</code> (0&ndash;127). A direct register helper, independent of the stream engine; handy for one-call sound effects or hand-built instruments.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#mikey_snd_pitch">mikey_snd_pitch</a>,
+<a href="#mikey_snd_octave">mikey_snd_octave</a></p>
 </dd>
 <dt>Example</dt>
 <dd>

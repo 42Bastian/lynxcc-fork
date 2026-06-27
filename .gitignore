@@ -16,6 +16,9 @@ examples/*/*.lnx
 examples/*/*.map
 examples/*/*.o
 examples/*/*.s
+# ...except theme.s: the abccc-compiled tune is committed beside sndtune.c so the
+# example links without the host tool present (regenerate with host-tools/abccc).
+!examples/mikey/theme.s
 
 # sp65-generated sprite headers (rebuilt from suzy/heart.pcx)
 examples/suzy/heart_packed.h

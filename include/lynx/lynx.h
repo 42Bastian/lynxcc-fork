@@ -140,26 +140,50 @@
 
 
 
-void lynx_snd_init (void);
-/* Initialize the sound driver */
+/* Compiled-stream music engine.  Streams are produced offline by the abccc
+** tune compiler; see design/LYNX_SND_ENGINE_DESIGN.md and doc/sound.html. */
 
-void lynx_snd_pause (void);
-/* Pause sound */
+void snd_init (void);
+/* Initialize the sound engine: program the sound timer and install the
+** sound-interrupt handler.  Call once before any other snd_* function. */
 
-void lynx_snd_continue (void);
-/* Continue sound after pause */
+void snd_pause (void);
+/* Suspend playback on all channels (e.g. game pause) */
 
-void __fastcall__ lynx_snd_play (unsigned char channel, unsigned char *music);
-/* Play tune on channel */
+void snd_continue (void);
+/* Resume playback after snd_pause */
 
-void lynx_snd_stop (void);
+void __fastcall__ snd_play (unsigned char channel, const unsigned char *stream);
+/* Start a compiled tune stream on a channel (0-3); a busy default channel
+** yields to a free one */
+
+void snd_stop (void);
 /* Stop sound on all channels */
 
-void __fastcall__ lynx_snd_stop_channel (unsigned char channel);
+void __fastcall__ snd_stop_channel (unsigned char channel);
 /* Stop sound on the given channel */
 
-unsigned char lynx_snd_active(void);
-/* Show which channels are active */
+unsigned char snd_active (void);
+/* Non-zero while any channel is still playing (bitmask of active channels) */
+
+/* Direct Mikey channel-register helpers, independent of the stream engine --
+** useful for sound effects or hand-built instruments (mikey-snd.s). */
+
+void __fastcall__ mikey_snd_octave (unsigned char chan, unsigned char val);
+/* Clock-divider band, CONTROL bits 0-2 (val 0..6); also enables the channel
+** timer (a channel makes no sound until its timer runs). Set feedback taps too. */
+
+void __fastcall__ mikey_snd_pitch (unsigned char chan, unsigned char val);
+/* Timer reload / pitch within the octave, BACKUP (val 0..255) */
+
+void __fastcall__ mikey_snd_taps (unsigned char chan, unsigned int val);
+/* LFSR feedback taps, FEEDBACK + CONTROL bit 7 (val 0..511) */
+
+void __fastcall__ mikey_snd_integrate (unsigned char chan, unsigned char val);
+/* Integrate bit, CONTROL bit 5 (val 0 = square, 1 = integrate) */
+
+void __fastcall__ mikey_snd_volume (unsigned char chan, unsigned char val);
+/* Signed output volume, VOLUME (val 0..127) */
 
 
 

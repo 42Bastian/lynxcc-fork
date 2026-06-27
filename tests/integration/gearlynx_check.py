@@ -48,6 +48,7 @@ EXAMPLES = [
     "suzy/spriteslice",    # sp65 --slice/--pop: hand-tabled frames
     "suzy/fonttest",       # TGI scaled fonts
     "mikey/setbpp",        # Mikey display-DMA bit depths
+    "mikey/sndtune",       # snd engine: compiled ABC tune + direct SFX
     "games/breakout",      # a complete game frame
 ]
 

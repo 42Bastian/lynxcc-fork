@@ -1,20 +1,23 @@
 ;
-; Sound driver for the Atari Lynx.
+; Lynx sound engine (snd) for the Atari Lynx.
 ;
-; Karri Kaksonen and Bjoern Spruck, 11.12.2012
+; Compiled-stream music player for Mikey's four audio channels.  Runtime origin:
+; binary event-stream player by Karri Kaksonen and Bjoern Spruck, 11.12.2012.
+; The _IF/_ELSE/_ENDIF structured-assembly macros are Spruck's (from Chipper).
+; See design/LYNX_SND_ENGINE_DESIGN.md.
 ;
 
         .include "lynx/lynx.inc"
         .include        "zeropage.inc"
 
-        .export         _lynx_snd_init
-        .export         _lynx_snd_active
-        .export         _lynx_snd_play
-        .export         _lynx_snd_stop
-        .export         _lynx_snd_stop_channel
-        .export         _lynx_snd_pause
-        .export         _lynx_snd_continue
-        .interruptor    lynx_snd_handler
+        .export         _snd_init
+        .export         _snd_active
+        .export         _snd_play
+        .export         _snd_stop
+        .export         _snd_stop_channel
+        .export         _snd_pause
+        .export         _snd_continue
+        .interruptor    snd_handler
         .import         popa
         .importzp       ptr1
 
@@ -52,6 +55,9 @@ SndReqStop:             .res    4
 SndEnvVol:              .res    4
 SndEnvFrq:              .res    4
 SndEnvWave:             .res    4
+SndMode:                .res    4       ; per-channel parser mode flags (bit0 = compact notes)
+SndDefDur:              .res    4       ; per-channel default note duration (compact notes)
+SndInteg:               .res    4       ; per-channel integrate (bit5) + upper tap (bit7) bits
 SndChannel:             .res    32
 SndEnvVolCnt:           .res    4
 SndEnvVolInc:           .res    4
@@ -155,12 +161,12 @@ nest_count      .set    0
         .code
 
 ;----------------------------------------------------------------------------
-; void lynx_snd_init() will initialize the sound engine.
+; void snd_init() will initialize the sound engine.
 ;
 
 _31250Hz        .set    %101
 
-_lynx_snd_init:
+_snd_init:
         php
         sei
         lda     #%10011000|_31250Hz
@@ -190,6 +196,9 @@ init0:  stz     SndActive,x
         stz     SndEnvVol,x
         stz     SndEnvFrq,x
         stz     SndEnvWave,x
+        stz     SndMode,x               ; default: legacy 2-byte notes
+        stz     SndDefDur,x             ; default duration 0 (set via SetDur)
+        stz     SndInteg,x              ; default: square wave, low taps only
         ldy     SndOffsets,x
         sta     SndChannel+2,y
         dex
@@ -201,10 +210,10 @@ init0:  stz     SndActive,x
         rts
 
 ;----------------------------------------------------------------------------
-; lynx_snd_handler is run at every sound interrupt
+; snd_handler is run at every sound interrupt
 ;
 
-lynx_snd_handler:
+snd_handler:
         lda     INTSET
         and     #SND_INTERRUPT
         bne     @L0
@@ -284,6 +293,9 @@ SndCmdsLo:
         .byte <((SndSetChnAttenution)-1)
         .byte <((SndPlayerFreq)-1)
         .byte <((SndReturnAll)-1)
+        .byte <((SndModeOp)-1)
+        .byte <((SndSetDur)-1)
+        .byte <((SndSetInteg)-1)
 
 SndCmdsHi:
         .byte >((SndLoop)-1)
@@ -305,6 +317,9 @@ SndCmdsHi:
         .byte >((SndSetChnAttenution)-1)
         .byte >((SndPlayerFreq)-1)
         .byte >((SndReturnAll)-1)
+        .byte >((SndModeOp)-1)
+        .byte >((SndSetDur)-1)
+        .byte >((SndSetInteg)-1)
 
 ;----------------------------------------------------------------------------
 ; Get next sound command from stream
@@ -410,8 +425,14 @@ SndNewNote:
         phx
         sta SndNotePlaying,x
         pha
-        ldy #1
-        lda (SndPtrTmp),y
+        lda SndMode,x
+        lsr a                   ; bit0 -> carry
+        _IFCS                   ; compact note: duration from SndDefDur
+                lda SndDefDur,x
+        _ELSE                   ; legacy note: duration is the next stream byte
+                ldy #1
+                lda (SndPtrTmp),y
+        _ENDIF
         sta SndDelay,x
         ldy SndOffsets,x
         lda SndVolume,x
@@ -436,11 +457,17 @@ SndNewNote:
         _IFNE
                 jsr SndSetEnvWave1
         _ENDIF
-        lda #$2
-        ldy SndDelay,x
-        _IFNE
-                ora #$80
+        lda SndMode,x
+        lsr a                   ; compact => advance 1 byte, legacy => 2 bytes
+        _IFCS
+                lda #$1
+        _ELSE
+                lda #$2
         _ENDIF
+        ldy SndDelay,x
+        _IFEQ
+                ora #$80        ; zero-length note: keep parsing this frame
+        _ENDIF                  ; timed note: bit7 clear => yield, wait out SndDelay
         tay
         rts
 
@@ -798,6 +825,35 @@ SndSetChnAttenution:
                 ldy #$82
                 rts
 
+;----------------------------------------------------------------------------
+; Mode ($93): per-channel parser modes.  bit0 = compact (1-byte) notes.
+;
+SndModeOp:
+                lda (SndPtrTmp),y
+                sta SndMode,x
+                ldy #$82
+                rts
+
+;----------------------------------------------------------------------------
+; SetDur ($94): default note duration used by compact notes.
+;
+SndSetDur:
+                lda (SndPtrTmp),y
+                sta SndDefDur,x
+                ldy #$82
+                rts
+
+;----------------------------------------------------------------------------
+; SetInteg ($95): per-channel integrate (bit5) and upper feedback tap (bit7)
+; bits, ora'd into the CONTROL register by SndSetValues.  Defaults to 0 so
+; legacy streams keep writing the square-wave control value.
+;
+SndSetInteg:
+                lda (SndPtrTmp),y
+                sta SndInteg,x
+                ldy #$82
+                rts
+
 SndChangeVol:
                 tay
                 _IFMI
@@ -1090,6 +1146,7 @@ set0:                ldy SndOffsets,x
                     lda SndChannel+5,y
                     ora #%00011000 ;;; #%01011000
             ;; and #%00111111
+                    ora SndInteg,x              ; opt-in integrate (bit5) + tap9 (bit7)
                     sta $fd25,y                 ; re-enable timer
                     _ENDIF
 
@@ -1103,7 +1160,7 @@ set0:                ldy SndOffsets,x
         _ENDIF
         rts
 
-_lynx_snd_play:
+_snd_play:
         sta ptr1
         stx ptr1+1
         jsr popa
@@ -1167,7 +1224,7 @@ start20:
         plx
         rts
 
-_lynx_snd_stop:
+_snd_stop:
         ldx #3
         lda SndActive,x
         _IFNE
@@ -1181,7 +1238,7 @@ stop1:          lda SndActive,x
         bpl stop0
         rts
 
-_lynx_snd_stop_channel:
+_snd_stop_channel:
         tax
         lda SndActive,x
         _IFNE
@@ -1193,7 +1250,7 @@ stopc1:         lda SndActive,x
         _ENDIF
         rts
 
-_lynx_snd_active:
+_snd_active:
         ldx #3
         lda #0
 act0:   ldy SndActive,x
@@ -1204,7 +1261,7 @@ act0:   ldy SndActive,x
         bpl act0
         rts
 
-_lynx_snd_pause:
+_snd_pause:
         php
         sei
         lda STIMCTLA
@@ -1222,7 +1279,7 @@ _lynx_snd_pause:
         plp
         rts
 
-_lynx_snd_continue:
+_snd_continue:
         php
         sei
 SndPauseOff1:

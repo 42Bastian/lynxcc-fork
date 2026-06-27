@@ -50,7 +50,7 @@ endif
 ROOT_EXAMPLES = lynxdemo
 GAMES         = breakout invaders raycaster sybil
 SUZY          = muldivtest spritetest spritesheet spriteslice suzyasync suzyasyncbench suzybench packtest fonttest fontvar textdir
-MIKEY         = setbpp
+MIKEY         = setbpp sndtune
 MEMORY        = heaptest zeropage
 NETWORK       = comlynx
 
@@ -136,6 +136,15 @@ suzy/spritesheet.o: suzy/spritesheet.c suzy/sheet_anim.h
 suzy/spriteslice.o: suzy/spriteslice.c $(SHEET_FRAMES)
 
 # --------------------------------------------------------------------------
+# The snd-engine demo links the example against a compiled ABC tune stream.
+# theme.s is the committed output of "abccc -f s -l theme_music -o theme.s
+# theme.abc" (abccc lives under host-tools/, outside this build); regenerate it
+# by hand when theme.abc changes. See mikey/sndtune.c and doc/sound.html.
+
+mikey/sndtune.lnx: mikey/sndtune.o mikey/theme.o
+	$(CL) $(LDFLAGS) -o $@ -m $(@:.lnx=.map) $^
+
+# --------------------------------------------------------------------------
 
 examples: $(EXELIST)
 
@@ -165,6 +174,7 @@ install:
 	$(INSTALL) -m0644 suzy/sheet.pcx suzy/sheet.pcx.py $(DESTDIR)$(examplesdir)/suzy
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/mikey
 	$(INSTALL) -m0644 $(addprefix mikey/,$(addsuffix .c,$(MIKEY))) $(DESTDIR)$(examplesdir)/mikey
+	$(INSTALL) -m0644 mikey/theme.abc mikey/theme.s $(DESTDIR)$(examplesdir)/mikey
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/memory
 	$(INSTALL) -m0644 $(addprefix memory/,$(addsuffix .c,$(MEMORY))) $(DESTDIR)$(examplesdir)/memory
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/network
@@ -180,7 +190,7 @@ zip:
 # Clean-up rules
 
 mostlyclean:
-	@$(DEL) $(EXELIST:.lnx=.map) $(EXELIST:.lnx=.o) $(EXELIST:.lnx=.s) $(SPRITETEST_HDRS) suzy/sheet_anim.h $(SHEET_FRAMES) 2>$(NULLDEV)
+	@$(DEL) $(EXELIST:.lnx=.map) $(EXELIST:.lnx=.o) $(EXELIST:.lnx=.s) $(SPRITETEST_HDRS) suzy/sheet_anim.h $(SHEET_FRAMES) mikey/theme.o 2>$(NULLDEV)
 
 clean: mostlyclean
 	@$(DEL) $(EXELIST) 2>$(NULLDEV)

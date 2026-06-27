@@ -12,7 +12,7 @@ See doc/licenses.html.
 <link rel="stylesheet" href="doc.css">
 <script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
 </head><body>
-<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html">Functions</a><a href="lynx_gfx_fonts.html">Fonts</a><a href="lynx.html" class="active">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html">Migrating</a><a href="history.html">History</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>Atari Lynx specific information for cc65</h1></header><div class="abstract">An overview over the Atari Lynx runtime system as it is implemented for the
+<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html">Functions</a><a href="lynx_gfx_fonts.html">Fonts</a><a href="sound.html">Sound</a><a href="lynx.html" class="active">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html">Migrating</a><a href="history.html">History</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>Atari Lynx specific information for cc65</h1></header><div class="abstract">An overview over the Atari Lynx runtime system as it is implemented for the
 cc65 C compiler.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Overview</a></li>
 <li class="lvl1"><a href="#sect-2">2. Building your first Hello World application</a></li>
@@ -589,13 +589,21 @@ and
 </dd>
 <dt>Sound</dt>
 <dd>
-<p><a href="funcref.html#lynx_snd_init">lynx_snd_init</a>,
-<a href="funcref.html#lynx_snd_play">lynx_snd_play</a>,
-<a href="funcref.html#lynx_snd_stop">lynx_snd_stop</a>,
-<a href="funcref.html#lynx_snd_stop_channel">lynx_snd_stop_channel</a>,
-<a href="funcref.html#lynx_snd_pause">lynx_snd_pause</a>,
-<a href="funcref.html#lynx_snd_continue">lynx_snd_continue</a>,
-<a href="funcref.html#lynx_snd_active">lynx_snd_active</a>.</p>
+<p>The compiled-stream music engine:
+<a href="funcref.html#snd_init">snd_init</a>,
+<a href="funcref.html#snd_play">snd_play</a>,
+<a href="funcref.html#snd_stop">snd_stop</a>,
+<a href="funcref.html#snd_stop_channel">snd_stop_channel</a>,
+<a href="funcref.html#snd_pause">snd_pause</a>,
+<a href="funcref.html#snd_continue">snd_continue</a>,
+<a href="funcref.html#snd_active">snd_active</a>; plus the direct Mikey helpers
+<a href="funcref.html#mikey_snd_octave">mikey_snd_octave</a>,
+<a href="funcref.html#mikey_snd_pitch">mikey_snd_pitch</a>,
+<a href="funcref.html#mikey_snd_taps">mikey_snd_taps</a>,
+<a href="funcref.html#mikey_snd_integrate">mikey_snd_integrate</a>,
+<a href="funcref.html#mikey_snd_volume">mikey_snd_volume</a>.
+See the dedicated <a href="sound.html">Sound</a> page for the engine guide and the
+<code>abccc</code> composing tutorial.</p>
 </dd>
 </dl>
 <h3 id="sect-7-2">7.2. Hardware access</h3>
@@ -777,20 +785,24 @@ against the macros.</p>
   as ComLynx has only one wire for the data.</p>
 <p>Both transmit and receive are interrupt driven.</p>
 <h3 id="sect-8-4">8.4. Audio</h3>
-<p>Sound is a small static library driving Mikey's four audio channels; there is
-nothing to install or that can fail to load. Call <code>lynx_snd_init()</code>
-once at startup &mdash; it sets up the channels and installs a vertical-blank
-interrupt handler that advances playback &mdash; then start a note-string tune on
-a channel (0&ndash;3) with <code>lynx_snd_play(channel, music)</code>; if the
-requested channel is busy a free one is chosen and the tune then plays
-automatically under the VBL interrupt. <code>lynx_snd_pause()</code> and
-<code>lynx_snd_continue()</code> suspend and resume every channel,
-<code>lynx_snd_stop()</code> silences all channels at once and
-<code>lynx_snd_stop_channel(channel)</code> silences just one, and
-<code>lynx_snd_active()</code> returns non-zero while any channel is still
-playing so a program can wait for a tune to finish. The functions are declared
-in <code>lynx/lynx.h</code>; see the
-<a href="funcref.html#lynx_snd_init">function reference</a> for the full set.</p>
+<p>Sound is a compiled-stream music engine driving Mikey's four audio channels;
+there is nothing to install or that can fail to load. Call <code>snd_init()</code>
+once at startup &mdash; it sets up the channels, programs a dedicated sound timer
+(~240&nbsp;Hz) and installs the interrupt handler that advances playback &mdash;
+then start a compiled tune stream on a channel (0&ndash;3) with
+<code>snd_play(channel, stream)</code>; if the requested channel is busy a free
+one is chosen and the tune then plays automatically under the sound-timer
+interrupt. <code>snd_pause()</code> and <code>snd_continue()</code> suspend and
+resume every channel, <code>snd_stop()</code> silences all channels at once and
+<code>snd_stop_channel(channel)</code> silences just one, and
+<code>snd_active()</code> returns non-zero while any channel is still playing so
+a program can wait for a tune to finish. Tune streams are authored in ABC text
+and compiled offline by the <code>abccc</code> tool; for sound effects, the
+<code>mikey_snd_*</code> helpers poke a single channel register directly. The
+functions are declared in <code>lynx/lynx.h</code>; the dedicated
+<a href="sound.html">Sound</a> page is the full engine guide and composing
+tutorial, and the <a href="funcref.html#snd_init">function reference</a> lists
+the API.</p>
 <h3 id="sect-8-5">8.5. EEPROM (cart save data)</h3>
 <p>Because the cart ROM cannot be written at run time, persistent state &mdash;
 high scores, options &mdash; is kept in the serial EEPROM chip fitted to the

@@ -1,0 +1,318 @@
+Modules list:
+-------------
+template.o:
+    CODE              Offs=000000  Size=000087  Align=00001  Fill=0000
+    RODATA            Offs=000000  Size=000008  Align=00001  Fill=0000
+regions.o:
+    RODATA            Offs=000008  Size=000828  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx-audio.lib(lynx-snd.o):
+    CODE              Offs=000087  Size=0006DC  Align=00001  Fill=0000
+    RODATA            Offs=000830  Size=000108  Align=00001  Fill=0000
+    BSS               Offs=000000  Size=000232  Align=00001  Fill=0000
+    APPZP             Offs=000000  Size=000007  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(addysp.o):
+    CODE              Offs=000763  Size=00000E  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(bootldr.o):
+    BOOTLDR           Offs=000000  Size=0000CB  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(callirq.o):
+    DATA              Offs=000000  Size=00001E  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(callmain.o):
+    CODE              Offs=000771  Size=000017  Align=00001  Fill=0000
+    DATA              Offs=00001E  Size=000004  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(condes.o):
+    CODE              Offs=000788  Size=00000C  Align=00001  Fill=0000
+    DATA              Offs=000022  Size=000025  Align=00001  Fill=0000
+    ONCE              Offs=000000  Size=00000C  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(crt0.o):
+    RODATA            Offs=000938  Size=00002C  Align=00001  Fill=0000
+    STARTUP           Offs=000000  Size=00006D  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(decsp1.o):
+    CODE              Offs=000794  Size=000009  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(defdir.o):
+    DIRECTORY         Offs=000000  Size=000008  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(exehdr.o):
+    EXEHDR            Offs=000000  Size=000040  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(extzp.o):
+    EXTZP             Offs=000000  Size=000011  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(incaxy.o):
+    CODE              Offs=00079D  Size=00000B  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(incsp4.o):
+    CODE              Offs=0007A8  Size=000005  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(irq.o):
+    CODE              Offs=0007AD  Size=000001  Align=00001  Fill=0000
+    ONCE              Offs=00000C  Size=00000D  Align=00001  Fill=0000
+    LOWCODE           Offs=000000  Size=000010  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(ldaxsp.o):
+    CODE              Offs=0007AE  Size=00000F  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(or.o):
+    CODE              Offs=0007BD  Size=000011  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(popa.o):
+    CODE              Offs=0007CE  Size=00000A  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(pusha.o):
+    CODE              Offs=0007D8  Size=000014  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(pushax.o):
+    CODE              Offs=0007EC  Size=00001A  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(pushw.o):
+    CODE              Offs=000806  Size=00000F  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(zerobss.o):
+    CODE              Offs=000815  Size=000023  Align=00001  Fill=0000
+/sessions/focused-zealous-cerf/mnt/lynxcc/lib/lynx.lib(zeropage.o):
+    ZEROPAGE          Offs=000000  Size=00001A  Align=00001  Fill=0000
+
+
+Segment list:
+-------------
+Name                   Start     End    Size  Align
+----------------------------------------------------
+DIRECTORY             000000  000007  000008  00001
+EXEHDR                000000  00003F  000040  00001
+ZEROPAGE              000000  000019  00001A  00001
+EXTZP                 00001A  00002A  000011  00001
+APPZP                 00002B  000031  000007  00001
+BOOTLDR               000200  0002CA  0000CB  00001
+STARTUP               000200  00026C  00006D  00001
+LOWCODE               00026D  00027C  000010  00001
+ONCE                  00027D  000297  00001B  00001
+CODE                  000298  000ACF  000838  00001
+RODATA                000AD0  001437  000968  00001
+DATA                  001438  00147E  000047  00001
+BSS                   00147F  0016B0  000232  00001
+
+
+Exports list by name:
+---------------------
+_FileBlockByte            000027 RLZ    _FileBlockOffset          00001F RLZ    
+_FileCurrBlock            000026 RLZ    _FileDestAddr             000022 RLZ    
+_FileDestPtr              000029 RLZ    _FileEntry                00001E RLZ    
+_FileFileLen              000024 RLZ    _FileStartBlock           00001E RLZ    
+__BANK0BLOCKSIZE__        000400 REA    __BANK1BLOCKSIZE__        000000 REA    
+__BOOTLDR__               000001 REA    __BSS_RUN__               00147F RLA    
+__BSS_SIZE__              000232 REA    __CALLIRQ__               000001 REA    
+__CODE_SIZE__             000838 REA    __CONSTRUCTOR_COUNT__     000001 REA    
+__CONSTRUCTOR_TABLE__     000296 RLA    __DATA_SIZE__             000047 REA    
+__DEFDIR__                000001 REA    __DESTRUCTOR_COUNT__      000001 REA    
+__DESTRUCTOR_TABLE__      001434 RLA    __EXEHDR__                000001 REA    
+__INTERRUPTOR_COUNT__     000001 REA    __INTERRUPTOR_TABLE__     001436 RLA    
+__LOWCODE_SIZE__          000010 REA    __MAIN_SIZE__             00BA38 REA    
+__MAIN_START__            000200 RLA    __ONCE_SIZE__             00001B REA    
+__RODATA_SIZE__           000968 REA    __STACKSIZE__             000400 REA    
+__STARTOFDIRECTORY__      0000CB REA    __STARTUP_SIZE__          00006D REA    
+__STARTUP__               000001 REA    __iodat                   00001A RLZ    
+__iodir                   00001B RLZ    __sprsys                  00001D RLZ    
+__viddma                  00001C RLZ    _abcr_region0             000AD8 RLA    
+_abcr_region1             000CE2 RLA    _abcr_region2             000EEC RLA    
+_abcr_region3             0010F6 RLA    _main                     000298 RLA    
+_snd_init                 00031F RLA    _snd_play                 000911 RLA    
+addysp                    0009FC RLA    addysp1                   0009FB RLA    
+callirq                   001438 RLA    callmain                  000A09 RLA    
+decsp1                    000A2C RLA    doneirq                   000A45 RLA    
+donelib                   000A20 RLA    incaxy                    000A37 RLA    
+incsp4                    000A40 RLA    initirq                   000289 RLA    
+initlib                   00027D RLA    irq_done                  000A45  LAI   
+irq_init                  000289  LAI   ldax0sp                   000A46 RLA    
+ldaxysp                   000A4E RLA    popa                      000A66 RLA    
+ptr1                      000008 RLZ    pusha                     000A74 RLA    
+pusha0                    000A86 RLA    pushax                    000A88 RLA    
+pushw                     000A9E RLA    snd_handler               00037C  LAI   
+sp                        000000 RLZ    tmp1                      000010 RLZ    
+tosorax                   000A57 RLA    zerobss                   000AAD RLA    
+
+
+
+Exports list by value:
+----------------------
+__BANK1BLOCKSIZE__        000000 REA    sp                        000000 RLZ    
+__BOOTLDR__               000001 REA    __CALLIRQ__               000001 REA    
+__CONSTRUCTOR_COUNT__     000001 REA    __DEFDIR__                000001 REA    
+__DESTRUCTOR_COUNT__      000001 REA    __EXEHDR__                000001 REA    
+__INTERRUPTOR_COUNT__     000001 REA    __STARTUP__               000001 REA    
+ptr1                      000008 RLZ    __LOWCODE_SIZE__          000010 REA    
+tmp1                      000010 RLZ    __iodat                   00001A RLZ    
+__ONCE_SIZE__             00001B REA    __iodir                   00001B RLZ    
+__viddma                  00001C RLZ    __sprsys                  00001D RLZ    
+_FileEntry                00001E RLZ    _FileStartBlock           00001E RLZ    
+_FileBlockOffset          00001F RLZ    _FileDestAddr             000022 RLZ    
+_FileFileLen              000024 RLZ    _FileCurrBlock            000026 RLZ    
+_FileBlockByte            000027 RLZ    _FileDestPtr              000029 RLZ    
+__DATA_SIZE__             000047 REA    __STARTUP_SIZE__          00006D REA    
+__STARTOFDIRECTORY__      0000CB REA    __MAIN_START__            000200 RLA    
+__BSS_SIZE__              000232 REA    initlib                   00027D RLA    
+initirq                   000289 RLA    irq_init                  000289  LAI   
+__CONSTRUCTOR_TABLE__     000296 RLA    _main                     000298 RLA    
+_snd_init                 00031F RLA    snd_handler               00037C  LAI   
+__BANK0BLOCKSIZE__        000400 REA    __STACKSIZE__             000400 REA    
+__CODE_SIZE__             000838 REA    _snd_play                 000911 RLA    
+__RODATA_SIZE__           000968 REA    addysp1                   0009FB RLA    
+addysp                    0009FC RLA    callmain                  000A09 RLA    
+donelib                   000A20 RLA    decsp1                    000A2C RLA    
+incaxy                    000A37 RLA    incsp4                    000A40 RLA    
+doneirq                   000A45 RLA    irq_done                  000A45  LAI   
+ldax0sp                   000A46 RLA    ldaxysp                   000A4E RLA    
+tosorax                   000A57 RLA    popa                      000A66 RLA    
+pusha                     000A74 RLA    pusha0                    000A86 RLA    
+pushax                    000A88 RLA    pushw                     000A9E RLA    
+zerobss                   000AAD RLA    _abcr_region0             000AD8 RLA    
+_abcr_region1             000CE2 RLA    _abcr_region2             000EEC RLA    
+_abcr_region3             0010F6 RLA    __DESTRUCTOR_TABLE__      001434 RLA    
+__INTERRUPTOR_TABLE__     001436 RLA    callirq                   001438 RLA    
+__BSS_RUN__               00147F RLA    __MAIN_SIZE__             00BA38 REA    
+
+
+
+Imports list:
+-------------
+_FileBlockByte (extzp.o):
+    bootldr.o                 /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/lynx/extzp.inc(26)
+_FileBlockOffset (extzp.o):
+    bootldr.o                 /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/lynx/extzp.inc(21)
+_FileCurrBlock (extzp.o):
+    bootldr.o                 /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/lynx/extzp.inc(25)
+_FileDestAddr (extzp.o):
+    bootldr.o                 /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/lynx/extzp.inc(23)
+_FileDestPtr (extzp.o):
+    bootldr.o                 /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/lynx/extzp.inc(27)
+_FileEntry (extzp.o):
+    bootldr.o                 /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/lynx/extzp.inc(19)
+_FileFileLen (extzp.o):
+    bootldr.o                 /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/lynx/extzp.inc(24)
+_FileStartBlock (extzp.o):
+    bootldr.o                 /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/lynx/extzp.inc(20)
+__BANK0BLOCKSIZE__ ([linker generated]):
+    exehdr.o                  runtime/lynx/exehdr.s(6)
+    defdir.o                  runtime/lynx/defdir.s(11)
+    bootldr.o                 runtime/lynx/bootldr.s(8)
+__BANK1BLOCKSIZE__ ([linker generated]):
+    exehdr.o                  runtime/lynx/exehdr.s(7)
+__BOOTLDR__ (bootldr.o):
+    [linker generated]        /sessions/focused-zealous-cerf/mnt/lynxcc/cfg/lynx.cfg(7)
+__BSS_RUN__ ([linker generated]):
+    zerobss.o                 libraries/libc/zerobss.s(8)
+__BSS_SIZE__ ([linker generated]):
+    zerobss.o                 libraries/libc/zerobss.s(8)
+__CALLIRQ__ (callirq.o):
+    lynx-snd.o                libraries/audio/lynx-snd.s(216)
+__CODE_SIZE__ ([linker generated]):
+    defdir.o                  runtime/lynx/defdir.s(9)
+__CONSTRUCTOR_COUNT__ ([linker generated]):
+    condes.o                  runtime/rt/condes.s(18)
+__CONSTRUCTOR_TABLE__ ([linker generated]):
+    condes.o                  runtime/rt/condes.s(18)
+__DATA_SIZE__ ([linker generated]):
+    defdir.o                  runtime/lynx/defdir.s(9)
+__DEFDIR__ (defdir.o):
+    [linker generated]        /sessions/focused-zealous-cerf/mnt/lynxcc/cfg/lynx.cfg(8)
+__DESTRUCTOR_COUNT__ ([linker generated]):
+    condes.o                  runtime/rt/condes.s(19)
+__DESTRUCTOR_TABLE__ ([linker generated]):
+    condes.o                  runtime/rt/condes.s(19)
+__EXEHDR__ (exehdr.o):
+    [linker generated]        /sessions/focused-zealous-cerf/mnt/lynxcc/cfg/lynx.cfg(6)
+__INTERRUPTOR_COUNT__ ([linker generated]):
+    callirq.o                 runtime/rt/callirq.s(36)
+__INTERRUPTOR_TABLE__ ([linker generated]):
+    callirq.o                 runtime/rt/callirq.s(36)
+__LOWCODE_SIZE__ ([linker generated]):
+    defdir.o                  runtime/lynx/defdir.s(10)
+__MAIN_SIZE__ ([linker generated]):
+    crt0.o                    runtime/lynx/crt0.s(25)
+__MAIN_START__ ([linker generated]):
+    defdir.o                  runtime/lynx/defdir.s(8)
+    crt0.o                    runtime/lynx/crt0.s(25)
+__ONCE_SIZE__ ([linker generated]):
+    defdir.o                  runtime/lynx/defdir.s(10)
+__RODATA_SIZE__ ([linker generated]):
+    defdir.o                  runtime/lynx/defdir.s(9)
+__STACKSIZE__ ([linker generated]):
+    crt0.o                    runtime/lynx/crt0.s(25)
+    [linker generated]        /sessions/focused-zealous-cerf/mnt/lynxcc/cfg/lynx.cfg(15)
+__STARTOFDIRECTORY__ ([linker generated]):
+    defdir.o                  runtime/lynx/defdir.s(7)
+    [linker generated]        /sessions/focused-zealous-cerf/mnt/lynxcc/cfg/lynx.cfg(13)
+__STARTUP_SIZE__ ([linker generated]):
+    defdir.o                  runtime/lynx/defdir.s(10)
+__STARTUP__ (crt0.o):
+    template.o                template.s(13)
+__iodat (extzp.o):
+    crt0.o                    /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/lynx/extzp.inc(11)
+    bootldr.o                 /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/lynx/extzp.inc(11)
+__iodir (extzp.o):
+    crt0.o                    /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/lynx/extzp.inc(12)
+__sprsys (extzp.o):
+    crt0.o                    /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/lynx/extzp.inc(14)
+__viddma (extzp.o):
+    crt0.o                    /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/lynx/extzp.inc(13)
+_abcr_region0 (regions.o):
+    template.o                template.s(16)
+_abcr_region1 (regions.o):
+    template.o                template.s(17)
+_abcr_region2 (regions.o):
+    template.o                template.s(18)
+_abcr_region3 (regions.o):
+    template.o                template.s(19)
+_main (template.o):
+    callmain.o                runtime/rt/callmain.s(11)
+_snd_init (lynx-snd.o):
+    template.o                template.s(14)
+_snd_play (lynx-snd.o):
+    template.o                template.s(15)
+addysp (addysp.o):
+    incsp4.o                  runtime/rt/incsp4.s(8)
+addysp1 (addysp.o):
+    or.o                      runtime/rt/or.s(9)
+callirq (callirq.o):
+    irq.o                     runtime/lynx/irq.s(6)
+callmain (callmain.o):
+    crt0.o                    runtime/lynx/crt0.s(23)
+decsp1 (decsp1.o):
+    template.o                template.s(107)
+doneirq (irq.o):
+    callirq.o                 runtime/rt/callirq.s(38)
+donelib (condes.o):
+    crt0.o                    runtime/lynx/crt0.s(21)
+incaxy (incaxy.o):
+    template.o                template.s(107)
+incsp4 (incsp4.o):
+    template.o                template.s(107)
+initirq (irq.o):
+    callirq.o                 runtime/rt/callirq.s(37)
+initlib (condes.o):
+    crt0.o                    runtime/lynx/crt0.s(21)
+ldax0sp (ldaxsp.o):
+    template.o                template.s(107)
+ldaxysp (ldaxsp.o):
+    template.o                template.s(107)
+popa (popa.o):
+    lynx-snd.o                libraries/audio/lynx-snd.s(21)
+ptr1 (zeropage.o):
+    zerobss.o                 libraries/libc/zerobss.s(9)
+    pushw.o                   runtime/rt/pushw.s(9)
+    lynx-snd.o                /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/zeropage.inc(12)
+    template.o                template.s(11)
+pusha (pusha.o):
+    template.o                template.s(107)
+pusha0 (pushax.o):
+    template.o                template.s(107)
+pushax (pushax.o):
+    callmain.o                runtime/rt/callmain.s(11)
+    pushw.o                   runtime/rt/pushw.s(8)
+    template.o                template.s(107)
+pushw (pushw.o):
+    template.o                template.s(107)
+sp (zeropage.o):
+    addysp.o                  runtime/rt/addysp.s(8)
+    pushax.o                  runtime/rt/pushax.s(8)
+    pusha.o                   runtime/rt/pusha.s(8)
+    popa.o                    runtime/rt/popa.s(8)
+    or.o                      runtime/rt/or.s(10)
+    ldaxsp.o                  runtime/rt/ldaxsp.s(8)
+    decsp1.o                  runtime/rt/decsp1.s(8)
+    crt0.o                    /sessions/focused-zealous-cerf/mnt/lynxcc/asminc/zeropage.inc(11)
+    template.o                template.s(10)
+tmp1 (zeropage.o):
+    or.o                      runtime/rt/or.s(10)
+    incaxy.o                  runtime/rt/incaxy.s(8)
+tosorax (or.o):
+    template.o                template.s(107)
+zerobss (zerobss.o):
+    crt0.o                    runtime/lynx/crt0.s(22)
+
