@@ -24,13 +24,7 @@
         .export         _mikey_snd_integrate
         .export         _mikey_snd_volume
         .import         popa
-
-;----------------------------------------------------------------------------
-
-        .bss
-
-SfxTmp:         .res    1
-
+	.importzp	tmp1
 ;----------------------------------------------------------------------------
 
         .code
@@ -41,13 +35,7 @@ SfxTmp:         .res    1
 ; Write the signed output volume ($FD20 + 8c).  val in A, chan on the C stack.
 ;
 _mikey_snd_volume:
-        pha                     ; save val
-        jsr     popa            ; A = chan
-        asl     a
-        asl     a
-        asl     a               ; chan << 3
-        tax
-        pla
+        jsr     get_channel     ; A = chan
         sta     AUD0VOL,x       ; $FD20 + 8c
         rts
 
@@ -57,13 +45,7 @@ _mikey_snd_volume:
 ; Write the timer reload / pitch within the octave (BACKUP, $FD24 + 8c).
 ;
 _mikey_snd_pitch:
-        pha
-        jsr     popa
-        asl     a
-        asl     a
-        asl     a
-        tax
-        pla
+        jsr     get_channel
         sta     AUD0BKUP,x      ; $FD24 + 8c
         rts
 
@@ -79,19 +61,13 @@ _mikey_snd_pitch:
 ; to oscillate; with no taps the output is a DC level, i.e. silence.
 ;
 _mikey_snd_octave:
-        pha
-        jsr     popa
-        asl     a
-        asl     a
-        asl     a
-        tax
-        pla
+        jsr     get_channel
         and     #$07            ; octave band -> bits 0-2
-        sta     SfxTmp
+        sta     tmp1
         lda     AUD0CTLA,x      ; $FD25 + 8c
         and     #$F8            ; keep bits 3-7
         ora     #$18            ; enable reload+count so the channel runs
-        ora     SfxTmp
+        ora     tmp1
         sta     AUD0CTLA,x
         rts
 
@@ -102,14 +78,11 @@ _mikey_snd_octave:
 ; non-zero = integrated waveform.  Other control bits are preserved.
 ;
 _mikey_snd_integrate:
-        pha
-        jsr     popa
-        asl     a
-        asl     a
-        asl     a
-        tax
-        pla
         lsr     a               ; val bit0 -> carry
+        php
+        jsr     get_channel
+
+	plp
         lda     AUD0CTLA,x      ; $FD25 + 8c
         and     #$DF            ; clear bit 5
         bcc     @set
@@ -125,16 +98,12 @@ _mikey_snd_integrate:
 ; arrives with the low byte in A and the high byte in X.
 ;
 _mikey_snd_taps:
-        sta     SfxTmp          ; low 8 taps
+        sta     tmp1            ; low 8 taps
         txa                     ; high byte (bit 0 = 9th tap)
         lsr     a               ; tap 8 -> carry
         php                     ; remember 9th tap
-        jsr     popa            ; A = chan
-        asl     a
-        asl     a
-        asl     a
-        tax
-        lda     SfxTmp
+        jsr     get_channel            ; A = chan
+        lda     tmp1
         sta     AUD0FEED,x      ; $FD21 + 8c : taps 0-7
         lda     AUD0CTLA,x      ; $FD25 + 8c
         and     #$7F            ; clear bit 7 (9th tap)
@@ -143,3 +112,13 @@ _mikey_snd_taps:
         ora     #$80            ; 9th tap on
 @set:   sta     AUD0CTLA,x
         rts
+
+get_channel:
+	tay
+	jsr	popa
+	asl	a
+	asl	a
+	asl	a
+	tax
+	tya
+	rts
