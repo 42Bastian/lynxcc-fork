@@ -54,6 +54,15 @@ names remain as deprecated, removable aliases via <code>&lt;lynx/tgi.h&gt;</code
 existing programs keep compiling unchanged; see the
 <a href="migrating.html#sect-tgi-deprecation">TGI Deprecation</a> section of the
 migration guide.</p>
+<p>On 02.07.2026 the serial-EEPROM read/write calls were renamed from the
+historical <code>lynx_ee</code> prefix (operation-then-chip, e.g.
+<code>lynx_eeread_93c46</code>) to a plain <code>eeprom_</code> prefix with the chip
+model first (<code>eeprom_93c46_read</code>), matching the naming of every other
+subsystem. The old <code>lynx_ee*</code> names remain as deprecated, removable
+aliases in <code>&lt;lynx/lynx.h&gt;</code> (suppressible with
+<code>LYNX_NO_EEPROM_COMPAT</code>) so existing programs keep compiling unchanged;
+see the <a href="migrating.html#sect-eeprom-rename">EEPROM API rename</a> section
+of the migration guide.</p>
 
 <h2 id="sect-4">4. Licensing</h2>
 <p>This page records authorship only; it does not change any license. cc65 and its binutils are Copyright &copy; 1998&ndash;2012 Ullrich von Bassewitz and others, distributed under the usual cc65 (zlib-style) terms. The full notice for every component is collected on the consolidated <a href="licenses.html">Licenses and copyright notices</a> page.</p>

@@ -201,7 +201,7 @@ void __fastcall__ mikey_snd_volume (unsigned char chan, unsigned char val);
 ** is the boot executable, entry 1 the next file appended after it, and so on.
 ** Access is therefore read-only and numbered - there is no POSIX open()/fopen()
 ** layer and no write()/creat() path. Persistent game data belongs in the EEPROM
-** (see the lynx_eeread_93cNN / lynx_eewrite_93cNN family below). Only bank 0
+** (see the eeprom_93cNN_read / eeprom_93cNN_write family below). Only bank 0
 ** is read.
 */
 
@@ -228,23 +228,38 @@ void __fastcall__ lynx_exec (int fileno);
 /* Size-selectable read/write family. Pick the variant matching the EEPROM chip
 ** fitted to the cart: 93C46 = 64 words, 93C66 = 256 words, 93C86 = 1024 words.
 */
-unsigned __fastcall__ lynx_eeread_93c46 (unsigned char cell);
+unsigned __fastcall__ eeprom_93c46_read (unsigned char cell);
 /* Read a 16 bit word from a 93C46 (cell 0..63) */
 
-unsigned __fastcall__ lynx_eeread_93c66 (unsigned addr);
+unsigned __fastcall__ eeprom_93c66_read (unsigned addr);
 /* Read a 16 bit word from a 93C66 (addr 0..255) */
 
-unsigned __fastcall__ lynx_eeread_93c86 (unsigned addr);
+unsigned __fastcall__ eeprom_93c86_read (unsigned addr);
 /* Read a 16 bit word from a 93C86 (addr 0..1023) */
 
-void __fastcall__ lynx_eewrite_93c46 (unsigned addr, unsigned val);
+void __fastcall__ eeprom_93c46_write (unsigned addr, unsigned val);
 /* Write the word at the given address of a 93C46 */
 
-void __fastcall__ lynx_eewrite_93c66 (unsigned addr, unsigned val);
+void __fastcall__ eeprom_93c66_write (unsigned addr, unsigned val);
 /* Write the word at the given address of a 93C66 */
 
-void __fastcall__ lynx_eewrite_93c86 (unsigned addr, unsigned val);
+void __fastcall__ eeprom_93c86_write (unsigned addr, unsigned val);
 /* Write the word at the given address of a 93C86 */
+
+/* DEPRECATED. The EEPROM API moved from the lynx_ee* prefix (operation-then-chip)
+** to the eeprom_<chip>_<op> scheme. Use the eeprom_* names. These aliases exist
+** only for backward compatibility and will be removed in a future release.
+** Define LYNX_NO_EEPROM_COMPAT before including <lynx.h> to opt out early and
+** surface any lingering lynx_ee* uses as errors.
+*/
+#ifndef LYNX_NO_EEPROM_COMPAT
+#define lynx_eeread_93c46   eeprom_93c46_read
+#define lynx_eeread_93c66   eeprom_93c66_read
+#define lynx_eeread_93c86   eeprom_93c86_read
+#define lynx_eewrite_93c46  eeprom_93c46_write
+#define lynx_eewrite_93c66  eeprom_93c66_write
+#define lynx_eewrite_93c86  eeprom_93c86_write
+#endif /* LYNX_NO_EEPROM_COMPAT */
 
 
 

@@ -12,7 +12,7 @@ See doc/licenses.html.
 <link rel="stylesheet" href="doc.css">
 <script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
 </head><body>
-<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html" class="active">Functions</a><a href="lynx_gfx_fonts.html">Fonts</a><a href="sound.html">Sound</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html">Migrating</a><a href="history.html">History</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><div class="javadoc"><aside class="fn-aside"><h2>Functions</h2><input id="fnFilter" class="fn-filter" type="search" placeholder="Filter functions…" autocomplete="off" aria-label="Filter functions"><ul id="fnIndex" class="fn-index"><li data-name="_de_isdir"><a href="#_DE_ISDIR">_DE_ISDIR</a></li><li data-name="_de_islbl"><a href="#_DE_ISLBL">_DE_ISLBL</a></li><li data-name="_de_islnk"><a href="#_DE_ISLNK">_DE_ISLNK</a></li><li data-name="_de_isreg"><a href="#_DE_ISREG">_DE_ISREG</a></li><li data-name="_heapadd"><a href="#_heapadd">_heapadd</a></li><li data-name="_heapblocksize"><a href="#_heapblocksize">_heapblocksize</a></li><li data-name="_heapmaxavail"><a href="#_heapmaxavail">_heapmaxavail</a></li><li data-name="_heapmemavail"><a href="#_heapmemavail">_heapmemavail</a></li><li data-name="_randomize"><a href="#_randomize">_randomize</a></li><li data-name="_stroserror"><a href="#_stroserror">_stroserror</a></li><li data-name="_swap"><a href="#_swap">_swap</a></li><li data-name="_sys"><a href="#_sys">_sys</a></li><li data-name="brk"><a href="#BRK">BRK</a></li><li data-name="cli"><a href="#CLI">CLI</a></li><li data-name="peek"><a href="#PEEK">PEEK</a></li><li data-name="peekw"><a href="#PEEKW">PEEKW</a></li><li data-name="poke"><a href="#POKE">POKE</a></li><li data-name="pokew"><a href="#POKEW">POKEW</a></li><li data-name="sei"><a href="#SEI">SEI</a></li><li data-name="abs"><a href="#abs">abs</a></li><li data-name="atexit"><a href="#atexit">atexit</a></li><li data-name="atoi"><a href="#atoi">atoi</a></li><li data-name="atol"><a href="#atol">atol</a></li><li data-name="bsearch"><a href="#bsearch">bsearch</a></li><li data-name="bzero"><a href="#bzero">bzero</a></li><li data-name="calloc"><a href="#calloc">calloc</a></li><li data-name="clock"><a href="#clock">clock</a></li><li data-name="decompress_lz4"><a href="#decompress_lz4">decompress_lz4</a></li><li data-name="div"><a href="#div">div</a></li><li data-name="doesclrscrafterexit"><a href="#doesclrscrafterexit">doesclrscrafterexit</a></li><li data-name="exit"><a href="#exit">exit</a></li><li data-name="free"><a href="#free">free</a></li><li data-name="gfx_busy"><a href="#gfx_busy">gfx_busy</a></li><li data-name="gfx_clear"><a href="#gfx_clear">gfx_clear</a></li><li data-name="gfx_clearrows"><a href="#gfx_clearrows">gfx_clearrows</a></li><li data-name="gfx_flip"><a href="#gfx_flip">gfx_flip</a></li><li data-name="gfx_getcolor"><a href="#gfx_getcolor">gfx_getcolor</a></li><li data-name="gfx_getcolorcount"><a href="#gfx_getcolorcount">gfx_getcolorcount</a></li><li data-name="gfx_getdefpalette"><a href="#gfx_getdefpalette">gfx_getdefpalette</a></li><li data-name="gfx_getmaxcolor"><a href="#gfx_getmaxcolor">gfx_getmaxcolor</a></li><li data-name="gfx_getmaxx"><a href="#gfx_getmaxx">gfx_getmaxx</a></li><li data-name="gfx_getmaxy"><a href="#gfx_getmaxy">gfx_getmaxy</a></li><li data-name="gfx_getpagecount"><a href="#gfx_getpagecount">gfx_getpagecount</a></li><li data-name="gfx_getpalette"><a href="#gfx_getpalette">gfx_getpalette</a></li><li data-name="gfx_gettextheight"><a href="#gfx_gettextheight">gfx_gettextheight</a></li><li data-name="gfx_gettextwidth"><a href="#gfx_gettextwidth">gfx_gettextwidth</a></li><li data-name="gfx_getxres"><a href="#gfx_getxres">gfx_getxres</a></li><li data-name="gfx_getyres"><a href="#gfx_getyres">gfx_getyres</a></li><li data-name="gfx_gotoxy"><a href="#gfx_gotoxy">gfx_gotoxy</a></li><li data-name="gfx_init"><a href="#gfx_init">gfx_init</a></li><li data-name="gfx_outtext"><a href="#gfx_outtext">gfx_outtext</a></li><li data-name="gfx_outtextxy"><a href="#gfx_outtextxy">gfx_outtextxy</a></li><li data-name="gfx_setbgcolor"><a href="#gfx_setbgcolor">gfx_setbgcolor</a></li><li data-name="gfx_setbpp"><a href="#gfx_setbpp">gfx_setbpp</a></li><li data-name="gfx_setcollisiondetection"><a href="#gfx_setcollisiondetection">gfx_setcollisiondetection</a></li><li data-name="gfx_setcolor"><a href="#gfx_setcolor">gfx_setcolor</a></li><li data-name="gfx_setdrawpage"><a href="#gfx_setdrawpage">gfx_setdrawpage</a></li><li data-name="gfx_setfont"><a href="#gfx_setfont">gfx_setfont</a></li><li data-name="gfx_setframerate"><a href="#gfx_setframerate">gfx_setframerate</a></li><li data-name="gfx_setpalette"><a href="#gfx_setpalette">gfx_setpalette</a></li><li data-name="gfx_settextdir"><a href="#gfx_settextdir">gfx_settextdir</a></li><li data-name="gfx_settextscale"><a href="#gfx_settextscale">gfx_settextscale</a></li><li data-name="gfx_settextstyle"><a href="#gfx_settextstyle">gfx_settextstyle</a></li><li data-name="gfx_setviewpage"><a href="#gfx_setviewpage">gfx_setviewpage</a></li><li data-name="gfx_sprite"><a href="#gfx_sprite">gfx_sprite</a></li><li data-name="gfx_updatedisplay"><a href="#gfx_updatedisplay">gfx_updatedisplay</a></li><li data-name="isalnum"><a href="#isalnum">isalnum</a></li><li data-name="isalpha"><a href="#isalpha">isalpha</a></li><li data-name="isascii"><a href="#isascii">isascii</a></li><li data-name="isblank"><a href="#isblank">isblank</a></li><li data-name="iscntrl"><a href="#iscntrl">iscntrl</a></li><li data-name="isdigit"><a href="#isdigit">isdigit</a></li><li data-name="isgraph"><a href="#isgraph">isgraph</a></li><li data-name="islower"><a href="#islower">islower</a></li><li data-name="isprint"><a href="#isprint">isprint</a></li><li data-name="ispunct"><a href="#ispunct">ispunct</a></li><li data-name="isspace"><a href="#isspace">isspace</a></li><li data-name="isupper"><a href="#isupper">isupper</a></li><li data-name="isxdigit"><a href="#isxdigit">isxdigit</a></li><li data-name="itoa"><a href="#itoa">itoa</a></li><li data-name="joy_read"><a href="#joy_read">joy_read</a></li><li data-name="labs"><a href="#labs">labs</a></li><li data-name="ltoa"><a href="#ltoa">ltoa</a></li><li data-name="longjmp"><a href="#longjmp">longjmp</a></li><li data-name="lynx_eeread_93c46"><a href="#lynx_eeread_93c46">lynx_eeread_93c46</a></li><li data-name="lynx_eeread_93c66"><a href="#lynx_eeread_93c66">lynx_eeread_93c66</a></li><li data-name="lynx_eeread_93c86"><a href="#lynx_eeread_93c86">lynx_eeread_93c86</a></li><li data-name="lynx_eewrite_93c46"><a href="#lynx_eewrite_93c46">lynx_eewrite_93c46</a></li><li data-name="lynx_eewrite_93c66"><a href="#lynx_eewrite_93c66">lynx_eewrite_93c66</a></li><li data-name="lynx_eewrite_93c86"><a href="#lynx_eewrite_93c86">lynx_eewrite_93c86</a></li><li data-name="lynx_exec"><a href="#lynx_exec">lynx_exec</a></li><li data-name="lynx_load"><a href="#lynx_load">lynx_load</a></li><li data-name="mikey_snd_integrate"><a href="#mikey_snd_integrate">mikey_snd_integrate</a></li><li data-name="mikey_snd_octave"><a href="#mikey_snd_octave">mikey_snd_octave</a></li><li data-name="mikey_snd_pitch"><a href="#mikey_snd_pitch">mikey_snd_pitch</a></li><li data-name="mikey_snd_taps"><a href="#mikey_snd_taps">mikey_snd_taps</a></li><li data-name="mikey_snd_volume"><a href="#mikey_snd_volume">mikey_snd_volume</a></li><li data-name="malloc"><a href="#malloc">malloc</a></li><li data-name="memchr"><a href="#memchr">memchr</a></li><li data-name="memcmp"><a href="#memcmp">memcmp</a></li><li data-name="memcpy"><a href="#memcpy">memcpy</a></li><li data-name="memmove"><a href="#memmove">memmove</a></li><li data-name="memset"><a href="#memset">memset</a></li><li data-name="offsetof"><a href="#offsetof">offsetof</a></li><li data-name="openn"><a href="#openn">openn</a></li><li data-name="qsort"><a href="#qsort">qsort</a></li><li data-name="rand"><a href="#rand">rand</a></li><li data-name="realloc"><a href="#realloc">realloc</a></li><li data-name="reset_irq"><a href="#reset_irq">reset_irq</a></li><li data-name="ser_close"><a href="#ser_close">ser_close</a></li><li data-name="ser_get"><a href="#ser_get">ser_get</a></li><li data-name="ser_open"><a href="#ser_open">ser_open</a></li><li data-name="ser_put"><a href="#ser_put">ser_put</a></li><li data-name="ser_status"><a href="#ser_status">ser_status</a></li><li data-name="set_irq"><a href="#set_irq">set_irq</a></li><li data-name="setjmp"><a href="#setjmp">setjmp</a></li><li data-name="sleep"><a href="#sleep">sleep</a></li><li data-name="snd_active"><a href="#snd_active">snd_active</a></li><li data-name="snd_continue"><a href="#snd_continue">snd_continue</a></li><li data-name="snd_init"><a href="#snd_init">snd_init</a></li><li data-name="snd_pause"><a href="#snd_pause">snd_pause</a></li><li data-name="snd_play"><a href="#snd_play">snd_play</a></li><li data-name="snd_stop"><a href="#snd_stop">snd_stop</a></li><li data-name="snd_stop_channel"><a href="#snd_stop_channel">snd_stop_channel</a></li><li data-name="snprintf"><a href="#snprintf">snprintf</a></li><li data-name="sprintf"><a href="#sprintf">sprintf</a></li><li data-name="srand"><a href="#srand">srand</a></li><li data-name="sscanf"><a href="#sscanf">sscanf</a></li><li data-name="strcasecmp"><a href="#strcasecmp">strcasecmp</a></li><li data-name="strcat"><a href="#strcat">strcat</a></li><li data-name="strchr"><a href="#strchr">strchr</a></li><li data-name="strcmp"><a href="#strcmp">strcmp</a></li><li data-name="strcoll"><a href="#strcoll">strcoll</a></li><li data-name="strcpy"><a href="#strcpy">strcpy</a></li><li data-name="strcspn"><a href="#strcspn">strcspn</a></li><li data-name="strdup"><a href="#strdup">strdup</a></li><li data-name="strerror"><a href="#strerror">strerror</a></li><li data-name="stricmp"><a href="#stricmp">stricmp</a></li><li data-name="strlen"><a href="#strlen">strlen</a></li><li data-name="strlower"><a href="#strlower">strlower</a></li><li data-name="strlwr"><a href="#strlwr">strlwr</a></li><li data-name="strncasecmp"><a href="#strncasecmp">strncasecmp</a></li><li data-name="strncat"><a href="#strncat">strncat</a></li><li data-name="strncmp"><a href="#strncmp">strncmp</a></li><li data-name="strncpy"><a href="#strncpy">strncpy</a></li><li data-name="strnicmp"><a href="#strnicmp">strnicmp</a></li><li data-name="strpbrk"><a href="#strpbrk">strpbrk</a></li><li data-name="strqtok"><a href="#strqtok">strqtok</a></li><li data-name="strrchr"><a href="#strrchr">strrchr</a></li><li data-name="strspn"><a href="#strspn">strspn</a></li><li data-name="strstr"><a href="#strstr">strstr</a></li><li data-name="strtok"><a href="#strtok">strtok</a></li><li data-name="strxfrm"><a href="#strxfrm">strxfrm</a></li><li data-name="strupper"><a href="#strupper">strupper</a></li><li data-name="strupr"><a href="#strupr">strupr</a></li><li data-name="suzy_div_result"><a href="#suzy_div_result">suzy_div_result</a></li><li data-name="suzy_div_start"><a href="#suzy_div_start">suzy_div_start</a></li><li data-name="suzy_math_busy"><a href="#suzy_math_busy">suzy_math_busy</a></li><li data-name="suzy_mod_result"><a href="#suzy_mod_result">suzy_mod_result</a></li><li data-name="suzy_mod_start"><a href="#suzy_mod_start">suzy_mod_start</a></li><li data-name="suzy_mul_result"><a href="#suzy_mul_result">suzy_mul_result</a></li><li data-name="suzy_mul_start"><a href="#suzy_mul_start">suzy_mul_start</a></li><li data-name="suzy_muldiv_result"><a href="#suzy_muldiv_result">suzy_muldiv_result</a></li><li data-name="suzy_muldiv_start"><a href="#suzy_muldiv_start">suzy_muldiv_start</a></li><li data-name="suzy_udiv_result"><a href="#suzy_udiv_result">suzy_udiv_result</a></li><li data-name="suzy_udiv_start"><a href="#suzy_udiv_start">suzy_udiv_start</a></li><li data-name="suzy_umod_result"><a href="#suzy_umod_result">suzy_umod_result</a></li><li data-name="suzy_umod_start"><a href="#suzy_umod_start">suzy_umod_start</a></li><li data-name="suzy_umul_result"><a href="#suzy_umul_result">suzy_umul_result</a></li><li data-name="suzy_umul_start"><a href="#suzy_umul_start">suzy_umul_start</a></li><li data-name="suzy_umuldiv_result"><a href="#suzy_umuldiv_result">suzy_umuldiv_result</a></li><li data-name="suzy_umuldiv_start"><a href="#suzy_umuldiv_start">suzy_umuldiv_start</a></li><li data-name="tolower"><a href="#tolower">tolower</a></li><li data-name="toupper"><a href="#toupper">toupper</a></li><li data-name="ultoa"><a href="#ultoa">ultoa</a></li><li data-name="utoa"><a href="#utoa">utoa</a></li><li data-name="vsnprintf"><a href="#vsnprintf">vsnprintf</a></li><li data-name="vsprintf"><a href="#vsprintf">vsprintf</a></li><li data-name="vsscanf"><a href="#vsscanf">vsscanf</a></li></ul><div class="fn-empty">No matches.</div></aside><main class="doc fn-main"><article><header class="doc-header"><h1>cc65 function reference</h1></header><div class="abstract">cc65 is a C compiler for 6502 based systems. This function reference describes
+<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><a href="intro.html">Intro</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><a href="funcref.html" class="active">Functions</a><a href="lynx_gfx_fonts.html">Fonts</a><a href="sound.html">Sound</a><a href="lynx.html">Lynx</a><a href="samples.html">Samples</a><a href="migrating.html">Migrating</a><a href="history.html">History</a><a href="licenses.html">Licenses</a></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><div class="javadoc"><aside class="fn-aside"><h2>Functions</h2><input id="fnFilter" class="fn-filter" type="search" placeholder="Filter functions…" autocomplete="off" aria-label="Filter functions"><ul id="fnIndex" class="fn-index"><li data-name="_de_isdir"><a href="#_DE_ISDIR">_DE_ISDIR</a></li><li data-name="_de_islbl"><a href="#_DE_ISLBL">_DE_ISLBL</a></li><li data-name="_de_islnk"><a href="#_DE_ISLNK">_DE_ISLNK</a></li><li data-name="_de_isreg"><a href="#_DE_ISREG">_DE_ISREG</a></li><li data-name="_heapadd"><a href="#_heapadd">_heapadd</a></li><li data-name="_heapblocksize"><a href="#_heapblocksize">_heapblocksize</a></li><li data-name="_heapmaxavail"><a href="#_heapmaxavail">_heapmaxavail</a></li><li data-name="_heapmemavail"><a href="#_heapmemavail">_heapmemavail</a></li><li data-name="_randomize"><a href="#_randomize">_randomize</a></li><li data-name="_stroserror"><a href="#_stroserror">_stroserror</a></li><li data-name="_swap"><a href="#_swap">_swap</a></li><li data-name="_sys"><a href="#_sys">_sys</a></li><li data-name="brk"><a href="#BRK">BRK</a></li><li data-name="cli"><a href="#CLI">CLI</a></li><li data-name="peek"><a href="#PEEK">PEEK</a></li><li data-name="peekw"><a href="#PEEKW">PEEKW</a></li><li data-name="poke"><a href="#POKE">POKE</a></li><li data-name="pokew"><a href="#POKEW">POKEW</a></li><li data-name="sei"><a href="#SEI">SEI</a></li><li data-name="abs"><a href="#abs">abs</a></li><li data-name="atexit"><a href="#atexit">atexit</a></li><li data-name="atoi"><a href="#atoi">atoi</a></li><li data-name="atol"><a href="#atol">atol</a></li><li data-name="bsearch"><a href="#bsearch">bsearch</a></li><li data-name="bzero"><a href="#bzero">bzero</a></li><li data-name="calloc"><a href="#calloc">calloc</a></li><li data-name="clock"><a href="#clock">clock</a></li><li data-name="decompress_lz4"><a href="#decompress_lz4">decompress_lz4</a></li><li data-name="div"><a href="#div">div</a></li><li data-name="doesclrscrafterexit"><a href="#doesclrscrafterexit">doesclrscrafterexit</a></li><li data-name="eeprom_93c46_read"><a href="#eeprom_93c46_read">eeprom_93c46_read</a></li><li data-name="eeprom_93c46_write"><a href="#eeprom_93c46_write">eeprom_93c46_write</a></li><li data-name="eeprom_93c66_read"><a href="#eeprom_93c66_read">eeprom_93c66_read</a></li><li data-name="eeprom_93c66_write"><a href="#eeprom_93c66_write">eeprom_93c66_write</a></li><li data-name="eeprom_93c86_read"><a href="#eeprom_93c86_read">eeprom_93c86_read</a></li><li data-name="eeprom_93c86_write"><a href="#eeprom_93c86_write">eeprom_93c86_write</a></li><li data-name="exit"><a href="#exit">exit</a></li><li data-name="free"><a href="#free">free</a></li><li data-name="gfx_busy"><a href="#gfx_busy">gfx_busy</a></li><li data-name="gfx_clear"><a href="#gfx_clear">gfx_clear</a></li><li data-name="gfx_clearrows"><a href="#gfx_clearrows">gfx_clearrows</a></li><li data-name="gfx_flip"><a href="#gfx_flip">gfx_flip</a></li><li data-name="gfx_getcolor"><a href="#gfx_getcolor">gfx_getcolor</a></li><li data-name="gfx_getcolorcount"><a href="#gfx_getcolorcount">gfx_getcolorcount</a></li><li data-name="gfx_getdefpalette"><a href="#gfx_getdefpalette">gfx_getdefpalette</a></li><li data-name="gfx_getmaxcolor"><a href="#gfx_getmaxcolor">gfx_getmaxcolor</a></li><li data-name="gfx_getmaxx"><a href="#gfx_getmaxx">gfx_getmaxx</a></li><li data-name="gfx_getmaxy"><a href="#gfx_getmaxy">gfx_getmaxy</a></li><li data-name="gfx_getpagecount"><a href="#gfx_getpagecount">gfx_getpagecount</a></li><li data-name="gfx_getpalette"><a href="#gfx_getpalette">gfx_getpalette</a></li><li data-name="gfx_gettextheight"><a href="#gfx_gettextheight">gfx_gettextheight</a></li><li data-name="gfx_gettextwidth"><a href="#gfx_gettextwidth">gfx_gettextwidth</a></li><li data-name="gfx_getxres"><a href="#gfx_getxres">gfx_getxres</a></li><li data-name="gfx_getyres"><a href="#gfx_getyres">gfx_getyres</a></li><li data-name="gfx_gotoxy"><a href="#gfx_gotoxy">gfx_gotoxy</a></li><li data-name="gfx_init"><a href="#gfx_init">gfx_init</a></li><li data-name="gfx_outtext"><a href="#gfx_outtext">gfx_outtext</a></li><li data-name="gfx_outtextxy"><a href="#gfx_outtextxy">gfx_outtextxy</a></li><li data-name="gfx_setbgcolor"><a href="#gfx_setbgcolor">gfx_setbgcolor</a></li><li data-name="gfx_setbpp"><a href="#gfx_setbpp">gfx_setbpp</a></li><li data-name="gfx_setcollisiondetection"><a href="#gfx_setcollisiondetection">gfx_setcollisiondetection</a></li><li data-name="gfx_setcolor"><a href="#gfx_setcolor">gfx_setcolor</a></li><li data-name="gfx_setdrawpage"><a href="#gfx_setdrawpage">gfx_setdrawpage</a></li><li data-name="gfx_setfont"><a href="#gfx_setfont">gfx_setfont</a></li><li data-name="gfx_setframerate"><a href="#gfx_setframerate">gfx_setframerate</a></li><li data-name="gfx_setpalette"><a href="#gfx_setpalette">gfx_setpalette</a></li><li data-name="gfx_settextdir"><a href="#gfx_settextdir">gfx_settextdir</a></li><li data-name="gfx_settextscale"><a href="#gfx_settextscale">gfx_settextscale</a></li><li data-name="gfx_settextstyle"><a href="#gfx_settextstyle">gfx_settextstyle</a></li><li data-name="gfx_setviewpage"><a href="#gfx_setviewpage">gfx_setviewpage</a></li><li data-name="gfx_sprite"><a href="#gfx_sprite">gfx_sprite</a></li><li data-name="gfx_updatedisplay"><a href="#gfx_updatedisplay">gfx_updatedisplay</a></li><li data-name="isalnum"><a href="#isalnum">isalnum</a></li><li data-name="isalpha"><a href="#isalpha">isalpha</a></li><li data-name="isascii"><a href="#isascii">isascii</a></li><li data-name="isblank"><a href="#isblank">isblank</a></li><li data-name="iscntrl"><a href="#iscntrl">iscntrl</a></li><li data-name="isdigit"><a href="#isdigit">isdigit</a></li><li data-name="isgraph"><a href="#isgraph">isgraph</a></li><li data-name="islower"><a href="#islower">islower</a></li><li data-name="isprint"><a href="#isprint">isprint</a></li><li data-name="ispunct"><a href="#ispunct">ispunct</a></li><li data-name="isspace"><a href="#isspace">isspace</a></li><li data-name="isupper"><a href="#isupper">isupper</a></li><li data-name="isxdigit"><a href="#isxdigit">isxdigit</a></li><li data-name="itoa"><a href="#itoa">itoa</a></li><li data-name="joy_read"><a href="#joy_read">joy_read</a></li><li data-name="labs"><a href="#labs">labs</a></li><li data-name="longjmp"><a href="#longjmp">longjmp</a></li><li data-name="ltoa"><a href="#ltoa">ltoa</a></li><li data-name="lynx_exec"><a href="#lynx_exec">lynx_exec</a></li><li data-name="lynx_load"><a href="#lynx_load">lynx_load</a></li><li data-name="malloc"><a href="#malloc">malloc</a></li><li data-name="memchr"><a href="#memchr">memchr</a></li><li data-name="memcmp"><a href="#memcmp">memcmp</a></li><li data-name="memcpy"><a href="#memcpy">memcpy</a></li><li data-name="memmove"><a href="#memmove">memmove</a></li><li data-name="memset"><a href="#memset">memset</a></li><li data-name="mikey_snd_integrate"><a href="#mikey_snd_integrate">mikey_snd_integrate</a></li><li data-name="mikey_snd_octave"><a href="#mikey_snd_octave">mikey_snd_octave</a></li><li data-name="mikey_snd_pitch"><a href="#mikey_snd_pitch">mikey_snd_pitch</a></li><li data-name="mikey_snd_taps"><a href="#mikey_snd_taps">mikey_snd_taps</a></li><li data-name="mikey_snd_volume"><a href="#mikey_snd_volume">mikey_snd_volume</a></li><li data-name="offsetof"><a href="#offsetof">offsetof</a></li><li data-name="openn"><a href="#openn">openn</a></li><li data-name="qsort"><a href="#qsort">qsort</a></li><li data-name="rand"><a href="#rand">rand</a></li><li data-name="realloc"><a href="#realloc">realloc</a></li><li data-name="reset_irq"><a href="#reset_irq">reset_irq</a></li><li data-name="ser_close"><a href="#ser_close">ser_close</a></li><li data-name="ser_get"><a href="#ser_get">ser_get</a></li><li data-name="ser_open"><a href="#ser_open">ser_open</a></li><li data-name="ser_put"><a href="#ser_put">ser_put</a></li><li data-name="ser_status"><a href="#ser_status">ser_status</a></li><li data-name="set_irq"><a href="#set_irq">set_irq</a></li><li data-name="setjmp"><a href="#setjmp">setjmp</a></li><li data-name="sleep"><a href="#sleep">sleep</a></li><li data-name="snd_active"><a href="#snd_active">snd_active</a></li><li data-name="snd_continue"><a href="#snd_continue">snd_continue</a></li><li data-name="snd_init"><a href="#snd_init">snd_init</a></li><li data-name="snd_pause"><a href="#snd_pause">snd_pause</a></li><li data-name="snd_play"><a href="#snd_play">snd_play</a></li><li data-name="snd_stop"><a href="#snd_stop">snd_stop</a></li><li data-name="snd_stop_channel"><a href="#snd_stop_channel">snd_stop_channel</a></li><li data-name="snprintf"><a href="#snprintf">snprintf</a></li><li data-name="sprintf"><a href="#sprintf">sprintf</a></li><li data-name="srand"><a href="#srand">srand</a></li><li data-name="sscanf"><a href="#sscanf">sscanf</a></li><li data-name="strcasecmp"><a href="#strcasecmp">strcasecmp</a></li><li data-name="strcat"><a href="#strcat">strcat</a></li><li data-name="strchr"><a href="#strchr">strchr</a></li><li data-name="strcmp"><a href="#strcmp">strcmp</a></li><li data-name="strcoll"><a href="#strcoll">strcoll</a></li><li data-name="strcpy"><a href="#strcpy">strcpy</a></li><li data-name="strcspn"><a href="#strcspn">strcspn</a></li><li data-name="strdup"><a href="#strdup">strdup</a></li><li data-name="strerror"><a href="#strerror">strerror</a></li><li data-name="stricmp"><a href="#stricmp">stricmp</a></li><li data-name="strlen"><a href="#strlen">strlen</a></li><li data-name="strlower"><a href="#strlower">strlower</a></li><li data-name="strlwr"><a href="#strlwr">strlwr</a></li><li data-name="strncasecmp"><a href="#strncasecmp">strncasecmp</a></li><li data-name="strncat"><a href="#strncat">strncat</a></li><li data-name="strncmp"><a href="#strncmp">strncmp</a></li><li data-name="strncpy"><a href="#strncpy">strncpy</a></li><li data-name="strnicmp"><a href="#strnicmp">strnicmp</a></li><li data-name="strpbrk"><a href="#strpbrk">strpbrk</a></li><li data-name="strqtok"><a href="#strqtok">strqtok</a></li><li data-name="strrchr"><a href="#strrchr">strrchr</a></li><li data-name="strspn"><a href="#strspn">strspn</a></li><li data-name="strstr"><a href="#strstr">strstr</a></li><li data-name="strtok"><a href="#strtok">strtok</a></li><li data-name="strupper"><a href="#strupper">strupper</a></li><li data-name="strupr"><a href="#strupr">strupr</a></li><li data-name="strxfrm"><a href="#strxfrm">strxfrm</a></li><li data-name="suzy_div_result"><a href="#suzy_div_result">suzy_div_result</a></li><li data-name="suzy_div_start"><a href="#suzy_div_start">suzy_div_start</a></li><li data-name="suzy_math_busy"><a href="#suzy_math_busy">suzy_math_busy</a></li><li data-name="suzy_mod_result"><a href="#suzy_mod_result">suzy_mod_result</a></li><li data-name="suzy_mod_start"><a href="#suzy_mod_start">suzy_mod_start</a></li><li data-name="suzy_mul_result"><a href="#suzy_mul_result">suzy_mul_result</a></li><li data-name="suzy_mul_start"><a href="#suzy_mul_start">suzy_mul_start</a></li><li data-name="suzy_muldiv_result"><a href="#suzy_muldiv_result">suzy_muldiv_result</a></li><li data-name="suzy_muldiv_start"><a href="#suzy_muldiv_start">suzy_muldiv_start</a></li><li data-name="suzy_udiv_result"><a href="#suzy_udiv_result">suzy_udiv_result</a></li><li data-name="suzy_udiv_start"><a href="#suzy_udiv_start">suzy_udiv_start</a></li><li data-name="suzy_umod_result"><a href="#suzy_umod_result">suzy_umod_result</a></li><li data-name="suzy_umod_start"><a href="#suzy_umod_start">suzy_umod_start</a></li><li data-name="suzy_umul_result"><a href="#suzy_umul_result">suzy_umul_result</a></li><li data-name="suzy_umul_start"><a href="#suzy_umul_start">suzy_umul_start</a></li><li data-name="suzy_umuldiv_result"><a href="#suzy_umuldiv_result">suzy_umuldiv_result</a></li><li data-name="suzy_umuldiv_start"><a href="#suzy_umuldiv_start">suzy_umuldiv_start</a></li><li data-name="tolower"><a href="#tolower">tolower</a></li><li data-name="toupper"><a href="#toupper">toupper</a></li><li data-name="ultoa"><a href="#ultoa">ultoa</a></li><li data-name="utoa"><a href="#utoa">utoa</a></li><li data-name="vsnprintf"><a href="#vsnprintf">vsnprintf</a></li><li data-name="vsprintf"><a href="#vsprintf">vsprintf</a></li><li data-name="vsscanf"><a href="#vsscanf">vsscanf</a></li></ul><div class="fn-empty">No matches.</div></aside><main class="doc fn-main"><article><header class="doc-header"><h1>cc65 function reference</h1></header><div class="abstract">cc65 is a C compiler for 6502 based systems. This function reference describes
 the C functions available in the standard library.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Introduction</a></li>
 <li class="lvl1"><a href="#sect-2">2. Functions by header file</a></li>
@@ -103,6 +103,9 @@ function.</p>
 <h3 id="6502.h">2.1. <code>6502.h</code></h3>
 <ul>
 <li>
+<p><a href="#_sys">_sys</a></p>
+</li>
+<li>
 <p><a href="#BRK">BRK</a></p>
 </li>
 <li>
@@ -110,9 +113,6 @@ function.</p>
 </li>
 <li>
 <p><a href="#SEI">SEI</a></p>
-</li>
-<li>
-<p><a href="#_sys">_sys</a></p>
 </li>
 <li>
 <p><a href="#reset_irq">reset_irq</a></p>
@@ -211,22 +211,22 @@ read-only cart access, then <code>read</code>/<code>lseek</code>.</p>
 <h3 id="lynx.h">2.8. <code>lynx/lynx.h</code></h3>
 <ul>
 <li>
-<p><a href="#lynx_eeread_93c46">lynx_eeread_93c46</a></p>
+<p><a href="#eeprom_93c46_read">eeprom_93c46_read</a></p>
 </li>
 <li>
-<p><a href="#lynx_eeread_93c66">lynx_eeread_93c66</a></p>
+<p><a href="#eeprom_93c46_write">eeprom_93c46_write</a></p>
 </li>
 <li>
-<p><a href="#lynx_eeread_93c86">lynx_eeread_93c86</a></p>
+<p><a href="#eeprom_93c66_read">eeprom_93c66_read</a></p>
 </li>
 <li>
-<p><a href="#lynx_eewrite_93c46">lynx_eewrite_93c46</a></p>
+<p><a href="#eeprom_93c66_write">eeprom_93c66_write</a></p>
 </li>
 <li>
-<p><a href="#lynx_eewrite_93c66">lynx_eewrite_93c66</a></p>
+<p><a href="#eeprom_93c86_read">eeprom_93c86_read</a></p>
 </li>
 <li>
-<p><a href="#lynx_eewrite_93c86">lynx_eewrite_93c86</a></p>
+<p><a href="#eeprom_93c86_write">eeprom_93c86_write</a></p>
 </li>
 <li>
 <p><a href="#lynx_exec">lynx_exec</a></p>
@@ -250,6 +250,9 @@ read-only cart access, then <code>read</code>/<code>lseek</code>.</p>
 <p><a href="#mikey_snd_volume">mikey_snd_volume</a></p>
 </li>
 <li>
+<p><a href="#openn">openn</a></p>
+</li>
+<li>
 <p><a href="#snd_active">snd_active</a></p>
 </li>
 <li>
@@ -269,9 +272,6 @@ read-only cart access, then <code>read</code>/<code>lseek</code>.</p>
 </li>
 <li>
 <p><a href="#snd_stop_channel">snd_stop_channel</a></p>
-</li>
-<li>
-<p><a href="#openn">openn</a></p>
 </li>
 </ul>
 <h3 id="lz4.h">2.9. <code>lynx/lz4.h</code></h3>
@@ -318,10 +318,10 @@ communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 <h3 id="setjmp.h">2.12. <code>setjmp.h</code></h3>
 <ul>
 <li>
-<p><a href="#setjmp">setjmp</a></p>
+<p><a href="#longjmp">longjmp</a></p>
 </li>
 <li>
-<p><a href="#longjmp">longjmp</a></p>
+<p><a href="#setjmp">setjmp</a></p>
 </li>
 </ul>
 <h3 id="stdarg.h">2.13. <code>stdarg.h</code></h3>
@@ -530,13 +530,13 @@ communication, see also <code>testcode/lib/ser-test.c</code>.</p>
 <p><a href="#strtok">strtok</a></p>
 </li>
 <li>
-<p><a href="#strxfrm">strxfrm</a></p>
-</li>
-<li>
 <p><a href="#strupper">strupper</a></p>
 </li>
 <li>
 <p><a href="#strupr">strupr</a></p>
+</li>
+<li>
+<p><a href="#strxfrm">strxfrm</a></p>
 </li>
 </ul>
 <h3 id="suzymath.h">2.19. <code>lynx/suzymath.h</code></h3>
@@ -547,55 +547,55 @@ harvest the result. These are the start/poll/harvest counterpart of the
 <a href="#sect-4">section 4</a> for how they work and why they are safe.</p>
 <ul>
 <li>
-<p><a href="#suzy_math_busy">suzy_math_busy</a></p>
-</li>
-<li>
-<p><a href="#suzy_udiv_start">suzy_udiv_start</a></p>
-</li>
-<li>
-<p><a href="#suzy_udiv_result">suzy_udiv_result</a></p>
+<p><a href="#suzy_div_result">suzy_div_result</a></p>
 </li>
 <li>
 <p><a href="#suzy_div_start">suzy_div_start</a></p>
 </li>
 <li>
-<p><a href="#suzy_div_result">suzy_div_result</a></p>
-</li>
-<li>
-<p><a href="#suzy_umod_start">suzy_umod_start</a></p>
-</li>
-<li>
-<p><a href="#suzy_umod_result">suzy_umod_result</a></p>
-</li>
-<li>
-<p><a href="#suzy_mod_start">suzy_mod_start</a></p>
+<p><a href="#suzy_math_busy">suzy_math_busy</a></p>
 </li>
 <li>
 <p><a href="#suzy_mod_result">suzy_mod_result</a></p>
 </li>
 <li>
-<p><a href="#suzy_umul_start">suzy_umul_start</a></p>
-</li>
-<li>
-<p><a href="#suzy_umul_result">suzy_umul_result</a></p>
-</li>
-<li>
-<p><a href="#suzy_mul_start">suzy_mul_start</a></p>
+<p><a href="#suzy_mod_start">suzy_mod_start</a></p>
 </li>
 <li>
 <p><a href="#suzy_mul_result">suzy_mul_result</a></p>
 </li>
 <li>
-<p><a href="#suzy_umuldiv_start">suzy_umuldiv_start</a></p>
+<p><a href="#suzy_mul_start">suzy_mul_start</a></p>
 </li>
 <li>
-<p><a href="#suzy_umuldiv_result">suzy_umuldiv_result</a></p>
+<p><a href="#suzy_muldiv_result">suzy_muldiv_result</a></p>
 </li>
 <li>
 <p><a href="#suzy_muldiv_start">suzy_muldiv_start</a></p>
 </li>
 <li>
-<p><a href="#suzy_muldiv_result">suzy_muldiv_result</a></p>
+<p><a href="#suzy_udiv_result">suzy_udiv_result</a></p>
+</li>
+<li>
+<p><a href="#suzy_udiv_start">suzy_udiv_start</a></p>
+</li>
+<li>
+<p><a href="#suzy_umod_result">suzy_umod_result</a></p>
+</li>
+<li>
+<p><a href="#suzy_umod_start">suzy_umod_start</a></p>
+</li>
+<li>
+<p><a href="#suzy_umul_result">suzy_umul_result</a></p>
+</li>
+<li>
+<p><a href="#suzy_umul_start">suzy_umul_start</a></p>
+</li>
+<li>
+<p><a href="#suzy_umuldiv_result">suzy_umuldiv_result</a></p>
+</li>
+<li>
+<p><a href="#suzy_umuldiv_start">suzy_umuldiv_start</a></p>
 </li>
 </ul>
 <h3 id="gfx.h">2.20. <code>lynx/gfx.h</code></h3>
@@ -2183,7 +2183,271 @@ int main(void)
 </dd>
 </dl>
 </blockquote>
-<h3 id="exit">3.31. exit</h3>
+<h3 id="eeprom_93c46_read">3.31. eeprom_93c46_read</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Read a word from a 93C46 EEPROM.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>unsigned __fastcall__ eeprom_93c46_read (unsigned char cell);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Reads and returns the 16-bit word at <code>cell</code> (0&ndash;63) from a 93C46 part (64 words).</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+<li>
+<p>Part of the size-selectable EEPROM family; pick the variant that matches the chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024). To clear a word, write the value you want; there is no separate erase call. The former <code>lynx_ee*</code> names (e.g. <code>lynx_eeread_93c46</code>) remain as deprecated aliases for backward compatibility.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#eeprom_93c46_write">eeprom_93c46_write</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="eeprom_93c46_write">3.32. eeprom_93c46_write</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Write a word to a 93C46 EEPROM.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ eeprom_93c46_write (unsigned addr, unsigned val);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Writes the 16-bit <code>val</code> at <code>addr</code> (0&ndash;63) of a 93C46 part and waits for the write to complete.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+<li>
+<p>Part of the size-selectable EEPROM family; pick the variant that matches the chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024). To clear a word, write the value you want; there is no separate erase call. The former <code>lynx_ee*</code> names (e.g. <code>lynx_eeread_93c46</code>) remain as deprecated aliases for backward compatibility.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#eeprom_93c46_read">eeprom_93c46_read</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="eeprom_93c66_read">3.33. eeprom_93c66_read</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Read a word from a 93C66 EEPROM.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>unsigned __fastcall__ eeprom_93c66_read (unsigned addr);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Reads and returns the 16-bit word at <code>addr</code> (0&ndash;255) from a 93C66 part (256 words).</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+<li>
+<p>Part of the size-selectable EEPROM family; pick the variant that matches the chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024). To clear a word, write the value you want; there is no separate erase call. The former <code>lynx_ee*</code> names (e.g. <code>lynx_eeread_93c46</code>) remain as deprecated aliases for backward compatibility.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#eeprom_93c66_write">eeprom_93c66_write</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="eeprom_93c66_write">3.34. eeprom_93c66_write</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Write a word to a 93C66 EEPROM.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ eeprom_93c66_write (unsigned addr, unsigned val);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Writes the 16-bit <code>val</code> at <code>addr</code> (0&ndash;255) of a 93C66 part and waits for the write to complete.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+<li>
+<p>Part of the size-selectable EEPROM family; pick the variant that matches the chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024). To clear a word, write the value you want; there is no separate erase call. The former <code>lynx_ee*</code> names (e.g. <code>lynx_eeread_93c46</code>) remain as deprecated aliases for backward compatibility.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#eeprom_93c66_read">eeprom_93c66_read</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="eeprom_93c86_read">3.35. eeprom_93c86_read</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Read a word from a 93C86 EEPROM.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>unsigned __fastcall__ eeprom_93c86_read (unsigned addr);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Reads and returns the 16-bit word at <code>addr</code> (0&ndash;1023) from a 93C86 part (1024 words).</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+<li>
+<p>Part of the size-selectable EEPROM family; pick the variant that matches the chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024). To clear a word, write the value you want; there is no separate erase call. The former <code>lynx_ee*</code> names (e.g. <code>lynx_eeread_93c46</code>) remain as deprecated aliases for backward compatibility.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#eeprom_93c86_write">eeprom_93c86_write</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="eeprom_93c86_write">3.36. eeprom_93c86_write</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Write a word to a 93C86 EEPROM.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ eeprom_93c86_write (unsigned addr, unsigned val);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Writes the 16-bit <code>val</code> at <code>addr</code> (0&ndash;1023) of a 93C86 part and waits for the write to complete.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+<li>
+<p>Part of the size-selectable EEPROM family; pick the variant that matches the chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024). To clear a word, write the value you want; there is no separate erase call. The former <code>lynx_ee*</code> names (e.g. <code>lynx_eeread_93c46</code>) remain as deprecated aliases for backward compatibility.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#eeprom_93c86_read">eeprom_93c86_read</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="exit">3.37. exit</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2233,7 +2497,7 @@ evaluated or is ignored.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="free">3.32. free</h3>
+<h3 id="free">3.38. free</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2288,7 +2552,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_busy">3.33. gfx_busy</h3>
+<h3 id="gfx_busy">3.39. gfx_busy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2319,7 +2583,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_clear">3.34. gfx_clear</h3>
+<h3 id="gfx_clear">3.40. gfx_clear</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2361,7 +2625,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_clearrows">3.35. gfx_clearrows</h3>
+<h3 id="gfx_clearrows">3.41. gfx_clearrows</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2402,7 +2666,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_flip">3.36. gfx_flip</h3>
+<h3 id="gfx_flip">3.42. gfx_flip</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2432,7 +2696,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_getcolor">3.37. gfx_getcolor</h3>
+<h3 id="gfx_getcolor">3.43. gfx_getcolor</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2462,7 +2726,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_getcolorcount">3.38. gfx_getcolorcount</h3>
+<h3 id="gfx_getcolorcount">3.44. gfx_getcolorcount</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2499,7 +2763,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_getdefpalette">3.39. gfx_getdefpalette</h3>
+<h3 id="gfx_getdefpalette">3.45. gfx_getdefpalette</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2529,7 +2793,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_getmaxcolor">3.40. gfx_getmaxcolor</h3>
+<h3 id="gfx_getmaxcolor">3.46. gfx_getmaxcolor</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2567,7 +2831,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_getmaxx">3.41. gfx_getmaxx</h3>
+<h3 id="gfx_getmaxx">3.47. gfx_getmaxx</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2605,7 +2869,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_getmaxy">3.42. gfx_getmaxy</h3>
+<h3 id="gfx_getmaxy">3.48. gfx_getmaxy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2643,7 +2907,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_getpagecount">3.43. gfx_getpagecount</h3>
+<h3 id="gfx_getpagecount">3.49. gfx_getpagecount</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2681,7 +2945,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_getpalette">3.44. gfx_getpalette</h3>
+<h3 id="gfx_getpalette">3.50. gfx_getpalette</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2711,7 +2975,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_gettextheight">3.45. gfx_gettextheight</h3>
+<h3 id="gfx_gettextheight">3.51. gfx_gettextheight</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2750,7 +3014,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_gettextwidth">3.46. gfx_gettextwidth</h3>
+<h3 id="gfx_gettextwidth">3.52. gfx_gettextwidth</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2792,7 +3056,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_getxres">3.47. gfx_getxres</h3>
+<h3 id="gfx_getxres">3.53. gfx_getxres</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2830,7 +3094,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_getyres">3.48. gfx_getyres</h3>
+<h3 id="gfx_getyres">3.54. gfx_getyres</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2868,7 +3132,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_gotoxy">3.49. gfx_gotoxy</h3>
+<h3 id="gfx_gotoxy">3.55. gfx_gotoxy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2906,7 +3170,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_init">3.50. gfx_init</h3>
+<h3 id="gfx_init">3.56. gfx_init</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2945,7 +3209,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_outtext">3.51. gfx_outtext</h3>
+<h3 id="gfx_outtext">3.57. gfx_outtext</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -2985,7 +3249,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_outtextxy">3.52. gfx_outtextxy</h3>
+<h3 id="gfx_outtextxy">3.58. gfx_outtextxy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3023,7 +3287,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_setbgcolor">3.53. gfx_setbgcolor</h3>
+<h3 id="gfx_setbgcolor">3.59. gfx_setbgcolor</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3061,7 +3325,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_setbpp">3.54. gfx_setbpp</h3>
+<h3 id="gfx_setbpp">3.60. gfx_setbpp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3105,7 +3369,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_setcollisiondetection">3.55. gfx_setcollisiondetection</h3>
+<h3 id="gfx_setcollisiondetection">3.61. gfx_setcollisiondetection</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3144,7 +3408,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_setcolor">3.56. gfx_setcolor</h3>
+<h3 id="gfx_setcolor">3.62. gfx_setcolor</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3183,7 +3447,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_setdrawpage">3.57. gfx_setdrawpage</h3>
+<h3 id="gfx_setdrawpage">3.63. gfx_setdrawpage</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3222,7 +3486,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_setfont">3.58. gfx_setfont</h3>
+<h3 id="gfx_setfont">3.64. gfx_setfont</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3263,7 +3527,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_setframerate">3.59. gfx_setframerate</h3>
+<h3 id="gfx_setframerate">3.65. gfx_setframerate</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3300,7 +3564,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_setpalette">3.60. gfx_setpalette</h3>
+<h3 id="gfx_setpalette">3.66. gfx_setpalette</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3338,7 +3602,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_settextdir">3.61. gfx_settextdir</h3>
+<h3 id="gfx_settextdir">3.67. gfx_settextdir</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3376,7 +3640,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_settextscale">3.62. gfx_settextscale</h3>
+<h3 id="gfx_settextscale">3.68. gfx_settextscale</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3415,7 +3679,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_settextstyle">3.63. gfx_settextstyle</h3>
+<h3 id="gfx_settextstyle">3.69. gfx_settextstyle</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3455,7 +3719,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_setviewpage">3.64. gfx_setviewpage</h3>
+<h3 id="gfx_setviewpage">3.70. gfx_setviewpage</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3494,7 +3758,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_sprite">3.65. gfx_sprite</h3>
+<h3 id="gfx_sprite">3.71. gfx_sprite</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3538,7 +3802,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="gfx_updatedisplay">3.66. gfx_updatedisplay</h3>
+<h3 id="gfx_updatedisplay">3.72. gfx_updatedisplay</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3570,7 +3834,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="isalnum">3.67. isalnum</h3>
+<h3 id="isalnum">3.73. isalnum</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3625,7 +3889,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="isalpha">3.68. isalpha</h3>
+<h3 id="isalpha">3.74. isalpha</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3679,7 +3943,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="isascii">3.69. isascii</h3>
+<h3 id="isascii">3.75. isascii</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3733,7 +3997,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="isblank">3.70. isblank</h3>
+<h3 id="isblank">3.76. isblank</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3788,7 +4052,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="iscntrl">3.71. iscntrl</h3>
+<h3 id="iscntrl">3.77. iscntrl</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3843,7 +4107,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="isdigit">3.72. isdigit</h3>
+<h3 id="isdigit">3.78. isdigit</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3897,7 +4161,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="isgraph">3.73. isgraph</h3>
+<h3 id="isgraph">3.79. isgraph</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -3953,7 +4217,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="islower">3.74. islower</h3>
+<h3 id="islower">3.80. islower</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -4008,7 +4272,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="isprint">3.75. isprint</h3>
+<h3 id="isprint">3.81. isprint</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -4063,7 +4327,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="ispunct">3.76. ispunct</h3>
+<h3 id="ispunct">3.82. ispunct</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -4119,7 +4383,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="isspace">3.77. isspace</h3>
+<h3 id="isspace">3.83. isspace</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -4176,7 +4440,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="isupper">3.78. isupper</h3>
+<h3 id="isupper">3.84. isupper</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -4231,7 +4495,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="isxdigit">3.79. isxdigit</h3>
+<h3 id="isxdigit">3.85. isxdigit</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -4286,7 +4550,7 @@ fastcall function, so it may only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="itoa">3.80. itoa</h3>
+<h3 id="itoa">3.86. itoa</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -4342,7 +4606,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="joy_read">3.81. joy_read</h3>
+<h3 id="joy_read">3.87. joy_read</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -4386,7 +4650,7 @@ the <code>JOY_xxx</code> masks and macros from <code>lynx/lynx.h</code>.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="labs">3.82. labs</h3>
+<h3 id="labs">3.88. labs</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -4432,63 +4696,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="ltoa">3.83. ltoa</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Convert a long integer into a string.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#stdlib.h">stdlib.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>char* __fastcall__ ltoa (long val, char* buf, int radix);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p><code>itoa</code> converts the long integer <code>val</code> into a string
-using <code>radix</code> as the base.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>There are no provisions to prevent a buffer overflow.</p>
-</li>
-<li>
-<p>If <code>val</code> contains <code>LONG_MIN</code>, the behaviour is undefined.</p>
-</li>
-<li>
-<p>You should probably use <a href="#sprintf">sprintf</a> instead.</p>
-</li>
-<li>
-<p>The function is only available as fastcall function, so it may only be
-used in presence of a prototype.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#atoi">atoi</a>,
-<a href="#atol">atol</a>,
-<a href="#itoa">itoa</a>,
-<a href="#ultoa">ultoa</a>,
-<a href="#utoa">utoa</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="longjmp">3.84. longjmp</h3>
+<h3 id="longjmp">3.89. longjmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -4538,263 +4746,55 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="lynx_eeread_93c46">3.85. lynx_eeread_93c46</h3>
+<h3 id="ltoa">3.90. ltoa</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
 <dd>
-<p>Read a word from a 93C46 EEPROM.</p>
+<p>Convert a long integer into a string.</p>
 </dd>
 <dt>Header</dt>
 <dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+<p><code><a href="#stdlib.h">stdlib.h</a></code></p>
 </dd>
 <dt>Declaration</dt>
 <dd>
-<p><code>unsigned __fastcall__ lynx_eeread_93c46 (unsigned char cell);</code></p>
+<p><code>char* __fastcall__ ltoa (long val, char* buf, int radix);</code></p>
 </dd>
 <dt>Description</dt>
 <dd>
-<p>Reads and returns the 16-bit word at <code>cell</code> (0&ndash;63) from a 93C46 part (64 words).</p>
+<p><code>itoa</code> converts the long integer <code>val</code> into a string
+using <code>radix</code> as the base.</p>
 </dd>
 <dt>Notes</dt>
 <dd>
 <ul>
 <li>
-<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+<p>There are no provisions to prevent a buffer overflow.</p>
 </li>
 <li>
-<p>Part of the size-selectable EEPROM family; pick the variant that matches the chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024). To clear a word, write the value you want; there is no separate erase call.</p>
+<p>If <code>val</code> contains <code>LONG_MIN</code>, the behaviour is undefined.</p>
+</li>
+<li>
+<p>You should probably use <a href="#sprintf">sprintf</a> instead.</p>
+</li>
+<li>
+<p>The function is only available as fastcall function, so it may only be
+used in presence of a prototype.</p>
 </li>
 </ul>
 </dd>
 <dt>Availability</dt>
 <dd>
-<p>cc65 (Atari Lynx only)</p>
+<p>cc65</p>
 </dd>
 <dt>See also</dt>
 <dd>
-<p><a href="#lynx_eewrite_93c46">lynx_eewrite_93c46</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="lynx_eeread_93c66">3.86. lynx_eeread_93c66</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Read a word from a 93C66 EEPROM.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>unsigned __fastcall__ lynx_eeread_93c66 (unsigned addr);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Reads and returns the 16-bit word at <code>addr</code> (0&ndash;255) from a 93C66 part (256 words).</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
-</li>
-<li>
-<p>Part of the size-selectable EEPROM family; pick the variant that matches the chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024). To clear a word, write the value you want; there is no separate erase call.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#lynx_eewrite_93c66">lynx_eewrite_93c66</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="lynx_eeread_93c86">3.87. lynx_eeread_93c86</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Read a word from a 93C86 EEPROM.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>unsigned __fastcall__ lynx_eeread_93c86 (unsigned addr);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Reads and returns the 16-bit word at <code>addr</code> (0&ndash;1023) from a 93C86 part (1024 words).</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
-</li>
-<li>
-<p>Part of the size-selectable EEPROM family; pick the variant that matches the chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024). To clear a word, write the value you want; there is no separate erase call.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#lynx_eewrite_93c86">lynx_eewrite_93c86</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="lynx_eewrite_93c46">3.88. lynx_eewrite_93c46</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Write a word to a 93C46 EEPROM.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void __fastcall__ lynx_eewrite_93c46 (unsigned addr, unsigned val);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Writes the 16-bit <code>val</code> at <code>addr</code> (0&ndash;63) of a 93C46 part and waits for the write to complete.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
-</li>
-<li>
-<p>Part of the size-selectable EEPROM family; pick the variant that matches the chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024). To clear a word, write the value you want; there is no separate erase call.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#lynx_eeread_93c46">lynx_eeread_93c46</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="lynx_eewrite_93c66">3.89. lynx_eewrite_93c66</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Write a word to a 93C66 EEPROM.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void __fastcall__ lynx_eewrite_93c66 (unsigned addr, unsigned val);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Writes the 16-bit <code>val</code> at <code>addr</code> (0&ndash;255) of a 93C66 part and waits for the write to complete.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
-</li>
-<li>
-<p>Part of the size-selectable EEPROM family; pick the variant that matches the chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024). To clear a word, write the value you want; there is no separate erase call.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#lynx_eeread_93c66">lynx_eeread_93c66</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="lynx_eewrite_93c86">3.90. lynx_eewrite_93c86</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Write a word to a 93C86 EEPROM.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void __fastcall__ lynx_eewrite_93c86 (unsigned addr, unsigned val);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Writes the 16-bit <code>val</code> at <code>addr</code> (0&ndash;1023) of a 93C86 part and waits for the write to complete.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
-</li>
-<li>
-<p>Part of the size-selectable EEPROM family; pick the variant that matches the chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024). To clear a word, write the value you want; there is no separate erase call.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#lynx_eeread_93c86">lynx_eeread_93c86</a></p>
+<p><a href="#atoi">atoi</a>,
+<a href="#atol">atol</a>,
+<a href="#itoa">itoa</a>,
+<a href="#ultoa">ultoa</a>,
+<a href="#utoa">utoa</a></p>
 </dd>
 <dt>Example</dt>
 <dd>
@@ -4886,289 +4886,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="snd_active">3.93. snd_active</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Report which sound channels are active.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>unsigned char snd_active (void);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Returns a non-zero value while any of the four Mikey audio channels is still playing, so a program can wait for a tune to finish.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#snd_play">snd_play</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="snd_continue">3.94. snd_continue</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Resume sound after a pause.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void snd_continue (void);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Resumes playback previously suspended with <code><a href="#snd_pause">snd_pause</a></code>.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#snd_pause">snd_pause</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="snd_init">3.95. snd_init</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Initialize the sound engine.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void snd_init (void);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Sets up the four Mikey audio channels, programs the dedicated sound timer (~240&nbsp;Hz) and installs the sound-interrupt handler that drives playback. Call once before any other <code>snd_*</code> function.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>Playback runs from a dedicated Mikey timer interrupt (not the VBL); the handler is installed as an interruptor and stays resident. See <a href="sound.html">the Sound page</a> and <code>design/LYNX_SND_ENGINE_DESIGN.md</code>.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#snd_play">snd_play</a>,
-<a href="#snd_stop">snd_stop</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="snd_pause">3.96. snd_pause</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Pause sound.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void snd_pause (void);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Suspends playback on all channels. Resume with <code><a href="#snd_continue">snd_continue</a></code>.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#snd_continue">snd_continue</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="snd_play">3.97. snd_play</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Play a compiled tune stream on a channel.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void __fastcall__ snd_play (unsigned char channel, const unsigned char* stream);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Starts playing the compiled event <code>stream</code> on <code>channel</code> (0&ndash;3). If that channel is already sounding, it is retriggered in place: the old stream is force-stopped (see <a href="#snd_stop">snd_stop</a> for the fade-out this involves) and the new one starts on the same channel. The stream is produced offline by the <code>abccc</code> tune compiler (see <a href="sound.html">the Sound page</a>). Playback then proceeds automatically under the sound-timer interrupt.</p>
-<p>The <a href="sound.html#sfx">reusable sound-effect library</a> (<code>&lt;lynx/sfx.h&gt;</code>) is a pack of ready-made streams played this way: <code>sfx_&lt;name&gt;(ch)</code> expands to <code>snd_play(ch, sfx_&lt;name&gt;_data)</code>. The 56 effects (<code>sfx_coin</code>, <code>sfx_laser</code>, <code>sfx_explosion_small</code>, <code>sfx_alarm</code>, &hellip;) are catalogued on the Sound page; author your own with the <code>SFX_*</code> ca65 macros in <code>asminc/lynx/sfx.inc</code>.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#snd_stop_channel">snd_stop_channel</a>,
-<a href="#snd_active">snd_active</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="snd_stop">3.98. snd_stop</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Stop sound on all channels.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void snd_stop (void);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Silences every channel. Each channel's volume is faded out over a few sound-timer ticks (at most ~17&nbsp;ms at the default 240&nbsp;Hz rate) rather than cut instantly, to avoid an audible click; <a href="#snd_active">snd_active</a> reports a channel busy until its fade finishes. See <a href="sound.html#sfx">the Sound page &sect;6.5</a>.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#snd_stop_channel">snd_stop_channel</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="snd_stop_channel">3.99. snd_stop_channel</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Stop sound on one channel.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void __fastcall__ snd_stop_channel (unsigned char channel);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Silences the given <code>channel</code> (0&ndash;3), leaving the others playing. Fades the volume out over a few ticks rather than cutting it instantly &mdash; same as <a href="#snd_stop">snd_stop</a>.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#snd_stop">snd_stop</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="malloc">3.100. malloc</h3>
+<h3 id="malloc">3.93. malloc</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5219,7 +4937,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="memchr">3.101. memchr</h3>
+<h3 id="memchr">3.94. memchr</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5264,7 +4982,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="memcmp">3.102. memcmp</h3>
+<h3 id="memcmp">3.95. memcmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5311,7 +5029,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="memcpy">3.103. memcpy</h3>
+<h3 id="memcpy">3.96. memcpy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5361,7 +5079,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="memmove">3.104. memmove</h3>
+<h3 id="memmove">3.97. memmove</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5411,7 +5129,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="memset">3.105. memset</h3>
+<h3 id="memset">3.98. memset</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5457,7 +5175,214 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="offsetof">3.106. offsetof</h3>
+<h3 id="mikey_snd_integrate">3.99. mikey_snd_integrate</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Set or clear a Mikey channel's integrate (waveform-shape) bit.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ mikey_snd_integrate (unsigned char chan, unsigned char val);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Writes the integrate bit (CONTROL bit&nbsp;5) of channel <code>chan</code> (0&ndash;3): <code>val</code>&nbsp;0 selects the square wave, non-zero the integrated (smoother) wave. A direct register helper, independent of the stream engine; the other control bits are preserved.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#mikey_snd_volume">mikey_snd_volume</a>,
+<a href="#snd_play">snd_play</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="mikey_snd_octave">3.100. mikey_snd_octave</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Set a Mikey channel's clock-divider (octave) band.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ mikey_snd_octave (unsigned char chan, unsigned char val);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Writes the clock-divider bits (CONTROL bits&nbsp;0&ndash;2) of channel <code>chan</code> (0&ndash;3) to <code>val</code> (0&ndash;6), selecting the octave band, <strong>and</strong> sets the timer-enable bits (<code>$18</code> = reload + count) so the channel's poly counter is actually clocked. A direct register helper; integrate (bit&nbsp;5) and the 9th tap (bit&nbsp;7) are preserved. The channel still needs a non-zero feedback tap (<a href="#mikey_snd_taps"><code>mikey_snd_taps</code></a>) to oscillate; with no taps it emits only a DC level, i.e. silence.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#mikey_snd_pitch">mikey_snd_pitch</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="mikey_snd_pitch">3.101. mikey_snd_pitch</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Set a Mikey channel's timer reload (pitch within the octave).</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ mikey_snd_pitch (unsigned char chan, unsigned char val);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Writes the BACKUP (timer reload) register of channel <code>chan</code> (0&ndash;3) to <code>val</code> (0&ndash;255). Together with <code><a href="#mikey_snd_octave">mikey_snd_octave</a></code> this fixes the channel's frequency. A direct register helper.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#mikey_snd_octave">mikey_snd_octave</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="mikey_snd_taps">3.102. mikey_snd_taps</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Select a Mikey channel's LFSR feedback taps (timbre / noise colour).</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ mikey_snd_taps (unsigned char chan, unsigned int val);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Programs the 9-bit feedback-tap selection of channel <code>chan</code> (0&ndash;3): the low 8 taps go to the FEEDBACK register and the 9th tap to CONTROL bit&nbsp;7. <code>val</code> ranges 0&ndash;511; small tap sets give pure tones, wider sets give buzzy or noisy timbres. A direct register helper.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#mikey_snd_integrate">mikey_snd_integrate</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="mikey_snd_volume">3.103. mikey_snd_volume</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Set a Mikey channel's output volume.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ mikey_snd_volume (unsigned char chan, unsigned char val);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Writes the signed VOLUME register of channel <code>chan</code> (0&ndash;3) to <code>val</code> (0&ndash;127). A direct register helper, independent of the stream engine; handy for one-call sound effects or hand-built instruments.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#mikey_snd_pitch">mikey_snd_pitch</a>,
+<a href="#mikey_snd_octave">mikey_snd_octave</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="offsetof">3.104. offsetof</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5495,7 +5420,7 @@ or <code>union</code> member.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="openn">3.107. openn</h3>
+<h3 id="openn">3.105. openn</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5551,7 +5476,7 @@ RAM in one step (optionally running it), use <code>lynx_load</code> /
 </dd>
 </dl>
 </blockquote>
-<h3 id="qsort">3.108. qsort</h3>
+<h3 id="qsort">3.106. qsort</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5605,7 +5530,7 @@ calling convention.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="rand">3.109. rand</h3>
+<h3 id="rand">3.107. rand</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5653,7 +5578,7 @@ had been used with an argument of 1.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="realloc">3.110. realloc</h3>
+<h3 id="realloc">3.108. realloc</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5715,7 +5640,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="reset_irq">3.111. reset_irq</h3>
+<h3 id="reset_irq">3.109. reset_irq</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5757,7 +5682,7 @@ necessary to call this function as a part of your clean-up when exiting the prog
 </dd>
 </dl>
 </blockquote>
-<h3 id="ser_close">3.112. ser_close</h3>
+<h3 id="ser_close">3.110. ser_close</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5802,7 +5727,7 @@ static void initialize(){
 </dd>
 </dl>
 </blockquote>
-<h3 id="ser_get">3.113. ser_get</h3>
+<h3 id="ser_get">3.111. ser_get</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5849,7 +5774,7 @@ while (ser_get(&amp;ch) == SER_ERR_NO_DATA)
 </dd>
 </dl>
 </blockquote>
-<h3 id="ser_open">3.114. ser_open</h3>
+<h3 id="ser_open">3.112. ser_open</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5903,7 +5828,7 @@ static void initialize(){
 </dd>
 </dl>
 </blockquote>
-<h3 id="ser_put">3.115. ser_put</h3>
+<h3 id="ser_put">3.113. ser_put</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5947,7 +5872,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="ser_status">3.116. ser_status</h3>
+<h3 id="ser_status">3.114. ser_status</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -5989,7 +5914,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="set_irq">3.117. set_irq</h3>
+<h3 id="set_irq">3.115. set_irq</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6053,7 +5978,7 @@ clean-up when exiting the program.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="setjmp">3.118. setjmp</h3>
+<h3 id="setjmp">3.116. setjmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6103,7 +6028,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="sleep">3.119. sleep</h3>
+<h3 id="sleep">3.117. sleep</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6142,7 +6067,289 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="snprintf">3.120. snprintf</h3>
+<h3 id="snd_active">3.118. snd_active</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Report which sound channels are active.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>unsigned char snd_active (void);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Returns a non-zero value while any of the four Mikey audio channels is still playing, so a program can wait for a tune to finish.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#snd_play">snd_play</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="snd_continue">3.119. snd_continue</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Resume sound after a pause.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void snd_continue (void);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Resumes playback previously suspended with <code><a href="#snd_pause">snd_pause</a></code>.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#snd_pause">snd_pause</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="snd_init">3.120. snd_init</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Initialize the sound engine.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void snd_init (void);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Sets up the four Mikey audio channels, programs the dedicated sound timer (~240&nbsp;Hz) and installs the sound-interrupt handler that drives playback. Call once before any other <code>snd_*</code> function.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>Playback runs from a dedicated Mikey timer interrupt (not the VBL); the handler is installed as an interruptor and stays resident. See <a href="sound.html">the Sound page</a> and <code>design/LYNX_SND_ENGINE_DESIGN.md</code>.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#snd_play">snd_play</a>,
+<a href="#snd_stop">snd_stop</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="snd_pause">3.121. snd_pause</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Pause sound.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void snd_pause (void);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Suspends playback on all channels. Resume with <code><a href="#snd_continue">snd_continue</a></code>.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#snd_continue">snd_continue</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="snd_play">3.122. snd_play</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Play a compiled tune stream on a channel.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ snd_play (unsigned char channel, const unsigned char* stream);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Starts playing the compiled event <code>stream</code> on <code>channel</code> (0&ndash;3). If that channel is already sounding, it is retriggered in place: the old stream is force-stopped (see <a href="#snd_stop">snd_stop</a> for the fade-out this involves) and the new one starts on the same channel. The stream is produced offline by the <code>abccc</code> tune compiler (see <a href="sound.html">the Sound page</a>). Playback then proceeds automatically under the sound-timer interrupt.</p>
+<p>The <a href="sound.html#sfx">reusable sound-effect library</a> (<code>&lt;lynx/sfx.h&gt;</code>) is a pack of ready-made streams played this way: <code>sfx_&lt;name&gt;(ch)</code> expands to <code>snd_play(ch, sfx_&lt;name&gt;_data)</code>. The 56 effects (<code>sfx_coin</code>, <code>sfx_laser</code>, <code>sfx_explosion_small</code>, <code>sfx_alarm</code>, &hellip;) are catalogued on the Sound page; author your own with the <code>SFX_*</code> ca65 macros in <code>asminc/lynx/sfx.inc</code>.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#snd_stop_channel">snd_stop_channel</a>,
+<a href="#snd_active">snd_active</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="snd_stop">3.123. snd_stop</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Stop sound on all channels.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void snd_stop (void);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Silences every channel. Each channel's volume is faded out over a few sound-timer ticks (at most ~17&nbsp;ms at the default 240&nbsp;Hz rate) rather than cut instantly, to avoid an audible click; <a href="#snd_active">snd_active</a> reports a channel busy until its fade finishes. See <a href="sound.html#sfx">the Sound page &sect;6.5</a>.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#snd_stop_channel">snd_stop_channel</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="snd_stop_channel">3.124. snd_stop_channel</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Stop sound on one channel.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>void __fastcall__ snd_stop_channel (unsigned char channel);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>Silences the given <code>channel</code> (0&ndash;3), leaving the others playing. Fades the volume out over a few ticks rather than cutting it instantly &mdash; same as <a href="#snd_stop">snd_stop</a>.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65 (Atari Lynx only)</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#snd_stop">snd_stop</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="snprintf">3.125. snprintf</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6192,7 +6399,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="sprintf">3.121. sprintf</h3>
+<h3 id="sprintf">3.126. sprintf</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6241,7 +6448,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="srand">3.122. srand</h3>
+<h3 id="srand">3.127. srand</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6286,7 +6493,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="sscanf">3.123. sscanf</h3>
+<h3 id="sscanf">3.128. sscanf</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6335,7 +6542,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strcasecmp">3.124. strcasecmp</h3>
+<h3 id="strcasecmp">3.129. strcasecmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6384,7 +6591,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strcat">3.125. strcat</h3>
+<h3 id="strcat">3.130. strcat</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6435,7 +6642,7 @@ is undefined.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strchr">3.126. strchr</h3>
+<h3 id="strchr">3.131. strchr</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6481,7 +6688,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strcmp">3.127. strcmp</h3>
+<h3 id="strcmp">3.132. strcmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6530,7 +6737,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strcoll">3.128. strcoll</h3>
+<h3 id="strcoll">3.133. strcoll</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6579,7 +6786,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strcpy">3.129. strcpy</h3>
+<h3 id="strcpy">3.134. strcpy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6633,7 +6840,7 @@ strcpy (hello, "Hello world!\n");</pre>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strcspn">3.130. strcspn</h3>
+<h3 id="strcspn">3.135. strcspn</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6681,7 +6888,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strdup">3.131. strdup</h3>
+<h3 id="strdup">3.136. strdup</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6730,7 +6937,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strerror">3.132. strerror</h3>
+<h3 id="strerror">3.137. strerror</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6779,7 +6986,7 @@ string must not be modified by the caller!</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="stricmp">3.133. stricmp</h3>
+<h3 id="stricmp">3.138. stricmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6828,7 +7035,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strlen">3.134. strlen</h3>
+<h3 id="strlen">3.139. strlen</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6875,7 +7082,7 @@ function does not work correctly for strings with more than 255 characters.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strlower">3.135. strlower</h3>
+<h3 id="strlower">3.140. strlower</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6922,11 +7129,11 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strlwr">3.136. strlwr</h3>
+<h3 id="strlwr">3.141. strlwr</h3>
 <blockquote>
 <p>See <code>strlower</code>.</p>
 </blockquote>
-<h3 id="strncasecmp">3.137. strncasecmp</h3>
+<h3 id="strncasecmp">3.142. strncasecmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -6975,7 +7182,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strncat">3.138. strncat</h3>
+<h3 id="strncat">3.143. strncat</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7026,7 +7233,7 @@ is undefined.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strncmp">3.139. strncmp</h3>
+<h3 id="strncmp">3.144. strncmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7076,7 +7283,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strncpy">3.140. strncpy</h3>
+<h3 id="strncpy">3.145. strncpy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7137,7 +7344,7 @@ strncpy (hello, "Hello world!\n", sizeof hello - 1)[5] = '\0';</pre>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strnicmp">3.141. strnicmp</h3>
+<h3 id="strnicmp">3.146. strnicmp</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7186,7 +7393,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strpbrk">3.142. strpbrk</h3>
+<h3 id="strpbrk">3.147. strpbrk</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7234,7 +7441,7 @@ so, it should be used only in the presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strqtok">3.143. strqtok</h3>
+<h3 id="strqtok">3.148. strqtok</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7292,7 +7499,7 @@ a second <code>s1</code> string before it finishes the first one.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strrchr">3.144. strrchr</h3>
+<h3 id="strrchr">3.149. strrchr</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7337,7 +7544,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strspn">3.145. strspn</h3>
+<h3 id="strspn">3.150. strspn</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7383,7 +7590,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strstr">3.146. strstr</h3>
+<h3 id="strstr">3.151. strstr</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7428,7 +7635,7 @@ be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strtok">3.147. strtok</h3>
+<h3 id="strtok">3.152. strtok</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7485,7 +7692,58 @@ a second <code>s1</code> string before it finishes the first one.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strxfrm">3.148. strxfrm</h3>
+<h3 id="strupper">3.153. strupper</h3>
+<blockquote>
+<dl>
+<dt>Function</dt>
+<dd>
+<p>Make a string upper case.</p>
+</dd>
+<dt>Header</dt>
+<dd>
+<p><code><a href="#string.h">string.h</a></code></p>
+</dd>
+<dt>Declaration</dt>
+<dd>
+<p><code>char* __fastcall__ strupper (char* s);</code></p>
+</dd>
+<dt>Description</dt>
+<dd>
+<p>The <code>strupper</code> function will apply the <code>toupper</code>
+function to each character of a string. The function will always return <code>s</code>.</p>
+</dd>
+<dt>Notes</dt>
+<dd>
+<ul>
+<li>
+<p>The function is only available as fastcall function, so it may only
+be used in presence of a prototype.</p>
+</li>
+<li>
+<p>An alias name for this function is <code>strupr</code>.</p>
+</li>
+</ul>
+</dd>
+<dt>Availability</dt>
+<dd>
+<p>cc65</p>
+</dd>
+<dt>See also</dt>
+<dd>
+<p><a href="#strlower">strlower</a>
+<a href="#toupper">toupper</a></p>
+</dd>
+<dt>Example</dt>
+<dd>
+<p>None.</p>
+</dd>
+</dl>
+</blockquote>
+<h3 id="strupr">3.154. strupr</h3>
+<blockquote>
+<p>See <code>strupper</code>.</p>
+</blockquote>
+<h3 id="strxfrm">3.155. strxfrm</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7546,58 +7804,7 @@ just copy s2 to s1 using <code><a href="#strncpy">strncpy</a></code>.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="strupper">3.149. strupper</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Make a string upper case.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#string.h">string.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>char* __fastcall__ strupper (char* s);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>The <code>strupper</code> function will apply the <code>toupper</code>
-function to each character of a string. The function will always return <code>s</code>.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>The function is only available as fastcall function, so it may only
-be used in presence of a prototype.</p>
-</li>
-<li>
-<p>An alias name for this function is <code>strupr</code>.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#strlower">strlower</a>
-<a href="#toupper">toupper</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="strupr">3.150. strupr</h3>
-<blockquote>
-<p>See <code>strupper</code>.</p>
-</blockquote>
-<h3 id="suzy_div_result">3.151. suzy_div_result</h3>
+<h3 id="suzy_div_result">3.156. suzy_div_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7647,7 +7854,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_div_start">3.152. suzy_div_start</h3>
+<h3 id="suzy_div_start">3.157. suzy_div_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7696,7 +7903,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_math_busy">3.153. suzy_math_busy</h3>
+<h3 id="suzy_math_busy">3.158. suzy_math_busy</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7738,7 +7945,7 @@ routines also poll defensively, so reading too early is always safe.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_mod_result">3.154. suzy_mod_result</h3>
+<h3 id="suzy_mod_result">3.159. suzy_mod_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7785,7 +7992,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_mod_start">3.155. suzy_mod_start</h3>
+<h3 id="suzy_mod_start">3.160. suzy_mod_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7833,7 +8040,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_mul_result">3.156. suzy_mul_result</h3>
+<h3 id="suzy_mul_result">3.161. suzy_mul_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7866,7 +8073,7 @@ the signed and unsigned multiply harvests are the same routine.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_mul_start">3.157. suzy_mul_start</h3>
+<h3 id="suzy_mul_start">3.162. suzy_mul_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7908,7 +8115,7 @@ provided for symmetry with the divide.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_muldiv_result">3.158. suzy_muldiv_result</h3>
+<h3 id="suzy_muldiv_result">3.163. suzy_muldiv_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -7955,7 +8162,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_muldiv_start">3.159. suzy_muldiv_start</h3>
+<h3 id="suzy_muldiv_start">3.164. suzy_muldiv_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8004,7 +8211,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_udiv_result">3.160. suzy_udiv_result</h3>
+<h3 id="suzy_udiv_result">3.165. suzy_udiv_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8055,7 +8262,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_udiv_start">3.161. suzy_udiv_start</h3>
+<h3 id="suzy_udiv_start">3.166. suzy_udiv_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8105,7 +8312,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_umod_result">3.162. suzy_umod_result</h3>
+<h3 id="suzy_umod_result">3.167. suzy_umod_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8152,7 +8359,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_umod_start">3.163. suzy_umod_start</h3>
+<h3 id="suzy_umod_start">3.168. suzy_umod_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8200,7 +8407,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_umul_result">3.164. suzy_umul_result</h3>
+<h3 id="suzy_umul_result">3.169. suzy_umul_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8243,7 +8450,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_umul_start">3.165. suzy_umul_start</h3>
+<h3 id="suzy_umul_start">3.170. suzy_umul_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8291,7 +8498,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_umuldiv_result">3.166. suzy_umuldiv_result</h3>
+<h3 id="suzy_umuldiv_result">3.171. suzy_umuldiv_result</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8338,7 +8545,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="suzy_umuldiv_start">3.167. suzy_umuldiv_start</h3>
+<h3 id="suzy_umuldiv_start">3.172. suzy_umuldiv_start</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8387,7 +8594,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="tolower">3.168. tolower</h3>
+<h3 id="tolower">3.173. tolower</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8432,7 +8639,7 @@ only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="toupper">3.169. toupper</h3>
+<h3 id="toupper">3.174. toupper</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8477,7 +8684,7 @@ only be used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="ultoa">3.170. ultoa</h3>
+<h3 id="ultoa">3.175. ultoa</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8530,7 +8737,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="utoa">3.171. utoa</h3>
+<h3 id="utoa">3.176. utoa</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8583,7 +8790,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="vsnprintf">3.172. vsnprintf</h3>
+<h3 id="vsnprintf">3.177. vsnprintf</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8629,7 +8836,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="vsprintf">3.173. vsprintf</h3>
+<h3 id="vsprintf">3.178. vsprintf</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8678,7 +8885,7 @@ used in presence of a prototype.</p>
 </dd>
 </dl>
 </blockquote>
-<h3 id="vsscanf">3.174. vsscanf</h3>
+<h3 id="vsscanf">3.179. vsscanf</h3>
 <blockquote>
 <dl>
 <dt>Function</dt>
@@ -8717,213 +8924,6 @@ used in presence of a prototype.</p>
 <p><a href="#sprintf">sprintf</a>,
 <a href="#sscanf">sscanf</a>,
 <a href="#vsnprintf">vsnprintf</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="mikey_snd_integrate">3.175. mikey_snd_integrate</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Set or clear a Mikey channel's integrate (waveform-shape) bit.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void __fastcall__ mikey_snd_integrate (unsigned char chan, unsigned char val);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Writes the integrate bit (CONTROL bit&nbsp;5) of channel <code>chan</code> (0&ndash;3): <code>val</code>&nbsp;0 selects the square wave, non-zero the integrated (smoother) wave. A direct register helper, independent of the stream engine; the other control bits are preserved.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#mikey_snd_volume">mikey_snd_volume</a>,
-<a href="#snd_play">snd_play</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="mikey_snd_octave">3.176. mikey_snd_octave</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Set a Mikey channel's clock-divider (octave) band.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void __fastcall__ mikey_snd_octave (unsigned char chan, unsigned char val);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Writes the clock-divider bits (CONTROL bits&nbsp;0&ndash;2) of channel <code>chan</code> (0&ndash;3) to <code>val</code> (0&ndash;6), selecting the octave band, <strong>and</strong> sets the timer-enable bits (<code>$18</code> = reload + count) so the channel's poly counter is actually clocked. A direct register helper; integrate (bit&nbsp;5) and the 9th tap (bit&nbsp;7) are preserved. The channel still needs a non-zero feedback tap (<a href="#mikey_snd_taps"><code>mikey_snd_taps</code></a>) to oscillate; with no taps it emits only a DC level, i.e. silence.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#mikey_snd_pitch">mikey_snd_pitch</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="mikey_snd_pitch">3.177. mikey_snd_pitch</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Set a Mikey channel's timer reload (pitch within the octave).</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void __fastcall__ mikey_snd_pitch (unsigned char chan, unsigned char val);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Writes the BACKUP (timer reload) register of channel <code>chan</code> (0&ndash;3) to <code>val</code> (0&ndash;255). Together with <code><a href="#mikey_snd_octave">mikey_snd_octave</a></code> this fixes the channel's frequency. A direct register helper.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#mikey_snd_octave">mikey_snd_octave</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="mikey_snd_taps">3.178. mikey_snd_taps</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Select a Mikey channel's LFSR feedback taps (timbre / noise colour).</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void __fastcall__ mikey_snd_taps (unsigned char chan, unsigned int val);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Programs the 9-bit feedback-tap selection of channel <code>chan</code> (0&ndash;3): the low 8 taps go to the FEEDBACK register and the 9th tap to CONTROL bit&nbsp;7. <code>val</code> ranges 0&ndash;511; small tap sets give pure tones, wider sets give buzzy or noisy timbres. A direct register helper.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#mikey_snd_integrate">mikey_snd_integrate</a></p>
-</dd>
-<dt>Example</dt>
-<dd>
-<p>None.</p>
-</dd>
-</dl>
-</blockquote>
-<h3 id="mikey_snd_volume">3.179. mikey_snd_volume</h3>
-<blockquote>
-<dl>
-<dt>Function</dt>
-<dd>
-<p>Set a Mikey channel's output volume.</p>
-</dd>
-<dt>Header</dt>
-<dd>
-<p><code><a href="#lynx.h">lynx/lynx.h</a></code></p>
-</dd>
-<dt>Declaration</dt>
-<dd>
-<p><code>void __fastcall__ mikey_snd_volume (unsigned char chan, unsigned char val);</code></p>
-</dd>
-<dt>Description</dt>
-<dd>
-<p>Writes the signed VOLUME register of channel <code>chan</code> (0&ndash;3) to <code>val</code> (0&ndash;127). A direct register helper, independent of the stream engine; handy for one-call sound effects or hand-built instruments.</p>
-</dd>
-<dt>Notes</dt>
-<dd>
-<ul>
-<li>
-<p>The function is only available as fastcall function, so it may only be used in presence of a prototype.</p>
-</li>
-</ul>
-</dd>
-<dt>Availability</dt>
-<dd>
-<p>cc65 (Atari Lynx only)</p>
-</dd>
-<dt>See also</dt>
-<dd>
-<p><a href="#mikey_snd_pitch">mikey_snd_pitch</a>,
-<a href="#mikey_snd_octave">mikey_snd_octave</a></p>
 </dd>
 <dt>Example</dt>
 <dd>

@@ -24,6 +24,7 @@ See doc/licenses.html.
 <li class="lvl1"><a href="#sect-4">4. Checklist of concrete edits</a></li>
 <li class="lvl1"><a href="#sect-5">5. Compatibility deliberately preserved</a></li>
 <li class="lvl1"><a href="#sect-tgi-deprecation">6. TGI Deprecation</a></li>
+<li class="lvl1"><a href="#sect-eeprom-rename">7. EEPROM API rename</a></li>
 </ul></nav>
 <h2 id="sect-1">1. Overview</h2>
 <p><strong>lynxcc</strong> is not a drop-in upstream cc65: it is the <strong>Lynx Game Development
@@ -101,7 +102,7 @@ into an actionable list.</p>
 <li><strong>Remove the TGI driver-install calls.</strong> Delete every <code>tgi_install(…)</code> call, including the <code>tgi_static_stddrv</code> reference it took as its argument. Lynx graphics has no driver to install — call <code>gfx_init</code> instead.</li>
 <li><strong>Change <code>time_t</code> variables to <code>clock_t</code>.</strong> The Lynx has no wall-clock/calendar time; <code>time.h</code> provides only <code>clock()</code> and <code>sleep()</code>, and the calendar types (<code>time_t</code>, <code>struct tm</code>, …) are gone.</li>
 <li><strong>Replace <code>open()</code> with <code>openn()</code>.</strong> Lynx cart files are numbered, not named, so there is no <code>open()</code>/<code>fopen()</code>. Open a file by index with <code>openn(fileno)</code>, then <code>read()</code>/<code>lseek()</code> on it.</li>
-<li><strong>Use the chip-specific EEPROM functions.</strong> Replace the generic <code>lynx_eeread</code>/<code>lynx_eewrite</code> with the variant matching your cart's serial EEPROM: <code>lynx_eeread_93c46</code>/<code>_93c66</code>/<code>_93c86</code> and the corresponding <code>lynx_eewrite_93c46</code>/<code>_93c66</code>/<code>_93c86</code>.</li>
+<li><strong>Use the chip-specific EEPROM functions.</strong> Replace the generic <code>lynx_eeread</code>/<code>lynx_eewrite</code> with the variant matching your cart's serial EEPROM: <code>eeprom_93c46_read</code>/<code>eeprom_93c66_read</code>/<code>eeprom_93c86_read</code> and the corresponding <code>eeprom_93c46_write</code>/<code>eeprom_93c66_write</code>/<code>eeprom_93c86_write</code>. The former <code>lynx_ee*</code> names still work as deprecated aliases &mdash; see <a href="#sect-eeprom-rename">section&nbsp;7</a>.</li>
 <li><strong>Don't use <code>assert()</code>.</strong> <code>assert.h</code> has been removed; delete <code>assert()</code> calls and any code that relied on them.</li>
 <li><strong>Build with the separate tools, not <code>cl65</code>.</strong> Move from the one-shot <code>cl65</code> driver to invoking <code>cc65</code>, <code>ca65</code> and <code>ld65</code> as discrete steps; see <a href="using-make.html">Using make</a> for a worked build.</li>
 <li><strong>Drop the <code>-t lynx</code> option from every tool.</strong> The target is hard-wired to the Lynx, so the <code>-t</code>/<code>--target</code> selector no longer exists.</li>
@@ -196,6 +197,39 @@ new name with unchanged semantics, arguments and return values.</p>
 <p>Header: include <code>&lt;lynx/gfx.h&gt;</code> instead of
 <code>&lt;lynx/tgi.h&gt;</code> (or just <code>&lt;lynx.h&gt;</code>, which now pulls
 in <code>gfx.h</code>).</p>
+<h2 id="sect-eeprom-rename">7. EEPROM API rename</h2>
+<p>The serial-EEPROM read/write calls were historically named with a
+<code>lynx_ee</code> prefix that fused the platform tag and an abbreviated
+subsystem tag, and put the operation before the chip model
+(<code>lynx_eeread_93c46</code>). They now use a plain <code>eeprom_</code> prefix
+with the chip model before the operation (<code>eeprom_93c46_read</code>), so the
+family reads and sorts by chip: all <code>eeprom_93c46_*</code> calls together,
+then <code>eeprom_93c66_*</code>, then <code>eeprom_93c86_*</code>. This matches the
+spelled-out, platform-prefix-free naming used by every other subsystem
+(<code>gfx_</code>, <code>joy_</code>, <code>ser_</code>, <code>snd_</code>).</p>
+<p>The old names are <strong>deprecated but still work.</strong> Including
+<code>&lt;lynx/lynx.h&gt;</code> (or <code>&lt;lynx.h&gt;</code>) gives you the
+canonical <code>eeprom_</code> names and additionally defines one
+<code>lynx_ee*</code> alias per function; these are pure preprocessor macros that
+expand to the <code>eeprom_</code> names, so they add no code or data and do not
+defeat <code>ld65</code> smart linking. The aliases will be removed in a future
+release.</p>
+<p>To prove a project is already clean, define
+<code>LYNX_NO_EEPROM_COMPAT</code> before including the header: the compatibility
+aliases are then suppressed and any lingering <code>lynx_ee*</code> use becomes a
+compile error. Once your sources build with that switch, you are ready for the
+eventual removal of the aliases.</p>
+<p>The full old&rarr;new equivalence is below; every old name maps to exactly one
+new name with unchanged semantics, arguments and return values.</p>
+<table class="grid">
+<tr><th>Deprecated (<code>lynx_ee*</code>)</th><th>Replacement (<code>eeprom_&lt;chip&gt;_&lt;op&gt;</code>)</th></tr>
+<tr><td><code>lynx_eeread_93c46</code></td><td><code>eeprom_93c46_read</code></td></tr>
+<tr><td><code>lynx_eeread_93c66</code></td><td><code>eeprom_93c66_read</code></td></tr>
+<tr><td><code>lynx_eeread_93c86</code></td><td><code>eeprom_93c86_read</code></td></tr>
+<tr><td><code>lynx_eewrite_93c46</code></td><td><code>eeprom_93c46_write</code></td></tr>
+<tr><td><code>lynx_eewrite_93c66</code></td><td><code>eeprom_93c66_write</code></td></tr>
+<tr><td><code>lynx_eewrite_93c86</code></td><td><code>eeprom_93c86_write</code></td></tr>
+</table>
 </article></main><footer class="site-foot"><strong>lynxcc</strong> documentation &mdash; a complete Atari Lynx Game Development SDK.</footer>
 <script src="doc.js"></script>
 </body></html>

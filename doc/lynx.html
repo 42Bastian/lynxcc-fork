@@ -583,9 +583,9 @@ of POSIX or ISO&nbsp;C.</li>
 <dd>
 <p>The size-selectable read/write family &mdash; pick the variant matching the
 chip fitted to the cart (93C46 = 64 words, 93C66 = 256, 93C86 = 1024):
-<a href="funcref.html#lynx_eeread_93c46">lynx_eeread_93c46</a>&thinsp;/&thinsp;<a href="funcref.html#lynx_eeread_93c66">_93c66</a>&thinsp;/&thinsp;<a href="funcref.html#lynx_eeread_93c86">_93c86</a>
+<a href="funcref.html#eeprom_93c46_read">eeprom_93c46_read</a>&thinsp;/&thinsp;<a href="funcref.html#eeprom_93c66_read">eeprom_93c66_read</a>&thinsp;/&thinsp;<a href="funcref.html#eeprom_93c86_read">eeprom_93c86_read</a>
 and
-<a href="funcref.html#lynx_eewrite_93c46">lynx_eewrite_93c46</a>&thinsp;/&thinsp;<a href="funcref.html#lynx_eewrite_93c66">_93c66</a>&thinsp;/&thinsp;<a href="funcref.html#lynx_eewrite_93c86">_93c86</a>.</p>
+<a href="funcref.html#eeprom_93c46_write">eeprom_93c46_write</a>&thinsp;/&thinsp;<a href="funcref.html#eeprom_93c66_write">eeprom_93c66_write</a>&thinsp;/&thinsp;<a href="funcref.html#eeprom_93c86_write">eeprom_93c86_write</a>.</p>
 </dd>
 <dt>Sound</dt>
 <dd>
@@ -813,15 +813,17 @@ high scores, options &mdash; is kept in the serial EEPROM chip fitted to the
 cart. Access is a static library of word-wide read/write calls; each EEPROM
 &ldquo;cell&rdquo; holds one 16-bit word. The calls come as a size-selectable
 family &mdash; pick the variant matching the chip on the cart:
-<code>lynx_eeread_93c46</code>&thinsp;/&thinsp;<code>lynx_eewrite_93c46</code> for
+<code>eeprom_93c46_read</code>&thinsp;/&thinsp;<code>eeprom_93c46_write</code> for
 the 93C46 (64 words, cell 0&ndash;63),
-<code>_93c66</code> for the 93C66 (256 words, 0&ndash;255) and
-<code>_93c86</code> for the 93C86 (1024 words, 0&ndash;1023). A read returns the
+<code>eeprom_93c66_*</code> for the 93C66 (256 words, 0&ndash;255) and
+<code>eeprom_93c86_*</code> for the 93C86 (1024 words, 0&ndash;1023). A read returns the
 word at the given cell; a write stores a word there. There is no separate erase
 call &mdash; to clear a word, just write the value you want. All six are
 <code>__fastcall__</code> functions declared in <code>lynx/lynx.h</code> and so need a
 prototype in scope; see the
-<a href="funcref.html#lynx_eeread_93c46">function reference</a>.</p>
+<a href="funcref.html#eeprom_93c46_read">function reference</a>. The former
+<code>lynx_ee*</code> names remain as deprecated aliases (define
+<code>LYNX_NO_EEPROM_COMPAT</code> to disable them); see the migration guide.</p>
 <h3 id="sect-8-6">8.6. Reading data from the cart</h3>
 <p>The cart is read-only ROM whose files are addressed by <em>number</em> rather
 than by name, and reading them is again a static library &mdash; no driver to
@@ -962,8 +964,8 @@ entry.</dd>
 <p><strong>Saving data.</strong> Since the cart itself cannot be written,
 persistent state (high scores, options) is kept in the cart's serial EEPROM. See
 the size-selectable
-<code>lynx_eeread_93c46</code>/<code>_93c66</code>/<code>_93c86</code> and
-<code>lynx_eewrite_*</code> family in <code>&lt;lynx/lynx.h&gt;</code>.</p>
+<code>eeprom_93c46_read</code>/<code>_93c66_read</code>/<code>_93c86_read</code> and
+<code>eeprom_93cNN_write</code> family in <code>&lt;lynx/lynx.h&gt;</code>.</p>
 <p><strong>Bank&nbsp;0 only.</strong> The block reader drives the cart through the
 <code>CART0</code> read strobe, so only bank&nbsp;0 is accessible. The
 <code>EXEHDR</code> header still records a <code>__BANK1BLOCKSIZE__</code> and the

@@ -12,8 +12,8 @@
 ; convenience calls built on top of it.
 ;
 ; The cart is ROM, so access is read-only; there is no write()/O_CREAT path.
-; Persistent game data lives in the EEPROM instead (see the lynx_eeread_93cNN /
-; lynx_eewrite_93cNN family in <lynx.h>). Only bank 0 (the CART0 read strobe)
+; Persistent game data lives in the EEPROM instead (see the eeprom_93cNN_read /
+; eeprom_93cNN_write family in <lynx.h>). Only bank 0 (the CART0 read strobe)
 ; is supported.
 ;
 ; void __fastcall__ openn (int fileno);

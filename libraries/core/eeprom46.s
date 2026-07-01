@@ -25,8 +25,8 @@
 ;               +---| DI     |- NC
 ;(32) AUDIN ----+---| DO     |- GND
 ;                   ----------
-        .export         _lynx_eeread_93c46
-        .export         _lynx_eewrite_93c46
+        .export         _eeprom_93c46_read
+        .export         _eeprom_93c46_write
         .import         popax
         .importzp       ptr1
 
@@ -41,10 +41,10 @@ EE_C_EWEN       =    $30
 EE_C_EWDS       =    $00
 
 ; ------------------------------------------------------------------------
-; unsigned __fastcall__ lynx_eeread_93c46(unsigned char cell);
+; unsigned __fastcall__ eeprom_93c46_read(unsigned char cell);
 ; /* Read a 16 bit word from the given address */
 ;
-_lynx_eeread_93c46:
+_eeprom_93c46_read:
         and #$3f
         ora #EE_C_READ
         jsr EE_Send9Bit
@@ -92,8 +92,8 @@ EEloop1:
 
 ;***************
 ; write word to EEPROM
-; void __fastcall__ lynx_eewrite_93c46(unsigned int addr, unsigned int val);
-_lynx_eewrite_93c46:
+; void __fastcall__ eeprom_93c46_write(unsigned int addr, unsigned int val);
+_eeprom_93c46_write:
         sta ptr1
         stx ptr1+1
         lda #EE_C_EWEN

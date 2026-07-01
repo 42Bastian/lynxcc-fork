@@ -27,8 +27,8 @@
 ;(32) AUDIN ----+---| DO     |- GND
 ;                   ----------
 
-        .export         _lynx_eeread_93c66
-        .export         _lynx_eewrite_93c66
+        .export         _eeprom_93c66_read
+        .export         _eeprom_93c66_write
         .import         popax
         .importzp       ptr1
 
@@ -46,8 +46,8 @@ EE_C_EWDS2      =    $00
 
 ;**************
 ; Only lower byte in A is used for address
-; unsigned int __fastcall__ lynx_eeread_93c66(unsigned int addr);
-_lynx_eeread_93c66:
+; unsigned int __fastcall__ eeprom_93c66_read(unsigned int addr);
+_eeprom_93c66_read:
         ldx #EE_C_READ
         jsr EE_Send11Bit
         jsr EE_Read16Bit
@@ -94,8 +94,8 @@ EEloop1:
 
 ;***************
 ; write word to EEPROM
-; void __fastcall__ lynx_eewrite_93c66(unsigned int addr, unsigned int val);
-_lynx_eewrite_93c66:
+; void __fastcall__ eeprom_93c66_write(unsigned int addr, unsigned int val);
+_eeprom_93c66_write:
         sta ptr1
         stx ptr1+1
         ldx #EE_C_EWEN
