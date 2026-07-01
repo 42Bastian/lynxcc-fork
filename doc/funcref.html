@@ -5062,7 +5062,8 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Description</dt>
 <dd>
-<p>Starts playing the compiled event <code>stream</code> on <code>channel</code> (0&ndash;3); if that channel is busy a free one is chosen. The stream is produced offline by the <code>abccc</code> tune compiler (see <a href="sound.html">the Sound page</a>). Playback then proceeds automatically under the sound-timer interrupt.</p>
+<p>Starts playing the compiled event <code>stream</code> on <code>channel</code> (0&ndash;3). If that channel is already sounding, it is retriggered in place: the old stream is force-stopped (see <a href="#snd_stop">snd_stop</a> for the fade-out this involves) and the new one starts on the same channel. The stream is produced offline by the <code>abccc</code> tune compiler (see <a href="sound.html">the Sound page</a>). Playback then proceeds automatically under the sound-timer interrupt.</p>
+<p>The <a href="sound.html#sfx">reusable sound-effect library</a> (<code>&lt;lynx/sfx.h&gt;</code>) is a pack of ready-made streams played this way: <code>sfx_&lt;name&gt;(ch)</code> expands to <code>snd_play(ch, sfx_&lt;name&gt;_data)</code>. The 56 effects (<code>sfx_coin</code>, <code>sfx_laser</code>, <code>sfx_explosion_small</code>, <code>sfx_alarm</code>, &hellip;) are catalogued on the Sound page; author your own with the <code>SFX_*</code> ca65 macros in <code>asminc/lynx/sfx.inc</code>.</p>
 </dd>
 <dt>Notes</dt>
 <dd>
@@ -5104,7 +5105,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Description</dt>
 <dd>
-<p>Silences every channel immediately.</p>
+<p>Silences every channel. Each channel's volume is faded out over a few sound-timer ticks (at most ~17&nbsp;ms at the default 240&nbsp;Hz rate) rather than cut instantly, to avoid an audible click; <a href="#snd_active">snd_active</a> reports a channel busy until its fade finishes. See <a href="sound.html#sfx">the Sound page &sect;6.5</a>.</p>
 </dd>
 <dt>Notes</dt>
 <dd>
@@ -5143,7 +5144,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Description</dt>
 <dd>
-<p>Silences the given <code>channel</code> (0&ndash;3), leaving the others playing.</p>
+<p>Silences the given <code>channel</code> (0&ndash;3), leaving the others playing. Fades the volume out over a few ticks rather than cutting it instantly &mdash; same as <a href="#snd_stop">snd_stop</a>.</p>
 </dd>
 <dt>Notes</dt>
 <dd>

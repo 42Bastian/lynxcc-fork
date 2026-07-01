@@ -364,28 +364,28 @@ static unsigned char tune_t;
 
 static void play_tune (const unsigned char* t) { tune = t; tune_t = 0; }
 
-static void sfx_jump (void)
+static void sy_sfx_jump (void)
 {
     jmp_p = 130;
     jmp_t = 9;
     snd_voice (&MIKEY.channel_a, 0x32, FB_TONE, 3, jmp_p);
 }
 
-static void sfx_coin (void)
+static void sy_sfx_coin (void)
 {
     blip_v = 0x40;
     blip_t = 6;
     snd_voice (&MIKEY.channel_b, blip_v, FB_TONE, 2, 70);
 }
 
-static void sfx_stomp (void)
+static void sy_sfx_stomp (void)
 {
     blip_v = 0x50;
     blip_t = 7;
     snd_voice (&MIKEY.channel_b, blip_v, FB_NOISE, 3, 0x24);
 }
 
-static void sfx_hurt (void)
+static void sy_sfx_hurt (void)
 {
     hurt_p = 70;
     hurt_t = 26;
@@ -393,7 +393,7 @@ static void sfx_hurt (void)
 }
 
 /* Advance every sound envelope one frame. */
-static void sfx_update (void)
+static void sy_sfx_update (void)
 {
     if (jmp_t) {
         if (jmp_p > 10) jmp_p -= 10;        /* pitch slides up */
@@ -580,7 +580,7 @@ static unsigned char overlap (int ax, int ay, int aw, int ah,
 
 static void hurt (void)
 {
-    sfx_hurt ();
+    sy_sfx_hurt ();
     if (--lives == 0) {
         state = ST_OVER;
         play_tune (tune_over);
@@ -601,7 +601,7 @@ static void update_play (void)
     if (px > SCREEN_W - SYB_HW) px = SCREEN_W - SYB_HW;
 
     /* Jump / gravity */
-    if (on_ground && (pressed & JOY_BTN_1_MASK)) { vy = JUMP; sfx_jump (); }
+    if (on_ground && (pressed & JOY_BTN_1_MASK)) { vy = JUMP; sy_sfx_jump (); }
     vy += GRAV;
     if (vy > VMAX) vy = VMAX;
     py += vy;
@@ -628,7 +628,7 @@ static void update_play (void)
                 en_alive[i] = 0;
                 score += 3 !* 50;                       /* 150, via Suzy */
                 vy = BOUNCE;
-                sfx_stomp ();
+                sy_sfx_stomp ();
                 --en_left;
             } else if (!invuln) {
                 hurt ();
@@ -644,7 +644,7 @@ static void update_play (void)
                      coin_sx[i], coin_sy[i], COIN_W, COIN_H)) {
             coin_on[i] = 0;
             score += 50;
-            sfx_coin ();
+            sy_sfx_coin ();
             if (--coins_left == 0) {
                 score += 500;
                 state = ST_CLEAR;
@@ -785,7 +785,7 @@ void main (void)
         /* Coin gold shimmers between two tones. */
         pal_set (PEN_COIN, (shine & 16) ? 0xFE0 : 0xDF0);
 
-        sfx_update ();
+        sy_sfx_update ();
         gfx_setpalette (pal);
         draw ();
     }

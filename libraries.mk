@@ -58,7 +58,7 @@ export CC65_HOME := $(abspath .)
 
 CORE_DIRS     = runtime/rt runtime/lynx libraries/core libraries/libc
 GRAPHICS_DIRS = libraries/graphics
-AUDIO_DIRS    = libraries/audio
+AUDIO_DIRS    = libraries/audio libraries/audio/sfx
 MATH_DIRS     = libraries/math
 COMPRESS_DIRS = libraries/compress
 

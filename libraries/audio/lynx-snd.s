@@ -327,7 +327,7 @@ SndCmdsHi:
 
 SndGetCmd:
         lda SndReqStop,x
-        bne SndStop
+        bne SndFadeStop
 
         lda SndRetAFlag2
         and SndMask,x
@@ -398,6 +398,34 @@ SndCallCmd:
         pha
         lda SndCmdsLo,y
         pha
+        ldy #1
+        rts
+
+;----------------------------------------------------------------------------
+; Forced-stop volume fade.  A forced stop (snd_stop / snd_stop_channel, or
+; snd_play retriggering a channel that is still sounding) used to slam the
+; channel's shadow volume straight to 0 on the very next tick -- an instant,
+; audible click, most noticeable retriggering a short soft one-shot (e.g.
+; sfx_water_drop) faster than its own natural decay.  Instead, ramp the
+; current shadow volume down by FADE_STEP per tick until it underflows, then
+; finish with the normal SndStop.  SndReqStop,x stays set the whole time, so
+; SndGetCmd keeps routing back here every tick until the fade completes; the
+; caller's busy-wait (SndActive,x) just spins a few ticks longer.  Worst case
+; (from max volume 127) is 4 ticks (~17ms @ 240Hz) -- inaudible as added
+; latency, but removes the discontinuity.
+;
+
+FADE_STEP = 32
+
+SndFadeStop:
+        ldy SndOffsets,x
+        lda SndChannel,y
+        sec
+        sbc #FADE_STEP
+        bcc SndStop             ; already near-silent -> finish now
+        sta SndChannel,y
+        lda #1
+        sta SndChannel+2,y      ; flag: push the lower volume, no full reprogram
         ldy #1
         rts
 
@@ -937,6 +965,17 @@ vol1v:                 lda (SndEnvPtr),y
                 rts
 
 
+; Fixed: every path here that stores a new reload value into SndChannel+4,y
+; must also OR the dirty bit into SndChannel+2,y (read-modify-write, matching
+; SndChangeVol above), or SndSetValues never pushes it to $fd24,y.  The two
+; store sites below used to fall straight into a bare "ora #1" with no
+; preceding load / following store, so the new reload only reached hardware
+; when something else (typically SndChangeVol, same tick) happened to flag an
+; update anyway.  For an effect with an active volume envelope that mostly
+; masks it, but whenever the volume envelope isn't also dirty that tick the
+; frequency update is silently dropped -- audible as an uneven/skippy sweep on
+; fast short SFX_SWEEPs (e.g. sfx_water_drop, sfx_bubble: rate 8-10 over only
+; 10-14 ticks, so every tick's update matters).
 SndChangeFrq:
                 tay
                 _IFMI
@@ -1010,6 +1049,9 @@ frq1f:                 lda (SndEnvPtr),y
                       _IFEQ
                         pla
                         sta SndChannel+4,y
+                        lda SndChannel+2,y
+                        ora #1 ;; if already -1 (full reprogram) -> no effect
+                        sta SndChannel+2,y
                         rts
                       _ENDIF
                       pla
@@ -1049,7 +1091,9 @@ frq1f:                 lda (SndEnvPtr),y
                   _ENDIF
                   sta SndChannel+4,y
 
-                  ora #1 ;; if already -1 -> no effect
+                  lda SndChannel+2,y
+                  ora #1 ;; if already -1 (full reprogram) -> no effect
+                  sta SndChannel+2,y
                 rts
 
 SndChangeWave:
@@ -1134,6 +1178,25 @@ set0:                ldy SndOffsets,x
                       sta $fd27,y
                       lda SndChannel+1,y
                       sta $fd21,y                 ; feedback
+
+                      ; Integrate mode ($fd25 bit5): reset the DAC output
+                      ; accumulator ($fd22) so a fresh note starts from
+                      ; silence.  SndSetValues never otherwise touches $fd22
+                      ; (SndChannel+2 is reused as the dirty flag), so in
+                      ; integrate mode a previous note can leave the output
+                      ; railed near +/-full scale; a *short* new note then
+                      ; can't swing far enough to be audible (a long note walks
+                      ; it back over time).  This is why short integrate
+                      ; one-shots (sfx_water_drop, sfx_bubble) fell silent when
+                      ; replayed while longer integrate effects (power_down,
+                      ; teleport) did not.  Square (non-integrate) channels
+                      ; reload $fd22 from hardware every tick, so skip them.
+                      lda SndInteg,x
+                      and #$20                    ; bit5 = integrate
+                      _IFNE
+                        lda #0
+                        sta $fd22,y               ; clear DAC accumulator
+                      _ENDIF
                     _ENDIF
 
                     lda SndChannel,y

@@ -50,7 +50,7 @@ endif
 ROOT_EXAMPLES = lynxdemo
 GAMES         = breakout invaders raycaster sybil
 SUZY          = muldivtest spritetest spritesheet spriteslice suzyasync suzyasyncbench suzybench packtest fonttest fontvar textdir
-MIKEY         = setbpp sndtune
+MIKEY         = setbpp sndtune sfxtest sfxdemo
 MEMORY        = heaptest zeropage
 NETWORK       = comlynx
 
@@ -144,6 +144,13 @@ suzy/spriteslice.o: suzy/spriteslice.c $(SHEET_FRAMES)
 mikey/sndtune.lnx: mikey/sndtune.o mikey/theme.o
 	$(CL) $(LDFLAGS) -o $@ -m $(@:.lnx=.map) $^
 
+# sfxtest links the hand-authored rsound effect streams in mikey/sfx.s.  sfxdemo
+# needs no extra object: it plays the reusable sfx pack, whose per-effect members
+# ld65 pulls out of lib/lynx-audio.lib automatically (see doc/sound.html sec. 6).
+
+mikey/sfxtest.lnx: mikey/sfxtest.o mikey/sfx.o
+	$(CL) $(LDFLAGS) -o $@ -m $(@:.lnx=.map) $^
+
 # --------------------------------------------------------------------------
 
 examples: $(EXELIST)
@@ -174,7 +181,7 @@ install:
 	$(INSTALL) -m0644 suzy/sheet.pcx suzy/sheet.pcx.py $(DESTDIR)$(examplesdir)/suzy
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/mikey
 	$(INSTALL) -m0644 $(addprefix mikey/,$(addsuffix .c,$(MIKEY))) $(DESTDIR)$(examplesdir)/mikey
-	$(INSTALL) -m0644 mikey/theme.abc mikey/theme.s $(DESTDIR)$(examplesdir)/mikey
+	$(INSTALL) -m0644 mikey/theme.abc mikey/theme.s mikey/sfx.s $(DESTDIR)$(examplesdir)/mikey
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/memory
 	$(INSTALL) -m0644 $(addprefix memory/,$(addsuffix .c,$(MEMORY))) $(DESTDIR)$(examplesdir)/memory
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/network
@@ -190,7 +197,7 @@ zip:
 # Clean-up rules
 
 mostlyclean:
-	@$(DEL) $(EXELIST:.lnx=.map) $(EXELIST:.lnx=.o) $(EXELIST:.lnx=.s) $(SPRITETEST_HDRS) suzy/sheet_anim.h $(SHEET_FRAMES) mikey/theme.o 2>$(NULLDEV)
+	@$(DEL) $(EXELIST:.lnx=.map) $(EXELIST:.lnx=.o) $(EXELIST:.lnx=.s) $(SPRITETEST_HDRS) suzy/sheet_anim.h $(SHEET_FRAMES) mikey/theme.o mikey/sfx.o 2>$(NULLDEV)
 
 clean: mostlyclean
 	@$(DEL) $(EXELIST) 2>$(NULLDEV)

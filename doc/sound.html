@@ -28,7 +28,8 @@ teaches how to compose tunes. The authoritative reference is
 <li><a href="#composing">3. Composing with abccc</a></li>
 <li><a href="#examples">4. Worked examples</a></li>
 <li><a href="#audition">5. Auditioning with abcrom</a></li>
-<li><a href="#reference">6. Reference</a></li>
+<li><a href="#sfx">6. Sound effects (sfx)</a></li>
+<li><a href="#reference">7. Reference</a></li>
 </ul></nav>
 
 <h2 id="overview">1. Overview</h2>
@@ -94,12 +95,17 @@ register directly.</p>
 timer (<code>STIMCTLA</code>/<code>STIMBKUP</code>, ~240&nbsp;Hz by default) and
 installs the sound-interrupt handler, which is finer than a 60&nbsp;Hz vertical
 blank and gives smoother envelopes. Then hand a compiled stream to a channel with
-<code>snd_play(channel,&nbsp;stream)</code>; if that channel is busy a free one is
-chosen. Playback advances on its own from then on &mdash; your program is free
-between calls. <code>snd_pause()</code>/<code>snd_continue()</code> suspend and
-resume every channel, <code>snd_stop()</code> and
+<code>snd_play(channel,&nbsp;stream)</code>; if that channel is already sounding it
+is retriggered in place &mdash; the old stream is force-stopped and the new one
+starts on the same channel. Playback advances on its own from then on &mdash; your
+program is free between calls. <code>snd_pause()</code>/<code>snd_continue()</code>
+suspend and resume every channel, <code>snd_stop()</code> and
 <code>snd_stop_channel()</code> silence all or one, and <code>snd_active()</code>
-returns a bitmask of the channels still playing.</p>
+returns a bitmask of the channels still playing. Any of these three stops &mdash;
+an explicit <code>snd_stop*()</code> call or a <code>snd_play()</code> retrigger
+&mdash; fades the channel's volume out over a few ticks (~17&nbsp;ms at 240&nbsp;Hz)
+instead of cutting it instantly, so repeatedly firing a short effect doesn't click;
+see &sect;6.5.</p>
 
 <p>The interpreter reads a <em>lead byte</em> each step. With bit&nbsp;7 clear the
 byte is a <strong>note</strong>; with bit&nbsp;7 set it is an <strong>opcode</strong>
@@ -472,7 +478,241 @@ stream format changes, rebuild it once with the toolchain
 (<code>make&nbsp;-C&nbsp;host-tools&nbsp;template</code>). Tunes larger than a
 region's capacity are rejected &mdash; bump the reserved size and rebuild.</p>
 
-<h2 id="reference">6. Reference</h2>
+<h2 id="sfx">6. Sound effects (sfx)</h2>
+<p>The <code>sfx</code> layer is a batteries-included pack of ready-made sound
+effects &mdash; a coin pickup, a laser, an explosion, a menu blip, a looping
+alarm, and around fifty more. Each effect is a small, pre-built compiled event
+stream played through the <code>snd</code> engine above; a game just calls a
+<code>sfx_&lt;name&gt;(ch)</code> macro and the interrupt renders it. It adds no
+new runtime code and no new stream opcodes &mdash; every effect is realised with
+features the engine already has (frequency envelopes for pitch sweeps, volume
+envelopes for decay, the LFSR taps and integrate bit for noise and timbre, and
+multi-note runs for arpeggios). The <code>sfx</code> pack is to sound effects
+what the standard font is to text: drop it in, or drop a layer down and build
+your own when you want something bespoke.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 250" style="width:100%;height:auto;max-width:640px"
+     role="img" aria-label="The three-layer Lynx audio stack: sfx over snd over mikey_snd">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" text-anchor="middle">
+    <!-- sfx layer -->
+    <rect x="60" y="20" width="600" height="56" rx="6"
+          fill="var(--accent)" fill-opacity="0.16" stroke="var(--accent)"/>
+    <text x="360" y="42" font-size="13" fill="var(--ink)"
+          font-family="ui-monospace,Menlo,Consolas,monospace">sfx_*</text>
+    <text x="360" y="61" font-size="10.5" fill="var(--ink-soft)">named one-shot / looping effects &mdash; one linkable stream each</text>
+    <!-- snd layer -->
+    <rect x="60" y="97" width="600" height="56" rx="6"
+          fill="var(--accent)" fill-opacity="0.10" stroke="var(--border)"/>
+    <text x="360" y="119" font-size="13" fill="var(--ink)"
+          font-family="ui-monospace,Menlo,Consolas,monospace">snd_*</text>
+    <text x="360" y="138" font-size="10.5" fill="var(--ink-soft)">compiled-stream player: instruments + looping envelopes, under the sound IRQ</text>
+    <!-- mikey layer -->
+    <rect x="60" y="174" width="600" height="56" rx="6"
+          fill="var(--panel-2)" stroke="var(--border)"/>
+    <text x="360" y="196" font-size="13" fill="var(--ink)"
+          font-family="ui-monospace,Menlo,Consolas,monospace">mikey_snd_*</text>
+    <text x="360" y="215" font-size="10.5" fill="var(--ink-soft)">direct Mikey register pokes &mdash; one write, no timing, fully manual</text>
+    <!-- arrows down the right, showing "built on" -->
+    <g stroke="var(--ink-faint)" stroke-width="1.4" fill="none">
+      <path d="M690 76 L690 97" marker-end="url(#sfxarrow)"/>
+      <path d="M690 153 L690 174" marker-end="url(#sfxarrow)"/>
+    </g>
+    <defs>
+      <marker id="sfxarrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+        <path d="M1 1 L7 4 L1 7 z" fill="var(--ink-faint)"/>
+      </marker>
+    </defs>
+    <text x="705" y="90" font-size="9" fill="var(--ink-faint)"
+          font-family="ui-monospace,Menlo,Consolas,monospace" text-anchor="start"
+          transform="rotate(90 705 90)">plays via snd_play</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">
+  Three layers, highest to lowest. A <code>sfx_*</code> effect is a stream handed
+  to <code>snd_play</code>; power users can drop to <code>snd_*</code> or poke
+  <code>mikey_snd_*</code> directly.</figcaption>
+</figure>
+
+<p>Include <code>&lt;lynx/lynx.h&gt;</code> (which pulls in
+<code>&lt;lynx/sfx.h&gt;</code>) and fire an effect:</p>
+<pre><code>#define SFX_CH 3
+
+snd_init();
+sfx_jump(SFX_CH);              /* fire-and-forget; the IRQ renders it */
+...
+sfx_coin(SFX_CH);              /* replaces whatever was on the channel */</code></pre>
+
+<p>Each effect also exposes its stream symbol
+(<code>sfx_coin_data</code>, &hellip;), so anything that takes a stream pointer
+accepts it directly: <code>snd_play(3, sfx_coin_data)</code> is exactly what the
+macro expands to.</p>
+
+<h3>6.1. Channels, one-shot and looping</h3>
+<p>Effects share Mikey's four channels with music. The convention is to reserve
+one channel for effects &mdash; channel&nbsp;3 by recommendation &mdash; and keep
+music on 0&ndash;2, so an effect ducks only itself. There is no mixer or priority
+engine: <code>snd_play</code> replaces whatever was sounding on the channel, so the
+last effect on a channel wins, which is what most retro games do. The old sound is
+faded out over a few ticks rather than cut instantly (&sect;6.5), so firing the same
+short effect repeatedly sounds like clean retriggers, not a click.</p>
+<p>Most effects are <em>one-shot</em>: their stream ends on its own and the channel
+goes idle. A handful are continuous by nature (<code>sfx_alarm</code>,
+<code>sfx_ambient_hum</code>, <code>sfx_engine</code>, <code>sfx_heartbeat</code>)
+&mdash; these loop and must be stopped explicitly:</p>
+<pre><code>sfx_alarm(3);                 /* starts the looping siren */
+...
+snd_stop_channel(3);          /* silence it */</code></pre>
+<p>A game-pause still uses <code>snd_pause()</code> / <code>snd_continue()</code>,
+which cover the effect channels too.</p>
+
+<h3>6.2. Linkage &mdash; pay only for what you use</h3>
+<p>Each effect is its own object file
+(<code>libraries/audio/sfx/sfx_&lt;name&gt;.s</code>) archived as a separate member
+of <code>lib/lynx-audio.lib</code>. The linker pulls a member in only if its symbol
+is referenced, so calling <code>sfx_coin(3)</code> drags in
+<code>sfx_coin.o</code> and nothing else; unused effects never reach the cart. A
+one-shot stream is ~10&ndash;30 bytes of <code>RODATA</code>, and the audio library
+is already on the <code>cl65</code> auto-libs manifest, so no build-flag change is
+needed.</p>
+
+<h3>6.3. Authoring your own</h3>
+<p>Effects are hand-authored as short ca65 sources using the <code>SFX_*</code>
+macro vocabulary in <code>asminc/lynx/sfx.inc</code>, which hides the raw opcode
+bytes. A whole effect reads declaratively:</p>
+<pre><code>        .include "lynx/sfx.inc"
+
+        SFX_BEGIN coin         ; exports sfx_coin_data
+        SFX_WAVE  SQ           ; square timbre (SQ / TRI / NOISE / METAL)
+        SFX_VOL   90           ; base loudness 0..127
+        SFX_DUR   4            ; compact notes, 4 frames each
+        SFX_DECAY 5, 12        ; volume fade to silence
+        SFX_ARP   72, 79       ; two rising notes
+        SFX_END</code></pre>
+<p>The macros cover timbre (<code>SFX_WAVE</code>, <code>SFX_VOL</code>,
+<code>SFX_FEEDBACK</code>), pitch and shape (<code>SFX_SWEEP</code>,
+<code>SFX_DECAY</code>, <code>SFX_SWELL</code>, <code>SFX_SHIMMER</code>), notes
+(<code>SFX_DUR</code>, <code>SFX_NOTE</code>, <code>SFX_ARP</code>,
+<code>SFX_REST</code>) and looping (<code>SFX_LOOP_FOREVER</code> &hellip;
+<code>SFX_LOOP_END</code>). Because they emit only existing engine opcodes, an
+effect replays byte-identically on the shipped player. Save the file under
+<code>libraries/audio/sfx/</code>, add an <code>extern</code> + play macro to
+<code>include/lynx/sfx.h</code>, and it links like the rest. Since &ldquo;sounds
+right&rdquo; is the only real test, tune the indices and rates on the emulator or
+hardware.</p>
+
+<h3>6.4. The catalogue</h3>
+<p>All 56 effects, grouped by role and one row each describing what it actually
+sounds like (all one-shot unless noted):</p>
+<table>
+<thead><tr><th>Effect</th><th>Sound</th></tr></thead>
+<tbody>
+<tr><th colspan="2">Pickups, power, progression</th></tr>
+<tr><td><code>sfx_coin</code></td><td>Bright square blip arpeggiating up (72&rarr;79) with a snappy decay &mdash; a classic coin-get ping.</td></tr>
+<tr><td><code>sfx_extra_life</code></td><td>Square arpeggio climbing five notes (60&rarr;76) into a longer held high note &mdash; a small triumphant fanfare.</td></tr>
+<tr><td><code>sfx_power_up</code></td><td>Square tone sweeping upward while arpeggiating through four rising notes &mdash; an energising boost.</td></tr>
+<tr><td><code>sfx_power_down</code></td><td>Soft triangle tone sliding downward and fading out &mdash; a deflating loss of energy.</td></tr>
+<tr><td><code>sfx_confirm</code></td><td>Short two-note square blip (67&rarr;74) with a quick decay &mdash; a crisp acknowledgement click.</td></tr>
+<tr><td><code>sfx_level_complete</code></td><td>Bright square arpeggio climbing six notes into a sustained high note &mdash; a short victory jingle.</td></tr>
+<tr><td><code>sfx_checkpoint</code></td><td>Gentle square two-note arpeggio (64&rarr;71) with a longer fade &mdash; a soft &ldquo;saved&rdquo; chime.</td></tr>
+<tr><td><code>sfx_secret_found</code></td><td>Square three-note arpeggio (61&rarr;66&rarr;73) &mdash; a bright, curious little lift.</td></tr>
+<tr><td><code>sfx_recharge</code></td><td>Fast five-note rising square arpeggio (60&rarr;72) &mdash; a quick trickle-up refill.</td></tr>
+<tr><td><code>sfx_charge_up</code></td><td>Square tone swelling in volume while sweeping upward over 90 frames &mdash; a building power-up drone.</td></tr>
+<tr><th colspan="2">Movement and platforming</th></tr>
+<tr><td><code>sfx_jump</code></td><td>Square tone sweeping upward with a quick decay &mdash; a light, springy hop.</td></tr>
+<tr><td><code>sfx_double_jump</code></td><td>Faster, higher square sweep upward &mdash; a snappier second hop in mid-air.</td></tr>
+<tr><td><code>sfx_land</code></td><td>Short, low noise thud with a fast decay &mdash; a soft footfall landing.</td></tr>
+<tr><td><code>sfx_footstep</code></td><td>Very short, quiet, low noise tick &mdash; a single footstep tap.</td></tr>
+<tr><td><code>sfx_bounce</code></td><td>Square tone sweeping upward with a longer, springier decay &mdash; a rubbery bounce.</td></tr>
+<tr><td><code>sfx_bounce_wall</code></td><td>Bright metallic tone sweeping upward &mdash; a harder, clangier bounce off a wall.</td></tr>
+<tr><td><code>sfx_whoosh</code></td><td>Noise sweeping upward with a decay &mdash; a quick rush of air.</td></tr>
+<tr><td><code>sfx_cursor_move</code></td><td>Very short, high, quiet square tick &mdash; a subtle UI-cursor nudge.</td></tr>
+<tr><th colspan="2">Combat and damage</th></tr>
+<tr><td><code>sfx_attack</code></td><td>Noise sweeping downward with a decay &mdash; a quick weapon swing or whiff.</td></tr>
+<tr><td><code>sfx_laser</code></td><td>High square tone sweeping sharply downward &mdash; a classic laser &ldquo;pew&rdquo;.</td></tr>
+<tr><td><code>sfx_explosion_small</code></td><td>Noise sweeping downward with a matching decay &mdash; a compact bang.</td></tr>
+<tr><td><code>sfx_explosion_large</code></td><td>Louder noise sweeping downward over more than a second &mdash; a big, rumbling boom.</td></tr>
+<tr><td><code>sfx_hit</code></td><td>Short, sharp noise thump with equal attack and decay &mdash; a solid impact.</td></tr>
+<tr><td><code>sfx_player_death</code></td><td>Falling five-note square arpeggio with a long fade &mdash; a defeated, sinking descent.</td></tr>
+<tr><td><code>sfx_enemy_death</code></td><td>Square tone sweeping downward &mdash; an enemy's quick dying whine.</td></tr>
+<tr><td><code>sfx_magic_cast</code></td><td>Shimmering triangle tone arpeggiating upward &mdash; a sparkly spell cast.</td></tr>
+<tr><td><code>sfx_magic_impact</code></td><td>Bright metallic two-note arpeggio (84&rarr;88) &mdash; a sharp magical strike.</td></tr>
+<tr><td><code>sfx_shield</code></td><td>Triangle tone that swells in and shimmers, then holds &mdash; a humming protective barrier.</td></tr>
+<tr><th colspan="2">Spawning, teleport, environment</th></tr>
+<tr><td><code>sfx_spawn</code></td><td>Square tone sweeping upward while shimmering &mdash; a materialising pop.</td></tr>
+<tr><td><code>sfx_teleport</code></td><td>Shimmering triangle tone sweeping upward with a long fade &mdash; a warping teleport.</td></tr>
+<tr><td><code>sfx_fire</code></td><td>Sustained low noise with a slow decay &mdash; a crackling flame.</td></tr>
+<tr><td><code>sfx_wind</code></td><td>Noise sweeping upward slowly over 72 frames &mdash; a long gust of wind.</td></tr>
+<tr><td><code>sfx_thunder</code></td><td>Loud, low noise with a very long, rumbling decay &mdash; a distant thunderclap.</td></tr>
+<tr><td><code>sfx_water_drop</code></td><td>Triangle tone sweeping upward with a quick decay &mdash; a rounded plink of a falling drop.</td></tr>
+<tr><td><code>sfx_splash</code></td><td>Noise sweeping downward with a decay &mdash; a watery splash.</td></tr>
+<tr><td><code>sfx_bubble</code></td><td>Triangle tone sweeping upward with a decay &mdash; a rising bubble popping.</td></tr>
+<tr><th colspan="2">Objects, doors, items</th></tr>
+<tr><td><code>sfx_door_open</code></td><td>Noise sweeping upward with a long decay &mdash; a door creaking open.</td></tr>
+<tr><td><code>sfx_door_close</code></td><td>Low noise thud with a decay and no sweep &mdash; a door slamming shut.</td></tr>
+<tr><td><code>sfx_switch</code></td><td>Metallic tone with a snappy decay &mdash; a mechanical switch flipping.</td></tr>
+<tr><td><code>sfx_button</code></td><td>High, very short square blip &mdash; a crisp button press.</td></tr>
+<tr><td><code>sfx_chest_open</code></td><td>Metallic four-note rising arpeggio (60&rarr;79) &mdash; a chest lid creaking open.</td></tr>
+<tr><td><code>sfx_item_equip</code></td><td>Metallic two-note arpeggio (67&rarr;74) &mdash; a quick equip clink.</td></tr>
+<tr><td><code>sfx_key_pickup</code></td><td>Metallic three-note rising arpeggio (72&rarr;84) &mdash; a bright key jingle.</td></tr>
+<tr><td><code>sfx_unlock</code></td><td>Metallic falling two-note arpeggio (55&rarr;48) &mdash; a lock releasing.</td></tr>
+<tr><td><code>sfx_crumble</code></td><td>Noise sweeping downward over more than a second &mdash; crumbling debris breaking apart.</td></tr>
+<tr><td><code>sfx_falling_rock</code></td><td>Five-note falling, scattering noise arpeggio &mdash; loose rocks tumbling down.</td></tr>
+<tr><th colspan="2">Menus and UI</th></tr>
+<tr><td><code>sfx_menu_select</code></td><td>Short square blip with a snappy decay &mdash; a menu item selected.</td></tr>
+<tr><td><code>sfx_menu_back</code></td><td>The same short square blip, one octave lower &mdash; backing out of a menu.</td></tr>
+<tr><td><code>sfx_error</code></td><td>Falling three-note square arpeggio (55&rarr;50&rarr;45) &mdash; a buzzy &ldquo;that's wrong&rdquo; alert.</td></tr>
+<tr><td><code>sfx_typing</code></td><td>Very short, high, quiet square tick &mdash; a single keystroke click.</td></tr>
+<tr><td><code>sfx_countdown</code></td><td>Single square tone with a moderate decay &mdash; a steady countdown tick.</td></tr>
+<tr><th colspan="2">Continuous / ambient (looping)</th></tr>
+<tr><td><code>sfx_alarm</code></td><td>Looping two-note square siren alternating pitch &mdash; a repeating alarm wail.</td></tr>
+<tr><td><code>sfx_ambient_hum</code></td><td>Looping low triangle drone &mdash; a continuous background hum.</td></tr>
+<tr><td><code>sfx_engine</code></td><td>Looping low square tone &mdash; a steady engine idle.</td></tr>
+<tr><td><code>sfx_heartbeat</code></td><td>Looping double-thump triangle pulse with rests between beats &mdash; a beating heart.</td></tr>
+<tr><td><code>sfx_game_over</code></td><td>Falling four-note square arpeggio with a long fade (one-shot, not looping) &mdash; a somber game-over close.</td></tr>
+</tbody>
+</table>
+<p>The four looping effects (<code>sfx_alarm</code>, <code>sfx_ambient_hum</code>,
+<code>sfx_engine</code>, <code>sfx_heartbeat</code>) run until
+<code>snd_stop_channel</code>; every other entry, including <code>sfx_game_over</code>,
+is a one-shot. Full recipes and design rationale are in
+<code>design/LYNX_SFX_LIBRARY_DESIGN.md</code>; see
+<code>examples/mikey/sfxdemo.c</code> for a playable sound test.</p>
+
+<h3>6.5. Stopping and retriggering &mdash; the fade-out</h3>
+<p>Whenever a channel is force-stopped &mdash; an explicit <code>snd_stop()</code> /
+<code>snd_stop_channel()</code>, or <code>snd_play()</code> retriggering a channel
+that's still sounding &mdash; the engine ramps that channel's volume down by a fixed
+step every sound-timer tick until it reaches zero, then finishes the stop. From full
+volume (127) that's at most 4&nbsp;ticks, under 17&nbsp;ms at the default 240&nbsp;Hz
+tick rate. <code>snd_active()</code> reports the channel busy for the whole fade, so
+a caller polling it (or the busy-wait inside <code>snd_play</code> itself, when
+retriggering) simply waits those few extra ticks before the new stream starts.</p>
+<p>Before this, a forced stop set the volume register to zero on the very next tick
+&mdash; instant, but audible as a click when it interrupted a note mid-sound. That
+matters most for short, soft one-shots: <code>sfx_water_drop</code>'s whole &ldquo;plink&rdquo;
+lasts only ~50&ndash;60&nbsp;ms (a <code>SFX_SWEEP</code> + <code>SFX_DECAY</code> over
+12&ndash;14 ticks), so retriggering it faster than that window used to hard-cut the
+tail every time. A natural end-of-stream (the stream's own <code>SFX_END</code>,
+reached when its note duration runs out) is unaffected by this &mdash; it already
+relies on the effect's own <code>SFX_DECAY</code> having faded the note out by then,
+which is why well-tuned effects keep <code>SFX_DUR</code> at or above their decay
+length.</p>
+<p>A related quirk affects <em>integrate</em>-mode effects
+(<code>SFX_WAVE&nbsp;TRI</code>, i.e. CONTROL bit&nbsp;5). In integrate mode the
+channel's DAC output register (<code>$FD22</code>, <code>AUDxOUTVAL</code>)
+<em>accumulates</em> rather than being reloaded each tick, and the engine never
+otherwise writes it &mdash; so a finished note can leave the output railed near
+&plusmn;full&nbsp;scale. A long integrate effect walks that offset back into range
+on its own, but a <em>short</em> one-shot could not swing far enough to be audible
+when replayed, leaving <code>sfx_water_drop</code> and <code>sfx_bubble</code>
+seemingly silent on repeat while longer integrate effects
+(<code>sfx_power_down</code>, <code>sfx_teleport</code>) were fine. The engine now
+clears <code>$FD22</code> whenever it fully reprograms an integrate-mode channel,
+so every note starts from silence. Square (non-integrate) channels reload the DAC
+from hardware every tick and are left untouched.</p>
+
+<h2 id="reference">7. Reference</h2>
 <p>The engine API (<code>snd_init</code>, <code>snd_play</code>,
 <code>snd_stop</code>, <code>snd_stop_channel</code>, <code>snd_pause</code>,
 <code>snd_continue</code>, <code>snd_active</code>) and the direct helpers

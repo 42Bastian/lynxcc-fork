@@ -797,10 +797,14 @@ resume every channel, <code>snd_stop()</code> silences all channels at once and
 <code>snd_stop_channel(channel)</code> silences just one, and
 <code>snd_active()</code> returns non-zero while any channel is still playing so
 a program can wait for a tune to finish. Tune streams are authored in ABC text
-and compiled offline by the <code>abccc</code> tool; for sound effects, the
-<code>mikey_snd_*</code> helpers poke a single channel register directly. The
-functions are declared in <code>lynx/lynx.h</code>; the dedicated
-<a href="sound.html">Sound</a> page is the full engine guide and composing
+and compiled offline by the <code>abccc</code> tool. For sound effects the
+<a href="sound.html#sfx">reusable <code>sfx</code> pack</a>
+(<code>&lt;lynx/sfx.h&gt;</code>) provides ~55 ready-made effects &mdash;
+<code>sfx_coin(ch)</code>, <code>sfx_laser(ch)</code>, <code>sfx_alarm(ch)</code>
+and more, each a linkable stream fired through <code>snd_play</code>; the
+<code>mikey_snd_*</code> helpers poke a single channel register directly for the
+lowest-level control. The functions are declared in <code>lynx/lynx.h</code>; the
+dedicated <a href="sound.html">Sound</a> page is the full engine guide and composing
 tutorial, and the <a href="funcref.html#snd_init">function reference</a> lists
 the API.</p>
 <h3 id="sect-8-5">8.5. EEPROM (cart save data)</h3>

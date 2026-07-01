@@ -262,8 +262,11 @@ The recipes in §7 follow the user-supplied retro design guidelines:
 The requirement is that a game pays only for the effects it uses. This is achieved
 with **library-member granularity**:
 
-- One effect per source file: `libraries/audio/sfx/coin.s`, `…/jump.s`, etc., each
-  emitting exactly one `sfx_<name>_data` symbol.
+- One effect per source file: `libraries/audio/sfx/sfx_coin.s`, `…/sfx_jump.s`,
+  etc., each emitting exactly one `sfx_<name>_data` symbol. The files carry the
+  `sfx_` prefix so their object basenames stay globally unique across the source
+  tree (the build flattens all objects into one work dir keyed by basename, and a
+  bare `land.s` would collide with the runtime's `runtime/rt/land.s`).
 - All effect objects are archived into the existing **audio** library partition,
   `lib/lynx-audio.lib` (the partition created by the phase-5 library split), as
   separate members.
@@ -449,8 +452,8 @@ touches:
 - `include/lynx/sfx.h` — the `sfx_<name>_data` externs + `sfx_<name>(ch)` macros;
   `include/lynx/lynx.h` includes it.
 - `asminc/lynx/sfx.inc` — the `SFX_*` authoring macros (§4).
-- `libraries/audio/sfx/*.s` — one source per effect (§6); added to the audio
-  library object list in `libraries.mk` so they archive into `lib/lynx-audio.lib`.
+- `libraries/audio/sfx/sfx_*.s` — one source per effect (§6); `libraries.mk` adds
+  `libraries/audio/sfx` to `AUDIO_DIRS` so they archive into `lib/lynx-audio.lib`.
 - `doc/sound.html` — a new "Sound effects" section: the `sfx_*` API, the channel
   convention, the one-shot-vs-looping distinction, the catalogue table, and the
   drop-down-a-layer guidance; plus at least one SVG (the three-layer audio stack of
@@ -496,6 +499,6 @@ looping:     sfx_alarm(3);   ... ;  snd_stop_channel(3);
 custom:      snd_play(3, sfx_coin_data);     // stream symbol is public
 pause all:   snd_pause(); / snd_continue();
 
-author:      libraries/audio/sfx/<name>.s using SFX_* macros (asminc/lynx/sfx.inc)
+author:      libraries/audio/sfx/sfx_<name>.s using SFX_* macros (asminc/lynx/sfx.inc)
 convention:  music on channels 0-2, effects on channel 3
 ```

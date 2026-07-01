@@ -154,14 +154,18 @@ void snd_continue (void);
 /* Resume playback after snd_pause */
 
 void __fastcall__ snd_play (unsigned char channel, const unsigned char *stream);
-/* Start a compiled tune stream on a channel (0-3); a busy default channel
-** yields to a free one */
+/* Start a compiled tune stream on a channel (0-3).  If that channel is still
+** sounding, it is retriggered in place: the old stream is force-stopped (with
+** a brief ~4-tick volume fade, not an instant cut -- see snd_stop_channel)
+** before the new one starts. */
 
 void snd_stop (void);
-/* Stop sound on all channels */
+/* Stop sound on all channels.  Each channel's volume is faded out over a few
+** ticks (~17ms at 240Hz) rather than cut instantly, to avoid an audible
+** click; snd_active() reports the channel busy until the fade finishes. */
 
 void __fastcall__ snd_stop_channel (unsigned char channel);
-/* Stop sound on the given channel */
+/* Stop sound on the given channel, fading it out the same way as snd_stop */
 
 unsigned char snd_active (void);
 /* Non-zero while any channel is still playing (bitmask of active channels) */
@@ -260,6 +264,13 @@ void __fastcall__ lynx_eewrite_93c86 (unsigned addr, unsigned val);
 ** gfx_setcollisiondetection) are real functions declared in <lynx/gfx.h>;
 ** existing call sites compile unchanged. The ioctl dispatcher itself is gone.
 */
+
+/* Pull in the reusable sound-effect library so that programs including
+** <lynx.h> get the sfx_<name>(ch) play macros by default.  It layers over the
+** snd engine declared above; see <lynx/sfx.h>, doc/sound.html and
+** design/LYNX_SFX_LIBRARY_DESIGN.md.
+*/
+#include <lynx/sfx.h>
 
 /* Define Hardware */
 #include <lynx/_mikey.h>

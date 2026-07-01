@@ -57,14 +57,16 @@ void           snd_init (void);
 /* Initialise the engine: program the sound timer + install the interrupt. */
 
 void __fastcall__ snd_play (unsigned char channel, const unsigned char *stream);
-/* Start a compiled tune stream on a channel (0-3); a busy default channel
-   yields to a free one. */
+/* Start a compiled tune stream on a channel (0-3).  Retriggering a channel
+   that's still sounding force-stops it first (brief fade, see snd_stop) then
+   starts the new stream on the same channel. */
 
 void           snd_stop (void);
-/* Stop all channels. */
+/* Stop all channels, fading each out over a few ticks instead of an instant
+   cut (avoids an audible click, esp. retriggering short one-shots). */
 
 void __fastcall__ snd_stop_channel (unsigned char channel);
-/* Stop one channel. */
+/* Stop one channel, same fade-out as snd_stop. */
 
 void           snd_pause (void);
 void           snd_continue (void);
@@ -312,6 +314,16 @@ Because the byte defaults to 0, existing streams write a bit-identical control v
 (square preserved); new streams switch a channel to the integrated wave (ABC `I1`)
 or set the 9th tap (high ABC `X`). This closes the timbre gap that previously
 blocked a faithful ABC round-trip.
+
+**Integrate DAC reset.** In integrate mode the channel's output register
+(`$FD22`, `AUDxOUTVAL`) accumulates instead of being reloaded each tick, and
+`SndSetValues` never otherwise writes it (`SndChannel+2` is reused as the dirty
+flag). A finished note can therefore leave the output railed near ±full scale; a
+long integrate effect walks it back over time, but a short one-shot cannot swing
+far enough to be audible on replay (the symptom seen with `sfx_water_drop` /
+`sfx_bubble`). `SndSetValues` now writes 0 to `$FD22` on any full reprogram of an
+integrate-mode channel, so each note starts from silence; square channels reload
+`$FD22` from hardware every tick and are skipped.
 
 ---
 
