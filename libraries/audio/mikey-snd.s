@@ -24,7 +24,7 @@
         .export         _mikey_snd_integrate
         .export         _mikey_snd_volume
         .import         popa
-	.importzp	tmp1
+        .importzp       tmp1
 ;----------------------------------------------------------------------------
 
         .code
@@ -102,7 +102,7 @@ _mikey_snd_taps:
         txa                     ; high byte (bit 0 = 9th tap)
         lsr     a               ; tap 8 -> carry
         php                     ; remember 9th tap
-        jsr     get_channel            ; A = chan
+        jsr     get_channel     ; X = chan << 3 (A = val, overwritten below)
         lda     tmp1
         sta     AUD0FEED,x      ; $FD21 + 8c : taps 0-7
         lda     AUD0CTLA,x      ; $FD25 + 8c
@@ -113,12 +113,26 @@ _mikey_snd_taps:
 @set:   sta     AUD0CTLA,x
         rts
 
+;----------------------------------------------------------------------------
+; get_channel: shared prologue for the per-channel helpers.
+;
+; In:   A   = value to preserve for the caller
+;       C stack top = channel number
+; Out:  X   = chan << 3 (per-channel register offset)
+;       A   = the value passed in (unchanged)
+;       Y   = clobbered
+;
+; The incoming value is stashed in Y across popa/shift, which is only safe
+; because this SDK is hardwired to the 65SC02, where popa is `lda (sp)` and
+; leaves Y untouched.  On a plain 6502 popa does `ldy #0` and would destroy
+; the stashed value.
+;
 get_channel:
-	tay
-	jsr	popa
-	asl	a
-	asl	a
-	asl	a
-	tax
-	tya
-	rts
+        tay                     ; stash val (65SC02 popa preserves Y)
+        jsr     popa            ; A = chan
+        asl     a
+        asl     a
+        asl     a               ; chan << 3
+        tax
+        tya                     ; restore val
+        rts
