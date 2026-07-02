@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Joypad input</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Usage</button><div class="dropdown-menu"><a href="intro.html"><span>Introduction</span><span class="tdesc">hello world tutorial</span></a><a href="coding.html"><span>Coding hints</span><span class="tdesc">effective cc65 code</span></a><a href="smc.html"><span>Self-modifying code</span><span class="tdesc">SMC ca65 macros</span></a><a href="using-make.html"><span>Using make</span><span class="tdesc">build with GNU Make</span></a><a href="migrating.html"><span>Migrating</span><span class="tdesc">port from cc65</span></a><a href="samples.html"><span>Sample programs</span><span class="tdesc">annotated examples</span></a></div></div><div class="dropdown active"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Reference</button><div class="dropdown-menu"><a href="funcref.html"><span>Function reference</span><span class="tdesc">standard library</span></a><a href="lynx_gfx_fonts.html"><span>Graphics fonts</span><span class="tdesc">glyph tables</span></a><a href="sound.html"><span>Sound</span><span class="tdesc">music engine</span></a><a href="joypad.html" class="active"><span>Joypad input</span><span class="tdesc">buttons &amp; debouncing</span></a><a href="memory.html"><span>Memory</span><span class="tdesc">layout, stack &amp; heap</span></a><a href="cart.html"><span>Cart ROM &amp; EEPROM</span><span class="tdesc">image, saves &amp; I/O</span></a><a href="lynx.html"><span>Lynx specifics</span><span class="tdesc">runtime &amp; hardware</span></a></div></div><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">About</button><div class="dropdown-menu"><a href="history.html"><span>History</span><span class="tdesc">authors &amp; credits</span></a><a href="licenses.html"><span>Licenses</span><span class="tdesc">copyright notices</span></a><a href="optlim.html"><span>Optimizations &amp; Limitations</span><span class="tdesc">code-gen &amp; limits</span></a></div></div></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>Joypad input</h1></header><div class="abstract">Reading the Atari Lynx joypad with <code>joy_read()</code>, the button and switch
+bit masks, per-frame edge detection, and how to debounce and auto-repeat the
+controls.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Reading the joypad</a></li>
+<li class="lvl1"><a href="#sect-2">2. Buttons and switches</a></li>
+<li class="lvl1"><a href="#sect-3">3. Edge detection</a></li>
+<li class="lvl1"><a href="#sect-4">4. Debouncing and auto-repeat</a></li>
+</ul></nav><h2 id="sect-1">1. Reading the joypad</h2>
+<p>There is no loadable joystick driver: input is a static library function (see
+<code>design/LYNX_JOY_SER_DESIGN.md</code>). One call to
+<code><a href="funcref.html#joy_read">joy_read()</a></code> returns all nine
+inputs at once &mdash; the four d-pad directions, the two fire buttons, the two
+option buttons and the Pause switch. No installation is required and there is
+nothing that can fail; there is exactly one, always-present joypad.</p>
+<p><code>joy_read()</code> returns an <code>unsigned</code> value. The low byte is
+the raw hardware button register and the Pause switch (a Mikey-side button) is
+reported in bit&nbsp;8, so the result does not fit in a <code>char</code>. A set
+bit means the control is currently held down.</p>
+<h2 id="sect-2">2. Buttons and switches</h2>
+<p>Every input has a bit mask defined in <code>&lt;lynx/lynx.h&gt;</code>:</p>
+<pre class="verb">JOY_UP_MASK     0x80    JOY_OPT1_MASK    0x08
+JOY_DOWN_MASK   0x40    JOY_OPT2_MASK    0x04
+JOY_LEFT_MASK   0x20    JOY_BTN_1_MASK   0x01
+JOY_RIGHT_MASK  0x10    JOY_BTN_2_MASK   0x02
+                        JOY_PAUSE_MASK   0x100</pre>
+<p><code>JOY_BTN_A_MASK</code> and <code>JOY_BTN_B_MASK</code> are aliases for
+<code>JOY_BTN_1_MASK</code> and <code>JOY_BTN_2_MASK</code>. The convenience macros
+<code>JOY_BTN_A(v)</code>, <code>JOY_BTN_B(v)</code>, <code>JOY_OPT1(v)</code>,
+<code>JOY_OPT2(v)</code> and <code>JOY_PAUSE(v)</code> test the matching bit in a
+<code>joy_read()</code> result and evaluate to non-zero when that control is
+held.</p>
+<dl>
+<dt>Directional pad</dt>
+<dd><p><code>JOY_UP_MASK</code>, <code>JOY_DOWN_MASK</code>,
+<code>JOY_LEFT_MASK</code> and <code>JOY_RIGHT_MASK</code> report the four-way pad.
+The Lynx can be turned 180&deg; for left-handed play (see
+<code><a href="funcref.html#gfx_flip">gfx_flip</a></code>); when you flip the
+display you should also swap up/down, left/right and the A/B buttons in software
+so the controls still match the picture.</p></dd>
+<dt>Fire buttons A and B</dt>
+<dd><p>The two action buttons on the face of the unit are
+<code>JOY_BTN_1_MASK</code> and <code>JOY_BTN_2_MASK</code>, also spelled
+<code>JOY_BTN_A_MASK</code> and <code>JOY_BTN_B_MASK</code>.</p></dd>
+<dt>Option&nbsp;1 and Option&nbsp;2</dt>
+<dd><p><code>JOY_OPT1_MASK</code> and <code>JOY_OPT2_MASK</code> are the two smaller
+buttons beside the screen &mdash; conventionally used for start/select, a pause
+menu or a secondary action.</p></dd>
+<dt>Pause</dt>
+<dd><p><code>JOY_PAUSE_MASK</code> is the Pause switch. It is wired to Mikey rather
+than the main button register, which is why it lands in bit&nbsp;8 and why
+<code>joy_read()</code> must return an <code>unsigned</code> rather than a
+<code>char</code>.</p></dd>
+</dl>
+<p>A minimal read loop tests masks directly &mdash; this reacts every frame the
+control is held:</p>
+<pre class="code">unsigned now = joy_read();
+
+if (now &amp; JOY_LEFT_MASK)  player_x--;
+if (now &amp; JOY_RIGHT_MASK) player_x++;
+if (JOY_BTN_A(now))        fire();
+if (JOY_PAUSE(now))        open_menu();</pre>
+<h2 id="sect-3">3. Edge detection</h2>
+<p>Testing the raw word tells you a control is <em>held</em>, which is true on
+every frame until it is released. For actions that should happen once per press
+&mdash; jump, confirm, toggle &mdash; compare this frame against the previous one
+and act only on the transition:</p>
+<pre class="code">static unsigned prev = 0;
+
+unsigned now      = joy_read();
+unsigned pressed  = now &amp; ~prev;   /* bits that went 0 -&gt; 1 this frame */
+unsigned released = prev &amp; ~now;   /* bits that went 1 -&gt; 0 this frame */
+prev = now;
+
+if (pressed &amp; JOY_BTN_A_MASK)  jump();            /* exactly once per tap */
+if (released &amp; JOY_BTN_B_MASK) release_charge();</pre>
+<p>Because <code>joy_read()</code> hands back every input in one word, a single
+<code>pressed</code>/<code>released</code> pair covers the whole pad; mask it with
+whichever controls a given piece of code cares about.</p>
+<h2 id="sect-4">4. Debouncing and auto-repeat</h2>
+<p><code>joy_read()</code> samples the hardware directly, so like any mechanical
+contact the switches can <em>bounce</em>: one physical press or release may read
+as a short burst of 1/0 transitions while the contact settles. Polling once per
+frame (~60&ndash;75&nbsp;Hz) already hides most bounce, because a frame is long
+compared with the settling time &mdash; but menu navigation and anything that
+reacts to a single edge is more robust with an explicit debounce that accepts a
+new state only after it has held steady for a few consecutive reads:</p>
+<pre class="code">#define DEBOUNCE_FRAMES 3
+
+/* Return a debounced joypad word: a bit only changes in the result after the
+   raw input has reported the new value on DEBOUNCE_FRAMES reads in a row. */
+static unsigned joy_debounced(void)
+{
+    static unsigned stable    = 0;   /* last accepted state */
+    static unsigned candidate = 0;   /* value currently being timed */
+    static unsigned char count = 0;
+    unsigned raw = joy_read();
+
+    if (raw != candidate) {          /* input moved: restart the timer */
+        candidate = raw;
+        count = 0;
+    } else if (count &lt; DEBOUNCE_FRAMES &amp;&amp; ++count == DEBOUNCE_FRAMES) {
+        stable = candidate;          /* held long enough: accept it */
+    }
+    return stable;
+}</pre>
+<p>Feed the debounced word into the edge-detection step from section&nbsp;3 to get
+clean, single-press events. For a direction held down in a menu, auto-repeat adds
+an initial delay followed by a steady repeat rate:</p>
+<pre class="code">#define REPEAT_DELAY 20   /* frames held before auto-repeat begins */
+#define REPEAT_RATE   4   /* frames between repeats */
+
+struct repeat { unsigned char timer; };
+
+/* Nonzero on a frame the action should fire: immediately on press, then every
+   REPEAT_RATE frames after an initial REPEAT_DELAY while the mask stays held. */
+unsigned char joy_repeat(struct repeat *r, unsigned now, unsigned mask)
+{
+    if (!(now &amp; mask))   { r-&gt;timer = 0; return 0; }              /* not held  */
+    if (r-&gt;timer == 0)   { r-&gt;timer = REPEAT_DELAY; return 1; }   /* first press */
+    if (--r-&gt;timer == 0) { r-&gt;timer = REPEAT_RATE;  return 1; }   /* repeat tick */
+    return 0;
+}</pre>
+<p>Keep one <code>struct repeat</code> per control you want to repeat, and drive a
+menu cursor that steps once when the pad is tapped and then scrolls smoothly while
+it is held.</p></article></main><footer class="site-foot"><strong>lynxcc</strong> documentation &mdash; a complete Atari Lynx Game Development SDK.</footer>
+<script src="doc.js"></script>
+</body></html>

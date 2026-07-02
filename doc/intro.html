@@ -12,7 +12,7 @@ See doc/licenses.html.
 <link rel="stylesheet" href="doc.css">
 <script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
 </head><body>
-<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><div class="dropdown active"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Usage</button><div class="dropdown-menu"><a href="intro.html" class="active"><span>Introduction</span><span class="tdesc">hello world tutorial</span></a><a href="coding.html"><span>Coding hints</span><span class="tdesc">effective cc65 code</span></a><a href="smc.html"><span>Self-modifying code</span><span class="tdesc">SMC ca65 macros</span></a><a href="using-make.html"><span>Using make</span><span class="tdesc">build with GNU Make</span></a><a href="migrating.html"><span>Migrating</span><span class="tdesc">port from cc65</span></a><a href="samples.html"><span>Sample programs</span><span class="tdesc">annotated examples</span></a></div></div><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Reference</button><div class="dropdown-menu"><a href="funcref.html"><span>Function reference</span><span class="tdesc">standard library</span></a><a href="lynx_gfx_fonts.html"><span>Graphics fonts</span><span class="tdesc">glyph tables</span></a><a href="sound.html"><span>Sound</span><span class="tdesc">music engine</span></a><a href="lynx.html"><span>Lynx specifics</span><span class="tdesc">hardware &amp; code-gen</span></a></div></div><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">About</button><div class="dropdown-menu"><a href="history.html"><span>History</span><span class="tdesc">authors &amp; credits</span></a><a href="licenses.html"><span>Licenses</span><span class="tdesc">copyright notices</span></a></div></div></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>cc65 Compiler Intro</h1></header><div class="abstract">How to use the cc65 C language system -- an introduction.</div><nav class="toc"><h2>Contents</h2><ul>
+<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><a href="index.html">Home</a><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><div class="dropdown active"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Usage</button><div class="dropdown-menu"><a href="intro.html" class="active"><span>Introduction</span><span class="tdesc">hello world tutorial</span></a><a href="coding.html"><span>Coding hints</span><span class="tdesc">effective cc65 code</span></a><a href="smc.html"><span>Self-modifying code</span><span class="tdesc">SMC ca65 macros</span></a><a href="using-make.html"><span>Using make</span><span class="tdesc">build with GNU Make</span></a><a href="migrating.html"><span>Migrating</span><span class="tdesc">port from cc65</span></a><a href="samples.html"><span>Sample programs</span><span class="tdesc">annotated examples</span></a></div></div><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Reference</button><div class="dropdown-menu"><a href="funcref.html"><span>Function reference</span><span class="tdesc">standard library</span></a><a href="lynx_gfx_fonts.html"><span>Graphics fonts</span><span class="tdesc">glyph tables</span></a><a href="sound.html"><span>Sound</span><span class="tdesc">music engine</span></a><a href="joypad.html"><span>Joypad input</span><span class="tdesc">buttons &amp; debouncing</span></a><a href="memory.html"><span>Memory</span><span class="tdesc">layout, stack &amp; heap</span></a><a href="cart.html"><span>Cart ROM &amp; EEPROM</span><span class="tdesc">image, saves &amp; I/O</span></a><a href="lynx.html"><span>Lynx specifics</span><span class="tdesc">runtime &amp; hardware</span></a></div></div><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">About</button><div class="dropdown-menu"><a href="history.html"><span>History</span><span class="tdesc">authors &amp; credits</span></a><a href="licenses.html"><span>Licenses</span><span class="tdesc">copyright notices</span></a><a href="optlim.html"><span>Optimizations &amp; Limitations</span><span class="tdesc">code-gen &amp; limits</span></a></div></div></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>cc65 Compiler Intro</h1></header><div class="abstract">How to use the cc65 C language system -- an introduction.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Overview</a></li>
 <li class="lvl2"><a href="#sect-1-1">1.1. Before we start</a></li>
 <li class="lvl2"><a href="#sect-1-2">1.2. The sample modules</a></li>
@@ -21,8 +21,9 @@ See doc/licenses.html.
 <li class="lvl1"><a href="#sect-3">3. The assembler</a></li>
 <li class="lvl1"><a href="#sect-4">4. The linker</a></li>
 <li class="lvl1"><a href="#using-cl65">5. The easy way (using the cl65 utility)</a></li>
-<li class="lvl1"><a href="#sect-6">6. Running The Executable</a></li>
-<li class="lvl2"><a href="#sect-6-1">6.1. Emulators</a></li>
+<li class="lvl1"><a href="#hello-graphics">6. A Hello World you can see</a></li>
+<li class="lvl1"><a href="#sect-6">7. Running The Executable</a></li>
+<li class="lvl2"><a href="#sect-6-1">7.1. Emulators</a></li>
 </ul></nav><h2 id="sect-1">1. Overview</h2>
 <p>This is a short intro of how to use the compiler and the bin-utils. It contains
 a step-by-step example of how to build a complete application from one C and
@@ -56,7 +57,7 @@ installed cc65.</p>
         {
             /* The Lynx has no text console, so there is nothing to print
                here; this module only demonstrates the build flow.  For
-               on-screen text, see the Lynx graphics "Hello World" in the Lynx docs. */
+               on-screen text, see the graphical Hello World in section 6 below. */
             return (int) strlen (text);
         }</pre>
 <p>text.s:</p>
@@ -188,17 +189,55 @@ game (a <code>Makefile</code> that uses the automatic SDK libraries plus a
 <code>src/main.c</code> that brings up Lynx graphics and reads the joystick) and is the
 canonical example of the <code>&lt;lynx/...&gt;</code> include layout and the
 zero-config link path. See its <code>README.md</code> for details.</p>
-<h2 id="sect-6">6. Running The Executable</h2>
+<h2 id="hello-graphics">6. A Hello World you can see</h2>
+<p>The two-module example above exercises the whole toolchain, but it draws
+nothing: the Lynx has no text console, so <code>main</code> can only compute a
+value and return it. Here is a self-contained program that actually puts text on
+the Lynx screen, using the SDK's Lynx graphics library:</p>
+<pre class="code">#include &lt;lynx/lynx.h&gt;
+#include &lt;lynx/gfx.h&gt;
+#include &lt;6502.h&gt;
+
+void main(void) {
+  gfx_init();
+  CLI();
+  while (gfx_busy())
+    ;
+  gfx_clear();
+  gfx_setcolor(GFX_COLOR_GREEN);
+  gfx_outtextxy(0, 0, "Hello World");
+  gfx_updatedisplay();
+  while (1)
+    ;
+}</pre>
+<p><code>&lt;lynx/lynx.h&gt;</code> brings in the Lynx system definitions and the
+color constants, <code>&lt;lynx/gfx.h&gt;</code> declares the graphics functions,
+and <code>&lt;6502.h&gt;</code> supplies the <code>CLI()</code> wrapper that
+enables interrupts once the graphics system is initialised.</p>
+<p>Because the Lynx has no ASCII text hardware, on-screen characters are drawn by
+the Lynx graphics library rather than printed. Unlike the upstream cc65 driver
+model, this SDK's Lynx graphics are a <strong>static, direct-call</strong>
+library: there is no relocatable driver to load at run time and nothing to
+install &mdash; you simply call the <code>gfx_*</code> functions and link the
+graphics library. See the <a href="funcref.html">function reference</a> for the
+full graphics API, and the <a href="memory.html">Memory</a> page for how the runtime
+and screen buffers are laid out.</p>
+<p>Build it with <strong>cl65</strong>, which supplies the startup code and links
+the SDK subsystem libraries (including Lynx graphics) automatically:</p>
+<pre class="verb">cl65 -O -o hello.lnx hello.c</pre>
+<p>The result is a bootable cart image, <code>hello.lnx</code>. With an explicit
+<code>ld65</code> link you would name <code>lynx-graphics.lib</code> before the
+core <code>lynx.lib</code>, exactly as shown in <a href="#sect-4">section&nbsp;4</a>.</p>
+<h2 id="sect-6">7. Running The Executable</h2>
 <p>The Lynx has no operating system or text screen: the linker output is a
 bootable cart image, and text output requires the Lynx graphics library.
 The program in the tutorial above therefore produces no visible
 output on the Lynx - it demonstrates the build mechanics only. For a
-program that actually displays text on the Lynx screen, see the Hello
-World example in the <a href="lynx.html">Lynx-specific
-documentation</a>, which uses Lynx graphics. By convention, give the output file a
+program that actually displays text on the Lynx screen, see the graphical
+Hello World in <a href="#hello-graphics">section&nbsp;6</a> above. By convention, give the output file a
 <code>.lnx</code> extension:</p>
 <pre class="verb">cl65 -O -o hello.lnx hello.c text.s</pre>
-<h3 id="sect-6-1">6.1. Emulators</h3>
+<h3 id="sect-6-1">7.1. Emulators</h3>
 <dl>
 <dt>GearLynx</dt>
 <dd>
