@@ -20,11 +20,15 @@
 **      rainbow that flows down the formation - zero extra sprite data,
 **      just Mikey's 16-entry 12-bit palette (0xFDA0) being repainted.
 **
-**   2. Sound. The Mikey audio channels are driven directly (no sound
-**      driver / tune format): channel A = laser, B = explosion noise,
-**      C = the four-note marching bass loop, D = player death / UFO.
-**      Square tone = feedback tap 0 (0x01); noise = a long tap set
-**      (0x3F). Volume envelopes run once per frame in the main loop.
+**   2. Sound. Channels C and D play the two-voice Space Invaders theme
+**      as compiled snd-engine streams (invtheme.s, snd_play on channels
+**      2 and 3); the snd IRQ walks the event streams - patterns, loops
+**      and a shared attack envelope - and the streams self-loop. Channels
+**      A and B stay hand-driven for the interactive effects (laser and
+**      explosion noise; player-death / UFO share channel A). Square tone
+**      = feedback tap 0 (0x01); noise = a long tap set (0x3F). Those SFX
+**      envelopes run once per frame in the main loop. See invtheme.s and
+**      doc/sound.html.
 **
 ** Suzy math contract (design/LYNX_CODEGEN_DESIGN.md section 2.6): all !* !/
 ** !% sites are in the main loop, never in IRQ context, so the math
@@ -33,7 +37,7 @@
 **
 ** Controls: pad left/right moves the cannon, A fires, A restarts.
 **
-** Build:  cl65 -Ors -o invaders.lnx invaders.c
+** Build:  cl65 -Ors -o invaders.lnx invaders.c invtheme.s
 */
 
 #include <lynx/lynx.h>
@@ -41,6 +45,15 @@
 #include <lynx/joystick.h>
 #include <6502.h>
 #include <string.h>
+
+/* The two-voice Space Invaders theme, as compiled snd-engine event streams in
+** invtheme.s (extracted from the reference cartridge). Voice A is the lead,
+** voice B the counter-voice; each self-loops. They play on channels 2 and 3. */
+extern const unsigned char invaders_theme_a[];
+extern const unsigned char invaders_theme_b[];
+
+#define THEME_CH_A   2
+#define THEME_CH_B   3
 
 /* ------------------------------------------------------------------ */
 /* Geometry                                                            */
@@ -294,9 +307,9 @@ static unsigned char laser_t;           /* channel A */
 static unsigned char laser_p;
 static unsigned char boom_t;            /* channel B */
 static unsigned char boom_v;
-static unsigned char die_t;             /* channel D */
+static unsigned char die_t;             /* channel A (shared w/ laser) */
 static unsigned char die_p;
-static unsigned char ufo_snd;           /* channel D shared, UFO hum */
+static unsigned char ufo_snd;           /* channel A shared, UFO hum */
 
 static void sfx_shoot (void)
 {
@@ -316,19 +329,8 @@ static void sfx_die (void)
 {
     die_p = 60;
     die_t = 40;
-    snd_voice (&MIKEY.channel_d, 0x48, FB_TONE, 4, die_p);
+    snd_voice (&MIKEY.channel_a, 0x48, FB_TONE, 4, die_p);
     ufo_snd = 0;
-}
-
-/* Four-note descending marching bass; step selects the note. */
-static const unsigned char march_notes[4] = { 150, 130, 110, 95 };
-
-static void sfx_march (unsigned char step)
-{
-    if (die_t || ufo_snd) return;       /* channel D busy */
-    snd_voice (&MIKEY.channel_c, 0x40, FB_TONE, 5, march_notes[step & 3]);
-    /* a short note: borrow the laser-like quick gate via its own count */
-    MIKEY.channel_c.control = 0x18 | 5;
 }
 
 /* Advance all sound envelopes one frame. */
@@ -346,12 +348,12 @@ static void sfx_update (void)
     }
     if (die_t) {
         die_p += 3;
-        MIKEY.channel_d.reload = die_p;
-        if (--die_t == 0) snd_silence (&MIKEY.channel_d);
+        MIKEY.channel_a.reload = die_p;
+        if (--die_t == 0) snd_silence (&MIKEY.channel_a);
     } else if (ufo_snd) {
-        /* warbling UFO hum on channel D */
+        /* warbling UFO hum on channel A */
         die_p = (die_p + 5) & 0x7F;
-        MIKEY.channel_d.reload = 40 + (die_p & 0x1F);
+        MIKEY.channel_a.reload = 40 + (die_p & 0x1F);
     }
 }
 
@@ -360,14 +362,14 @@ static void sfx_ufo_on (void)
     if (die_t) return;
     ufo_snd = 1;
     die_p = 0;
-    snd_voice (&MIKEY.channel_d, 0x2C, FB_TONE, 4, 48);
+    snd_voice (&MIKEY.channel_a, 0x2C, FB_TONE, 4, 48);
 }
 
 static void sfx_ufo_off (void)
 {
     if (ufo_snd) {
         ufo_snd = 0;
-        snd_silence (&MIKEY.channel_d);
+        snd_silence (&MIKEY.channel_a);
     }
 }
 
@@ -415,7 +417,6 @@ static int  bx, by;                     /* invader block origin, px  */
 static signed char dir;                 /* +1 / -1                   */
 static unsigned char alive;             /* invaders left             */
 static unsigned char frame_b;           /* march animation toggle    */
-static unsigned char march_step;        /* 0..3 note cycler          */
 static unsigned char march_delay, march_cnt;
 
 static int  px;                         /* cannon x, px              */
@@ -497,7 +498,6 @@ static void new_wave (void)
     dir = 1;
     alive = INV_N;
     frame_b = 0;
-    march_step = 0;
     place_invaders ();
     bullet_on = 0;
     state = ST_PLAY;
@@ -578,9 +578,6 @@ static void march (void)
             inv[i].vpos = by + r !* CELL_H;
             inv[i].data = frame_b ? inv_b : inv_a;
         }
-
-    sfx_march (march_step);
-    march_step = (march_step + 1) & 3;
 }
 
 /* Drop a bomb from a random live column's lowest invader. */
@@ -875,6 +872,13 @@ void main (void)
     snd_silence (&MIKEY.channel_b);
     snd_silence (&MIKEY.channel_c);
     snd_silence (&MIKEY.channel_d);
+
+    /* Start the two theme voices on channels C and D. snd_init() installs the
+    ** sound-timer IRQ that walks the streams; each stream self-loops, so no
+    ** retrigger is needed. Channels A and B are left for the hand-driven SFX. */
+    snd_init ();
+    snd_play (THEME_CH_A, invaders_theme_a);
+    snd_play (THEME_CH_B, invaders_theme_b);
 
     pal_init ();
     gfx_setpalette (pal);

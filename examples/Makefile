@@ -151,6 +151,13 @@ mikey/sndtune.lnx: mikey/sndtune.o mikey/theme.o
 mikey/sfxtest.lnx: mikey/sfxtest.o mikey/sfx.o
 	$(CL) $(LDFLAGS) -o $@ -m $(@:.lnx=.map) $^
 
+# invaders plays the Space Invaders theme from the hand-authored snd-engine
+# stream in games/invtheme.s (a re-encoding of a tune written for an earlier
+# engine; see that file). It links beside the game object.
+
+games/invaders.lnx: games/invaders.o games/invtheme.o
+	$(CL) $(LDFLAGS) -o $@ -m $(@:.lnx=.map) $^
+
 # --------------------------------------------------------------------------
 
 examples: $(EXELIST)
@@ -175,6 +182,7 @@ install:
 	$(INSTALL) -m0644 Makefile $(addsuffix .c,$(ROOT_EXAMPLES)) $(DESTDIR)$(examplesdir)
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/games
 	$(INSTALL) -m0644 $(addprefix games/,$(addsuffix .c,$(GAMES))) $(DESTDIR)$(examplesdir)/games
+	$(INSTALL) -m0644 games/invtheme.s $(DESTDIR)$(examplesdir)/games
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/suzy
 	$(INSTALL) -m0644 $(addprefix suzy/,$(addsuffix .c,$(SUZY))) $(DESTDIR)$(examplesdir)/suzy
 	$(INSTALL) -m0644 suzy/heart.pcx suzy/heart.pcx.py $(DESTDIR)$(examplesdir)/suzy
@@ -197,7 +205,7 @@ zip:
 # Clean-up rules
 
 mostlyclean:
-	@$(DEL) $(EXELIST:.lnx=.map) $(EXELIST:.lnx=.o) $(EXELIST:.lnx=.s) $(SPRITETEST_HDRS) suzy/sheet_anim.h $(SHEET_FRAMES) mikey/theme.o mikey/sfx.o 2>$(NULLDEV)
+	@$(DEL) $(EXELIST:.lnx=.map) $(EXELIST:.lnx=.o) $(EXELIST:.lnx=.s) $(SPRITETEST_HDRS) suzy/sheet_anim.h $(SHEET_FRAMES) mikey/theme.o mikey/sfx.o games/invtheme.o 2>$(NULLDEV)
 
 clean: mostlyclean
 	@$(DEL) $(EXELIST) 2>$(NULLDEV)

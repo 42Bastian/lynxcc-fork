@@ -229,10 +229,12 @@ themselves wait out their duration.
 
 | Form | Bytes | When |
 |------|-------|------|
-| legacy note | 2 | `[pitch 0-127][duration]` — always valid |
+| legacy note | 2 | `[pitch 0-127][duration]` — always valid; volume from the instrument |
 | compact note | 1 | `[pitch 0-127]` — duration from `SETDUR`, only while `MODE` compact bit set |
 
-`pitch` indexes the chromatic `SndReload`/`SndPrescaler` tables. `abccc` maps each
+The note volume always comes from the instrument (`SetInstr`'s `vol`); there is no
+per-note volume byte. `pitch` indexes the chromatic `SndReload`/`SndPrescaler`
+tables. `abccc` maps each
 ABC note (letter + accidental + octave) to the matching table index, so the
 engine's table is the canonical tuning.
 
@@ -276,7 +278,7 @@ New opcodes (this engine, free `$93+` space):
 
 | format | bytes/note | note |
 |--------|-----------|------|
-| legacy note | 2 | `[pitch][duration]` |
+| legacy note | 2 | `[pitch][duration]`, volume from the instrument |
 | `NewNote2` (explicit reload) | 4 | for pitches off the chromatic table |
 | **compact note** (this engine) | **1** | `[pitch]`, duration from `SETDUR` |
 

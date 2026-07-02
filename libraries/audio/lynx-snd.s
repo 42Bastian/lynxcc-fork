@@ -446,7 +446,12 @@ SndStop:
 
 
 ;----------------------------------------------------------------------------
-; Send a new note, length, volume triplet
+; Send a new note.  A note is 2 bytes, [pitch][duration]; the note volume comes
+; from the instrument (SndVolume, set by SetInstr).  This is the original rsound
+; note format.  The compact mode (Mode $93 bit0) drops the duration byte and
+; takes the duration from SetDur, making a note a single [pitch] byte -- the
+; opt-in size optimisation abccc uses (§6.4); it never changes where the volume
+; comes from.
 ;
 
 SndNewNote:
