@@ -1,6 +1,6 @@
 # Gearlynx (headless) — sandbox ROM verification
 
-A headless build of [Gearlynx](https://github.com/drhelius/Gearlynx) v1.2.14, an
+A headless build of [Gearlynx](https://github.com/drhelius/Gearlynx) v1.2.18, an
 accurate Atari Lynx emulator with an embedded **MCP server**. It runs inside the
 Linux sandbox with no display, so built `.lnx` ROMs can be booted and inspected
 (CPU, memory, Suzy/Mikey, screenshots) programmatically instead of by hand.
@@ -62,7 +62,7 @@ cmake --build SDL3/build -j4 && cmake --install SDL3/build
 
 # Gearlynx: drop "-lGL" from platforms/shared/makefiles/Makefile.common
 #   (headless uses SDL_Init(0) and never touches GL; glad loads via -ldl)
-git clone --depth 1 https://github.com/drhelius/Gearlynx.git
+git clone --depth 1 --branch 1.2.18 https://github.com/drhelius/Gearlynx.git
 cd Gearlynx/platforms/linux
 PKG_CONFIG_PATH=$PWD/../../../sdl3-prefix/lib/pkgconfig make DEBUG=1 -j4
 strip gearlynx

@@ -3,7 +3,7 @@
 # Launch Gearlynx (Atari Lynx emulator) headless with its MCP server, for
 # automated ROM verification inside the Linux sandbox.
 #
-# Built from source (github.com/drhelius/Gearlynx, v1.2.14) against a headless
+# Built from source (github.com/drhelius/Gearlynx, v1.2.18) against a headless
 # SDL3 3.4.10 because the released binaries target a newer glibc than the
 # sandbox provides. See README.md for the full build recipe.
 #
