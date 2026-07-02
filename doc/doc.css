@@ -72,14 +72,14 @@ body{
 .brand:hover{color:var(--accent)}
 .brand-logo{height:28px;width:auto;display:block;flex:none}
 
-/* ------------------------------------------------------------- tools dropdown */
+/* ------------------------------------------------- tools/usage/about dropdowns */
 .topbar .nav .dropdown{position:relative;display:inline-flex}
 .topbar .nav .dropbtn{
   font:inherit;color:var(--ink-soft);font-size:13.5px;cursor:pointer;
   border:none;background:none;padding:6px 10px;border-radius:7px;
   display:inline-flex;align-items:center;gap:4px;white-space:nowrap;
 }
-.topbar .nav .dropbtn::after{content:"▾";font-size:.8em;opacity:.8}
+.topbar .nav .dropbtn::after{content:"▾";font-size:1.8em;line-height:0;position:relative;top:-0.1em;opacity:.8}
 .topbar .nav .dropbtn:hover{background:var(--panel-2);color:var(--ink)}
 .topbar .nav .dropdown.active .dropbtn{color:var(--accent);font-weight:600}
 .topbar .nav .dropdown-menu{
