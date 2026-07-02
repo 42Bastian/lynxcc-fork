@@ -26,7 +26,8 @@ the <code>cfg/*.cfg</code> memory layout.</div><nav class="toc"><h2>Contents</h2
 <li class="lvl2"><a href="#sect-3-3">3.3. Field options</a></li>
 <li class="lvl1"><a href="#sect-4">4. Per-game JSON configuration</a></li>
 <li class="lvl1"><a href="#sect-5">5. Examples</a></li>
-<li class="lvl1"><a href="#sect-6">6. Copyright</a></li>
+<li class="lvl1"><a href="#sect-6">6. BLL objects &rarr; cartridge ROM</a></li>
+<li class="lvl1"><a href="#sect-7">7. Copyright</a></li>
 </ul></nav><h2 id="sect-1">1. Overview</h2>
 <p>Every linked <code>.lnx</code> file begins with a fixed 64-byte header that emulators
 (Handy, Mednafen) and flash carts read to learn the cartridge's bank sizes,
@@ -38,10 +39,13 @@ mean editing the shared runtime and relinking.</p>
 small JSON file describing its cartridge metadata and stamps it onto the built
 image with a single command. The image body is never touched &mdash; only the 64
 header bytes are rewritten &mdash; so patching is fast and safe to repeat.</p>
-<p>lnx deliberately does not generate cartridge images, list or extract directory
-segments, or convert sprites. Image construction stays with ld65 and the
-<code>cfg/*.cfg</code> files; sprite conversion is sp65's job. lnx only reads and rewrites
-the header, and wraps a raw image with one.</p>
+<p>lnx deliberately does not link programs, list or extract directory segments, or
+convert sprites. Symbol resolution and relocation stay with ld65 and the
+<code>cfg/*.cfg</code> files; sprite conversion is sp65's job. lnx reads and rewrites the
+header, wraps a raw image with one, and &mdash; with the <code>bll</code> command
+(<a href="#sect-6">section 6</a>) &mdash; wraps an already-linked BLL/BS93 object
+with the boot loader that turns it into a runnable cartridge ROM. That last step
+is a post-build format conversion of a finished object, not a second linker.</p>
 <h2 id="sect-2">2. The .lnx header</h2>
 <p>The header is 64 bytes; multi-byte numbers are little-endian. String fields are
 stored fixed-width and NUL-padded.</p>
@@ -81,8 +85,14 @@ commands:
   dump    &lt;file.lnx&gt;           hex+ASCII dump of the 64-byte header
   patch   [field-opts] &lt;file&gt;  rewrite header fields of a .lnx
   create  [field-opts] &lt;raw&gt;   wrap a raw image with a fresh header
+  bll     [bll-opts] &lt;obj.o&gt;   BLL/BS93 object -&gt; bootable cart ROM
 
-field options (patch/create):
+bll options:
+  --size 128|256|512           target cart size in KiB (default: smallest fit)
+  --lnx                        also prepend a 64-byte LYNX header
+  (plus the field options below, which apply to the --lnx header)
+
+field options (patch/create/bll):
   --config &lt;file.json&gt;         read fields from a JSON config
   --cartname &lt;str&gt;             set the 32-byte cart name
   --manufacturer &lt;str&gt;         set the 16-byte manufacturer name
@@ -131,6 +141,14 @@ field options (patch/create):
   rotation = none, blank names) and is then overlaid with the config/flags. A
   warning is printed if the input already starts with <code>LYNX</code>, since that would
   double-head the image.</p>
+</dd>
+<dt><code>bll [bll-opts] &lt;obj.o&gt;</code></dt>
+<dd>
+<p>Convert a BLL/BS93 object &mdash; as produced by
+  <code>cl65 -C cfg/lynx-bll.cfg</code> &mdash; into a bootable raw cartridge ROM,
+  writing it to the <code>-o</code> target (required). See
+  <a href="#sect-6">section 6</a> for the object format, the ROM layout and the
+  <code>--size</code> / <code>--lnx</code> options.</p>
 </dd>
 </dl>
 <h3 id="sect-3-3">3.3. Field options</h3>
@@ -230,7 +248,83 @@ a separate file rather than in place:</p>
 <pre class="verb">        game.lnx: src/main.c game.json
         	cl65 -o $@ src/main.c
         	lnx patch --config game.json $@</pre>
-<h2 id="sect-6">6. Copyright</h2>
+<p>Turn a BLL/BS93 object into a bootable cartridge ROM (see section 6):</p>
+<pre class="verb">        cl65 -t lynx -C cfg/lynx-bll.cfg -o game.o src/main.c
+        lnx bll game.o -o game.lyx</pre>
+<h2 id="sect-6">6. BLL objects &rarr; cartridge ROM</h2>
+<p>The SDK can link a program into a compact <em>BLL/BS93 object</em> with
+<code>cfg/lynx-bll.cfg</code>: a 10-byte header followed by the program body, with no boot
+loader and no cartridge padding. On its own such an object will not boot &mdash; it
+still needs the Lynx secondary loader in front of it and a directory entry telling
+that loader where the body lives. <code>lnx bll</code> performs exactly that wrap, producing
+a raw cartridge ROM that boots on real hardware, emulators and flash carts.</p>
+<h3 id="sect-6-1">6.1. The BLL/BS93 object</h3>
+<p>The object begins with a 10-byte header. Multi-byte numbers here are
+<strong>big-endian</strong>. Bytes 6&ndash;9 hold the ASCII magic <code>"BS93"</code> &mdash; this is what
+<code>lnx bll</code> checks to recognise the file (note the magic sits after the address and
+length fields, not at offset 0).</p>
+<table>
+<thead><tr><th>Offset</th><th>Size</th><th>Field</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>2</td><td>loader hint</td><td>not used by the conversion</td></tr>
+<tr><td>2</td><td>2</td><td>load address</td><td>big-endian; where the body loads in RAM</td></tr>
+<tr><td>4</td><td>2</td><td>block length</td><td>big-endian; length of header + body (body + 10)</td></tr>
+<tr><td>6</td><td>4</td><td>magic</td><td>ASCII <code>"BS93"</code></td></tr>
+<tr><td>10</td><td>&hellip;</td><td>body</td><td>the program image (block length &minus; 10 bytes)</td></tr>
+</tbody>
+</table>
+<h3 id="sect-6-2">6.2. The cartridge ROM it builds</h3>
+<p>The output is a raw cartridge image: the 203-byte secondary loader, an 8-byte
+directory entry at offset <code>0xCB</code>, the object body at offset 211 (<code>0xD3</code>), and
+zero padding out to the chosen cart size.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 150" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="Raw cartridge ROM layout: 203-byte loader, 8-byte directory at 0xCB, body at 0xD3, then zero padding to the cart size">
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="120" y="30">0x000</text>
+    <text x="300" y="30">0x0CB</text>
+    <text x="430" y="30">0x0D3 (211)</text>
+    <text x="690" y="30">cart size</text>
+  </g>
+  <g stroke="var(--border)">
+    <rect x="24"  y="38" width="252" height="46" fill="var(--accent)" fill-opacity="0.14"/>
+    <rect x="276" y="38" width="96"  height="46" fill="var(--accent-2)" fill-opacity="0.20"/>
+    <rect x="372" y="38" width="180" height="46" fill="var(--accent)" fill-opacity="0.34"/>
+    <rect x="552" y="38" width="144" height="46" fill="var(--panel-2)" stroke-dasharray="3 3"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" fill="var(--ink)" text-anchor="middle">
+    <text x="150" y="60">secondary loader</text>
+    <text x="324" y="60">directory</text>
+    <text x="462" y="60">object body</text>
+    <text x="624" y="60">zero pad</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="150" y="76">203 bytes</text>
+    <text x="324" y="76">8 bytes</text>
+    <text x="462" y="76">block length &minus; 10</text>
+    <text x="624" y="76">&middot;&middot;&middot;</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink-soft)" text-anchor="start">
+    <text x="24" y="110">directory entry (8 bytes): block 0 &middot; offset 211 &middot; flags 0x88 (exec) &middot; load address &middot; body length</text>
+    <text x="24" y="126">cart size 128 / 256 / 512&nbsp;KiB selects block size 512 / 1024 / 2048 (loader byte 0xC4 = 0xFE / 0xFC / 0xF8)</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">
+  Raw cartridge ROM built by <code>lnx bll</code> from a BLL/BS93 object.</figcaption>
+</figure>
+<p>The loader itself is the SDK's own boot loader (<code>runtime/lynx/bootldr.s</code>): the
+three loader variants embedded in lnx are generated from it at build time, one per
+block size, so a converted cartridge boots with exactly the loader the SDK ships
+in its full ROMs.</p>
+<h3 id="sect-6-3">6.3. Cart size and the LYNX header</h3>
+<p>By default <code>lnx bll</code> picks the smallest of 128, 256 or 512&nbsp;KiB that holds the
+body (the body must fit <code>cart&nbsp;size&nbsp;&minus;&nbsp;211</code> bytes); <code>--size</code> forces a
+particular size. The output is a raw image with no 64-byte <code>LYNX</code> header, which
+is what flash carts and most emulators expect. Pass <code>--lnx</code> to additionally
+prepend a header (built from the same field options and <code>--config</code> as
+<code>create</code>); its bank-0 page size defaults to the cart's block size. Emulators strip
+that header and boot the raw cartridge underneath, so both forms run identically.</p>
+<h2 id="sect-7">7. Copyright</h2>
 <p>lnx is part of the <strong>lynxcc</strong> Lynx Game Development SDK. The full license text is
 reproduced verbatim, together with every other copyright notice in the
 distribution, on the consolidated <a href="licenses.html">Licenses and copyright notices</a> page.</p></article></main><footer class="site-foot"><strong>lynxcc</strong> documentation &mdash; a complete Atari Lynx Game Development SDK.</footer>

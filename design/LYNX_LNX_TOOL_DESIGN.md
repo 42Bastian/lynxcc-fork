@@ -248,6 +248,10 @@ not an oversight):
 - **`.lnx` → raw `strip`.** Trivial (drop the first 64 bytes) but unneeded until
   a consumer asks; `create` covers the raw → `.lnx` direction that the build path
   uses.
+- **BLL/BS93 object → bootable cart ROM.** Wrapping a linked BLL object (from
+  `cfg/lynx-bll.cfg`) with the secondary loader and a one-entry directory is
+  designed separately in `design/LYNX_LNX_BLL_ROM_DESIGN.md` (a new `lnx bll`
+  command). It is a post-build format conversion, not linking, so it fits `lnx`.
 - *(No EEPROM gaps.)* Both the whole byte and every individual field (chip,
   LynxSD, word size) are settable from CLI and JSON, and `info` decodes them
   (§4.1). Nothing EEPROM-related is deferred.

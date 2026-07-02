@@ -23,6 +23,7 @@
 
 #include "lnxhdr.h"
 #include "jsoncfg.h"
+#include "bllrom.h"
 
 #define LNX_TOOL_VERSION "1.0"
 
@@ -47,6 +48,9 @@ typedef struct {
     int           version_set;
     unsigned      version;
 
+    int           lnx_wrap;        /* --lnx: prepend a 64-byte header (bll) */
+    BllSize       bll_size;        /* --size: forced cart size (bll), 0 = auto */
+
     const char*   output;          /* -o path, or NULL */
     const char*   file;            /* positional input file */
 } Options;
@@ -63,8 +67,14 @@ static void Usage(FILE* f)
         "  dump    <file.lnx>           hex+ASCII dump of the 64-byte header\n"
         "  patch   [field-opts] <file>  rewrite header fields of a .lnx\n"
         "  create  [field-opts] <raw>   wrap a raw image with a fresh header\n"
+        "  bll     [bll-opts] <obj.o>   BLL/BS93 object -> bootable cart ROM\n"
         "\n"
-        "field options (patch/create):\n"
+        "bll options:\n"
+        "  --size 128|256|512           target cart size in KiB (default: smallest fit)\n"
+        "  --lnx                        also prepend a 64-byte LYNX header\n"
+        "  (plus the field options below, which apply to the --lnx header)\n"
+        "\n"
+        "field options (patch/create/bll):\n"
         "  --config <file.json>         read fields from a JSON config\n"
         "  --cartname <str>             set the 32-byte cart name\n"
         "  --manufacturer <str>         set the 16-byte manufacturer name\n"
@@ -253,6 +263,14 @@ static int ParseFieldArgs(int argc, char** argv, int start, Options* o)
         } else if (strcmp(a, "--version") == 0) {
             if (++i >= argc || ParseUInt(argv[i], &o->version) != 0) { fprintf(stderr, "lnx: bad --version\n"); return -1; }
             o->version_set = 1;
+        } else if (strcmp(a, "--size") == 0) {
+            if (++i >= argc) { fprintf(stderr, "lnx: --size needs 128|256|512\n"); return -1; }
+            if (strcmp(argv[i], "128") == 0)      { o->bll_size = BLL_128K; }
+            else if (strcmp(argv[i], "256") == 0) { o->bll_size = BLL_256K; }
+            else if (strcmp(argv[i], "512") == 0) { o->bll_size = BLL_512K; }
+            else { fprintf(stderr, "lnx: bad --size '%s' (use 128|256|512)\n", argv[i]); return -1; }
+        } else if (strcmp(a, "--lnx") == 0) {
+            o->lnx_wrap = 1;
         } else if (strcmp(a, "-o") == 0 || strcmp(a, "--output") == 0) {
             if (++i >= argc) { fprintf(stderr, "lnx: -o needs a path\n"); return -1; }
             o->output = argv[i];
@@ -388,6 +406,78 @@ static int CmdCreate(const Options* o)
     return rc != 0;
 }
 
+static int CmdBll(const Options* o)
+{
+    size_t         obj_size;
+    unsigned char* obj;
+    unsigned       load_addr;
+    size_t         body_len;
+    BllSize        size;
+    unsigned char* rom;
+    unsigned char* out;
+    size_t         out_len;
+    int            rc;
+
+    if (!o->output) {
+        fprintf(stderr, "lnx: 'bll' requires -o <file>\n");
+        return 1;
+    }
+
+    obj = ReadFile(o->file, &obj_size);
+    if (!obj) {
+        return 1;
+    }
+    if (BllParseObject(obj, obj_size, &load_addr, &body_len) != 0) {
+        free(obj);
+        return 1;
+    }
+
+    size = BllChooseSize(body_len, o->bll_size);
+    if (size == BLL_SIZE_AUTO) {         /* did not fit (message already printed) */
+        free(obj);
+        return 1;
+    }
+
+    rom = BllBuildRom(obj + BLL_HDR_LEN, body_len, load_addr, size);
+    free(obj);
+    if (!rom) {
+        fprintf(stderr, "lnx: out of memory\n");
+        return 1;
+    }
+
+    if (o->lnx_wrap) {
+        /* Prepend a 64-byte LYNX header. Default page_size_bank0 to this cart's
+        ** block size (size / 256); config/flags may still override it. */
+        LnxHeader    h;
+        LnxRawHeader raw;
+
+        LnxHeaderDefaults(&h);
+        h.page_size_bank0 = (unsigned)size / 256;
+        if (ApplyOptions(o, &h) != 0) {
+            free(rom);
+            return 1;
+        }
+        LnxHeaderEncode(&h, &raw);
+
+        out_len = LNX_HEADER_SIZE + (size_t)size;
+        out = (unsigned char*)malloc(out_len);
+        if (!out) {
+            fprintf(stderr, "lnx: out of memory\n");
+            free(rom);
+            return 1;
+        }
+        memcpy(out, raw.bytes, LNX_HEADER_SIZE);
+        memcpy(out + LNX_HEADER_SIZE, rom, (size_t)size);
+        free(rom);
+        rc = WriteFile(o->output, out, out_len);
+        free(out);
+    } else {
+        rc = WriteFile(o->output, rom, (size_t)size);
+        free(rom);
+    }
+    return rc != 0;
+}
+
 int main(int argc, char** argv)
 {
     const char* cmd;
@@ -425,6 +515,10 @@ int main(int argc, char** argv)
     if (strcmp(cmd, "create") == 0) {
         if (ParseFieldArgs(argc, argv, 2, &o) != 0) { return 1; }
         return CmdCreate(&o);
+    }
+    if (strcmp(cmd, "bll") == 0) {
+        if (ParseFieldArgs(argc, argv, 2, &o) != 0) { return 1; }
+        return CmdBll(&o);
     }
 
     fprintf(stderr, "lnx: unknown command '%s'\n\n", cmd);

@@ -74,11 +74,15 @@
   <ItemGroup>
     <ClInclude Include="lnx\lnxhdr.h" />
     <ClInclude Include="lnx\jsoncfg.h" />
+    <ClInclude Include="lnx\bllrom.h" />
+    <ClInclude Include="lnx\blloader_gen.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lnx\main.c" />
     <ClCompile Include="lnx\lnxhdr.c" />
     <ClCompile Include="lnx\jsoncfg.c" />
+    <ClCompile Include="lnx\bllrom.c" />
+    <ClCompile Include="lnx\blloader_gen.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,4 +1,4 @@
-.PHONY: all mostlyclean clean install zip avail unavail bin lib doc html info examples tools tests
+.PHONY: all mostlyclean clean install zip avail unavail bin lib doc html info examples tools tests lnx-loader-gen
 
 .SUFFIXES:
 
@@ -34,6 +34,12 @@ examples:
 # on-demand / CI gate, not part of a plain build.
 tests:
 	@tests/run.sh
+
+# Regenerate the committed BLL loader tables (tools/lnx/blloader_gen.c) from the
+# SDK's own bootloader. Requires the toolchain + libraries to be built first.
+# See design/LYNX_LNX_BLL_ROM_DESIGN.md.
+lnx-loader-gen:
+	@sh tools/lnx/gen-loader.sh
 
 %65:
 	@$(MAKE) -C compiler     --no-print-directory $@
