@@ -547,7 +547,10 @@ directory is **not** added.
   - **SDK rebrand sweep.** The shared `site-foot` footer string repeated in
     every `doc/*.html` now reads "lynxcc documentation — a complete Atari Lynx
     game development toolkit." (done as one find-and-replace across all pages),
-    replacing the old "a fork of cc65 focused on the Atari Lynx target." The
+    replacing the old "a fork of cc65 focused on the Atari Lynx target." (The
+    topbar and footer were later centralised into `doc.js` as the `<site-nav>`
+    and `<site-foot>` custom elements, so this string now lives in one place —
+    see `design/DOC_STRUCTURE_DESIGN.md`.) The
     remaining "fork of cc65" framing in `history.html` and `intro.html` prose
     still awaits the same **Lynx Game Development SDK** rebrand — the SDK is the
     product; the cc65-derived toolchain is one component of it. This is a

@@ -127,6 +127,46 @@ body{
 html[data-theme="dark"] .theme-toggle .ic-sun{display:none}
 html[data-theme="dark"] .theme-toggle .ic-moon{display:inline}
 
+/* ---------------------------------------------- quick-jump search palette */
+.doc-search-btn{
+  flex:none;cursor:pointer;border:1px solid var(--border);
+  background:var(--panel-2);color:var(--ink);
+  width:38px;height:34px;border-radius:8px;font-size:19px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+}
+.doc-search-btn:hover{border-color:var(--accent)}
+.doc-search[hidden]{display:none}
+.doc-search{position:fixed;inset:0;z-index:100;display:flex;
+  align-items:flex-start;justify-content:center;}
+.doc-search .ds-backdrop{position:absolute;inset:0;
+  background:rgba(10,18,30,.45);backdrop-filter:blur(2px);}
+.ds-panel{position:relative;margin-top:12vh;width:min(620px,92vw);
+  max-height:70vh;display:flex;flex-direction:column;
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:12px;box-shadow:var(--shadow);overflow:hidden;}
+.ds-inputrow{display:flex;align-items:center;gap:9px;padding:12px 14px;
+  border-bottom:1px solid var(--border);}
+.ds-inputrow .ds-ic{font-size:20px;color:var(--ink-faint);flex:none;}
+.ds-input{flex:1;border:none;background:none;outline:none;
+  font:inherit;font-size:16px;color:var(--ink);}
+.ds-input::placeholder{color:var(--ink-faint);}
+.ds-esc{flex:none;font-size:11px;color:var(--ink-faint);
+  border:1px solid var(--border);border-radius:5px;padding:1px 6px;}
+.ds-list{list-style:none;margin:0;padding:6px;overflow-y:auto;}
+.ds-item{display:flex;align-items:baseline;gap:10px;cursor:pointer;
+  padding:8px 10px;border-radius:7px;color:var(--ink-soft);}
+.ds-item.active{background:var(--panel-2);color:var(--ink);}
+.ds-kind{flex:none;font-size:11px;font-weight:600;min-width:34px;
+  text-align:center;color:var(--ink-faint);}
+.ds-kind-page{color:var(--accent);}
+.ds-title{flex:1;color:inherit;font-size:14px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;}
+.ds-crumb{flex:none;font-size:12px;color:var(--ink-faint);
+  max-width:45%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ds-status{padding:8px 14px;border-top:1px solid var(--border);
+  font-size:12px;color:var(--ink-faint);}
+body.ds-open{overflow:hidden;}
+
 /* ------------------------------------------------------------- layout */
 .doc{max-width:var(--maxw);margin:0 auto;padding:34px 22px 64px}
 .doc-header h1{
@@ -222,6 +262,9 @@ nav.toc li.lvl2 a{color:var(--ink-soft)}
 @media (max-width:680px){nav.toc ul{columns:1}}
 
 /* footer */
+/* Custom elements default to display:inline; the shared chrome needs block so
+   the sticky topbar and the centered footer lay out like the old <div>/<footer>. */
+site-nav,site-foot{display:block}
 .site-foot{
   max-width:var(--maxw);margin:0 auto;padding:26px 22px 50px;
   color:var(--ink-faint);font-size:.85rem;border-top:1px solid var(--border);
