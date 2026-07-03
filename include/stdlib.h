@@ -95,19 +95,20 @@ void _randomize (void);         /* Non-standard */
 unsigned char __fastcall__ randmask (unsigned char mask);  /* Non-standard */
 
 /* Other standard stuff */
-/* NOTE: getenv(), putenv(), system() and abort() are NOT provided on the
-** Lynx.  There is no environment, no shell, and no console for abort()'s
-** diagnostic; use exit() to terminate.
+/* NOTE: getenv(), putenv(), system(), abort(), exit() and atexit() are NOT
+** provided on the Lynx.  There is no environment, no shell, and no console for
+** abort()'s diagnostic; and there is no host to return to, so exit() has no
+** public declaration and the runtime runs no teardown (hence no atexit()).
+** Return from main() (or fall off its end) to terminate: the runtime's
+** internal _exit trap then just masks interrupts and halts the machine.
 */
 int __fastcall__ abs (int val);
 long __fastcall__ labs (long val);
 int __fastcall__ atoi (const char* s);
 long __fastcall__ atol (const char* s);
-int __fastcall__ atexit (void (*exitfunc) (void));
 void* __fastcall__ bsearch (const void* key, const void* base, size_t n,
                             size_t size, int __fastcall__ (* cmp) (const void*, const void*));
 div_t __fastcall__ div (int numer, int denom);
-void __fastcall__ exit (int ret) __attribute__ ((noreturn));
 void __fastcall__ qsort (void* base, size_t count, size_t size,
                          int __fastcall__ (* compare) (const void*, const void*));
 long __fastcall__ strtol (const char* nptr, char** endptr, int base);

@@ -58,7 +58,6 @@
 int __fastcall__ isalnum (int c);
 int __fastcall__ isalpha (int c);
 int __fastcall__ isascii (int c);
-int __fastcall__ iscntrl (int c);
 int __fastcall__ isdigit (int c);
 int __fastcall__ isgraph (int c);
 int __fastcall__ islower (int c);

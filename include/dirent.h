@@ -41,75 +41,7 @@
 
 
 
-#if defined(__APPLE2__)
-
-struct dirent {
-    char          d_name[16];
-    unsigned      d_ino;
-    unsigned      d_blocks;
-    unsigned long d_size;
-    unsigned char d_type;
-    struct {
-        unsigned day  :5;
-        unsigned mon  :4;
-        unsigned year :7;
-    }             d_cdate;
-    struct {
-        unsigned char min;
-        unsigned char hour;
-    }             d_ctime;
-    unsigned char d_access;
-    unsigned      d_auxtype;
-    struct {
-        unsigned day  :5;
-        unsigned mon  :4;
-        unsigned year :7;
-    }             d_mdate;
-    struct {
-        unsigned char min;
-        unsigned char hour;
-    }             d_mtime;
-};
-
-#define _DE_ISREG(t)  ((t) != 0x0F)
-#define _DE_ISDIR(t)  ((t) == 0x0F)
-#define _DE_ISLBL(t)  (0)
-#define _DE_ISLNK(t)  (0)
-
-#elif defined(__ATARI__)
-
-struct dirent {
-    char          d_name[13];  /* 8.3 + trailing 0 */
-    unsigned char d_type;
-};
-
-#define _DE_ISREG(t)  ((t) != 0xC4)
-#define _DE_ISDIR(t)  ((t) == 0xC4)
-#define _DE_ISLBL(t)  (0)
-#define _DE_ISLNK(t)  (0)
-
-#elif defined(__CBM__)
-
-struct dirent {
-    char                d_name[16+1];
-    unsigned int        d_off;
-    unsigned int        d_blocks;
-    unsigned char       d_type;         /* See _CBM_T_xxx defines */
-
-    /* bsd extensions */
-    unsigned char       d_namlen;
-};
-
-/* File type specification macros. We need definitions of CBM file types. */
-#include <cbm_filetype.h>
-
-#define _DE_ISREG(t)    (((t) & _CBM_T_REG) != 0)
-#define _DE_ISDIR(t)    ((t) == _CBM_T_DIR)
-#define _DE_ISLBL(t)    ((t) == _CBM_T_HEADER)
-#define _DE_ISLNK(t)    ((t) == _CBM_T_LNK)
-
-#elif defined(__LYNX__)
-
+/* The cart's per-file directory entry, as populated by the runtime. */
 struct dirent {
     unsigned char       d_blocks;
     unsigned int        d_offset;
@@ -121,23 +53,12 @@ struct dirent {
 extern struct dirent FileEntry;
 #pragma zpsym ("FileEntry");
 
-#define _DE_ISREG(t)    (1)
-#define _DE_ISDIR(t)    (0)
-#define _DE_ISLBL(t)    (0)
-#define _DE_ISLNK(t)    (0)
-
-#else
-
-struct dirent {
-    char d_name[1];
-};
-
-#define _DE_ISREG(t)  (1)
-#define _DE_ISDIR(t)  (0)
-#define _DE_ISLBL(t)  (0)
-#define _DE_ISLNK(t)  (0)
-
-#endif
+/* NOTE: the _DE_ISREG/_DE_ISDIR/_DE_ISLBL/_DE_ISLNK entry-type classifier
+** macros are intentionally NOT provided on the Lynx.  They only make sense
+** together with the directory-stream functions (opendir/readdir/...), which
+** the cart does not have (see the note below), so on this target they would
+** be dead macros with nothing to classify.
+*/
 
 
 

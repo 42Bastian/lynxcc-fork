@@ -15,10 +15,15 @@
 ; on the front of the fully linked binary (see EXEHDR segment.)
 ;
 
+; _exit is the internal trap the program lands on if main() ever returns, and
+; the stack-overflow handler (stkchk.s) jumps here too.  It runs no teardown --
+; a console has no host to return to and nothing worth cleaning up -- it just
+; masks interrupts and spins.  There is deliberately no public exit() C
+; function on the Lynx; see include/stdlib.h.
         .export         _exit
         .export         __STARTUP__ : absolute = 1      ; Mark as startup
 
-        .import         initlib, donelib
+        .import         initlib
         .import         zerobss
         .import         callmain
         .import         _main
@@ -126,10 +131,10 @@ sloop:  ldy     SuzyInitReg,x
 
         jsr     callmain
 
-; Call the module destructors. This is also the exit() entry.
+; Landing pad: main() reaching here -- by returning or falling off its end --
+; traps the machine.  There is no host to return to and no teardown worth
+; running on a console, so we simply mask interrupts and spin forever.  The
+; stack-overflow handler (stkchk.s) also jumps here.
 
-_exit:  jsr     donelib         ; Run module destructors
-
-; Endless loop
-
+_exit:  sei
 noret:  bra     noret

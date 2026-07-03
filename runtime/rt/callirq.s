@@ -31,14 +31,11 @@
         .export         callirq_y       ; Same but with Y preloaded
         .export         __CALLIRQ__ : absolute = 1
         .constructor    irq_init, 10
-        .destructor     irq_done, 10
 
         .import         __INTERRUPTOR_TABLE__, __INTERRUPTOR_COUNT__
         .import         initirq
-        .import         doneirq
 
         irq_init :=     initirq
-        irq_done :=     doneirq
 
 ; --------------------------------------------------------------------------
 ; Call all IRQ routines. The function needs to use self modifying code and

@@ -85,9 +85,10 @@ int __fastcall__ _cos (unsigned x);
 ** is in 8.8 fixed point format, which means that 1.0 = $100 and -1.0 = $FF00.
 */
 
-unsigned char doesclrscrafterexit (void);
-/* Indicates whether the screen automatically be cleared after program
-** termination.
+/* NOTE: doesclrscrafterexit() is not provided.  It reports whether the host
+** clears the screen after a program returns; the Lynx program never returns
+** to a host (the runtime halts in an endless loop), so the query is
+** meaningless on this target.
 */
 
 

@@ -83,8 +83,10 @@ char* __fastcall__ strupr (char* s);
 char* __fastcall__ strupper (char* s);
 char* __fastcall__ strqtok (char* s1, const char* s2);
 
-const char* __fastcall__ _stroserror (unsigned char errcode);
-/* Map an operating system error number to an error message. */
+/* NOTE: _stroserror() (map an operating-system error number to a message) is
+** not provided.  It belonged to the mapped-errno machinery that was removed on
+** this target; only the direct-errno path and strerror() remain.
+*/
 
 
 

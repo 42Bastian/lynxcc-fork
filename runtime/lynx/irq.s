@@ -2,7 +2,7 @@
 ; IRQ handling (Lynx version)
 ;
 
-        .export         initirq, doneirq
+        .export         initirq
         .import         callirq
 
         .include "lynx/lynx.inc"
@@ -20,13 +20,9 @@ initirq:
         cli
         rts
 
-; ------------------------------------------------------------------------
-
-.code
-
-doneirq:
-        ; as Lynx is a console there is not much point in releasing the IRQ
-        rts
+; NOTE: there is no doneirq (IRQ-teardown) counterpart.  The runtime runs no
+; module destructors on the Lynx (the program never returns to a host), so
+; there is nothing to release the IRQ vector for.
 
 ; ------------------------------------------------------------------------
 

@@ -8,15 +8,14 @@
 ; limits the table size to 254 bytes (127 vectors) but this shouldn't be
 ; problem for now and may be changed later.
 ;
-; libinit and libdone call condes with the predefined module constructor and
-; destructor tables, they must be called from the platform specific startup
-; code.
+; initlib calls condes with the predefined module constructor table; it must
+; be called from the platform specific startup code.  (The Lynx runs no
+; module destructors -- see the note by initlib below.)
 
 
-        .export initlib, donelib, condes
+        .export initlib, condes
 
         .import __CONSTRUCTOR_TABLE__, __CONSTRUCTOR_COUNT__
-        .import __DESTRUCTOR_TABLE__, __DESTRUCTOR_COUNT__
 
         .macpack        cpu
 
@@ -36,22 +35,9 @@ exit:   rts
 
 .endproc
 
-
-; --------------------------------------------------------------------------
-; Cleanup library modules
-
-.code
-
-.proc   donelib
-
-        ldy     #<(__DESTRUCTOR_COUNT__*2)
-        beq     exit
-        lda     #<__DESTRUCTOR_TABLE__
-        ldx     #>__DESTRUCTOR_TABLE__
-        jmp     condes
-exit:   rts
-
-.endproc
+; NOTE: there is no donelib (module-destructor) counterpart on the Lynx.  The
+; program never returns to a host and the runtime runs no teardown, so only the
+; startup constructor pass (initlib) is provided.
 
 
 ; --------------------------------------------------------------------------
