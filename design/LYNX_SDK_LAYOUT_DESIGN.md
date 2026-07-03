@@ -238,6 +238,7 @@ This is the core new capability: a small **always-linked core** plus
 | Audio | `lynx-audio.lib` | opt-in | `libraries/audio` Mikey sound |
 | Math | `lynx-math.lib` | opt-in | `libraries/math` Suzy hw mul/div + async |
 | Compress | `lynx-compress.lib` | opt-in | `libraries/compress` zlib + lz4 |
+| SD/GD cart | `lynx-sdcard-gd.lib` | opt-in | `libraries/sdcard-gd` RetroHQ SD/GD flash cart (design/LYNX_SDCARD_GD_API_DESIGN.md) |
 
 `lynx.lib` (core) is the archive the `lynx` target auto-links, so existing
 programs that use only stdlib + core keep building with no link-line change.
@@ -321,6 +322,7 @@ target; this generalises that single default into an ordered list.
    lynx-audio.lib
    lynx-compress.lib
    lynx-math.lib
+   lynx-sdcard-gd.lib
    lynx.lib
    ```
 

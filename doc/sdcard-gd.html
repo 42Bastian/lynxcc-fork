@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SD / GD flash cart</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Usage</button><div class="dropdown-menu"><a href="intro.html"><span>Introduction</span><span class="tdesc">hello world tutorial</span></a><a href="coding.html"><span>Coding hints</span><span class="tdesc">effective cc65 code</span></a><a href="smc.html"><span>Self-modifying code</span><span class="tdesc">SMC ca65 macros</span></a><a href="using-make.html"><span>Using make</span><span class="tdesc">build with GNU Make</span></a><a href="migrating.html"><span>Migrating</span><span class="tdesc">port from cc65</span></a><a href="samples.html"><span>Sample programs</span><span class="tdesc">annotated examples</span></a></div></div><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="abccc.html"><span>abccc</span><span class="tdesc">tune compiler</span></a><a href="abcrom.html"><span>abcrom</span><span class="tdesc">tune test-ROM</span></a><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><div class="dropdown active"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Reference</button><div class="dropdown-menu"><a href="funcref.html"><span>Function reference</span><span class="tdesc">standard library</span></a><a href="lynx_gfx_fonts.html"><span>Graphics fonts</span><span class="tdesc">glyph tables</span></a><a href="sound.html"><span>Sound</span><span class="tdesc">music engine</span></a><a href="joypad.html"><span>Joypad input</span><span class="tdesc">buttons &amp; debouncing</span></a><a href="memory.html"><span>Memory</span><span class="tdesc">layout, stack &amp; heap</span></a><a href="cart.html"><span>Cart ROM &amp; EEPROM</span><span class="tdesc">image, saves &amp; I/O</span></a><a href="sdcard-gd.html" class="active"><span>SD/GD flash cart</span><span class="tdesc">RetroHQ cartridge</span></a><a href="lynx.html"><span>Lynx specifics</span><span class="tdesc">runtime &amp; hardware</span></a></div></div><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">About</button><div class="dropdown-menu"><a href="history.html"><span>History</span><span class="tdesc">authors &amp; credits</span></a><a href="licenses.html"><span>Licenses</span><span class="tdesc">copyright notices</span></a><a href="optlim.html"><span>Optimizations &amp; Limitations</span><span class="tdesc">code-gen &amp; limits</span></a></div></div></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>SD / GD flash cart</h1></header><div class="abstract">The RetroHQ Lynx <strong>SD / GD</strong> flash cartridge carries a
+microcontroller (MCU) that fronts an SD card. This page documents the
+<code>sdcard_gd_*</code> library that talks to it &mdash; the wire protocol, the C
+API for listing directories, streaming files and reprogramming the cart ROM
+window, and the on-card file layout the RetroHQ menu loader relies on. The
+driver is opt-in; the design lives in
+<code>design/LYNX_SDCARD_GD_API_DESIGN.md</code>.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl1"><a href="#sect-2">2. Wire protocol</a></li>
+<li class="lvl2"><a href="#sect-2-1">2.1. Registers and handshake</a></li>
+<li class="lvl2"><a href="#sect-2-2">2.2. Command set</a></li>
+<li class="lvl1"><a href="#sect-3">3. The C API</a></li>
+<li class="lvl1"><a href="#sect-4">4. Result codes and directory entries</a></li>
+<li class="lvl1"><a href="#sect-5">5. SD card layout</a></li>
+<li class="lvl2"><a href="#sect-5-1">5.1. Recognised ROM types</a></li>
+<li class="lvl2"><a href="#sect-5-2">5.2. The menu/ directory</a></li>
+<li class="lvl2"><a href="#sect-5-3">5.3. Long names, previews and block sizing</a></li>
+<li class="lvl1"><a href="#sect-6">6. Worked example</a></li>
+<li class="lvl1"><a href="#sect-7">7. Compatibility</a></li>
+</ul></nav>
+
+<h2 id="sect-1">1. Overview</h2>
+<p>On a RetroHQ SD/GD cart, everything behind the SD card &mdash; enumerating
+directories, streaming files, reflashing the cart ROM, saving data &mdash; is
+done by exchanging bytes with the cartridge MCU through two cartridge I/O
+registers. The <code>sdcard_gd_*</code> API wraps that byte protocol so a program
+can drive the card without hand-rolling the FIFO handshake.</p>
+<p>This is an <strong>opt-in</strong> subsystem: include the header and the library
+is auto-linked (like the audio and compress libraries), so ROMs that never touch
+the card pay nothing.</p>
+<pre class="verb">#include &lt;lynx/sdcard-gd.h&gt;</pre>
+<p>The API is specific to the RetroHQ SD/GD cart &mdash; the <code>_gd_</code> infix
+marks the family. A second flash-cart family, if one is ever added, gets its own
+header and library rather than overloading these names. Call
+<code>sdcard_gd_init()</code> once before anything else.</p>
+
+<h2 id="sect-2">2. Wire protocol</h2>
+
+<h3 id="sect-2-1">2.1. Registers and handshake</h3>
+<p>Communication is a byte FIFO exposed through four addresses:
+<code>IODIR</code> (<code>$FD8A</code>) and <code>IODAT</code> (<code>$FD8B</code>) are the
+Mikey I/O direction and data registers; <code>CART0</code> (<code>$FCB2</code>) and
+<code>CART1</code> (<code>$FCB3</code>) are the cartridge bank-0 and bank-1 data
+ports, used as the FIFO read and write sides. Bit 4 of <code>IODAT</code> (mask
+<code>$10</code>, the &ldquo;AUX&rdquo; bit) is the ready/busy flag that gates every
+transfer.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 250" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="Byte FIFO handshake between the Lynx CPU and the cart MCU gated by the IODAT AUX bit">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">
+    <rect x="40" y="40" width="180" height="170" rx="8" fill="var(--panel)" stroke="var(--border)"/>
+    <text x="130" y="62" font-size="13" fill="var(--ink)">Lynx CPU</text>
+    <text x="130" y="80" font-size="10" fill="var(--ink-faint)">sdcard_gd_* driver</text>
+
+    <rect x="500" y="40" width="180" height="170" rx="8" fill="var(--panel)" stroke="var(--border)"/>
+    <text x="590" y="62" font-size="13" fill="var(--ink)">Cart MCU</text>
+    <text x="590" y="80" font-size="10" fill="var(--ink-faint)">SD card behind it</text>
+
+    <!-- write path -->
+    <rect x="250" y="96" width="220" height="34" rx="6" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+    <text x="360" y="112" font-size="11" fill="var(--ink)">write: spin while IODAT&amp;$10</text>
+    <text x="360" y="125" font-size="10" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--ink-soft)">store byte &#8594; CART1 ($FCB3)</text>
+    <path d="M220 113 L248 113" stroke="var(--accent)" stroke-width="2" marker-end="url(#ah)"/>
+    <path d="M470 113 L498 113" stroke="var(--accent)" stroke-width="2" marker-end="url(#ah)"/>
+
+    <!-- read path -->
+    <rect x="250" y="150" width="220" height="34" rx="6" fill="var(--accent-2)" fill-opacity="0.16" stroke="var(--accent-2)"/>
+    <text x="360" y="166" font-size="11" fill="var(--ink)">read: spin until IODAT&amp;$10</text>
+    <text x="360" y="179" font-size="10" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--ink-soft)">load byte &#8592; CART0 ($FCB2)</text>
+    <path d="M498 167 L472 167" stroke="var(--accent-2)" stroke-width="2" marker-end="url(#ah2)"/>
+    <path d="M248 167 L222 167" stroke="var(--accent-2)" stroke-width="2" marker-end="url(#ah2)"/>
+  </g>
+  <defs>
+    <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="var(--accent)"/></marker>
+    <marker id="ah2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="var(--accent-2)"/></marker>
+  </defs>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">
+  The AUX bit (IODAT bit 4) gates the FIFO: the write side blocks while it is
+  set, the read side blocks until it is set.</figcaption>
+</figure>
+
+<p>Multi-byte arguments are <strong>little-endian</strong> (LSB first): a 16-bit
+value is two bytes, a 32-bit value four. Path strings are sent
+NUL-terminated, one byte at a time including the terminator. Initialisation
+writes <code>IODIR = 0</code> (all input) then <code>CART1 = $AA</code>, the magic
+byte that wakes the MCU comms state machine. Because the handshake busy-waits on
+hardware, the calls never time out &mdash; a wedged or absent MCU will hang.</p>
+
+<h3 id="sect-2-2">2.2. Command set</h3>
+<p>Every command writes a single command byte, then any arguments, then (for all
+but low-power) reads a status/result. The command bytes are a 0-based enum:</p>
+<table class="grid">
+<thead><tr><th>#</th><th>Command</th><th>Arguments written (LE)</th><th>Response read</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>OpenDir</td><td>NUL-terminated path</td><td>1 status byte</td></tr>
+<tr><td>1</td><td>ReadDir</td><td>&mdash;</td><td>1 status byte; if OK, a 22-byte <code>SFileInfo</code></td></tr>
+<tr><td>2</td><td>OpenFile</td><td>NUL-terminated path</td><td>1 status byte</td></tr>
+<tr><td>3</td><td>GetSize</td><td>&mdash;</td><td>4-byte size</td></tr>
+<tr><td>4</td><td>Seek</td><td>4-byte absolute offset</td><td>1 status byte</td></tr>
+<tr><td>5</td><td>Read</td><td>2-byte count</td><td><em>count</em> data bytes, then 1 status byte</td></tr>
+<tr><td>6</td><td>Write</td><td>2-byte count, then <em>count</em> data bytes</td><td>1 status byte</td></tr>
+<tr><td>7</td><td>Close</td><td>&mdash;</td><td>1 status byte</td></tr>
+<tr><td>8</td><td>ProgramFile</td><td>2-byte start block, 1-byte block size, 2-byte block count</td><td>1 status byte (blocks until flash done)</td></tr>
+<tr><td>9</td><td>ClearBlocks</td><td>2-byte start block, 2-byte block count</td><td>1 status byte (blocks until erase done)</td></tr>
+<tr><td>10</td><td>LowPowerMode</td><td>&mdash;</td><td>none</td></tr>
+</tbody>
+</table>
+<p>A <code>Read</code> streams its payload first and the status byte last, so the
+whole buffer is always drained. <code>ProgramFile</code> and <code>ClearBlocks</code>
+block on the MCU until the flash operation finishes; the status read is the
+completion signal. For a <strong>512-block card</strong> (A19 driven by the aux
+pin) the large-card bit is folded into an argument rather than a separate field:
+<code>ProgramFile</code> ORs <code>$10</code> into the block-size byte and
+<code>ClearBlocks</code> ORs <code>$8000</code> into the block-count word &mdash;
+the wrappers do this when their <code>b512BlockCard</code> flag is set.</p>
+
+<h2 id="sect-3">3. The C API</h2>
+<p>Twelve functions, all declared in <code>lynx/sdcard-gd.h</code>. The
+data-carrying calls are <code>__fastcall__</code> and so need a prototype in scope.
+Full per-function detail is in the
+<a href="funcref.html#sdcard-gd.h">function reference</a>.</p>
+
+<p><strong>Init and power</strong></p>
+<pre class="verb">void sdcard_gd_init (void);
+void sdcard_gd_lowpower (void);</pre>
+
+<p><strong>Directory listing</strong></p>
+<pre class="verb">FRESULT __fastcall__ sdcard_gd_opendir (const char* pDir);
+FRESULT __fastcall__ sdcard_gd_readdir (SFileInfo* pInfo);</pre>
+<p>Open a directory, then call <code>sdcard_gd_readdir()</code> repeatedly until it
+returns anything other than <code>FR_OK</code>.</p>
+
+<p><strong>File I/O</strong> (one file open at a time)</p>
+<pre class="verb">FRESULT __fastcall__ sdcard_gd_open  (const char* pFile);
+FRESULT              sdcard_gd_close (void);
+FRESULT __fastcall__ sdcard_gd_seek  (unsigned long nSeekPos);
+unsigned long        sdcard_gd_size  (void);
+FRESULT __fastcall__ sdcard_gd_read  (void* pBuffer, unsigned int nSize);
+FRESULT __fastcall__ sdcard_gd_write (const void* pBuffer, unsigned int nSize);</pre>
+
+<p><strong>ROM programming</strong></p>
+<pre class="verb">FRESULT __fastcall__ sdcard_gd_program (unsigned int  nStartBlock,
+                                        unsigned char nBlockSize,
+                                        unsigned int  nBlockCount,
+                                        unsigned char b512BlockCard);
+FRESULT __fastcall__ sdcard_gd_clear   (unsigned int  nStartBlock,
+                                        unsigned int  nBlocks,
+                                        unsigned char b512BlockCard);</pre>
+<p><code>sdcard_gd_program()</code> writes <em>block count</em> blocks of
+<em>block size</em> (in 256-byte units) into the cart ROM starting at
+<em>start block</em>, sourced from the current position of the open file.
+<code>sdcard_gd_clear()</code> erases a block range with no source file.</p>
+
+<h2 id="sect-4">4. Result codes and directory entries</h2>
+<p>Every status byte decodes to an <code>FRESULT</code>:</p>
+<table class="grid">
+<thead><tr><th>Value</th><th>Name</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>0</td><td><code>FR_OK</code></td><td>success</td></tr>
+<tr><td>1</td><td><code>FR_DISK_ERR</code></td><td>low-level I/O error</td></tr>
+<tr><td>2</td><td><code>FR_NOT_READY</code></td><td>card / MCU not ready</td></tr>
+<tr><td>3</td><td><code>FR_NO_FILE</code></td><td>path not found</td></tr>
+<tr><td>4</td><td><code>FR_NOT_OPENED</code></td><td>operation needs an open file/dir</td></tr>
+<tr><td>5</td><td><code>FR_NOT_ENABLED</code></td><td>subsystem disabled</td></tr>
+<tr><td>6</td><td><code>FR_NO_FILESYSTEM</code></td><td>no valid FAT filesystem</td></tr>
+</tbody>
+</table>
+<p><code>sdcard_gd_readdir()</code> fills a packed 22-byte record (cc65 does not pad
+structs, so the field order and sizes are fixed by the wire format):</p>
+<pre class="verb">typedef struct {
+    unsigned long   fsize;      /* file size in bytes           */
+    unsigned int    fdate;      /* FAT last-modified date       */
+    unsigned int    ftime;      /* FAT last-modified time       */
+    unsigned char   fattrib;    /* attribute bits (AM_*)        */
+    char            fname[13];  /* 8.3 name, NUL-terminated     */
+} SFileInfo;</pre>
+<p>The <code>fattrib</code> bits are <code>AM_RDO</code> ($01), <code>AM_HID</code>
+($02), <code>AM_SYS</code> ($04), <code>AM_VOL</code> ($08), <code>AM_DIR</code>
+($10) and <code>AM_ARC</code> ($20); <code>AM_MASK</code> ($3F) masks the defined
+bits.</p>
+
+<h2 id="sect-5">5. SD card layout</h2>
+<p>Paths are DOS-style with <code>/</code> separators, relative to the card root
+(for example <code>"menu/prefs"</code> or <code>"_preview/alien.lsd"</code>).
+Directory listings return upper-case 8.3 short names in <code>fname</code>; long
+names are not returned by <code>readdir</code> (see &sect;5.3). The layout below is
+the convention used by the RetroHQ menu loader.</p>
+
+<h3 id="sect-5-1">5.1. Recognised ROM types</h3>
+<table class="grid">
+<thead><tr><th>Ext</th><th>Format</th><th>Sizing</th></tr></thead>
+<tbody>
+<tr><td><code>.LNX</code></td><td>Headered Lynx ROM (64-byte &ldquo;LYNX&rdquo; header)</td><td>block size from header byte 5</td></tr>
+<tr><td><code>.LYX</code></td><td>Raw / headerless ROM image</td><td>block size inferred from file size</td></tr>
+<tr><td><code>.O</code></td><td>Homebrew BS93 object file</td><td>fixed 2048-byte blocks + object loader</td></tr>
+<tr><td><code>.COM</code></td><td>Same header as <code>.O</code></td><td>same as <code>.O</code></td></tr>
+</tbody>
+</table>
+
+<h3 id="sect-5-2">5.2. The menu/ directory</h3>
+<p>The menu loader keeps its own state as files it reads and writes through this
+same API &mdash; a good worked example of <code>sdcard_gd_read</code> /
+<code>sdcard_gd_write</code>:</p>
+<table class="grid">
+<thead><tr><th>Path</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>menu/prefs</code></td><td>preferences blob (one byte per option)</td></tr>
+<tr><td><code>menu/lastrom</code></td><td>256-byte path of the last launched ROM</td></tr>
+<tr><td><code>menu/homebrew</code></td><td>scratch file for the patched BS93 object loader</td></tr>
+<tr><td><code>menu/default.pal</code></td><td>32-byte BGR UI palette; absent &rArr; built-in colours</td></tr>
+<tr><td><code>menu/*.pal</code></td><td>extra sample palettes; copy over <code>default.pal</code> to switch</td></tr>
+</tbody>
+</table>
+
+<h3 id="sect-5-3">5.3. Long names, previews and block sizing</h3>
+<p><strong>Long names.</strong> An optional <code>romlist.txt</code> in a directory
+maps 8.3 names to display names, one per line as
+<code>[romname.ext]Long ROM Name</code> (name &le; 45 chars). Only files that
+exist are overridden. This is a loader convention; the API itself has no notion
+of long names.</p>
+<p><strong>Previews.</strong> A game preview is <code>8365</code> bytes of Lynx
+sprite image data followed by a <code>32</code>-byte palette. The file sits beside
+the ROM with the extension changed to <code>.LSD</code>
+(<code>alien.lnx</code> &rarr; <code>alien.LSD</code>); a legacy scheme keeps
+<code>&lt;base&gt;.lsd</code> files in a <code>_PREVIEW/</code> directory at the card
+root.</p>
+<p><strong>Block sizing.</strong> For a <code>.LNX</code> file, read the 64-byte
+header; byte 5 is the block-size code (1, 2, 4 or 8 = 256/512/1024/2048 bytes).
+File size minus the 64-byte header, divided by the block size in bytes (rounded
+up), is the block count; seek past the header, then program from block 0.
+Header byte 60 bit 6 (<code>$40</code>) is the &ldquo;use the cart EEPROM as a
+file&rdquo; flag &mdash; when set, do <em>not</em> call
+<code>sdcard_gd_lowpower()</code> before launch, because the game keeps talking to
+the MCU for saves. A <code>.LYX</code> file has no header: pick the block size from
+the total file size (64K&rarr;1, 128K&rarr;2, 256K&rarr;4, 512K&rarr;8, else 4)
+and program the whole image from block 0.</p>
+
+<h2 id="sect-6">6. Worked example</h2>
+<p>List the ROMs in the card root, then read the header of the first one:</p>
+<pre class="verb">#include &lt;lynx/sdcard-gd.h&gt;
+
+SFileInfo info;
+char header[64];
+
+sdcard_gd_init();
+
+if (sdcard_gd_opendir("/") == FR_OK) {
+    while (sdcard_gd_readdir(&amp;info) == FR_OK) {
+        if (info.fattrib &amp; AM_DIR)
+            continue;                    /* skip sub-directories   */
+        /* info.fname holds an 8.3 name such as "ALIEN.LNX"        */
+    }
+}
+
+if (sdcard_gd_open("ALIEN.LNX") == FR_OK) {
+    sdcard_gd_read(header, 64);          /* payload then status    */
+    sdcard_gd_close();
+}</pre>
+<p>Programming and launching a ROM is the menu loader's job; see
+<code>examples/sdcard-gd/</code> and
+<code>design/LYNX_SDCARD_GD_API_DESIGN.md</code> &sect;6.6 for the block-sizing
+and launch sequence.</p>
+
+<h2 id="sect-7">7. Compatibility</h2>
+<p>The original RetroHQ menu code uses <code>LynxSD_*</code>-prefixed names
+(<code>LynxSD_OpenFile</code>, <code>LynxSD_ProgramROMFromFile</code>, and so on).
+The header keeps these as thin deprecated aliases so existing community code
+compiles unchanged; define <code>LYNX_NO_SDCARD_GD_COMPAT</code> before including
+the header to remove them. New code should use the <code>sdcard_gd_*</code>
+names.</p>
+</article></main><footer class="site-foot"><strong>lynxcc</strong> documentation &mdash; a complete Atari Lynx Game Development SDK.</footer>
+<script src="doc.js"></script>
+</body></html>

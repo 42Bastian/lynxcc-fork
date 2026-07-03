@@ -17,6 +17,7 @@
 #   lib/lynx-audio.lib      opt-in: libraries/audio (Mikey sound)
 #   lib/lynx-math.lib       opt-in: libraries/math (Suzy hw mul/div + async)
 #   lib/lynx-compress.lib   opt-in: libraries/compress (zlib + lz4)
+#   lib/lynx-sdcard-gd.lib  opt-in: libraries/sdcard-gd (RetroHQ SD/GD cart)
 #
 # Run from the repo root (the CC65_HOME directory); the top-level Makefile
 # invokes it as "make -f libraries.mk".  Replaces the old single-target
@@ -61,8 +62,10 @@ GRAPHICS_DIRS = libraries/graphics
 AUDIO_DIRS    = libraries/audio libraries/audio/sfx
 MATH_DIRS     = libraries/math
 COMPRESS_DIRS = libraries/compress
+SDCARD_GD_DIRS = libraries/sdcard-gd
 
-ALL_DIRS = $(CORE_DIRS) $(GRAPHICS_DIRS) $(AUDIO_DIRS) $(MATH_DIRS) $(COMPRESS_DIRS)
+ALL_DIRS = $(CORE_DIRS) $(GRAPHICS_DIRS) $(AUDIO_DIRS) $(MATH_DIRS) $(COMPRESS_DIRS) \
+           $(SDCARD_GD_DIRS)
 
 vpath %.s $(ALL_DIRS)
 vpath %.c $(ALL_DIRS)
@@ -78,15 +81,18 @@ GRAPHICS_OBJS = $(call objs,$(GRAPHICS_DIRS))
 AUDIO_OBJS    = $(call objs,$(AUDIO_DIRS))
 MATH_OBJS     = $(call objs,$(MATH_DIRS))
 COMPRESS_OBJS = $(call objs,$(COMPRESS_DIRS))
+SDCARD_GD_OBJS = $(call objs,$(SDCARD_GD_DIRS))
 
-OBJS = $(CORE_OBJS) $(GRAPHICS_OBJS) $(AUDIO_OBJS) $(MATH_OBJS) $(COMPRESS_OBJS)
+OBJS = $(CORE_OBJS) $(GRAPHICS_OBJS) $(AUDIO_OBJS) $(MATH_OBJS) $(COMPRESS_OBJS) \
+       $(SDCARD_GD_OBJS)
 DEPS = $(OBJS:.o=.d)
 
 LIBS = lib/lynx.lib          \
        lib/lynx-graphics.lib \
        lib/lynx-audio.lib    \
        lib/lynx-math.lib     \
-       lib/lynx-compress.lib
+       lib/lynx-compress.lib \
+       lib/lynx-sdcard-gd.lib
 
 # The cl65 auto-library manifest (design sec. 6.6): one archive per line, in the
 # order cl65 hands them to ld65 — dependents first, core (lynx.lib) last — so a
@@ -159,6 +165,9 @@ lib/lynx-math.lib: $(MATH_OBJS) | dirs
 lib/lynx-compress.lib: $(COMPRESS_OBJS) | dirs
 	$(ARCHIVE_recipe)
 
+lib/lynx-sdcard-gd.lib: $(SDCARD_GD_OBJS) | dirs
+	$(ARCHIVE_recipe)
+
 # Regenerate the manifest whenever this Makefile (its source of truth) changes.
 # Written with one echo per line rather than make's $(file ...) function, which
 # needs GNU make 4.0+ — the macOS system make is still 3.81, where $(file ...)
@@ -172,6 +181,7 @@ $(MANIFEST): libraries.mk | dirs
 	@echo lynx-audio.lib>>$@
 	@echo lynx-compress.lib>>$@
 	@echo lynx-math.lib>>$@
+	@echo lynx-sdcard-gd.lib>>$@
 	@echo lynx.lib>>$@
 
 dirs:

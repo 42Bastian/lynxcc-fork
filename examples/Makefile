@@ -53,6 +53,7 @@ SUZY          = muldivtest spritetest spritesheet spriteslice suzyasync suzyasyn
 MIKEY         = setbpp sndtune sfxtest sfxdemo
 MEMORY        = heaptest zeropage
 NETWORK       = comlynx
+SDCARD_GD     = sdcardls
 
 EXELIST = \
         $(addsuffix .lnx,$(ROOT_EXAMPLES)) \
@@ -60,7 +61,8 @@ EXELIST = \
         $(addprefix suzy/,$(addsuffix .lnx,$(SUZY))) \
         $(addprefix mikey/,$(addsuffix .lnx,$(MIKEY))) \
         $(addprefix memory/,$(addsuffix .lnx,$(MEMORY))) \
-        $(addprefix network/,$(addsuffix .lnx,$(NETWORK)))
+        $(addprefix network/,$(addsuffix .lnx,$(NETWORK))) \
+        $(addprefix sdcard-gd/,$(addsuffix .lnx,$(SDCARD_GD)))
 
 # --------------------------------------------------------------------------
 # Generic rules
@@ -195,6 +197,8 @@ install:
 	$(INSTALL) -m0644 $(addprefix memory/,$(addsuffix .c,$(MEMORY))) $(DESTDIR)$(examplesdir)/memory
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/network
 	$(INSTALL) -m0644 $(addprefix network/,$(addsuffix .c,$(NETWORK))) $(DESTDIR)$(examplesdir)/network
+	$(INSTALL) -d $(DESTDIR)$(examplesdir)/sdcard-gd
+	$(INSTALL) -m0644 $(addprefix sdcard-gd/,$(addsuffix .c,$(SDCARD_GD))) $(DESTDIR)$(examplesdir)/sdcard-gd
 
 # --------------------------------------------------------------------------
 # Packaging rules
