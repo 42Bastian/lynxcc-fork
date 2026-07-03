@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>abcrom Users Guide</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Usage</button><div class="dropdown-menu"><a href="intro.html"><span>Introduction</span><span class="tdesc">hello world tutorial</span></a><a href="coding.html"><span>Coding hints</span><span class="tdesc">effective cc65 code</span></a><a href="smc.html"><span>Self-modifying code</span><span class="tdesc">SMC ca65 macros</span></a><a href="using-make.html"><span>Using make</span><span class="tdesc">build with GNU Make</span></a><a href="migrating.html"><span>Migrating</span><span class="tdesc">port from cc65</span></a><a href="samples.html"><span>Sample programs</span><span class="tdesc">annotated examples</span></a></div></div><div class="dropdown active"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="abccc.html"><span>abccc</span><span class="tdesc">tune compiler</span></a><a href="abcrom.html" class="active"><span>abcrom</span><span class="tdesc">tune test-ROM</span></a><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Reference</button><div class="dropdown-menu"><a href="funcref.html"><span>Function reference</span><span class="tdesc">standard library</span></a><a href="lynx_gfx_fonts.html"><span>Graphics fonts</span><span class="tdesc">glyph tables</span></a><a href="sound.html"><span>Sound</span><span class="tdesc">music engine</span></a><a href="joypad.html"><span>Joypad input</span><span class="tdesc">buttons &amp; debouncing</span></a><a href="memory.html"><span>Memory</span><span class="tdesc">layout, stack &amp; heap</span></a><a href="cart.html"><span>Cart ROM &amp; EEPROM</span><span class="tdesc">image, saves &amp; I/O</span></a><a href="lynx.html"><span>Lynx specifics</span><span class="tdesc">runtime &amp; hardware</span></a></div></div><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">About</button><div class="dropdown-menu"><a href="history.html"><span>History</span><span class="tdesc">authors &amp; credits</span></a><a href="licenses.html"><span>Licenses</span><span class="tdesc">copyright notices</span></a><a href="optlim.html"><span>Optimizations &amp; Limitations</span><span class="tdesc">code-gen &amp; limits</span></a></div></div></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>abcrom Users Guide</h1></header><div class="abstract">abcrom is a standalone Lynx Game Development SDK utility that turns a tune into a
+runnable <code>.lnx</code> cartridge for auditioning in an emulator, with no
+toolchain at test time. It ships a pre-assembled <em>template</em> ROM &mdash; the
+<code>snd</code> sound engine plus a tiny boot harness &mdash; and patches a
+compiled tune stream into a reserved region, so a tune reaches a playable ROM in
+milliseconds. It is host-compiled and does not invoke cc65. Tunes are authored in
+ABC and compiled by <a href="abccc.html">abccc</a>; for how the engine plays a
+stream, see the <a href="sound.html">Sound</a> page.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl1"><a href="#sect-2">2. How the template patcher works</a></li>
+<li class="lvl1"><a href="#sect-3">3. Usage</a></li>
+<li class="lvl1"><a href="#sect-4">4. The template ROM</a></li>
+<li class="lvl1"><a href="#sect-5">5. Copyright</a></li>
+</ul></nav><h2 id="sect-1">1. Overview</h2>
+<p>Once a tune is written, you usually want to hear it before wiring it into a
+game. abcrom gives that fast feedback loop: it takes an ABC tune (or an
+already-compiled stream) and produces a bootable <code>.lnx</code> that plays the
+tune on load in any Lynx emulator &mdash; no compile, no link, no cc65 installed.
+It is the preview companion to <a href="abccc.html">abccc</a>, which does the actual
+ABC&nbsp;&rarr;&nbsp;stream compilation.</p>
+<p>abcrom lives under <code>tools/abcrom/</code> and its binary installs into the
+root <code>bin/</code> alongside the rest of the SDK utilities. It shells out to
+<code>abccc</code> (which must be on <code>PATH</code>) to compile a tune, then does
+its own patching; pass <code>--bin</code> if the input is already a compiled
+stream.</p>
+<h2 id="sect-2">2. How the template patcher works</h2>
+<p>abcrom ships a pre-assembled <em>template</em> ROM &mdash; the <code>snd</code>
+engine plus a tiny boot harness and four fixed, reserved tune regions &mdash; and
+simply patches a compiled stream into the region for a channel. Because the region
+is fixed-size, patching never changes the file length, so the <code>.lnx</code>
+header stays valid and a tune reaches a playable ROM in milliseconds.</p>
+<p>Each region is fronted by an <code>"ABCR"</code> magic header carrying the
+format version, channel index, capacity and used length, so the patcher locates it
+without hard-coded offsets and refuses a template whose version does not match the
+compiler. On boot the harness calls <code>snd_init()</code> then
+<code>snd_play()</code> for each non-empty region and loops; an empty region is a
+single <code>END</code> byte and that channel stays silent.</p>
+<h2 id="sect-3">3. Usage</h2>
+<p>abcrom is invoked with a tune and options:</p>
+<pre class="verb">abcrom  [opts]  tune.abc
+  -o FILE          output .lnx (default: &lt;tune&gt;.lnx)
+  -t FILE          template .lnx (default: bundled template)
+  --channels MAP   place tunes on channels, e.g. 0:bass.abc,1:lead.abc
+  --name STR       cart-name field in the .lnx header
+  --run [EMU]      launch emulator after patching
+  --bin            input is already a compiled stream, skip abccc</pre>
+<p>The simplest run patches one tune onto channel&nbsp;0 and writes a ROM beside it:</p>
+<pre class="verb">        abcrom tune.abc                        # -&gt; tune.lnx
+        abcrom --channels 0:bass.abc,1:lead.abc -o song.lnx bass.abc
+        abcrom --run tune.abc                   # patch, then launch an emulator</pre>
+<h2 id="sect-4">4. The template ROM</h2>
+<p>The template embeds a specific engine build and stream-format version. Its
+source lives in <code>tools/abcrom/template/</code> and the bundled default
+<code>tools/abcrom/template.lnx</code> is committed, so abcrom works out of the box.
+Whenever the sound engine or the stream format changes, rebuild it once with the
+toolchain:</p>
+<pre class="verb">        make abcrom-template</pre>
+<p>The <code>ABCR</code> format-version byte turns a template/compiler mismatch into
+a hard error rather than silent corruption. Tunes larger than a region's capacity
+are rejected &mdash; bump the reserved size in the template source and rebuild. The
+patched <code>.lnx</code> carries the standard 64-byte header and runs in Handy,
+Mednafen and Felix; real-hardware carts need the encrypted micro-loader, a separate
+path outside abcrom's quick-preview scope.</p>
+<h2 id="sect-5">5. Copyright</h2>
+<p>abcrom is part of the <strong>lynxcc</strong> Lynx Game Development SDK. The full
+license text is reproduced verbatim, together with every other copyright notice in
+the distribution, on the consolidated <a href="licenses.html">Licenses and copyright notices</a> page.</p></article></main><footer class="site-foot"><strong>lynxcc</strong> documentation &mdash; a complete Atari Lynx Game Development SDK.</footer>
+<script src="doc.js"></script>
+</body></html>

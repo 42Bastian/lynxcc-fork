@@ -138,8 +138,9 @@ suzy/spriteslice.o: suzy/spriteslice.c $(SHEET_FRAMES)
 # --------------------------------------------------------------------------
 # The snd-engine demo links the example against a compiled ABC tune stream.
 # theme.s is the committed output of "abccc -f s -l theme_music -o theme.s
-# theme.abc" (abccc lives under host-tools/, outside this build); regenerate it
-# by hand when theme.abc changes. See mikey/sndtune.c and doc/sound.html.
+# theme.abc" (abccc lives under tools/abccc/, host-compiled into bin/, outside
+# this build); regenerate it by hand when theme.abc changes. See mikey/sndtune.c
+# and doc/sound.html.
 
 mikey/sndtune.lnx: mikey/sndtune.o mikey/theme.o
 	$(CL) $(LDFLAGS) -o $@ -m $(@:.lnx=.map) $^

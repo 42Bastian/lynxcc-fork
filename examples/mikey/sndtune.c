@@ -16,7 +16,7 @@
 **     |: CDEF GABc :|
 **     z4
 **
-** Rebuild the stream with (abccc lives under host-tools/):
+** Rebuild the stream with (abccc lives under tools/abccc/, built into bin/):
 **
 **     abccc -f s -l theme_music -o theme.s theme.abc
 **

@@ -13,9 +13,19 @@ endif
 # Standalone SDK utilities (not part of the cc65-derived compiler suite).
 # Each program is a subdirectory of .c sources; none depend on compiler/common.
 # All binaries install into the single root bin/ (LYNX_SDK_LAYOUT_DESIGN.md §2).
-PROGS = lnx
+#
+#   lnx     .lnx header/cart tool
+#   abccc   ABC tune text -> compiled event stream (sound engine, MIT)
+#   abcrom  patch a compiled tune into the template .lnx for emulator auditioning
+#
+# abccc/abcrom are host-compiled like the rest of tools/; unlike them, abcrom
+# also ships a pre-assembled template ROM (abcrom/template.lnx) that IS built
+# with the lynxcc toolchain — rebuilt on demand via the abcrom-template target
+# below, not as part of `all` (it needs the compiler + libraries, which build
+# after tools/). See design/LYNX_SND_ENGINE_DESIGN.md §7/§9.
+PROGS = lnx abccc abcrom
 
-.PHONY: all mostlyclean clean install zip avail unavail bin $(PROGS)
+.PHONY: all mostlyclean clean install zip avail unavail bin abcrom-template $(PROGS)
 
 .SUFFIXES:
 
@@ -56,6 +66,11 @@ ifdef CROSS_COMPILE
 endif
 
 all bin: $(PROGS)
+
+# (Re)build the abcrom template ROM with the lynxcc toolchain.  On demand only:
+# the committed abcrom/template.lnx is the default and clean does NOT remove it.
+abcrom-template:
+	$(MAKE) -C abcrom/template all
 
 mostlyclean:
 	$(call RMDIR,$(foreach prog,$(PROGS),../wrk/$(prog)))

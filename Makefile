@@ -1,4 +1,4 @@
-.PHONY: all mostlyclean clean install zip avail unavail bin lib doc html info examples tools tests lnx-loader-gen
+.PHONY: all mostlyclean clean install zip avail unavail bin lib doc html info examples tools tests lnx-loader-gen abcrom-template
 
 .SUFFIXES:
 
@@ -40,6 +40,13 @@ tests:
 # See design/LYNX_LNX_BLL_ROM_DESIGN.md.
 lnx-loader-gen:
 	@sh tools/lnx/gen-loader.sh
+
+# Rebuild the abcrom tune-audition template ROM (tools/abcrom/template.lnx) with
+# the lynxcc toolchain. Requires the compiler + libraries to be built first;
+# on demand only, whenever the sound engine or stream format changes.
+# See design/LYNX_SND_ENGINE_DESIGN.md §9.
+abcrom-template:
+	@$(MAKE) -C tools --no-print-directory abcrom-template
 
 %65:
 	@$(MAKE) -C compiler     --no-print-directory $@

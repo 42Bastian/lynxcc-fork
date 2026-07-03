@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>abccc Users Guide</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<div class="topbar"><a class="brand" href="index.html"><img class="brand-logo" src="logo.svg" alt=""><span>lynxcc</span></a><nav class="nav"><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Usage</button><div class="dropdown-menu"><a href="intro.html"><span>Introduction</span><span class="tdesc">hello world tutorial</span></a><a href="coding.html"><span>Coding hints</span><span class="tdesc">effective cc65 code</span></a><a href="smc.html"><span>Self-modifying code</span><span class="tdesc">SMC ca65 macros</span></a><a href="using-make.html"><span>Using make</span><span class="tdesc">build with GNU Make</span></a><a href="migrating.html"><span>Migrating</span><span class="tdesc">port from cc65</span></a><a href="samples.html"><span>Sample programs</span><span class="tdesc">annotated examples</span></a></div></div><div class="dropdown active"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Tools</button><div class="dropdown-menu"><a href="abccc.html" class="active"><span>abccc</span><span class="tdesc">tune compiler</span></a><a href="abcrom.html"><span>abcrom</span><span class="tdesc">tune test-ROM</span></a><a href="ar65.html"><span>ar65</span><span class="tdesc">object archiver</span></a><a href="ca65.html"><span>ca65</span><span class="tdesc">macro assembler</span></a><a href="cc65.html"><span>cc65</span><span class="tdesc">C compiler</span></a><a href="cl65.html"><span>cl65</span><span class="tdesc">compile &amp; link</span></a><a href="co65.html"><span>co65</span><span class="tdesc">object converter</span></a><a href="da65.html"><span>da65</span><span class="tdesc">disassembler</span></a><a href="ld65.html"><span>ld65</span><span class="tdesc">linker</span></a><a href="lnx.html"><span>lnx</span><span class="tdesc">cartridge tool</span></a><a href="sp65.html"><span>sp65</span><span class="tdesc">sprite &amp; bitmap</span></a></div></div><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">Reference</button><div class="dropdown-menu"><a href="funcref.html"><span>Function reference</span><span class="tdesc">standard library</span></a><a href="lynx_gfx_fonts.html"><span>Graphics fonts</span><span class="tdesc">glyph tables</span></a><a href="sound.html"><span>Sound</span><span class="tdesc">music engine</span></a><a href="joypad.html"><span>Joypad input</span><span class="tdesc">buttons &amp; debouncing</span></a><a href="memory.html"><span>Memory</span><span class="tdesc">layout, stack &amp; heap</span></a><a href="cart.html"><span>Cart ROM &amp; EEPROM</span><span class="tdesc">image, saves &amp; I/O</span></a><a href="lynx.html"><span>Lynx specifics</span><span class="tdesc">runtime &amp; hardware</span></a></div></div><div class="dropdown"><button type="button" class="dropbtn" aria-haspopup="true" aria-expanded="false">About</button><div class="dropdown-menu"><a href="history.html"><span>History</span><span class="tdesc">authors &amp; credits</span></a><a href="licenses.html"><span>Licenses</span><span class="tdesc">copyright notices</span></a><a href="optlim.html"><span>Optimizations &amp; Limitations</span><span class="tdesc">code-gen &amp; limits</span></a></div></div></nav><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle light/dark"><span class="ic-sun">☀</span><span class="ic-moon">☾</span></button></div><main class="doc"><article><header class="doc-header"><h1>abccc Users Guide</h1></header><div class="abstract">abccc is a standalone Lynx Game Development SDK utility that compiles a tune
+written in <strong>ABC</strong> text into the byte-coded event stream played on
+target by the <code>snd</code> sound engine. ABC is the <em>authoring</em> format
+only &mdash; it is never parsed on the Lynx; abccc does the parsing at build time
+and emits ca65 assembly, a C header or a raw binary. It is host-compiled and does
+not depend on the cc65 toolchain. For how the engine replays that stream, and for
+worked playback examples, see the <a href="sound.html">Sound</a> page; to preview a
+compiled tune as a runnable cartridge, see <a href="abcrom.html">abcrom</a>.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl1"><a href="#sect-2">2. The ABC source language</a></li>
+<li class="lvl2"><a href="#sect-2-1">2.1. Notes, rests and durations</a></li>
+<li class="lvl2"><a href="#sect-2-2">2.2. Inline commands</a></li>
+<li class="lvl2"><a href="#sect-2-3">2.3. Repeats and structure</a></li>
+<li class="lvl2"><a href="#sect-2-4">2.4. Envelopes: AHD and looping</a></li>
+<li class="lvl1"><a href="#sect-3">3. Usage</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. Command line</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. The build flow</a></li>
+<li class="lvl1"><a href="#sect-4">4. Copyright</a></li>
+</ul></nav><h2 id="sect-1">1. Overview</h2>
+<p>The <strong>lynxcc</strong> sound engine plays a compiled <em>event stream</em>:
+notes interleaved with opcodes that set instruments, envelopes and loops. abccc is
+the tool that produces those bytes. You write a tune in ABC &mdash; a compact text
+notation &mdash; and abccc lowers it to the stream once, at build time, so the
+cartridge carries only the byte-coded result and the engine never has to parse
+ASCII.</p>
+<p>Keeping the compiler off-target keeps the runtime free of a stateful tokenizer,
+lets the tool be written in a convenient host language, and makes its output easy
+to unit-test against the stream spec. abccc lives under <code>tools/abccc/</code>
+and its binary installs into the root <code>bin/</code> alongside the rest of the
+SDK utilities. The stream format, opcode map and ABC grammar are specified in full
+in <code>design/LYNX_SND_ENGINE_DESIGN.md</code>.</p>
+<h2 id="sect-2">2. The ABC source language</h2>
+<h3 id="sect-2-1">2.1. Notes, rests and durations</h3>
+<p>A tune is a NUL-terminated ASCII string. Notes are the letters
+<code>C&nbsp;D&nbsp;E&nbsp;F&nbsp;G&nbsp;A&nbsp;B</code> in the middle octave and
+<code>c&nbsp;d&nbsp;e&nbsp;f&nbsp;g&nbsp;a&nbsp;b</code> one octave higher.
+<code>^</code> sharpens and <code>_</code> flattens; a trailing <code>,</code>
+drops an octave and <code>'</code> raises one. <code>z</code> is a rest. Any note
+or rest takes an optional duration number (<code>C2</code>, <code>z4</code>); the
+real length in frames is <code>number &times; T</code>.</p>
+<h3 id="sect-2-2">2.2. Inline commands</h3>
+<p>Inline commands each take a numeric argument:</p>
+<table>
+<thead><tr><th>Cmd</th><th>Name</th><th>Effect</th><th>Default</th></tr></thead>
+<tbody>
+<tr><td><code>V</code></td><td>Volume</td><td>channel target volume (0&ndash;127)</td><td>127</td></tr>
+<tr><td><code>R</code></td><td>Ramp / attack</td><td>per-frame attack increment</td><td>4</td></tr>
+<tr><td><code>H</code></td><td>Hold</td><td>frames of full-volume sustain</td><td>4</td></tr>
+<tr><td><code>K</code></td><td>Kill / decay</td><td>per-frame decay decrement</td><td>4</td></tr>
+<tr><td><code>T</code></td><td>Tempo</td><td>frames per duration unit</td><td>6</td></tr>
+<tr><td><code>O</code></td><td>Octave base</td><td>added to each note's octave</td><td>0</td></tr>
+<tr><td><code>I</code></td><td>Integrate</td><td>0 = square, 1 = integrate/triangle</td><td>&mdash;</td></tr>
+<tr><td><code>X</code></td><td>XOR taps</td><td>LFSR feedback taps (timbre / noise)</td><td>&mdash;</td></tr>
+</tbody>
+</table>
+<h3 id="sect-2-3">2.3. Repeats and structure</h3>
+<p>For structure, <code>|:</code> opens a repeat (optionally followed by a count,
+<code>|:3</code>) and <code>:|</code> closes it; spaces are ignored. Bar lines
+<code>|</code> are cosmetic.</p>
+<h3 id="sect-2-4">2.4. Envelopes: AHD and looping</h3>
+<p><code>V/R/H/K</code> describe a simple attack&ndash;hold&ndash;decay (AHD)
+amplitude shape. abccc lowers them into an ordinary three-segment
+<em>volume envelope</em>, so the runtime needs no AHD-specific code: an AHD
+instrument is just a volume envelope like any other.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 180" style="width:100%;height:auto;max-width:620px" role="img"
+     aria-label="AHD envelope: volume ramps up by R during attack, holds for H frames at V, then decays by K back to zero">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10">
+    <line x1="64" y1="150" x2="680" y2="150" stroke="var(--border)"/>
+    <line x1="64" y1="20"  x2="64"  y2="150" stroke="var(--border)"/>
+    <text x="40" y="34" fill="var(--ink-faint)" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9">V</text>
+    <text x="36" y="150" fill="var(--ink-faint)" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9">0</text>
+    <line x1="60" y1="40" x2="68" y2="40" stroke="var(--border)"/>
+    <polyline points="64,150 224,40 424,40 624,150" fill="none" stroke="var(--accent)" stroke-width="2"/>
+    <line x1="224" y1="40" x2="224" y2="150" stroke="var(--border)" stroke-dasharray="3 3"/>
+    <line x1="424" y1="40" x2="424" y2="150" stroke="var(--border)" stroke-dasharray="3 3"/>
+    <g fill="var(--ink-soft)" text-anchor="middle">
+      <text x="144" y="168">attack (+R)</text>
+      <text x="324" y="168">hold (H)</text>
+      <text x="524" y="168">decay (&minus;K)</text>
+    </g>
+    <text x="232" y="36" fill="var(--ink-faint)" font-size="9">reaches V</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">
+  The AHD shape abccc compiles from <code>V/R/H/K</code> into a
+  three-segment volume envelope.</figcaption>
+</figure>
+
+<p>Richer effects use full looping envelopes directly. An envelope is a list of
+<code>[count,&nbsp;increment]</code> segments with a loop point; every interrupt the
+engine advances the active segment, applying <code>increment</code> to volume,
+frequency or the shift register. A looping frequency envelope gives vibrato; a
+looping volume envelope gives tremolo.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 150" style="width:100%;height:auto;max-width:680px" role="img"
+     aria-label="Looping envelope: a list of count-increment segments with an arrow looping from the last segment back to the loop point">
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" text-anchor="middle">
+    <g>
+      <rect x="40"  y="48" width="40" height="32" fill="var(--panel-2)" stroke="var(--border)"/>
+      <rect x="80"  y="48" width="40" height="32" fill="var(--panel-2)" stroke="var(--border)"/>
+      <rect x="140" y="48" width="56" height="32" fill="var(--accent)" fill-opacity="0.16" stroke="var(--accent)"/>
+      <rect x="196" y="48" width="56" height="32" fill="var(--accent)" fill-opacity="0.16" stroke="var(--accent)"/>
+      <rect x="252" y="48" width="56" height="32" fill="var(--accent)" fill-opacity="0.16" stroke="var(--accent)"/>
+      <rect x="308" y="48" width="56" height="32" fill="var(--accent)" fill-opacity="0.16" stroke="var(--accent)"/>
+    </g>
+    <g fill="var(--ink)">
+      <text x="60"  y="68">loop</text><text x="100" y="68">n</text>
+      <text x="168" y="68">cnt,inc</text><text x="224" y="68">cnt,inc</text><text x="280" y="68">cnt,inc</text><text x="336" y="68">cnt,inc</text>
+    </g>
+    <g font-size="9" fill="var(--ink-faint)">
+      <text x="80"  y="42">header</text>
+      <text x="252" y="42">segments</text>
+    </g>
+    <path d="M336,84 C336,118 196,118 168,86" fill="none" stroke="var(--accent-2)" stroke-width="1.5"/>
+    <polygon points="168,86 176,92 174,82" fill="var(--accent-2)"/>
+    <text x="252" y="116" fill="var(--accent-2)" font-size="9">loops back to the loop point</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">
+  A looping <code>[count,&nbsp;increment]</code> envelope &mdash; the basis of
+  vibrato and tremolo.</figcaption>
+</figure>
+
+<h2 id="sect-3">3. Usage</h2>
+<h3 id="sect-3-1">3.1. Command line</h3>
+<p>abccc reads <code>.abc</code> text and emits a ca65 source
+(<code>-f&nbsp;s</code>), a C header (<code>-f&nbsp;h</code>) or a raw stream
+(<code>-f&nbsp;bin</code>):</p>
+<pre class="verb">abccc  [options]  input.abc
+  -o FILE        output file
+  -f s|h|bin     output format: ca65 asm (.s), C header (.h), raw binary
+  -l LABEL       symbol/label name for the emitted stream
+  --org ADDR     load address for bin/h output that uses envelope pointers
+  --no-compact   disable default-duration compaction (emit 2-byte notes)
+  --validate     range/structure checks only, no output
+  --version      print the stream format version and exit</pre>
+<h3 id="sect-3-2">3.2. The build flow</h3>
+<p>abccc maps each note to a chromatic table index (the engine's tuning), folds
+<code>T</code> and <code>O</code> into durations and pitches, lowers
+<code>V/R/H/K</code> into a volume envelope, compiles repeats to
+<code>Loop</code>/<code>Do</code>, and packs common notes to one byte. The emitted
+bytes are the shared contract between abccc and the on-target player, so the two
+must always agree on the stream format version (<code>abccc&nbsp;--version</code>).
+A Makefile rule wires it in like any other generator:</p>
+<pre class="verb">ABCCC := abccc
+
+assets/%.s: assets/%.abc
+	$(ABCCC) -f s -l $(notdir $*)_music -o $@ $&lt;
+
+game.lnx: main.o assets/theme.o
+	cl65 -o $@ $^</pre>
+<p>The committed <code>examples/mikey/theme.s</code> is exactly this output for
+<code>theme.abc</code>; it is checked in so the <code>sndtune</code> example links
+without abccc present, and is regenerated by hand when the tune changes. For a
+walk-through of composing a melody, a two-voice loop and an expressive instrument
+&mdash; each with the resulting stream and the C that plays it &mdash; see the
+worked examples on the <a href="sound.html#examples">Sound</a> page. To hear a tune
+without a full build, patch it into a test cartridge with
+<a href="abcrom.html">abcrom</a>.</p>
+<h2 id="sect-4">4. Copyright</h2>
+<p>abccc is part of the <strong>lynxcc</strong> Lynx Game Development SDK. The full
+license text is reproduced verbatim, together with every other copyright notice in
+the distribution, on the consolidated <a href="licenses.html">Licenses and copyright notices</a> page.</p></article></main><footer class="site-foot"><strong>lynxcc</strong> documentation &mdash; a complete Atari Lynx Game Development SDK.</footer>
+<script src="doc.js"></script>
+</body></html>

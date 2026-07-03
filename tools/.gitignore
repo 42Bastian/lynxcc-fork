@@ -1,0 +1,4 @@
+# Build artifacts of the abcrom template ROM (regenerable with
+# `make abcrom-template`).  The template.lnx / template.lnx.map that abcrom
+# patches are committed as the bundled default and are NOT ignored.
+abcrom/template/*.o

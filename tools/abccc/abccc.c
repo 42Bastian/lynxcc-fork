@@ -4,8 +4,10 @@
  *
  * Part of the Lynx Game Development SDK (lynxcc).  abccc turns a human-readable
  * ABC tune string (see design/LYNX_SND_ENGINE_DESIGN.md sec. 4) into the binary
- * event stream interpreted on target by the snd engine (sec. 5/6).  It is a
- * self-contained host tool maintained outside the cc65 build.
+ * event stream interpreted on target by the snd engine (sec. 5/6).  It lives
+ * under tools/ and its binary installs into the root bin/ like the other SDK
+ * utilities, but it is built with the host C compiler and does not depend on
+ * the cc65-derived compiler suite.
  *
  * Usage:
  *   abccc [options] input.abc

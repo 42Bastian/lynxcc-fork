@@ -8,7 +8,7 @@
 # Produces ../template.lnx (the bundled default) and ../template.lnx.map, whose
 # exported region symbols abcrom reads to resolve envelope pointers.
 
-# Repo root is four levels up: host-tools/abcrom/template -> .
+# Repo root is three levels up: tools/abcrom/template -> .
 ROOT     := ../../..
 export CC65_HOME := $(abspath $(ROOT))
 

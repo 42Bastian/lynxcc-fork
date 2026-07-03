@@ -100,6 +100,8 @@ lynxcc/                     # repo root == CC65_HOME (dev tree)
 │   └── Makefile
 ├── tools/                  # standalone SDK utilities (own binaries)
 │   ├── lnx/                #   .lnx header/segment tool  (NEW, see §8)
+│   ├── abccc/              #   ABC tune -> event stream compiler (host, MIT)
+│   ├── abcrom/             #   tune test-ROM patcher + template/  (host, MIT)
 │   ├── *.vcxproj           #   MSVC projects (tool binaries)
 │   └── Makefile
 ├── runtime/                # C runtime + startup (was libsrc/runtime + crt0)
@@ -141,8 +143,8 @@ Deviations from the originally proposed layout, with rationale:
 - **`compiler/` holds the entire cc65 suite, including `sp65` and `da65`.**
   They were originally going to move to `tools/`, but that split them from the
   `common.a` they link; keeping the suite whole avoids the cross-directory
-  dependency entirely (§5). `tools/` is reserved for the brand-new standalone
-  utility `lnx`.
+  dependency entirely (§5). `tools/` is reserved for brand-new standalone
+  utilities (`lnx`, and the sound-engine host tools `abccc` / `abcrom`).
 - **`runtime/` is split into `rt/` and `lynx/`** to separate
   compiler-coupled helper routines from Lynx startup/glue; both are
   always-linked and end up in `lynx.lib`.
@@ -204,10 +206,10 @@ the shared `common/` support archive — moves as a unit from `src/` to
 the single root `bin/` output are all unchanged. There is no cross-directory
 `common.a` dependency to manage, which is exactly why we keep the suite whole.
 
-`tools/` is reserved for the new standalone utility `lnx`, which does
-**not** depend on `compiler/common`; if a future tool ever needs `common.a`,
-that is the point to reconsider publishing it to a stable shared path — not
-now.
+`tools/` is reserved for new standalone utilities — `lnx`, plus the sound-engine
+host tools `abccc` and `abcrom` — none of which depend on `compiler/common`; if a
+future tool ever needs `common.a`, that is the point to reconsider publishing it to a
+stable shared path — not now.
 
 The **top-level `Makefile` orders `compiler` before `tools`** so the toolchain
 binaries exist before anything that invokes them. All binaries install into the
@@ -408,6 +410,8 @@ existing toolchain capability — wrap or rename instead.
 | Tool | Status | Purpose | Overlap note |
 | --- | --- | --- | --- |
 | `lnx` | IMPLEMENTED (phase 8) | inspect/patch `.lnx` headers (`info`/`dump`/`patch`/`create`) — names, rotation, bank sizes, version, AUDIN and EEPROM flags — with per-game header config via CLI flags or JSON; raw→`.lnx` wrap. Segment list/extract and `.lnx`→raw strip deferred (see `design/LYNX_LNX_TOOL_DESIGN.md` §7). | `.lnx` *generation* already happens via `ld65` + `cfg/*.cfg`; `lnx` is a post-build inspector/editor, not a second linker. |
+| `abccc` | IMPLEMENTED | compile ABC tune text into the sound engine's binary event stream (`-f s`/`h`/`bin`). Host-compiled, MIT; see `design/LYNX_SND_ENGINE_DESIGN.md` §7. | No overlap: there is no on-target or toolchain ABC compiler. |
+| `abcrom` | IMPLEMENTED | patch an `abccc`-compiled tune into a reserved region of a pre-built template `.lnx` for zero-toolchain emulator auditioning. Host-compiled, MIT; see `design/LYNX_SND_ENGINE_DESIGN.md` §9. Its template ROM is rebuilt on demand with `make abcrom-template`. | Does **not** invoke `ld65`; it patches an already-linked template rather than linking a new ROM. |
 
 Sprite/bitmap conversion is **not** a `tools/` entry: that is `sp65`, which
 already exists in the toolchain (`compiler/`). No duplicate sprite engine and no

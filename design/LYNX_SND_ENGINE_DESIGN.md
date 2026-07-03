@@ -331,11 +331,14 @@ integrate-mode channel, so each note starts from silence; square channels reload
 
 ## 7. `abccc` — the tune compiler
 
-A **separate, self-contained command-line tool**, maintained **outside** the cc65 /
-**lynxcc** build. It turns ABC tune text into a compiled stream before the normal
-build runs. Keeping it external keeps the target tree free of the stateful
-tokenizer, lets it be written in a convenient host language (C or Python), and makes
-its output easy to unit-test against the stream spec.
+A **separate, self-contained command-line tool** living under `tools/abccc/`, with
+its binary built into the root `bin/` alongside the other SDK utilities (`tools/`,
+LYNX_SDK_LAYOUT_DESIGN.md §8). It is **host-compiled** and does **not** depend on the
+cc65-derived compiler suite — it runs before, and independently of, the on-target
+toolchain, turning ABC tune text into a compiled stream before the normal build runs.
+Keeping the compiler off-target keeps the target tree free of the stateful tokenizer,
+lets it be written in a convenient host language, and makes its output easy to
+unit-test against the stream spec.
 
 Responsibilities:
 
@@ -493,8 +496,10 @@ to `snd_play` with a compiled stream, or to `mikey_snd_*` for direct SFX.
 
 ## 9. `abcrom` — tune test-ROM utility
 
-A separate command-line utility (like `abccc`, **outside** the cc65 codebase) that
-turns a tune into a runnable `.lnx` for auditioning in an emulator.
+A separate command-line utility (like `abccc`, it lives under `tools/abcrom/`, builds
+into the root `bin/`, and is **host-compiled** — it does not depend on the cc65
+compiler suite) that turns a tune into a runnable `.lnx` for auditioning in an
+emulator.
 
 ### 9.1 Approach: template patcher (zero toolchain at test time)
 
@@ -509,8 +514,12 @@ stays valid.
 
 ### 9.2 The template ROM
 
-Built **once** with the normal toolchain (a `make` target in the player project, not
-part of `abcrom`). It contains the engine object, a boot harness that on reset calls
+Built **once** with the normal toolchain — its source lives in
+`tools/abcrom/template/` and it is rebuilt on demand with `make abcrom-template`, kept
+out of the default build (it needs the compiler + libraries, which build after
+`tools/`) and separate from `abcrom`'s own host build. The committed
+`tools/abcrom/template.lnx` is the bundled default. It contains the engine object, a
+boot harness that on reset calls
 `snd_init()` then `snd_play()` for each non-empty region and loops, and one or more
 **reserved tune regions** in `RODATA` fronted by a magic header so the patcher can
 locate them without hard-coded offsets. The player replays a stream until the `END`
@@ -564,10 +573,18 @@ abcrom  [opts]  tune.abc
 
 A standalone `doc/sound.html` page must be authored as part of this work. Today
 sound is only a short subsection (`doc/lynx.html` §8.4) plus the function-reference
-entries; the merged engine needs a full guide that both explains how playback works
-and teaches how to compose tunes with `abccc`. The page follows the rest of the SDK
-documentation: light/dark theme, the shared nav and Licenses links, a card on
-`doc/index.html`, and Makefile wiring like the other pages.
+entries; the merged engine needs a full guide that explains how playback works. The
+page follows the rest of the SDK documentation: light/dark theme, the shared nav and
+Licenses links, a card on `doc/index.html`, and Makefile wiring like the other pages.
+
+Because `abccc` and `abcrom` are standalone SDK utilities (they build into `bin/`
+like the rest of `tools/`), each also has its **own tool page** in the Tools section
+of the docs — `doc/abccc.html` (the ABC language, options and build flow) and
+`doc/abcrom.html` (the template patcher, options and `make abcrom-template`). The
+Sound page keeps a brief mention of both — that `abccc` generates the binary stream
+and `abcrom` previews a tune — and links out to those pages rather than duplicating
+their detail, so the composing/auditioning how-to lives next to the tools it
+documents.
 
 ### 10.1 Content outline
 

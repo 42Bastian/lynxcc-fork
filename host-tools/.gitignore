@@ -1,5 +1,0 @@
-# Host-tool build artifacts (regenerable with `make`); the bundled abcrom
-# template ROM (abcrom/template.lnx and its .map) IS committed as the default.
-abccc/abccc
-abcrom/abcrom
-abcrom/template/*.o

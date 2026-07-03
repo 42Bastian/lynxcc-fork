@@ -45,6 +45,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sp65", "sp65.vcxproj", "{43
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lnx", "..\tools\lnx.vcxproj", "{CBFBE5DC-394A-4726-A884-310D9DA78553}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "abccc", "..\tools\abccc.vcxproj", "{7F2A9C10-1AB2-4C3D-9E4F-ABCCC0000001}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "abcrom", "..\tools\abcrom.vcxproj", "{7F2A9C10-1AB2-4C3D-9E4F-ABCC00000002}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -91,6 +95,14 @@ Global
 		{CBFBE5DC-394A-4726-A884-310D9DA78553}.Debug|Win32.Build.0 = Debug|Win32
 		{CBFBE5DC-394A-4726-A884-310D9DA78553}.Release|Win32.ActiveCfg = Release|Win32
 		{CBFBE5DC-394A-4726-A884-310D9DA78553}.Release|Win32.Build.0 = Release|Win32
+		{7F2A9C10-1AB2-4C3D-9E4F-ABCCC0000001}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7F2A9C10-1AB2-4C3D-9E4F-ABCCC0000001}.Debug|Win32.Build.0 = Debug|Win32
+		{7F2A9C10-1AB2-4C3D-9E4F-ABCCC0000001}.Release|Win32.ActiveCfg = Release|Win32
+		{7F2A9C10-1AB2-4C3D-9E4F-ABCCC0000001}.Release|Win32.Build.0 = Release|Win32
+		{7F2A9C10-1AB2-4C3D-9E4F-ABCC00000002}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7F2A9C10-1AB2-4C3D-9E4F-ABCC00000002}.Debug|Win32.Build.0 = Debug|Win32
+		{7F2A9C10-1AB2-4C3D-9E4F-ABCC00000002}.Release|Win32.ActiveCfg = Release|Win32
+		{7F2A9C10-1AB2-4C3D-9E4F-ABCC00000002}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
