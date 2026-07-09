@@ -15,27 +15,35 @@ See doc/licenses.html.
 <site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>Memory</h1></header><div class="abstract">The Atari Lynx memory map, the C runtime stack and stack-overflow checking,
 and the dynamic-memory (heap) allocator.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Memory layout</a></li>
-<li class="lvl1"><a href="#sect-2">2. The C runtime stack and stack-overflow checking</a></li>
-<li class="lvl2"><a href="#sect-2-1">2.1. Setting the stack size</a></li>
-<li class="lvl2"><a href="#sect-2-2">2.2. Enabling stack-overflow checking</a></li>
-<li class="lvl1"><a href="#sect-3">3. Dynamic memory allocation (the heap)</a></li>
-<li class="lvl2"><a href="#sect-3-1">3.1. How allocation works</a></li>
-<li class="lvl2"><a href="#sect-3-2">3.2. How it deviates from POSIX</a></li>
-<li class="lvl1"><a href="#sect-4">4. Startup reclamation and relocation</a></li>
-<li class="lvl2"><a href="#sect-4-1">4.1. The split: resident stub vs one-shot body</a></li>
-<li class="lvl2"><a href="#sect-4-2">4.2. Relocation and reclaim</a></li>
-<li class="lvl2"><a href="#sect-4-3">4.3. The boot sequence</a></li>
+<li class="lvl1"><a href="#sect-2">2. Memory-mapped I/O and the display overlay</a></li>
+<li class="lvl1"><a href="#sect-3">3. The C runtime stack and stack-overflow checking</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. Setting the stack size</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. Enabling stack-overflow checking</a></li>
+<li class="lvl1"><a href="#sect-4">4. Dynamic memory allocation (the heap)</a></li>
+<li class="lvl2"><a href="#sect-4-1">4.1. How allocation works</a></li>
+<li class="lvl2"><a href="#sect-4-2">4.2. How it deviates from POSIX</a></li>
+<li class="lvl1"><a href="#sect-5">5. Startup reclamation and relocation</a></li>
+<li class="lvl2"><a href="#sect-5-1">5.1. The split: resident stub vs one-shot body</a></li>
+<li class="lvl2"><a href="#sect-5-2">5.2. Relocation and reclaim</a></li>
+<li class="lvl2"><a href="#sect-5-3">5.3. The boot sequence</a></li>
 </ul></nav><h2 id="sect-1">1. Memory layout</h2>
 <p>cc65 generated programs with the default setup run with the I/O area and the
 kernal enabled, which gives a usable memory range of $200 - $C037.</p>
-<p>Special locations:</p>
-<pre class="verb">  0000 - 00FF Zero page
-  0100 - 01FF Machine stack
-
-  A058 - C037 Collision buffer
-  C038 - E017 Screen buffer 1
-  E018 - FFF7 Screen buffer 0
-  FFF8 - FFFF Hardware vectors</pre>
+<p>Special locations (default <code>lynx.cfg</code>):</p>
+<pre class="verb">  0000 - 00FF  Zero page
+  0100 - 01FF  Machine stack (6502 hardware stack)
+  0200 - C037  Program, data, heap and C stack (MAIN area)
+               ($A058 - $C037 is the collision buffer under lynx-coll.cfg)
+  C038 - E017  Screen buffer 1
+  E018 - FFF7  Screen buffer 0   (shares addresses with the I/O overlay)
+  FC00 - FFF7  Suzy / Mikey / boot-ROM overlay -- CPU view only
+  FFF8 - FFFF  Hardware vectors and MAPCTL</pre>
+<p>The <code>$E018&ndash;$FFF7</code> and <code>$FC00&ndash;$FFF7</code> lines
+overlap on purpose: that is one physical block of DRAM holding screen
+buffer&nbsp;0, but at those same addresses the CPU sees Suzy, Mikey and the boot
+ROM. It is not a conflict &mdash; the display and the sprite engine reach that RAM
+by a different path than the CPU, so the buffer and the registers coexist.
+<a href="#sect-2">Section&nbsp;2</a> explains how.</p>
 <p>The same map is shown below. With the default config (<code>lynx.cfg</code>)
 the program, heap and C&nbsp;stack share the RAM below the screen buffers; the
 <code>__STACKSIZE__</code> reservation (1&nbsp;KB by default) sits at the very top
@@ -176,7 +184,7 @@ heap floor and is reclaimed once <code>main()</code> begins allocating.</figcapt
   then reclaimed: the first allocation grows the heap straight over it. Only a
   small resident stub of <code>STARTUP</code> (the reset entry, the
   <code>_exit</code> trap and a relocator) stays permanently in memory. See
-  <a href="#sect-3">&sect;3</a> and
+  <a href="#sect-4">&sect;4</a> and
   <code>design/LYNX_STARTUP_RECLAIM_DESIGN.md</code>.</p>
 </dd>
 <dt>Screen</dt>
@@ -204,7 +212,119 @@ heap floor and is reclaimed once <code>main()</code> begins allocating.</figcapt
   <code>lynx_load</code>), not linked into the program image.</p>
 </dd>
 </dl>
-<h2 id="sect-2">2. The C runtime stack and stack-overflow checking</h2>
+<h2 id="sect-2">2. Memory-mapped I/O and the display overlay</h2>
+<p>The map in <a href="#sect-1">&sect;1</a> has an apparent impossibility in it:
+screen buffer&nbsp;0 occupies <code>$E018&ndash;$FFF7</code>, yet that same range is
+where the CPU finds Suzy, Mikey and the boot ROM. The two do not actually collide,
+because the top of memory is reached by three different bus masters over three
+different paths &mdash; and only one of them sees the hardware overlay.</p>
+<p>The 64&nbsp;KB is a single physical DRAM array. What answers at
+<code>$FC00&ndash;$FFFF</code> depends on who is asking:</p>
+<dl>
+<dt>The CPU &mdash; through the MAPCTL decoder</dt>
+<dd>
+<p>Only the CPU is subject to the overlay, and the <code>MAPCTL</code> register at
+<code>$FFF9</code> decides what it sees. Each of the four low bits
+<em>disables</em> one overlay window and exposes the RAM underneath:
+<code>SUZYSPACE</code> (<code>$FC00&ndash;$FCFF</code>), <code>MIKEYSPACE</code>
+(<code>$FD00&ndash;$FDFF</code>), <code>ROMSPACE</code>
+(<code>$FE00&ndash;$FFF7</code>) and <code>VECTORSPACE</code>
+(<code>$FFF8&ndash;$FFFF</code>) &mdash; the masks are defined in
+<code>&lt;lynx/lynx.h&gt;</code>. <code>crt0.s</code> programs
+<code>MAPCTL&nbsp;=&nbsp;$0C</code>, which disables the ROM and vector windows (the
+boot ROM only matters at reset, and the CPU then fetches its interrupt vectors from
+RAM) but leaves the Suzy and Mikey windows enabled. So from the CPU's side the only
+part of screen buffer&nbsp;0 hidden behind hardware is the 512-byte strip at
+<code>$FC00&ndash;$FDFF</code>: a plain <code>sta&nbsp;$FD00</code> writes a Mikey
+register, not a pixel.</p>
+</dd>
+<dt>Mikey's video DMA &mdash; straight to DRAM</dt>
+<dd>
+<p>The circuit that refreshes the LCD reads the frame buffer directly from physical
+DRAM, starting at <code>scrbase</code> (<code>$FD94</code>), and ignores
+<code>MAPCTL</code> entirely. It scans <code>$E018&ndash;$FFF7</code> out as pixels
+no matter what the CPU sees at those addresses.</p>
+</dd>
+<dt>Suzy's sprite engine &mdash; straight to DRAM</dt>
+<dd>
+<p>When Suzy paints a sprite it reads the SCB and sprite data and writes the
+rendered pixels to the buffer as its own DMA accesses to physical DRAM, again
+bypassing <code>MAPCTL</code>. Suzy can write <code>$FC00&ndash;$FFF7</code> as RAM
+even though those addresses are registers to the CPU.</p>
+</dd>
+</dl>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 340" style="width:100%;height:auto;max-width:700px" role="img" aria-label="Three bus masters reach the top of memory by different paths: the CPU goes through the MAPCTL decoder and sees hardware registers, while Suzy and Mikey access the underlying DRAM directly">
+  <!-- masters (left) -->
+  <g stroke="var(--border)">
+    <rect x="24" y="52"  width="150" height="50" rx="6" fill="var(--panel)"/>
+    <rect x="24" y="150" width="150" height="50" rx="6" fill="var(--accent-2)" fill-opacity="0.20"/>
+    <rect x="24" y="238" width="150" height="50" rx="6" fill="var(--accent-2)" fill-opacity="0.20"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" fill="var(--ink)" text-anchor="middle">
+    <text x="99" y="73"  font-size="12.5" font-weight="600">CPU</text>
+    <text x="99" y="89"  font-size="9.5" fill="var(--ink-soft)">sees the overlay</text>
+    <text x="99" y="171" font-size="12" font-weight="600">Suzy</text>
+    <text x="99" y="187" font-size="9.5" fill="var(--ink-soft)">sprite engine</text>
+    <text x="99" y="259" font-size="12" font-weight="600">Mikey</text>
+    <text x="99" y="275" font-size="9.5" fill="var(--ink-soft)">video DMA</text>
+  </g>
+  <!-- MAPCTL gate on the CPU path -->
+  <rect x="250" y="50" width="118" height="54" rx="6" fill="var(--accent)" fill-opacity="0.18" stroke="var(--accent)"/>
+  <g text-anchor="middle" fill="var(--ink)">
+    <text x="309" y="72" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" font-weight="600">MAPCTL decode</text>
+    <text x="309" y="89" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-soft)">$FFF9</text>
+  </g>
+  <!-- targets (right) -->
+  <g stroke="var(--border)">
+    <rect x="470" y="40"  width="224" height="86"  rx="6" fill="var(--panel)"/>
+    <rect x="470" y="176" width="224" height="128" rx="6" fill="var(--accent-2)" fill-opacity="0.16"/>
+  </g>
+  <g text-anchor="middle">
+    <text x="582" y="60" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" font-weight="600" fill="var(--ink)">Hardware registers</text>
+    <text x="582" y="75" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink-soft)">CPU view only</text>
+    <text x="582" y="97"  font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="var(--ink-soft)">Suzy&nbsp;&nbsp;$FC00&ndash;$FCFF</text>
+    <text x="582" y="113" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="var(--ink-soft)">Mikey&nbsp;$FD00&ndash;$FDFF</text>
+    <text x="582" y="202" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" font-weight="600" fill="var(--ink)">Physical DRAM</text>
+    <text x="582" y="230" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" fill="var(--ink)">Screen buffer 0</text>
+    <text x="582" y="248" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="var(--ink-soft)">$E018&ndash;$FFF7</text>
+    <text x="582" y="280" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink-soft)">reached directly, ignoring MAPCTL</text>
+  </g>
+  <!-- CPU -> MAPCTL -->
+  <line x1="174" y1="77" x2="248" y2="77" stroke="var(--ink-faint)" stroke-width="1.5"/>
+  <polygon points="248,73 248,81 256,77" fill="var(--ink-faint)"/>
+  <!-- MAPCTL -> registers (enabled window) -->
+  <line x1="368" y1="70" x2="470" y2="70" stroke="var(--accent)" stroke-width="1.5"/>
+  <polygon points="464,66 464,74 472,70" fill="var(--accent)"/>
+  <text x="419" y="62" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="8.5" fill="var(--accent)" text-anchor="middle">window enabled</text>
+  <!-- MAPCTL -> DRAM (window disabled) -->
+  <path d="M 360 98 C 402 132, 432 172, 470 202" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="4 3"/>
+  <polygon points="463,197 468,205 472,195" fill="var(--accent)"/>
+  <text x="404" y="150" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="8.5" fill="var(--accent)" text-anchor="middle">window disabled &rarr; RAM</text>
+  <!-- Suzy -> DRAM -->
+  <line x1="174" y1="175" x2="470" y2="212" stroke="var(--accent-2)" stroke-width="1.5"/>
+  <polygon points="463,206 465,215 472,207" fill="var(--accent-2)"/>
+  <text x="308" y="185" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--accent-2)" text-anchor="middle">blits pixels &rarr; RAM</text>
+  <!-- Mikey -> DRAM -->
+  <line x1="174" y1="263" x2="470" y2="268" stroke="var(--accent-2)" stroke-width="1.5"/>
+  <polygon points="463,264 463,272 472,268" fill="var(--accent-2)"/>
+  <text x="308" y="256" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--accent-2)" text-anchor="middle">scans RAM &rarr; LCD</text>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Three masters, three paths to the same top-of-memory DRAM. Only the CPU goes
+through the <code>MAPCTL</code> decoder &mdash; so it sees Suzy/Mikey registers at
+<code>$FC00&ndash;$FDFF</code> &mdash; while Suzy's blitter and Mikey's video DMA
+read and write the underlying screen buffer directly, ignoring <code>MAPCTL</code>.</figcaption>
+</figure>
+<p>This is why the buffer works, and why it is parked here in the first place.
+Programs never draw pixels with the CPU: they hand Suzy a sprite and a destination
+and let it blit, and Mikey's DMA reads the result &mdash; both go straight to RAM.
+The CPU only ever writes the <em>registers</em> at <code>$FC00&ndash;$FDFF</code> to
+tell Suzy and Mikey what to do. RAM sitting under a permanent I/O overlay is awkward
+for the CPU to use &mdash; you would have to toggle <code>MAPCTL</code> around every
+access &mdash; so it is the ideal home for something touched only by DMA. Screen
+buffer&nbsp;0 stops at <code>$FFF7</code> precisely so it clears the hardware vectors
+at <code>$FFF8&ndash;$FFFF</code> that the CPU still needs.</p>
+<h2 id="sect-3">3. The C runtime stack and stack-overflow checking</h2>
 <p>cc65 programs use two independent stacks. The <strong>6502 hardware
 stack</strong> lives in page&nbsp;1 (<code>$0100&ndash;$01FF</code>, a fixed
 256&nbsp;bytes) and holds subroutine return addresses and interrupt state. The
@@ -214,7 +334,7 @@ zero-page pointer <code>sp</code> and grows <em>downwards</em> from the top of t
 <code>MAIN</code> memory area. The amount of RAM reserved for it is the link-time
 symbol <code>__STACKSIZE__</code>, which defaults to <code>$0400</code>
 (1&nbsp;KB).</p>
-<h3 id="sect-2-1">2.1. Setting the stack size</h3>
+<h3 id="sect-3-1">3.1. Setting the stack size</h3>
 <p>All of the Lynx configs (<code>lynx.cfg</code>, <code>lynx-bll.cfg</code>,
 <code>lynx-coll.cfg</code>, <code>lynx-uploader.cfg</code> and the fixed-size
 <code>lynx-128k.cfg</code>&thinsp;/&thinsp;<code>lynx-256k.cfg</code>&thinsp;/&thinsp;<code>lynx-512k.cfg</code>
@@ -243,7 +363,7 @@ nesting and the largest local arrays your program uses. There is no automatic
 overflow protection at this size &mdash; if the stack grows past its reservation
 it silently collides with the top of <code>BSS</code>/heap &mdash; unless you
 enable stack-overflow checking, described next.</p>
-<h3 id="sect-2-2">2.2. Enabling stack-overflow checking</h3>
+<h3 id="sect-3-2">3.2. Enabling stack-overflow checking</h3>
 <p>The compiler can instrument every function with a call to a small checking
 routine (<code>stkchk</code>/<code>cstkchk</code> in the runtime library). This is
 <strong>off by default</strong>. Turn it on for a whole build with the compiler
@@ -336,18 +456,18 @@ the 256-byte safety margin as headroom. See
 <code><a href="cc65.html#pragma-check-stack">#pragma check-stack</a></code> in the
 cc65 manual and the <code>__STACKSIZE__</code> notes in the
 <a href="ld65.html">ld65 manual</a> for more detail.</p>
-<h2 id="sect-3">3. Dynamic memory allocation (the heap)</h2>
+<h2 id="sect-4">4. Dynamic memory allocation (the heap)</h2>
 <p>Dynamic memory is available through the standard <code>&lt;stdlib.h&gt;</code>
 functions <code>malloc</code>, <code>calloc</code>, <code>realloc</code> and
 <code>free</code>. There is no operating system beneath them: the heap is simply
 a window of RAM in the <code>MAIN</code> area (<a href="#sect-1">section&nbsp;1</a>),
 bounded below by your program's static data and above by the C-stack reservation
-(<a href="#sect-2">section&nbsp;2</a>). The allocator is the standard cc65
+(<a href="#sect-3">section&nbsp;3</a>). The allocator is the standard cc65
 implementation &mdash; a first-fit free list backed by a bump pointer for fresh
 memory &mdash; carrying a deliberately small per-block header for the Lynx's flat
 64&nbsp;KB address space.</p>
 
-<h3 id="sect-3-1">3.1. How allocation works</h3>
+<h3 id="sect-4-1">4.1. How allocation works</h3>
 <p>Five runtime variables (declared in <code>&lt;_heap.h&gt;</code>) describe the
 heap at any moment: <code>_heaporg</code>, the fixed bottom, anchored on
 <code>__ONCE_RUN__</code> &mdash; the run base of the reclaimable <code>ONCE</code>
@@ -494,7 +614,7 @@ space, <code>_heapmaxavail()</code> the largest single block that could still be
 allocated, and <code>_heapadd()</code> donates an arbitrary buffer (for example a
 static array) to the free pool.</p>
 
-<h3 id="sect-3-2">3.2. How it deviates from POSIX</h3>
+<h3 id="sect-4-2">4.2. How it deviates from POSIX</h3>
 <p>This is a freestanding allocator for a machine with no operating system, no
 memory-management unit and a 16-bit address space, so it departs from a hosted
 POSIX environment in several ways worth knowing before you port code onto the
@@ -524,7 +644,7 @@ handler. The free list is plain global state with no locking; the Lynx is
 single-threaded, but do not call the heap from an IRQ that might interrupt
 another heap operation.</li>
 <li>No memory protection. The heap grows up while the C stack grows down toward
-it (<a href="#sect-2">section&nbsp;2</a>); at run time nothing keeps them apart
+it (<a href="#sect-3">section&nbsp;3</a>); at run time nothing keeps them apart
 unless you build with <code>--check-stack</code>. There is no fault or signal
 &mdash; an overrun silently corrupts memory.</li>
 <li><code>malloc(0)</code> returns a null pointer. (The C standard also permits a
@@ -534,7 +654,7 @@ unique, freeable pointer; this implementation chooses null.)</li>
 of POSIX or ISO&nbsp;C.</li>
 </ul>
 
-<h2 id="sect-4">4. Startup reclamation and relocation</h2>
+<h2 id="sect-5">5. Startup reclamation and relocation</h2>
 <p>The whole program image is copied into RAM at <code>$0200</code> and run in
 place, so any byte the startup code occupies is a byte lost to code, data and
 heap for the entire run. Most of what <code>crt0.s</code> does &mdash; masking
@@ -547,7 +667,7 @@ on. The startup code is therefore split so that the one-time part can be
 <em>reclaimed</em> by the heap. The full rationale is in
 <code>design/LYNX_STARTUP_RECLAIM_DESIGN.md</code>.</p>
 
-<h3 id="sect-4-1">4.1. The split: resident stub vs one-shot body</h3>
+<h3 id="sect-5-1">5.1. The split: resident stub vs one-shot body</h3>
 <p><code>crt0.s</code> keeps only a small permanent stub in the <code>STARTUP</code>
 segment &mdash; the <code>$0200</code> reset <code>jmp</code>, the resident
 <code>_exit</code> trap, and a short relocator. Everything else moves into the
@@ -584,7 +704,7 @@ segment &mdash; the <code>$0200</code> reset <code>jmp</code>, the resident
 <figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The resident startup footprint drops from 107 to 27 bytes; the one-shot init body moves into the reclaimable <code>ONCE</code> segment.</figcaption>
 </figure>
 
-<h3 id="sect-4-2">4.2. Relocation and reclaim</h3>
+<h3 id="sect-5-2">5.2. Relocation and reclaim</h3>
 <p>There is a catch. The <code>ONCE</code> body has to run at the <em>top</em> of
 the static area &mdash; immediately above <code>BSS</code>, at the heap origin
 (<code>__ONCE_RUN__</code>) &mdash; so the heap can grow over it. But the Lynx
@@ -657,7 +777,7 @@ entering it; the first allocation then overwrites those very bytes.</p>
 <figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">As loaded, <code>ONCE</code> is packed directly after <code>DATA</code> (no <code>bss</code> hole in the image). The relocator copies it up past the <code>BSS</code> gap to <code>__ONCE_RUN__</code>; the heap then grows over it from that same address. On the padded cart-size configs <code>MAIN</code>'s fill already lands <code>ONCE</code> at its run address, so <code>__ONCE_PHYS__ == __ONCE_RUN__</code> and the copy is a harmless self-copy.</figcaption>
 </figure>
 
-<h3 id="sect-4-3">4.3. The boot sequence</h3>
+<h3 id="sect-5-3">5.3. The boot sequence</h3>
 <p>Putting it together, control flows from the fixed reset entry through the
 relocator into the relocated body, and finally into <code>main()</code>; the very
 first allocation reclaims the spent init. The <code>_exit</code> trap the program
