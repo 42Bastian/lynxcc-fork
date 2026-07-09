@@ -49,7 +49,7 @@ endif
 
 ROOT_EXAMPLES = lynxdemo
 GAMES         = breakout invaders raycaster sybil
-SUZY          = muldivtest spritetest spritesheet spriteslice suzyasync suzyasyncbench suzybench packtest fonttest fontvar textdir
+SUZY          = muldivtest spritetest spritesheet spriteslice suzyasync suzyasyncbench suzybench packtest fonttest fontvar textdir collision
 MIKEY         = setbpp sndtune sfxtest sfxdemo
 MEMORY        = heaptest zeropage
 NETWORK       = comlynx
@@ -136,6 +136,16 @@ suzy/frame0.h suzy/frame1.h suzy/frame2.h suzy/frame3.h: suzy/sheet.pcx
 
 suzy/spritesheet.o: suzy/spritesheet.c suzy/sheet_anim.h
 suzy/spriteslice.o: suzy/spriteslice.c $(SHEET_FRAMES)
+
+# --------------------------------------------------------------------------
+# The collision demo needs the collision buffer, which only the lynx-coll.cfg
+# memory layout reserves (it carves 8 KB below the screen pages; the default
+# lynx.cfg leaves that RAM to the program). So this one example overrides the
+# link config; every other example links with the default lynx.cfg. See
+# suzy/collision.c and doc/collisions.html.
+
+suzy/collision.lnx: suzy/collision.o
+	$(CL) $(LDFLAGS) -C lynx-coll.cfg -o $@ -m $(@:.lnx=.map) $^
 
 # --------------------------------------------------------------------------
 # The snd-engine demo links the example against a compiled ABC tune stream.

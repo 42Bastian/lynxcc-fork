@@ -47,6 +47,7 @@ EXAMPLES = [
     "suzy/spritesheet",    # sp65 --sprite-sheet driver: generated frame table
     "suzy/spriteslice",    # sp65 --slice/--pop: hand-tabled frames
     "suzy/fonttest",       # TGI scaled fonts
+    "suzy/collision",      # Suzy collision buffer + depository read-back
     "mikey/setbpp",        # Mikey display-DMA bit depths
     "mikey/sndtune",       # snd engine: compiled ABC tune + direct SFX
     "games/breakout",      # a complete game frame

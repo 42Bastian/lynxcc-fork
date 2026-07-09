@@ -3010,7 +3010,7 @@ be used in presence of a prototype.</p>
 </dd>
 <dt>Description</dt>
 <dd>
-<p>Enables (nonzero) or disables (zero) Suzy's sprite collision detection. It is off by default. While enabled, <code><a href="#gfx_clear">gfx_clear</a></code> and <code><a href="#gfx_clearrows">gfx_clearrows</a></code> also erase the corresponding rows of the collision buffer.</p>
+<p>Enables (nonzero) or disables (zero) Suzy's sprite collision detection. It is off by default. While enabled, <code><a href="#gfx_clear">gfx_clear</a></code> and <code><a href="#gfx_clearrows">gfx_clearrows</a></code> also erase the corresponding rows of the collision buffer. A program that uses it must link with <code>lynx-coll.cfg</code> to reserve the buffer; see <a href="collisions.html">Collision detection</a> for the full mechanism and a worked example.</p>
 </dd>
 <dt>Notes</dt>
 <dd>

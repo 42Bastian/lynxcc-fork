@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lynxcc - Collision detection</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>Collision detection</h1></header><div class="abstract">The Atari Lynx has exactly one collision facility in hardware: as Suzy paints a
+sprite it maintains a second, off-screen <strong>collision buffer</strong> the
+same shape as the display, stamping each sprite's collision number into it and
+reading back what is already there. The highest number a sprite overlaps is
+written to that sprite's one-byte <strong>collision depository</strong>. This page
+explains the buffer, the depository, the collision number and the sprite types
+that opt in or out, how <strong>lynxcc</strong> wires it all up
+(<code>lynx-coll.cfg</code> plus <code><a
+href="funcref.html#gfx_setcollisiondetection">gfx_setcollisiondetection</a></code>),
+and walks through the <a href="samples.html#collision-c"><code>collision.c</code></a>
+example.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. The collision buffer</a></li>
+<li class="lvl1"><a href="#sect-2">2. Collision numbers and the depository</a></li>
+<li class="lvl2"><a href="#sect-2-1">2.1. Highest number wins</a></li>
+<li class="lvl2"><a href="#sect-2-2">2.2. Where the depository byte lives</a></li>
+<li class="lvl1"><a href="#sect-3">3. Sprite types: opting in and out</a></li>
+<li class="lvl1"><a href="#sect-4">4. Turning it on</a></li>
+<li class="lvl2"><a href="#sect-4-1">4.1. Reserving the buffer: lynx-coll.cfg</a></li>
+<li class="lvl2"><a href="#sect-4-2">4.2. gfx_init and gfx_setcollisiondetection</a></li>
+<li class="lvl1"><a href="#sect-5">5. Worked example: collision.c</a></li>
+<li class="lvl1"><a href="#sect-6">6. Limitations and gotchas</a></li>
+<li class="lvl1"><a href="#sect-7">7. License</a></li>
+</ul></nav>
+
+<h2 id="sect-1">1. The collision buffer</h2>
+<p>The Lynx draws nothing to the screen a pixel at a time; every visible thing is a
+sprite painted by Suzy's blitter into a video buffer (see <a href="graphics.html">Graphics</a>).
+Alongside that video buffer Suzy can keep a second bitmap of exactly the same
+geometry &mdash; 160&nbsp;&times;&nbsp;102 cells &mdash; called the <strong>collision
+buffer</strong>. It never reaches the display. Where the video buffer holds a
+<em>colour</em> for each pixel, the collision buffer holds a 4-bit
+<strong>collision number</strong>: the tag of the last collideable sprite painted
+into that cell, or <code>0</code> if nothing collideable is there.</p>
+<p>As Suzy paints a collideable sprite it does two things to each cell it touches:
+it <em>reads</em> the number already in the collision buffer (that is how a
+collision is noticed), then it <em>writes</em> this sprite's own number in its
+place. So the buffer is a running record of &ldquo;what collideable thing is here
+now,&rdquo; and a freshly painted sprite discovers everything collideable that was
+drawn <em>before</em> it in the same frame.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 250" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="The video buffer and the collision buffer are the same shape; a sprite painted into both shows colour on the left and its collision number on the right">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">
+    <text x="180" y="20" font-weight="bold">Video buffer</text>
+    <text x="540" y="20" font-weight="bold">Collision buffer</text>
+  </g>
+  <!-- two 8x5 grids -->
+  <g stroke="var(--border)" stroke-width="1">
+    <!-- video grid -->
+    <g>
+      <rect x="60" y="34" width="240" height="150" fill="var(--panel)"/>
+      <!-- grid lines -->
+      <line x1="90"  y1="34" x2="90"  y2="184"/><line x1="120" y1="34" x2="120" y2="184"/>
+      <line x1="150" y1="34" x2="150" y2="184"/><line x1="180" y1="34" x2="180" y2="184"/>
+      <line x1="210" y1="34" x2="210" y2="184"/><line x1="240" y1="34" x2="240" y2="184"/>
+      <line x1="270" y1="34" x2="270" y2="184"/>
+      <line x1="60" y1="64"  x2="300" y2="64"/><line x1="60" y1="94"  x2="300" y2="94"/>
+      <line x1="60" y1="124" x2="300" y2="124"/><line x1="60" y1="154" x2="300" y2="154"/>
+      <!-- a 3x3 coloured sprite -->
+      <rect x="120" y="64" width="90" height="90" fill="var(--accent)" fill-opacity="0.85" stroke="none"/>
+    </g>
+    <!-- collision grid -->
+    <g>
+      <rect x="420" y="34" width="240" height="150" fill="var(--panel)"/>
+      <line x1="450" y1="34" x2="450" y2="184"/><line x1="480" y1="34" x2="480" y2="184"/>
+      <line x1="510" y1="34" x2="510" y2="184"/><line x1="540" y1="34" x2="540" y2="184"/>
+      <line x1="570" y1="34" x2="570" y2="184"/><line x1="600" y1="34" x2="600" y2="184"/>
+      <line x1="630" y1="34" x2="630" y2="184"/>
+      <line x1="420" y1="64"  x2="660" y2="64"/><line x1="420" y1="94"  x2="660" y2="94"/>
+      <line x1="420" y1="124" x2="660" y2="124"/><line x1="420" y1="154" x2="660" y2="154"/>
+      <rect x="480" y="64" width="90" height="90" fill="var(--accent)" fill-opacity="0.14" stroke="none"/>
+    </g>
+  </g>
+  <!-- collision numbers in the right grid where the sprite sits -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12" fill="var(--ink)" text-anchor="middle">
+    <text x="495" y="83">3</text><text x="525" y="83">3</text><text x="555" y="83">3</text>
+    <text x="495" y="113">3</text><text x="525" y="113">3</text><text x="555" y="113">3</text>
+    <text x="495" y="143">3</text><text x="525" y="143">3</text><text x="555" y="143">3</text>
+    <!-- a few zeros elsewhere -->
+    <text x="435" y="53" fill="var(--ink-faint)">0</text><text x="645" y="53" fill="var(--ink-faint)">0</text>
+    <text x="435" y="173" fill="var(--ink-faint)">0</text><text x="645" y="173" fill="var(--ink-faint)">0</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="180" y="205">colour per pixel</text>
+    <text x="540" y="205">collision number per cell (here 3)</text>
+  </g>
+  <text x="360" y="118" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="20" fill="var(--ink-faint)" text-anchor="middle">&rarr;</text>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The two buffers are topographically identical. A sprite tagged with collision
+number&nbsp;3 paints colour into the video buffer and stamps the value&nbsp;3 into
+the matching cells of the collision buffer; empty cells read&nbsp;0.</figcaption>
+</figure>
+
+<h2 id="sect-2">2. Collision numbers and the depository</h2>
+<p>Every sprite carries a 4-bit <strong>collision number</strong> in the low nibble
+of the third SCB byte, <code>SPRCOLL</code> (the <code>sprcoll</code> field of the
+<code>SCB_*</code> structs in <code>&lt;lynx/gfx.h&gt;</code>). Values run
+<code>0&ndash;15</code>; the software assigns them and their meaning is entirely up
+to the game. Bit&nbsp;5 of the same byte is the per-sprite <em>don't-collide</em>
+flag (the <code>NO_COLLIDE</code> constant, <code>$20</code>), covered in
+<a href="#sect-3">section&nbsp;3</a>.</p>
+<p>When a collideable sprite finishes painting, Suzy writes one byte &mdash; the
+<strong>collision depository</strong> &mdash; recording the highest collision number
+it ran into. A depository of <code>0</code> means this sprite overlapped nothing
+collideable that was already in the buffer; any other value is the collision number
+of something it hit. The hardware writes the depository on <em>every</em> collideable
+paint, so you never have to clear it yourself; you read it back with the CPU after
+the sprite is drawn.</p>
+
+<h3 id="sect-2-1">2.1. Highest number wins</h3>
+<p>The rule is deliberately simple. At the start of painting a sprite an internal
+register (Suzy's designers called it <em>fred</em>) is cleared to&nbsp;0. As each
+cell is painted, the number read from the collision buffer is compared with
+<em>fred</em>; if it is larger, it replaces it. When the sprite is done,
+<em>fred</em> is the depository value. So if a sprite overlaps several collideable
+objects at once, the depository reports only the <strong>highest</strong> of their
+collision numbers &mdash; not a list, not a count, not the first. A common convention
+is therefore to assign collision numbers in visual-depth or priority order, so the
+one number you get back is the one that matters most.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 210" style="width:100%;height:auto;max-width:640px"
+     role="img" aria-label="A player sprite overlapping two targets numbered 3 and 7 yields a depository value of 7, the higher of the two">
+  <g stroke="var(--border)" stroke-width="1">
+    <rect x="150" y="40" width="120" height="90" fill="var(--accent)" fill-opacity="0.3"/>
+    <rect x="330" y="40" width="120" height="90" fill="var(--accent)" fill-opacity="0.6"/>
+    <rect x="240" y="70" width="120" height="60" fill="var(--accent-2)" fill-opacity="0.75"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">
+    <text x="195" y="35">target A</text>
+    <text x="405" y="35">target B</text>
+    <text x="300" y="152">player (drawn last)</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" fill="var(--ink)" text-anchor="middle">
+    <text x="185" y="95">3</text>
+    <text x="425" y="95">7</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12" fill="var(--ink)" text-anchor="start">
+    <text x="480" y="80">player depository</text>
+    <text x="480" y="100" font-size="15" fill="var(--accent)">= 7</text>
+    <text x="480" y="120" fill="var(--ink-faint)" font-size="10">max(3, 7)</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The player, painted after both targets, overlaps collision numbers&nbsp;3
+and&nbsp;7. Its depository comes back as&nbsp;7 &mdash; the higher of the two.</figcaption>
+</figure>
+
+<h3 id="sect-2-2">2.2. Where the depository byte lives</h3>
+<p>The depository is not a fixed hardware register; it is a byte in your SCB's RAM,
+and you tell Suzy where by loading the <code>COLLOFF</code> register with the signed
+offset from the start of the SCB to the depository byte. <strong>lynxcc</strong>'s
+<code><a href="funcref.html#gfx_init">gfx_init</a></code> sets
+<code>COLLOFF&nbsp;=&nbsp;$FFFF</code> (that is, &minus;1), so Suzy writes the
+depository to the byte <em>immediately before</em> the SCB. To read a sprite's
+collision result you therefore place one byte in front of its SCB and read that byte
+back after the paint. In C the neat way is a wrapper struct whose first member is the
+depository byte:</p>
+<pre class="code">static struct {
+    unsigned char coll;   /* Suzy writes the depository here (SCB - 1) */
+    SCB_REHV_PAL  scb;
+} player;
+
+gfx_sprite (&amp;player.scb);   /* synchronous: paints, then writes coll */
+hit = player.coll;          /* 0 = nothing hit, else the number struck */</pre>
+<p>cc65 lays struct members out with no padding, so <code>&amp;player.scb&nbsp;&minus;&nbsp;1</code>
+is exactly <code>&amp;player.coll</code> and the two line up. Note that <em>every</em>
+collideable sprite gets a depository written &minus;1 byte in front of it, so it is
+good practice to give collideable SCBs that leading byte even when you do not read it,
+lest Suzy scribble on whatever happens to precede the struct in memory.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 170" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="Byte layout: a depository byte sits one byte before the SCB, and COLLOFF equals minus one points Suzy from the SCB start back to it">
+  <g stroke="var(--border)" stroke-width="1">
+    <rect x="40"  y="50" width="70"  height="40" fill="var(--accent-2)" fill-opacity="0.25"/>
+    <rect x="110" y="50" width="60"  height="40" fill="var(--accent)" fill-opacity="0.2"/>
+    <rect x="170" y="50" width="60"  height="40" fill="var(--panel)"/>
+    <rect x="230" y="50" width="60"  height="40" fill="var(--panel-2)"/>
+    <rect x="290" y="50" width="150" height="40" fill="var(--panel)"/>
+    <rect x="440" y="50" width="180" height="40" fill="var(--panel-2)"/>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10.5" fill="var(--ink)" text-anchor="middle">
+    <text x="75"  y="74">coll</text>
+    <text x="140" y="74">sprctl0</text>
+    <text x="200" y="74">sprctl1</text>
+    <text x="260" y="74">sprcoll</text>
+    <text x="365" y="74">next, data</text>
+    <text x="530" y="74">pos, size, penpal &hellip;</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="75"  y="104">SCB &minus; 1</text>
+    <text x="140" y="104">SCB + 0</text>
+    <text x="260" y="104">collision #</text>
+  </g>
+  <!-- COLLOFF arrow from SCB+0 back to coll -->
+  <g stroke="var(--accent)" stroke-width="1.5" fill="none">
+    <path d="M132 40 C 120 22, 90 22, 78 40" marker-end="url(#ah)"/>
+  </g>
+  <defs>
+    <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+  <text x="105" y="20" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11" fill="var(--accent)" text-anchor="middle">COLLOFF = &minus;1</text>
+  <text x="140" y="132" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10.5" fill="var(--ink-faint)" text-anchor="middle">the SCB the hardware reads starts here</text>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">With <code>COLLOFF&nbsp;=&nbsp;&minus;1</code> the depository is the byte just before
+the SCB. The collision <em>number</em> the sprite carries is a different field,
+<code>sprcoll</code>, inside the SCB.</figcaption>
+</figure>
+
+<h2 id="sect-3">3. Sprite types: opting in and out</h2>
+<p>Whether a sprite takes part in collision at all is governed by its
+<strong>type</strong> (the low three bits of <code>SPRCTL0</code>, the
+<code>TYPE_*</code> constants in <code>&lt;lynx/gfx.h&gt;</code>) and by a couple of
+override bits. Not every sprite should collide &mdash; a scoreboard, a cloud or a
+cockpit frame is visible but should never register &mdash; and skipping collision
+also makes a sprite paint faster, because Suzy can drop the read-modify-write of the
+collision buffer. The types that matter for collision are:</p>
+<table>
+<thead><tr><th>Type</th><th>Constant</th><th>Collision behaviour</th></tr></thead>
+<tbody>
+<tr><td>Normal</td><td><code>TYPE_NORMAL</code></td><td>The workhorse. Pen&nbsp;0 is transparent and non-colliding; pens 1&ndash;15 are opaque and collideable. Reads and writes the collision buffer, writes a depository.</td></tr>
+<tr><td>Boundary</td><td><code>TYPE_BOUNDARY</code></td><td>Like normal, but pen&nbsp;15 is transparent yet still collideable &mdash; an invisible wall a ball can bounce off without visibly penetrating.</td></tr>
+<tr><td>Non-collideable</td><td><code>TYPE_NONCOLL</code></td><td>Never touches the collision buffer; all collision activity is overridden. Use it for HUD and scenery. Paints faster.</td></tr>
+<tr><td>Background</td><td><code>TYPE_BACKGROUND</code></td><td>Overwrites both buffers (pens 0 and 15 are no longer transparent) and does no collision <em>detection</em>. Used to initialise a scene &mdash; and, with collision on, to wipe the collision buffer (see below). Faster to paint.</td></tr>
+<tr><td>Shadow / XOR / others</td><td><code>TYPE_SHADOW</code>, <code>TYPE_XOR</code>, &hellip;</td><td>Specialised variants that keep normal collision activity while changing how pens 14/15 or the video data are treated. Rarely needed for collision logic.</td></tr>
+</tbody>
+</table>
+<p>Three switches can suppress collision regardless of type, each overriding
+everything below it:</p>
+<ul>
+<li><p>the <strong>non-collideable sprite type</strong> above;</p></li>
+<li><p>the <strong>don't-collide bit</strong> in the sprite's own <code>SPRCOLL</code>
+byte (<code>NO_COLLIDE</code>, <code>$20</code>) &mdash; disables collision for that one
+sprite;</p></li>
+<li><p>the <strong>global no-collide bit</strong> in Suzy's <code>SPRSYS</code>
+register &mdash; disables collision for <em>all</em> sprites at once. This is the bit
+<code><a href="funcref.html#gfx_setcollisiondetection">gfx_setcollisiondetection</a></code>
+toggles.</p></li>
+</ul>
+
+<h2 id="sect-4">4. Turning it on</h2>
+
+<h3 id="sect-4-1">4.1. Reserving the buffer: lynx-coll.cfg</h3>
+<p>The collision buffer costs a full screen's worth of RAM &mdash; roughly 8&nbsp;KB
+&mdash; and the Lynx has only 64&nbsp;KB, so <strong>lynxcc</strong> does not spend it
+unless you ask. Reserving the space is a link-time decision: build with
+<code>lynx-coll.cfg</code> instead of the default <code>lynx.cfg</code> and the linker
+carves the collision buffer out below the two screen pages, shrinking the RAM left for
+code, data and heap accordingly. The <a href="memory.html">Memory</a> page has the exact
+map; the buffer sits at <code>$A058</code> and the C stack drops from <code>$C037</code>
+to <code>$A057</code> to make room.</p>
+<pre class="code">cl65 -Ors -C lynx-coll.cfg -o collision.lnx collision.c</pre>
+<p>A program linked with the default config has no collision buffer; calling
+<code>gfx_setcollisiondetection(1)</code> there would point Suzy at RAM that belongs to
+your program, so the two must go together.</p>
+
+<h3 id="sect-4-2">4.2. gfx_init and gfx_setcollisiondetection</h3>
+<p><code><a href="funcref.html#gfx_init">gfx_init()</a></code> already does the
+hardware wiring: it loads <code>COLLBASE</code> with the buffer address
+(<code>$A058</code>) and <code>COLLOFF</code> with &minus;1, so the depository lands one
+byte before each SCB. What it does <em>not</em> do is switch collision on &mdash;
+detection is off by default, matching the fast path for programs that never use it.</p>
+<p><code><a href="funcref.html#gfx_setcollisiondetection">gfx_setcollisiondetection(active)</a></code>
+flips it. Passing a nonzero value clears Suzy's global no-collide bit
+<em>and</em> reconfigures the clear sprite that <code><a
+href="funcref.html#gfx_clear">gfx_clear</a></code> / <code><a
+href="funcref.html#gfx_clearrows">gfx_clearrows</a></code> use, so that clearing the
+screen also wipes the matching rows of the collision buffer. That second part matters:
+without it the collision buffer would accumulate stale numbers frame after frame and
+every sprite would &ldquo;collide&rdquo; with last frame's ghosts. With detection on,
+the normal <code>gfx_clear()</code> at the top of your draw loop resets both buffers
+together, and each frame starts clean.</p>
+
+<h2 id="sect-5">5. Worked example: collision.c</h2>
+<p><a href="samples.html#collision-c"><code>examples/suzy/collision.c</code></a> puts
+the whole mechanism on screen. Four fixed target blocks sit in a row, tagged with
+collision numbers&nbsp;1&ndash;4; a white player block sweeps across them (the d-pad
+steers it too). Every frame the targets are drawn first &mdash; laying their numbers
+into the collision buffer &mdash; and the player last, so that when the player paints,
+Suzy reads the target numbers underneath it. Reading <code>player.coll</code> after the
+paint tells the program exactly which target was struck, with no per-pixel testing in
+C: the struck target flashes and a <code>HIT&nbsp;TARGET&nbsp;n</code> read-out shows
+the depository value.</p>
+
+<figure class="shot" style="margin:1.2em 0;text-align:center">
+<img src="img/suzy__collision.png" alt="collision.c on GearLynx: a row of red, green, blue and yellow target blocks under the COLLISION BUFFER title; the white player block overlaps the third (blue) target, which has flashed magenta, and the read-out shows HIT TARGET 3" style="image-rendering:pixelated;width:100%;max-width:320px;height:auto;border:1px solid var(--border)">
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The player is over target&nbsp;3; that target flashes and the read-out shows the
+depository value, <code>HIT&nbsp;TARGET&nbsp;3</code>.</figcaption>
+</figure>
+
+<p>The core of it is the draw order and the one-byte read-back:</p>
+<pre class="code">gfx_setcollisiondetection (1);          /* once, after gfx_init()      */
+/* ... */
+gfx_clear ();                           /* clears screen AND coll buffer */
+for (i = 0; i &lt; 4; ++i)
+    gfx_sprite (&amp;targets[i].scb);        /* numbers 1..4 into the buffer  */
+gfx_sprite (&amp;player.scb);               /* reads them back as it paints  */
+hit = player.coll;                      /* the highest number it covered */</pre>
+<p>Because the targets are spaced apart, the player is over at most one at a time and
+<code>hit</code> is that target's number; overlap two and you would get the higher of
+them, per <a href="#sect-2-1">section&nbsp;2.1</a>. The example links with
+<code>lynx-coll.cfg</code> &mdash; the one example in the tree that overrides the link
+config &mdash; because it needs the buffer that config reserves.</p>
+
+<h2 id="sect-6">6. Limitations and gotchas</h2>
+<ul>
+<li><p><strong>Collision is a painting side effect.</strong> It happens only while
+Suzy paints sprites into the buffer; the CPU writing directly to the video buffer
+triggers nothing, and a sprite only ever sees things painted <em>before</em> it in the
+same frame. Draw order is your collision order.</p></li>
+<li><p><strong>You get one number, not a set.</strong> The depository reports the single
+highest collision number overlapped. If a sprite can straddle several different
+objects and you need to know about all of them, encode priority into the numbers or
+partition objects into separately drawn passes.</p></li>
+<li><p><strong>It is overlap in the collision buffer, not true pixel shape.</strong>
+Collision is per painted, collideable pixel, so it is tighter than a bounding box &mdash;
+but transparent pen&nbsp;0 (and, on boundary sprites, pen&nbsp;15) does not stamp the
+buffer, so shape it with your art and pen choices.</p></li>
+<li><p><strong>Clear both buffers every frame.</strong> With detection on,
+<code>gfx_clear()</code> handles this; if you clear with your own background sprite
+instead, use a <em>background</em>-type sprite so it wipes the collision buffer too, and
+remember pen&nbsp;14 (shadow) will not clear its cell.</p></li>
+<li><p><strong>Give every collideable SCB a leading byte.</strong> Suzy writes a
+depository one byte before <em>each</em> collideable sprite, read back or not; without a
+byte reserved there it will corrupt whatever precedes the SCB in memory.</p></li>
+</ul>
+
+<h2 id="sect-7">7. License</h2>
+<p>The Lynx runtime, like the rest of the package, is distributed under the cc65 zlib-style license. The full text, together with every other copyright notice in the distribution, is reproduced verbatim on the consolidated <a href="licenses.html">Licenses and copyright notices</a> page.</p></article></main><site-foot></site-foot>
+<script src="doc.js"></script>
+</body></html>
