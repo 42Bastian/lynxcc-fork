@@ -21,6 +21,10 @@ and the dynamic-memory (heap) allocator.</div><nav class="toc"><h2>Contents</h2>
 <li class="lvl1"><a href="#sect-3">3. Dynamic memory allocation (the heap)</a></li>
 <li class="lvl2"><a href="#sect-3-1">3.1. How allocation works</a></li>
 <li class="lvl2"><a href="#sect-3-2">3.2. How it deviates from POSIX</a></li>
+<li class="lvl1"><a href="#sect-4">4. Startup reclamation and relocation</a></li>
+<li class="lvl2"><a href="#sect-4-1">4.1. The split: resident stub vs one-shot body</a></li>
+<li class="lvl2"><a href="#sect-4-2">4.2. Relocation and reclaim</a></li>
+<li class="lvl2"><a href="#sect-4-3">4.3. The boot sequence</a></li>
 </ul></nav><h2 id="sect-1">1. Memory layout</h2>
 <p>cc65 generated programs with the default setup run with the I/O area and the
 kernal enabled, which gives a usable memory range of $200 - $C037.</p>
@@ -82,7 +86,10 @@ of that area, just under the first screen buffer:</p>
     <text x="188" y="301" dominant-baseline="middle">STARTUP · CODE · RODATA · DATA · BSS  (MAIN segment)</text>
   </g>
 </svg>
-<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Default memory layout (<code>lynx.cfg</code>) — regions not to scale.</figcaption>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Default memory layout (<code>lynx.cfg</code>) — regions not to scale. Only a small
+resident stub of <code>STARTUP</code> stays in memory; the crt0 one-shot init
+(<code>ONCE</code>) sits at the floor of the free-RAM/heap region and is reclaimed by
+the first allocation.</figcaption>
 </figure>
 <p>When collision detection is enabled (<code>lynx-coll.cfg</code>) a 2&nbsp;KB
 collision buffer is carved out below the screen buffers, so the usable program
@@ -137,7 +144,9 @@ area and the top of the C&nbsp;stack move down to <code>$A057</code>:</p>
     <text x="188" y="343" dominant-baseline="middle">STARTUP · CODE · RODATA · DATA · BSS  (MAIN segment)</text>
   </g>
 </svg>
-<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Layout with collision detection (<code>lynx-coll.cfg</code>) — regions not to scale.</figcaption>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Layout with collision detection (<code>lynx-coll.cfg</code>) — regions not to scale.
+As with the default layout, the crt0 one-shot init (<code>ONCE</code>) sits at the
+heap floor and is reclaimed once <code>main()</code> begins allocating.</figcaption>
 </figure>
 <dl>
 <dt>Text screen</dt>
@@ -162,7 +171,13 @@ area and the top of the C&nbsp;stack move down to <code>$A057</code>:</p>
 <dt>Heap</dt>
 <dd>
 <p>The C heap is located at the end of the program and grows towards the C
-  runtime stack.</p>
+  runtime stack. Its first bytes are the <code>ONCE</code> segment &mdash; the
+  crt0 one-shot startup code, which runs once before <code>main()</code> and is
+  then reclaimed: the first allocation grows the heap straight over it. Only a
+  small resident stub of <code>STARTUP</code> (the reset entry, the
+  <code>_exit</code> trap and a relocator) stays permanently in memory. See
+  <a href="#sect-3">&sect;3</a> and
+  <code>design/LYNX_STARTUP_RECLAIM_DESIGN.md</code>.</p>
 </dd>
 <dt>Screen</dt>
 <dd>
@@ -172,7 +187,8 @@ area and the top of the C&nbsp;stack move down to <code>$A057</code>:</p>
 <dt>Maximum program size</dt>
 <dd>
 <p>The MAIN segment (<code>STARTUP</code>, <code>CODE</code>, <code>RODATA</code>,
-  <code>DATA</code>, <code>BSS</code>), the C heap and the C stack all share the
+  <code>DATA</code>, <code>BSS</code>, and the reclaimable <code>ONCE</code>
+  one-shot startup code that the heap grows over), the C heap and the C stack all share the
   RAM below the screen buffers &mdash; $0200&nbsp;-&nbsp;$C037, which is $BE38
   (48,696) bytes in total. With the default 1&nbsp;KB stack that leaves $BA38
   (47,672) bytes for code, data and heap combined. With collision detection
@@ -333,8 +349,12 @@ memory &mdash; carrying a deliberately small per-block header for the Lynx's fla
 
 <h3 id="sect-3-1">3.1. How allocation works</h3>
 <p>Five runtime variables (declared in <code>&lt;_heap.h&gt;</code>) describe the
-heap at any moment: <code>_heaporg</code>, the fixed bottom, equal to the end of
-<code>BSS</code>; <code>_heapptr</code>, the bump pointer marking the top of the
+heap at any moment: <code>_heaporg</code>, the fixed bottom, anchored on
+<code>__ONCE_RUN__</code> &mdash; the run base of the reclaimable <code>ONCE</code>
+one-shot startup code, which sits immediately above <code>BSS</code>, so the first
+allocation grows the heap over the spent crt0 init and reclaims those bytes (see
+<code>design/LYNX_STARTUP_RECLAIM_DESIGN.md</code>);
+<code>_heapptr</code>, the bump pointer marking the top of the
 memory touched so far; <code>_heapend</code>, the ceiling, set once at start-up to
 <code>sp&nbsp;&minus;&nbsp;__STACKSIZE__</code> (<code>$BC38</code> with the default
 1&nbsp;KB stack); and <code>_heapfirst</code>/<code>_heaplast</code>, the two ends
@@ -452,7 +472,7 @@ and the C stack descending from the top of <code>MAIN</code>.</p>
     <text x="458" y="44">initial SP</text>
     <text x="458" y="93">_heapend = sp &minus; __STACKSIZE__</text>
     <text x="458" y="158">top of touched heap</text>
-    <text x="458" y="304">bottom of heap = end of BSS</text>
+    <text x="458" y="304">bottom of heap = __ONCE_RUN__ (over BSS)</text>
   </g>
   <!-- grow arrows -->
   <line x1="478" y1="58" x2="478" y2="86" stroke="var(--accent)" stroke-width="1.5"/>
@@ -462,7 +482,7 @@ and the C stack descending from the top of <code>MAIN</code>.</p>
   <polygon points="473,128 483,128 478,120" fill="var(--accent)"/>
   <text x="486" y="142" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--accent)" text-anchor="start">heap &uarr;</text>
 </svg>
-<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The heap occupies the RAM between the end of <code>BSS</code> (<code>_heaporg</code>) and the stack reservation (<code>_heapend</code>, <code>$BC38</code> with the default 1&nbsp;KB stack). It grows upward through <code>_heapptr</code>; the C stack grows down from <code>$C037</code>. With no MMU, nothing but <code>--check-stack</code> stops the two from meeting.</figcaption>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The heap occupies the RAM between <code>_heaporg</code> (anchored on <code>__ONCE_RUN__</code>, the reclaimable crt0 one-shot init that sits just above <code>BSS</code>) and the stack reservation (<code>_heapend</code>, <code>$BC38</code> with the default 1&nbsp;KB stack). It grows upward through <code>_heapptr</code> &mdash; the first allocation reclaims the spent <code>ONCE</code> init &mdash; while the C stack grows down from <code>$C037</code>. With no MMU, nothing but <code>--check-stack</code> stops the two from meeting.</figcaption>
 </figure>
 
 <p><code>realloc()</code> grows or shrinks a block in place when it is at the heap
@@ -513,6 +533,174 @@ unique, freeable pointer; this implementation chooses null.)</li>
 <code>_heapmaxavail</code> and <code>_heapadd</code> are cc65 extensions, not part
 of POSIX or ISO&nbsp;C.</li>
 </ul>
+
+<h2 id="sect-4">4. Startup reclamation and relocation</h2>
+<p>The whole program image is copied into RAM at <code>$0200</code> and run in
+place, so any byte the startup code occupies is a byte lost to code, data and
+heap for the entire run. Most of what <code>crt0.s</code> does &mdash; masking
+interrupts, programming Mikey and Suzy, setting the C stack pointer, clearing
+<code>BSS</code> and running the module constructors &mdash; happens exactly once,
+before <code>main()</code>, and is dead weight ever after. Only a tiny part must
+stay resident: the reset entry at <code>$0200</code> and the <code>_exit</code>
+trap that a returning <code>main()</code> (and the stack-overflow checker) lands
+on. The startup code is therefore split so that the one-time part can be
+<em>reclaimed</em> by the heap. The full rationale is in
+<code>design/LYNX_STARTUP_RECLAIM_DESIGN.md</code>.</p>
+
+<h3 id="sect-4-1">4.1. The split: resident stub vs one-shot body</h3>
+<p><code>crt0.s</code> keeps only a small permanent stub in the <code>STARTUP</code>
+segment &mdash; the <code>$0200</code> reset <code>jmp</code>, the resident
+<code>_exit</code> trap, and a short relocator. Everything else moves into the
+<code>ONCE</code> segment, which runs once and is then grown over by the heap.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 190" style="width:100%;height:auto;max-width:700px" role="img" aria-label="Before and after: the whole STARTUP segment was resident; after the split only a small stub stays resident and the one-shot body moves to ONCE">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" fill="var(--ink-soft)" text-anchor="end">
+    <text x="86" y="60" dominant-baseline="middle">Before</text>
+    <text x="86" y="132" dominant-baseline="middle">After</text>
+  </g>
+  <!-- Before: one resident block -->
+  <g stroke="var(--border)">
+    <rect x="96" y="44" width="588" height="32" fill="var(--accent)" fill-opacity="0.22"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" fill="var(--ink)" text-anchor="middle">
+    <text x="390" y="60" dominant-baseline="middle">STARTUP &mdash; IRQ mask &middot; Mikey/Suzy init &middot; sp &middot; zerobss &middot; initlib &middot; <tspan font-family="ui-monospace,Menlo,Consolas,monospace">_exit</tspan></text>
+  </g>
+  <text x="390" y="86" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-faint)" text-anchor="middle">107 bytes &mdash; resident forever, trapped at the bottom of MAIN</text>
+  <!-- After: stub + ONCE -->
+  <g stroke="var(--border)">
+    <rect x="96"  y="116" width="150" height="32" fill="var(--accent-2)" fill-opacity="0.28"/>
+    <rect x="252" y="116" width="432" height="32" fill="var(--accent)" fill-opacity="0.22"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10.5" fill="var(--ink)" text-anchor="middle">
+    <text x="171" y="132" dominant-baseline="middle">stub</text>
+    <text x="468" y="132" dominant-baseline="middle">ONCE &mdash; the one-shot init body</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="171" y="162">jmp &middot; _exit &middot; relocator</text>
+    <text x="171" y="174">27 B &middot; resident</text>
+    <text x="468" y="162">runs once, then reclaimed by the heap</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The resident startup footprint drops from 107 to 27 bytes; the one-shot init body moves into the reclaimable <code>ONCE</code> segment.</figcaption>
+</figure>
+
+<h3 id="sect-4-2">4.2. Relocation and reclaim</h3>
+<p>There is a catch. The <code>ONCE</code> body has to run at the <em>top</em> of
+the static area &mdash; immediately above <code>BSS</code>, at the heap origin
+(<code>__ONCE_RUN__</code>) &mdash; so the heap can grow over it. But the Lynx
+copies the file image to RAM verbatim, with no per-segment load step, and a
+<code>bss</code>-type hole cannot sit in the middle of the image without padding
+it by the full size of <code>BSS</code>. So <code>ONCE</code> is <em>packed</em>
+into the image straight after <code>DATA</code> (no hole), which means that after
+the verbatim copy it lands lower than where it must run &mdash; at
+<code>__ONCE_PHYS__</code> (which equals <code>__BSS_RUN__</code> on the plain
+carts). The permanent relocator copies it up to <code>__ONCE_RUN__</code> before
+entering it; the first allocation then overwrites those very bytes.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 300" style="width:100%;height:auto;max-width:700px" role="img" aria-label="Top bar shows ONCE packed after DATA as loaded; the relocator copies it up past the BSS gap to its run address, where the heap later grows over it">
+  <!-- row captions -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10.5" fill="var(--ink-soft)">
+    <text x="96" y="60">In the image / RAM as loaded (copied verbatim to <tspan font-family="ui-monospace,Menlo,Consolas,monospace">$0200</tspan>)</text>
+    <text x="96" y="196">Run-time addresses, after the relocator</text>
+  </g>
+  <!-- bar 1: load order -->
+  <g stroke="var(--border)">
+    <rect x="96"  y="70" width="50"  height="30" fill="var(--accent-2)" fill-opacity="0.28"/>
+    <rect x="146" y="70" width="38"  height="30" fill="var(--panel)"/>
+    <rect x="184" y="70" width="146" height="30" fill="var(--panel)"/>
+    <rect x="330" y="70" width="90"  height="30" fill="var(--panel)"/>
+    <rect x="420" y="70" width="80"  height="30" fill="var(--panel)"/>
+    <rect x="500" y="70" width="76"  height="30" fill="var(--accent)" fill-opacity="0.30"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink)" text-anchor="middle">
+    <text x="121" y="86" dominant-baseline="middle">stub</text>
+    <text x="165" y="86" dominant-baseline="middle" fill="var(--ink-soft)">LOW</text>
+    <text x="257" y="86" dominant-baseline="middle">CODE</text>
+    <text x="375" y="86" dominant-baseline="middle">RODATA</text>
+    <text x="460" y="86" dominant-baseline="middle">DATA</text>
+    <text x="538" y="86" dominant-baseline="middle">ONCE</text>
+  </g>
+  <line x1="500" y1="104" x2="500" y2="118" stroke="var(--border)"/>
+  <text x="500" y="130" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink-faint)" text-anchor="middle">__ONCE_PHYS__ = __BSS_RUN__</text>
+  <!-- relocation arrow -->
+  <path d="M 538 100 C 560 150, 590 160, 604 208" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+  <polygon points="599,200 611,203 602,212" fill="var(--accent)"/>
+  <text x="614" y="150" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--accent)" text-anchor="start">relocator</text>
+  <text x="614" y="162" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--accent)" text-anchor="start">copies up</text>
+  <!-- bar 2: run order -->
+  <g stroke="var(--border)">
+    <rect x="96"  y="206" width="50"  height="30" fill="var(--accent-2)" fill-opacity="0.28"/>
+    <rect x="146" y="206" width="38"  height="30" fill="var(--panel)"/>
+    <rect x="184" y="206" width="146" height="30" fill="var(--panel)"/>
+    <rect x="330" y="206" width="90"  height="30" fill="var(--panel)"/>
+    <rect x="420" y="206" width="80"  height="30" fill="var(--panel)"/>
+    <rect x="500" y="206" width="66"  height="30" fill="var(--panel-2)" stroke-dasharray="3 3"/>
+    <rect x="566" y="206" width="76"  height="30" fill="var(--accent)" fill-opacity="0.30"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink)" text-anchor="middle">
+    <text x="121" y="222" dominant-baseline="middle">stub</text>
+    <text x="165" y="222" dominant-baseline="middle" fill="var(--ink-soft)">LOW</text>
+    <text x="257" y="222" dominant-baseline="middle">CODE</text>
+    <text x="375" y="222" dominant-baseline="middle">RODATA</text>
+    <text x="460" y="222" dominant-baseline="middle">DATA</text>
+    <text x="533" y="222" dominant-baseline="middle" fill="var(--ink-soft)">BSS</text>
+    <text x="604" y="222" dominant-baseline="middle">ONCE</text>
+  </g>
+  <!-- heap arrow -->
+  <line x1="646" y1="221" x2="694" y2="221" stroke="var(--accent-2)" stroke-width="1.6"/>
+  <polygon points="692,216 700,221 692,226" fill="var(--accent-2)"/>
+  <text x="670" y="250" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--accent-2)" text-anchor="middle">heap &uarr;</text>
+  <line x1="566" y1="236" x2="566" y2="252" stroke="var(--border)"/>
+  <text x="566" y="264" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink-faint)" text-anchor="middle">__ONCE_RUN__ (heap origin)</text>
+  <text x="533" y="286" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--ink-faint)" text-anchor="middle">gap zeroed by zerobss</text>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">As loaded, <code>ONCE</code> is packed directly after <code>DATA</code> (no <code>bss</code> hole in the image). The relocator copies it up past the <code>BSS</code> gap to <code>__ONCE_RUN__</code>; the heap then grows over it from that same address. On the padded cart-size configs <code>MAIN</code>'s fill already lands <code>ONCE</code> at its run address, so <code>__ONCE_PHYS__ == __ONCE_RUN__</code> and the copy is a harmless self-copy.</figcaption>
+</figure>
+
+<h3 id="sect-4-3">4.3. The boot sequence</h3>
+<p>Putting it together, control flows from the fixed reset entry through the
+relocator into the relocated body, and finally into <code>main()</code>; the very
+first allocation reclaims the spent init. The <code>_exit</code> trap the program
+returns to lives in the permanent stub, so it survives even after the heap has
+overwritten the <code>ONCE</code> body it was reached from.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 288" style="width:100%;height:auto;max-width:560px" role="img" aria-label="Boot flow: reset jumps to the relocator, which copies ONCE up and enters it; the body inits hardware and runs constructors, tail-jumps into main, and the first malloc reclaims ONCE">
+  <g stroke="var(--border)">
+    <rect x="150" y="16"  width="420" height="34" rx="6" fill="var(--accent-2)" fill-opacity="0.24"/>
+    <rect x="150" y="74"  width="420" height="34" rx="6" fill="var(--accent-2)" fill-opacity="0.24"/>
+    <rect x="150" y="132" width="420" height="34" rx="6" fill="var(--accent)" fill-opacity="0.24"/>
+    <rect x="150" y="190" width="420" height="34" rx="6" fill="var(--accent-2)" fill-opacity="0.24"/>
+    <rect x="150" y="248" width="420" height="34" rx="6" fill="var(--accent)" fill-opacity="0.24"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="33"  dominant-baseline="middle">Reset @ <tspan font-family="ui-monospace,Menlo,Consolas,monospace">$0200</tspan> &mdash; <tspan font-family="ui-monospace,Menlo,Consolas,monospace">jmp</tspan> to relocator</text>
+    <text x="360" y="91"  dominant-baseline="middle">Relocator &mdash; copy <tspan font-family="ui-monospace,Menlo,Consolas,monospace">__ONCE_PHYS__ &rarr; __ONCE_RUN__</tspan></text>
+    <text x="360" y="149" dominant-baseline="middle"><tspan font-family="ui-monospace,Menlo,Consolas,monospace">onceinit</tspan> &mdash; IRQ mask &middot; Mikey/Suzy &middot; sp &middot; zerobss &middot; initlib</text>
+    <text x="360" y="207" dominant-baseline="middle">push <tspan font-family="ui-monospace,Menlo,Consolas,monospace">_exit</tspan> &middot; <tspan font-family="ui-monospace,Menlo,Consolas,monospace">jmp callmain</tspan> &rarr; <tspan font-family="ui-monospace,Menlo,Consolas,monospace">main()</tspan></text>
+    <text x="360" y="265" dominant-baseline="middle">first <tspan font-family="ui-monospace,Menlo,Consolas,monospace">malloc()</tspan> &mdash; heap grows over ONCE</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="8.5" fill="var(--ink-faint)" text-anchor="start">
+    <text x="578" y="35">resident</text>
+    <text x="578" y="93">resident</text>
+    <text x="578" y="151">in ONCE</text>
+    <text x="578" y="209">&rarr; _exit is resident</text>
+    <text x="578" y="267">ONCE reclaimed</text>
+  </g>
+  <g stroke="var(--ink-faint)">
+    <line x1="360" y1="50"  x2="360" y2="72"/>
+    <line x1="360" y1="108" x2="360" y2="130"/>
+    <line x1="360" y1="166" x2="360" y2="188"/>
+    <line x1="360" y1="224" x2="360" y2="246"/>
+  </g>
+  <g fill="var(--ink-faint)">
+    <polygon points="355,72 365,72 360,78"/>
+    <polygon points="355,130 365,130 360,136"/>
+    <polygon points="355,188 365,188 360,194"/>
+    <polygon points="355,246 365,246 360,252"/>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Boot flow. Only the reset entry, the relocator and the <code>_exit</code> trap are resident; <code>onceinit</code> runs from the relocated <code>ONCE</code> copy and is freed once <code>main()</code> begins allocating.</figcaption>
+</figure>
 
 </article></main><site-foot></site-foot>
 <script src="doc.js"></script>

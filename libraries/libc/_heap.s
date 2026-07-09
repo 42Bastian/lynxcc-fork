@@ -5,7 +5,7 @@
 ;
 
         .constructor    initheap, 24
-        .import         __BSS_RUN__, __BSS_SIZE__, __STACKSIZE__
+        .import         __ONCE_RUN__, __STACKSIZE__
         .importzp       sp
 
         .include        "_heap.inc"
@@ -13,12 +13,19 @@
 
 .data
 
+; The heap anchors on __ONCE_RUN__, the run base of the reclaimable crt0
+; one-shot body (see runtime/lynx/crt0.s and
+; design/LYNX_STARTUP_RECLAIM_DESIGN.md).  ONCE runs at the very top of the
+; static area -- immediately above BSS -- so allocation begins over the spent
+; startup code and reclaims it.  With ONCE placed directly after BSS this is
+; numerically the old end-of-BSS origin (__BSS_RUN__ + __BSS_SIZE__); the
+; symbolic form keeps the heap correct if ONCE ever gains leading alignment.
 __heaporg:
-        .word   __BSS_RUN__+__BSS_SIZE__        ; Linker calculates this symbol
+        .word   __ONCE_RUN__                    ; Linker calculates this symbol
 __heapptr:
-        .word   __BSS_RUN__+__BSS_SIZE__        ; Dito
+        .word   __ONCE_RUN__                    ; Dito
 __heapend:
-        .word   __BSS_RUN__+__BSS_SIZE__
+        .word   __ONCE_RUN__
 __heapfirst:
         .word   0
 __heaplast:

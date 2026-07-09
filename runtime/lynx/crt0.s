@@ -14,19 +14,38 @@
 ; segment, and grows downward.  Bastian Schick's executable header is put
 ; on the front of the fully linked binary (see EXEHDR segment.)
 ;
-
+; The startup code is split into two parts (see
+; design/LYNX_STARTUP_RECLAIM_DESIGN.md):
+;
+;   * A tiny permanent STARTUP stub -- the reset entry vector, the resident
+;     _exit trap, and a one-shot-body relocator.  These bytes stay resident
+;     for the whole run.
+;
+;   * The one-time hardware/runtime init sequence (label onceinit), which lives
+;     in the reclaimable ONCE segment.  ONCE is linked to *run* at the top of
+;     the static area (__ONCE_RUN__, which is the heap origin), so once init has
+;     finished the very first malloc() grows the heap over these spent bytes and
+;     reclaims them.  Because the Lynx copies the file image to RAM verbatim
+;     (no per-segment load step), ONCE is *loaded* lower in the image than it
+;     runs; the relocator copies it up to its run address before entering it.
+;     The cfg exports __ONCE_PHYS__ as ONCE's physical load address (== the
+;     packed image position for the plain carts, == __ONCE_RUN__ for the
+;     cart-size cfgs whose padding already lands ONCE at its run address, in
+;     which case the copy is a harmless self-copy).
+;
 ; _exit is the internal trap the program lands on if main() ever returns, and
 ; the stack-overflow handler (stkchk.s) jumps here too.  It runs no teardown --
 ; a console has no host to return to and nothing worth cleaning up -- it just
 ; masks interrupts and spins.  There is deliberately no public exit() C
 ; function on the Lynx; see include/stdlib.h.
+
         .export         _exit
         .export         __STARTUP__ : absolute = 1      ; Mark as startup
 
         .import         initlib
         .import         zerobss
         .import         callmain
-        .import         _main
+        .import         __ONCE_RUN__, __ONCE_SIZE__, __ONCE_PHYS__
         .import         __MAIN_START__, __MAIN_SIZE__, __STACKSIZE__
 
         .include        "zeropage.inc"
@@ -45,9 +64,54 @@ MikeyInitReg:   .byte $00,$01,$08,$09,$20,$28,$30,$38,$44,$50,$8a,$8b,$8c,$92,$9
 MikeyInitData:  .byte $9e,$18,$68,$1f,$00,$00,$00,$00,$00,$ff,$1a,$1b,$04,$0d,$29
 
 ; ------------------------------------------------------------------------
-; Actual code
+; Permanent resident stub: reset entry, the _exit trap, and the relocator.
+; These bytes are never reclaimed.  The reset entry must be the first byte of
+; MAIN (the bootloader jumps to the start of MAIN at the load address).
 
         .segment "STARTUP"
+
+; Reset entry.  Jump to the relocator, which brings the one-shot body up to its
+; run address and enters it.
+
+        jmp     relocate
+
+; Landing pad: main() reaching here -- by returning or falling off its end --
+; traps the machine.  There is no host to return to and no teardown worth
+; running on a console, so we simply mask interrupts and spin forever.  The
+; stack-overflow handler (stkchk.s) also jumps here.  This lives in the
+; permanent STARTUP segment so it is never overwritten by the heap.
+
+_exit:  sei
+noret:  bra     noret
+
+; One-shot-body relocator.  Copy the ONCE segment from its physical load
+; position (__ONCE_PHYS__) up to its run address (__ONCE_RUN__), then enter it.
+; The copy runs descending so that a load/run overlap (ONCE larger than the BSS
+; gap it is moved across) cannot clobber not-yet-copied source bytes.  A
+; byte-wide index keeps this small; the assert guards the one-page assumption.
+
+relocate:
+        sei
+        ldx     #$FF
+        txs
+
+        .assert __ONCE_SIZE__ < $100, lderror, "ONCE one-shot body exceeds 255 bytes; widen the crt0 relocator"
+        ldx     #<__ONCE_SIZE__
+        beq     enter                   ; nothing to relocate (defensive)
+@copy:  dex
+        lda     __ONCE_PHYS__,x
+        sta     __ONCE_RUN__,x
+        txa
+        bne     @copy
+enter:  jmp     onceinit
+
+; ------------------------------------------------------------------------
+; One-shot init body.  Lives in the reclaimable ONCE segment; runs exactly once
+; before main() and is then grown over by the heap.
+
+        .segment "ONCE"
+
+onceinit:
 
 ; Set up the system.
 
@@ -127,14 +191,14 @@ sloop:  ldy     SuzyInitReg,x
 
         jsr     initlib
 
-; Push the command-line arguments; and, call main().
+; Push the return address of the resident _exit trap, then tail-jump into
+; callmain.  callmain ends with "jmp _main", and main()'s rts then returns to
+; the address pushed here -- the permanent _exit -- rather than to any byte of
+; this reclaimable ONCE body, which the heap may already have overwritten by
+; then.  (6502 rts jumps to the pushed address plus one, hence _exit-1.)
 
-        jsr     callmain
-
-; Landing pad: main() reaching here -- by returning or falling off its end --
-; traps the machine.  There is no host to return to and no teardown worth
-; running on a console, so we simply mask interrupts and spin forever.  The
-; stack-overflow handler (stkchk.s) also jumps here.
-
-_exit:  sei
-noret:  bra     noret
+        lda     #>(_exit-1)
+        pha
+        lda     #<(_exit-1)
+        pha
+        jmp     callmain
