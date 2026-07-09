@@ -10,6 +10,16 @@ See doc/licenses.html.
 Based on analysis of this tree (cc65 2.19, Lynx-only). Companion to
 `LYNX_CODEGEN_DESIGN.md` (the synchronous-drawing contract in its §2.6 is preserved here).
 
+> **User-facing reference.** The graphics system is documented for SDK users on the
+> dedicated `doc/graphics.html` Reference page (built per `LYNX_GFX_DOC_PAGE_DESIGN.md`):
+> the display mode, the complete `gfx_*` API, the frame-buffer addresses, double
+> buffering and the deferred VBL swap, the refresh-rate register values, the display
+> depth and the palette format. Per `CLAUDE.md` ("Documentation stays in sync with
+> code"), any change to a `gfx_*` symbol, the page addresses (`$E018`/`$C038`), the
+> refresh-rate values, or the palette layout must update `doc/graphics.html` in the
+> same pass, alongside `include/lynx/gfx.h`/`asminc/gfx.inc`, `doc/funcref.html` and
+> this document.
+
 > **Naming note (later rename).** This document records the original transition
 > from the upstream cc65 **TGI** loadable-driver mechanism to the static
 > direct-call graphics library, as first implemented. The library's public API

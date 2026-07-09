@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lynxcc - Graphics</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>Graphics</h1></header><div class="abstract">The Lynx graphics system as the <strong>lynxcc</strong> SDK exposes it &mdash; one
+fixed 160&nbsp;&times;&nbsp;102 16-colour display, the complete <code>gfx_*</code>
+API, the two frame buffers and how double buffering flips them at vertical blank,
+the selectable refresh rates and the compute budget they leave, and the palette
+format.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. The display mode</a></li>
+<li class="lvl1"><a href="#sect-2">2. API overview</a></li>
+<li class="lvl1"><a href="#sect-3">3. Frame buffers and double buffering</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. The two pages in memory</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. Draw page and view page</a></li>
+<li class="lvl2"><a href="#sect-3-3">3.3. The deferred swap at VBL</a></li>
+<li class="lvl1"><a href="#sect-4">4. Refresh rate and frame timing</a></li>
+<li class="lvl1"><a href="#sect-5">5. Display depth</a></li>
+<li class="lvl1"><a href="#sect-6">6. Colour and the palette</a></li>
+<li class="lvl1"><a href="#sect-7">7. Sprites, collision and going deeper</a></li>
+<li class="lvl1"><a href="#sect-8">8. License</a></li>
+</ul></nav>
+
+<h2 id="sect-1">1. The display mode</h2>
+<p>The Lynx has exactly <strong>one</strong> display mode, and <strong>lynxcc</strong>
+treats it as a compile-time fact rather than something you query or configure. The
+screen is <strong>160&nbsp;&times;&nbsp;102 pixels, 16 colours, with 2 display
+pages</strong> &mdash; the constants <code>GFX_XRES</code>, <code>GFX_YRES</code>,
+<code>GFX_COLORCOUNT</code> and <code>GFX_PAGECOUNT</code> in
+<code>include/lynx/gfx.h</code>. There is no mode list, no resolution negotiation
+and no failure path: the hardware is fixed, so the mode cannot fail to initialise
+and (except for the display depth, <a href="#sect-5">section&nbsp;5</a>) cannot be
+changed.</p>
+<p>The old TGI-style query functions survive only as zero-cost macros over those
+constants &mdash; <code>gfx_getxres()</code> expands to <code>GFX_XRES</code>,
+<code>gfx_getmaxx()</code> to <code>GFX_XRES&nbsp;-&nbsp;1</code>, and so on
+(<a href="#sect-2">section&nbsp;2</a>). Prefer the constants; the macros exist so
+that code ported from stock cc65 keeps compiling.</p>
+<p>There are <strong>no geometric primitives and no pixel-plot call</strong>. All
+drawing is done by Suzy's sprite engine: <code>gfx_sprite</code> renders a sprite
+control block, and text is drawn as sprites too. If you want a shape &mdash; a line,
+a box, a filled region &mdash; you build it as a sprite. See the sprite pad-byte
+rule and the deeper sprite material in <a href="#sect-7">section&nbsp;7</a>.</p>
+<p><code><a href="funcref.html#gfx_init">gfx_init()</a></code> is the one required
+call. It enables the vertical-blank timer interrupt, sets up the collision buffer,
+selects 4&nbsp;bits&nbsp;per&nbsp;pixel, points both the view and draw pages at
+page&nbsp;0, loads the default palette, and sets the drawing pen to
+<strong>black</strong> (pen&nbsp;0). So the canonical opening pair,</p>
+<pre class="code">#include &lt;lynx/gfx.h&gt;
+
+gfx_init();
+gfx_clear();          /* clears in the CURRENT pen -- black -- so: black screen */</pre>
+<p>gives you a black screen. That black default is the one gotcha worth flagging up
+front: the old loadable driver defaulted to white, and <code>gfx_clear</code> /
+<code>gfx_outtext</code> now draw in the <em>current</em> pen. Set a colour with
+<code><a href="funcref.html#gfx_setcolor">gfx_setcolor()</a></code> before you draw,
+or you will draw black on black and see nothing.</p>
+
+<h2 id="sect-2">2. API overview</h2>
+<p>Every entry point in the graphics library, grouped the way
+<code>gfx.h</code> groups them. Each name links to its full signature and notes in
+the <a href="funcref.html#gfx_init">function reference</a> &mdash; this table is a
+map, not a second copy of the prototypes, so signatures live in exactly one place
+and cannot drift.</p>
+<table>
+<thead><tr><th>Group</th><th>Function</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td rowspan="3">Init / clear</td><td><code><a href="funcref.html#gfx_init">gfx_init</a></code></td><td>Initialise graphics; the one required call.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_clear">gfx_clear</a></code></td><td>Clear the draw page in the current pen.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_clearrows">gfx_clearrows</a></code></td><td>Clear a band of rows in the current pen.</td></tr>
+<tr><td rowspan="9">Sprites / display</td><td><code><a href="funcref.html#gfx_sprite">gfx_sprite</a></code></td><td>Draw an SCB (or SCB chain) into the draw page.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_flip">gfx_flip</a></code></td><td>Rotate the display 180&deg; (left-handed mode).</td></tr>
+<tr><td><code><a href="funcref.html#gfx_setviewpage">gfx_setviewpage</a></code></td><td>Choose the visible page (0/1).</td></tr>
+<tr><td><code><a href="funcref.html#gfx_setdrawpage">gfx_setdrawpage</a></code></td><td>Choose the page drawing renders into (0/1).</td></tr>
+<tr><td><code><a href="funcref.html#gfx_busy">gfx_busy</a></code></td><td>Nonzero while a requested swap is still pending.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_updatedisplay">gfx_updatedisplay</a></code></td><td>Request a draw/view swap at the next VBL.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_setframerate">gfx_setframerate</a></code></td><td>Select 50, 60 or 75&nbsp;Hz refresh.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_setcollisiondetection">gfx_setcollisiondetection</a></code></td><td>Enable/disable Suzy collision detection.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_setbpp">gfx_setbpp</a></code></td><td>Select 4bpp (default) or 2bpp display depth.</td></tr>
+<tr><td rowspan="6">Colour / palette</td><td><code><a href="funcref.html#gfx_setcolor">gfx_setcolor</a></code></td><td>Set the drawing pen (0&ndash;15).</td></tr>
+<tr><td><code><a href="funcref.html#gfx_getcolor">gfx_getcolor</a></code></td><td>Read the current drawing pen.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_setbgcolor">gfx_setbgcolor</a></code></td><td>Set the text background pen (0 = transparent).</td></tr>
+<tr><td><code><a href="funcref.html#gfx_setpalette">gfx_setpalette</a></code></td><td>Load a 32-byte palette.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_getpalette">gfx_getpalette</a></code></td><td>Read the current palette.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_getdefpalette">gfx_getdefpalette</a></code></td><td>Read the default palette.</td></tr>
+<tr><td rowspan="9">Text</td><td><code><a href="funcref.html#gfx_gotoxy">gfx_gotoxy</a></code></td><td>Move the text cursor.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_outtext">gfx_outtext</a></code></td><td>Draw text at the cursor (&le;&nbsp;20 chars/call).</td></tr>
+<tr><td><code><a href="funcref.html#gfx_outtextxy">gfx_outtextxy</a></code></td><td>Draw text at a given position.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_settextscale">gfx_settextscale</a></code></td><td>Set 8.8 fixed-point text scaling.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_settextstyle">gfx_settextstyle</a></code></td><td>Set scale and direction together.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_setfont">gfx_setfont</a></code></td><td>Select the 8x8, compact 5x5 or proportional font.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_settextdir">gfx_settextdir</a></code></td><td>Set cursor-advance direction.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_gettextwidth">gfx_gettextwidth</a></code></td><td>Width of a string at the current scale.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_gettextheight">gfx_gettextheight</a></code></td><td>Height of text at the current scale.</td></tr>
+<tr><td rowspan="4">Constants / query macros</td><td><code>GFX_XRES</code>, <code>GFX_YRES</code></td><td>160 and 102 &mdash; the display dimensions.</td></tr>
+<tr><td><code>GFX_COLORCOUNT</code>, <code>GFX_PAGECOUNT</code></td><td>16 colours, 2 pages.</td></tr>
+<tr><td><code>GFX_FONT_*</code>, <code>GFX_TEXT_*</code></td><td>Font and text-direction selectors.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_getxres">gfx_getxres()</a></code> &hellip;</td><td>Zero-cost macros over the constants above.</td></tr>
+</tbody>
+</table>
+
+<h2 id="sect-3">3. Frame buffers and double buffering</h2>
+<p>The Lynx has no dedicated video RAM: the display is refreshed straight out of
+main DRAM by Mikey's video DMA. Graphics reserves two full-screen buffers &mdash;
+&ldquo;pages&rdquo; &mdash; and draws into one while the hardware scans the other
+out. This section states where they live and how the flip is timed.</p>
+
+<h3 id="sect-3-1">3.1. The two pages in memory</h3>
+<p>Each page is the whole 160&nbsp;&times;&nbsp;102 screen at 4&nbsp;bits per pixel:
+80&nbsp;bytes/line &times;&nbsp;102&nbsp;lines&nbsp;=&nbsp;<strong>8160&nbsp;bytes</strong>.
+There are two of them:</p>
+<ul>
+<li><p><strong>Page&nbsp;0</strong> at base <code>$E018</code> (<code>GFX_PAGE0_ADDR</code>),
+running to <code>$FFF7</code>.</p></li>
+<li><p><strong>Page&nbsp;1</strong> at base <code>$C038</code> (<code>GFX_PAGE1_ADDR</code>),
+running to <code>$E017</code>.</p></li>
+</ul>
+<p>These addresses are not free-floating constants: they are coupled to the linker
+memory map in <code>cfg/lynx*.cfg</code>, and <code>asminc/gfx.inc</code> keeps them
+in step. If the config moves the buffers, these change with it. For the whole
+address-space picture &mdash; and the fact that page&nbsp;0 shares its range with the
+I/O overlay &mdash; see the <a href="memory.html#sect-1">Memory</a> page; this page
+owns only the two buffers.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 232" style="width:100%;height:auto;max-width:560px" role="img" aria-label="Memory map of the two 8160-byte display pages: page 1 at C038 and page 0 at E018, each with an upper region freed in 2bpp mode">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="22">The two display pages in DRAM</text>
+  </g>
+  <!-- page 1 -->
+  <rect x="210" y="40" width="300" height="72" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="210" y="40" width="300" height="30" fill="var(--accent)" fill-opacity="0.28" stroke="var(--accent)" stroke-dasharray="3 3"/>
+  <!-- page 0 -->
+  <rect x="210" y="128" width="300" height="72" fill="var(--accent-2)" fill-opacity="0.14" stroke="var(--accent-2)"/>
+  <rect x="210" y="128" width="300" height="30" fill="var(--accent-2)" fill-opacity="0.28" stroke="var(--accent-2)" stroke-dasharray="3 3"/>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11.5" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="90">Page&nbsp;1 &mdash; 8160 bytes</text>
+    <text x="360" y="178">Page&nbsp;0 &mdash; 8160 bytes</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="var(--ink-soft)" text-anchor="end">
+    <text x="200" y="45">$C038</text>
+    <text x="200" y="116">$E017</text>
+    <text x="200" y="133">$E018</text>
+    <text x="200" y="204">$FFF7</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--accent)" text-anchor="middle">
+    <text x="360" y="59">upper 4080 B free in 2bpp</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--accent-2)" text-anchor="middle">
+    <text x="360" y="147">upper 4080 B free in 2bpp</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="360" y="224">lower addresses at top; page&nbsp;0 shares its range with the I/O overlay</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Two 8160-byte 4bpp buffers. In 2bpp mode (<a href="#sect-5">section&nbsp;5</a>) Mikey scans only the lower 4080&nbsp;bytes of each page; the base addresses do not move.</figcaption>
+</figure>
+
+<h3 id="sect-3-2">3.2. Draw page and view page</h3>
+<p>Double buffering is just two independent pointers into those buffers:</p>
+<dl>
+<dt><strong>Draw page</strong> (<code><a href="funcref.html#gfx_setdrawpage">gfx_setdrawpage</a></code>)</dt>
+<dd><p>The page that <code>gfx_sprite</code>, <code>gfx_clear</code>,
+<code>gfx_outtext</code> and the rest render into.</p></dd>
+<dt><strong>View page</strong> (<code><a href="funcref.html#gfx_setviewpage">gfx_setviewpage</a></code>)</dt>
+<dd><p>The page Mikey scans out to the LCD (latched into its <code>DISPADR</code>
+register).</p></dd>
+</dl>
+<p>Point them at the <em>same</em> page and you have a <strong>single-buffered</strong>
+display: every draw is immediately visible. It is the simplest model, but because
+you are drawing into the buffer being scanned out, partial updates can tear or
+flicker mid-frame.</p>
+<p>Point them at <em>different</em> pages and you have a
+<strong>double-buffered</strong> display: draw the next frame into the hidden page
+while the other is shown, then swap. The swap must land during vertical blank, when
+nothing is being scanned out, or the display tears &mdash; which is exactly what
+<code>gfx_updatedisplay</code> arranges (<a href="#sect-3-3">section&nbsp;3.3</a>).</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 216" style="width:100%;height:auto;max-width:640px" role="img" aria-label="Draw and view pointers before and after a swap: they exchange which page is drawn and which is shown">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="22">Draw / view pointers exchange on swap</text>
+  </g>
+  <!-- before -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10.5" fill="var(--ink-soft)" text-anchor="middle">
+    <text x="185" y="48" font-weight="600" fill="var(--ink)">before swap</text>
+  </g>
+  <rect x="120" y="88" width="130" height="44" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="120" y="140" width="130" height="44" fill="var(--accent-2)" fill-opacity="0.14" stroke="var(--accent-2)"/>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10.5" fill="var(--ink)" text-anchor="middle">
+    <text x="185" y="114">Page&nbsp;0</text>
+    <text x="185" y="166">Page&nbsp;1</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" font-weight="600" text-anchor="end">
+    <text x="112" y="113" fill="var(--accent)">VIEW &rarr;</text>
+    <text x="112" y="165" fill="var(--accent-2)">DRAW &rarr;</text>
+  </g>
+  <!-- after -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10.5" fill="var(--ink-soft)" text-anchor="middle">
+    <text x="535" y="48" font-weight="600" fill="var(--ink)">after swap</text>
+  </g>
+  <rect x="470" y="88" width="130" height="44" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="470" y="140" width="130" height="44" fill="var(--accent-2)" fill-opacity="0.14" stroke="var(--accent-2)"/>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10.5" fill="var(--ink)" text-anchor="middle">
+    <text x="535" y="114">Page&nbsp;0</text>
+    <text x="535" y="166">Page&nbsp;1</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" font-weight="600" text-anchor="end">
+    <text x="462" y="113" fill="var(--accent-2)">DRAW &rarr;</text>
+    <text x="462" y="165" fill="var(--accent)">VIEW &rarr;</text>
+  </g>
+  <!-- swap arrow -->
+  <g stroke="var(--ink-faint)" fill="none">
+    <path d="M270 136 H450" marker-end="url(#gx-arrow)"/>
+  </g>
+  <text x="360" y="128" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink-faint)" text-anchor="middle">VBL swap</text>
+  <defs>
+    <marker id="gx-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-faint)"/>
+    </marker>
+  </defs>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The just-drawn page becomes the view page and the draw pointer moves to the other buffer, so the next frame is drawn off-screen again.</figcaption>
+</figure>
+
+<h3 id="sect-3-3">3.3. The deferred swap at VBL</h3>
+<p><code><a href="funcref.html#gfx_updatedisplay">gfx_updatedisplay()</a></code> does
+<strong>not</strong> perform the swap and does <strong>not</strong> block. It sets a
+one-byte <em>swap-request</em> flag and returns immediately. The actual swap is done
+by the VBL interrupt handler (<code>gfx_vbl_irq</code>): on the next vertical-blank
+interrupt it makes the just-drawn page the view page, flips the draw page to the
+other buffer, and clears the request. It is fire-and-forget.</p>
+<p>This corrects a long-standing description that said
+<code>gfx_updatedisplay</code> &ldquo;will wait for the next VBL&rdquo;. It does not
+wait; it <em>defers</em> to the next VBL and returns at once. If you must know the
+swap has actually happened before you start reusing the newly-hidden buffer, poll
+<code><a href="funcref.html#gfx_busy">gfx_busy()</a></code> &mdash; it returns nonzero
+while a requested swap is still pending and drops to zero once the interrupt has
+performed it.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 168" style="width:100%;height:auto;max-width:700px" role="img" aria-label="Timeline: gfx_updatedisplay sets the swap flag and returns, the frame continues, then the VBL interrupt swaps the pages and clears the flag">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="22">Deferred swap: request now, swap at VBL</text>
+  </g>
+  <!-- timeline -->
+  <line x1="40" y1="96" x2="680" y2="96" stroke="var(--ink-faint)" stroke-width="1.5"/>
+  <polygon points="680,96 672,92 672,100" fill="var(--ink-faint)"/>
+  <text x="686" y="99" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--ink-faint)" text-anchor="start">t</text>
+  <!-- call marker -->
+  <line x1="120" y1="70" x2="120" y2="122" stroke="var(--accent)"/>
+  <circle cx="120" cy="96" r="4" fill="var(--accent)"/>
+  <text x="120" y="60" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--accent)" text-anchor="middle">gfx_updatedisplay()</text>
+  <text x="120" y="140" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--ink-faint)" text-anchor="middle">set flag, return</text>
+  <!-- continue -->
+  <text x="330" y="88" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink-soft)" text-anchor="middle">frame continues (draw / logic)</text>
+  <!-- VBL marker -->
+  <line x1="560" y1="70" x2="560" y2="122" stroke="var(--accent-2)"/>
+  <circle cx="560" cy="96" r="4" fill="var(--accent-2)"/>
+  <text x="560" y="60" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--accent-2)" text-anchor="middle">VBL interrupt</text>
+  <text x="560" y="140" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--ink-faint)" text-anchor="middle">swap pages, clear flag</text>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Between the request and the VBL, <code>gfx_busy()</code> reports the swap as pending. The handler never blocks the caller.</figcaption>
+</figure>
+<p>The VBL swap handler is linked as an <code>.interruptor</code> that only enters the
+interrupt chain when a program actually links the paging module &mdash; that is, when
+it uses double buffering. A single-buffered program that only ever draws to
+page&nbsp;0 pays nothing for the swap machinery.</p>
+
+<h2 id="sect-4">4. Refresh rate and frame timing</h2>
+<p><code><a href="funcref.html#gfx_setframerate">gfx_setframerate(50|60|75)</a></code>
+selects the display refresh rate in Hz. It returns 0 on success and nonzero for any
+other value &mdash; it is the only fallible call left in the library. Internally it
+writes just the two timer backup registers <code>HTIMBKUP</code> and
+<code>PBKUP</code> (the safe subset of Mikey timer handling), with these values:</p>
+<table>
+<thead><tr><th>Rate</th><th><code>HTIMBKUP</code></th><th><code>PBKUP</code></th><th>Frame period</th></tr></thead>
+<tbody>
+<tr><td>50&nbsp;Hz</td><td><code>$BD</code></td><td><code>$31</code></td><td>20.0&nbsp;ms</td></tr>
+<tr><td>60&nbsp;Hz</td><td><code>$9E</code></td><td><code>$29</code></td><td>16.67&nbsp;ms</td></tr>
+<tr><td>75&nbsp;Hz</td><td><code>$7E</code></td><td><code>$20</code></td><td>13.33&nbsp;ms</td></tr>
+</tbody>
+</table>
+<p>The refresh rate sets your <strong>compute budget between frames</strong>. At the
+Lynx's roughly 4&nbsp;MHz 65SC02 the <em>gross</em> CPU budget per frame is about the
+system clock divided by the rate:</p>
+<table>
+<thead><tr><th>Rate</th><th>Frame period</th><th>Gross CPU cycles/frame (~4&nbsp;MHz)</th></tr></thead>
+<tbody>
+<tr><td>50&nbsp;Hz</td><td>20.0&nbsp;ms</td><td>&asymp;&nbsp;80,000</td></tr>
+<tr><td>60&nbsp;Hz</td><td>16.67&nbsp;ms</td><td>&asymp;&nbsp;66,700</td></tr>
+<tr><td>75&nbsp;Hz</td><td>13.33&nbsp;ms</td><td>&asymp;&nbsp;53,300</td></tr>
+</tbody>
+</table>
+<p>Treat those as a <strong>ceiling, not the real budget</strong>. Two things eat
+into it and neither is counted above: Mikey's display DMA steals cycles on every
+scanline to refresh the screen, and every synchronous
+<code><a href="funcref.html#gfx_sprite">gfx_sprite</a></code> call busy-waits while
+Suzy renders &mdash; from the program's point of view the drawing engine and the CPU
+do not run in parallel. So a higher refresh rate buys smoother motion at the cost of
+fewer cycles for game logic and fewer sprites you can draw per frame. The exact
+steal-cycle count is hardware-measurement territory and is deliberately left
+unquantified here (as in <code>design/LYNX_GFX_DESIGN.md</code>).</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 210" style="width:100%;height:auto;max-width:700px" role="img" aria-label="Frame-budget bars for 50, 60 and 75 Hz: each bar is one frame period split into a small VBL/swap slice and the remaining compute slice, the bar shrinking as the rate rises">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="22">Frame budget shrinks as the rate rises</text>
+  </g>
+  <!-- 50 Hz : full width -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-soft)" text-anchor="end">
+    <text x="96" y="63">50&nbsp;Hz</text>
+    <text x="96" y="113">60&nbsp;Hz</text>
+    <text x="96" y="163">75&nbsp;Hz</text>
+  </g>
+  <!-- bars: total width 560 maps to 20ms; 60Hz=467; 75Hz=373 -->
+  <!-- 50 -->
+  <rect x="110" y="48" width="44"  height="26" fill="var(--accent-2)" fill-opacity="0.30" stroke="var(--accent-2)"/>
+  <rect x="154" y="48" width="516" height="26" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <!-- 60 -->
+  <rect x="110" y="98" width="44"  height="26" fill="var(--accent-2)" fill-opacity="0.30" stroke="var(--accent-2)"/>
+  <rect x="154" y="98" width="413" height="26" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <!-- 75 -->
+  <rect x="110" y="148" width="44"  height="26" fill="var(--accent-2)" fill-opacity="0.30" stroke="var(--accent-2)"/>
+  <rect x="154" y="148" width="319" height="26" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <!-- annotations -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">
+    <text x="412" y="65">&asymp; 80,000 cycles</text>
+    <text x="360" y="115">&asymp; 66,700 cycles</text>
+    <text x="313" y="165">&asymp; 53,300 cycles</text>
+  </g>
+  <text x="132" y="90" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="8" fill="var(--accent-2)" text-anchor="middle">VBL</text>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="360" y="198">orange = gross compute ceiling before display-DMA / Suzy steal</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Each bar is one frame period. The teal slice stands for the VBL/swap window; the orange slice is the gross compute ceiling &mdash; real available cycles are lower once DMA and Suzy take their share.</figcaption>
+</figure>
+<p>In practice: <strong>60&nbsp;Hz</strong> is the usual choice; <strong>75&nbsp;Hz</strong>
+gives the smoothest motion when each frame's work is light; <strong>50&nbsp;Hz</strong>
+buys the most compute per frame when logic or sprite counts are heavy.</p>
+
+<h2 id="sect-5">5. Display depth</h2>
+<p><code><a href="funcref.html#gfx_setbpp">gfx_setbpp(4|2)</a></code> selects how
+Mikey's display DMA reads the buffer, via <code>DISPCTL</code> bit&nbsp;2.
+<strong>4&nbsp;bits per pixel is the default and the only spec-blessed mode</strong>
+&mdash; the 16-colour display this whole page describes.</p>
+<p><strong>2bpp is an advanced, experimental mode.</strong> It is a CPU-rendered
+framebuffer mode: Suzy's sprite engine always emits 4bpp, so sprite and text output
+(<code>gfx_sprite</code>, <code>gfx_outtext</code>) scans out garbled under 2bpp, and
+even <code>gfx_clear</code> only stays valid for pens 0, 5, 10 and 15 (which map onto
+the four 2bpp pens). It scans 40&nbsp;bytes/line instead of 80, so each page needs
+only 4080&nbsp;bytes and the upper 4080&nbsp;bytes of each buffer
+(<a href="#sect-3-1">section&nbsp;3.1</a>) fall free &mdash; but the base addresses do
+not move. The mode relies on a <code>DISPCTL</code> bit outside the hardware spec's
+guarantees and is <strong>unverified on real hardware</strong>. Reach for it only if
+you are hand-rendering a 2bpp framebuffer and know what you are doing; the full
+analysis is in <code>design/LYNX_GFX_DESIGN.md</code>&nbsp;&sect;2.7.</p>
+
+<h2 id="sect-6">6. Colour and the palette</h2>
+<p><code>lynx/lynx.h</code> defines 16 palette-index constants naming the entries of
+the default palette loaded by <code><a href="funcref.html#gfx_init">gfx_init</a></code>.
+A matching set of <code>GFX_COLOR_*</code> aliases (for example
+<code>GFX_COLOR_WHITE</code>) is provided for use with the graphics calls; each
+<code>GFX_COLOR_x</code> is simply equal to the corresponding <code>COLOR_x</code>.</p>
+<pre class="verb">COLOR_BLACK      0x00   COLOR_YELLOW      0x08
+COLOR_RED        0x01   COLOR_LIGHTGREEN  0x09
+COLOR_PINK       0x02   COLOR_GREEN       0x0A
+COLOR_LIGHTGREY  0x03   COLOR_DARKBROWN   0x0B
+COLOR_GREY       0x04   COLOR_VIOLET      0x0C
+COLOR_DARKGREY   0x05   COLOR_BLUE        0x0D
+COLOR_BROWN      0x06   COLOR_LIGHTBLUE   0x0E
+COLOR_PEACH      0x07   COLOR_WHITE       0x0F</pre>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 200" style="width:100%;height:auto;max-width:700px" role="img" aria-label="The 16 default palette swatches with their COLOR names and pen indices, in two rows of eight">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="20">Default palette &mdash; 16 pens</text>
+  </g>
+  <!-- row 1 -->
+  <g stroke="var(--border)">
+    <rect x="24"  y="36" width="76" height="40" fill="#110011"/>
+    <rect x="112" y="36" width="76" height="40" fill="#DD3344"/>
+    <rect x="200" y="36" width="76" height="40" fill="#FF99AA"/>
+    <rect x="288" y="36" width="76" height="40" fill="#8899BB"/>
+    <rect x="376" y="36" width="76" height="40" fill="#777777"/>
+    <rect x="464" y="36" width="76" height="40" fill="#553333"/>
+    <rect x="552" y="36" width="76" height="40" fill="#884444"/>
+    <rect x="640" y="36" width="56" height="40" fill="#EE7755"/>
+  </g>
+  <!-- row 2 -->
+  <g stroke="var(--border)">
+    <rect x="24"  y="118" width="76" height="40" fill="#FFDD55"/>
+    <rect x="112" y="118" width="76" height="40" fill="#33CC55"/>
+    <rect x="200" y="118" width="76" height="40" fill="#228822"/>
+    <rect x="288" y="118" width="76" height="40" fill="#332222"/>
+    <rect x="376" y="118" width="76" height="40" fill="#444488"/>
+    <rect x="464" y="118" width="76" height="40" fill="#5588EE"/>
+    <rect x="552" y="118" width="76" height="40" fill="#55CCFF"/>
+    <rect x="640" y="118" width="56" height="40" fill="#FFFFFF"/>
+  </g>
+  <!-- labels -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">
+    <text x="62"  y="90">0 BLACK</text>
+    <text x="150" y="90">1 RED</text>
+    <text x="238" y="90">2 PINK</text>
+    <text x="326" y="90">3 LTGREY</text>
+    <text x="414" y="90">4 GREY</text>
+    <text x="502" y="90">5 DKGREY</text>
+    <text x="590" y="90">6 BROWN</text>
+    <text x="668" y="90">7 PEACH</text>
+    <text x="62"  y="172">8 YELLOW</text>
+    <text x="150" y="172">9 LTGREEN</text>
+    <text x="238" y="172">10 GREEN</text>
+    <text x="326" y="172">11 DKBROWN</text>
+    <text x="414" y="172">12 VIOLET</text>
+    <text x="502" y="172">13 BLUE</text>
+    <text x="590" y="172">14 LTBLUE</text>
+    <text x="668" y="172">15 WHITE</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="360" y="194">swatch colours are approximate 12-bit Lynx values scaled to sRGB</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The 16 default pens with their <code>COLOR_*</code> names and indices. On-screen colour depends on the actual LCD; these swatches are an approximation.</figcaption>
+</figure>
+<p>The palette wire format &mdash; as consumed by
+<code><a href="funcref.html#gfx_setpalette">gfx_setpalette</a></code> and returned by
+<code><a href="funcref.html#gfx_getpalette">gfx_getpalette</a></code> /
+<code><a href="funcref.html#gfx_getdefpalette">gfx_getdefpalette</a></code> &mdash; is
+<strong>32 bytes</strong>: 16 green bytes (one green nibble per pen) followed by 16
+blue/red bytes (blue in the high nibble, red in the low nibble). Each pen is thus a
+12-bit colour, split across the two halves in Mikey's <code>GCOLMAP</code> layout.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 128" style="width:100%;height:auto;max-width:700px" role="img" aria-label="The 32-byte palette layout: sixteen green bytes followed by sixteen blue-red bytes">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="22">32-byte palette layout</text>
+  </g>
+  <rect x="40"  y="40" width="300" height="46" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="340" y="40" width="340" height="46" fill="var(--accent-2)" fill-opacity="0.14" stroke="var(--accent-2)"/>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" fill="var(--ink)" text-anchor="middle">
+    <text x="190" y="62">16 green bytes</text>
+    <text x="510" y="62">16 blue/red bytes</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="190" y="80">green nibble per pen</text>
+    <text x="510" y="80">blue&nbsp;=&nbsp;high nibble, red&nbsp;=&nbsp;low nibble</text>
+    <text x="40"  y="102" text-anchor="start">byte 0</text>
+    <text x="340" y="102" text-anchor="middle">byte 16</text>
+    <text x="680" y="102" text-anchor="end">byte 31</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Greens first, then blue/red pairs &mdash; the order Mikey's <code>GCOLMAP</code> hardware expects.</figcaption>
+</figure>
+<p>Two more pen controls: <code><a href="funcref.html#gfx_setcolor">gfx_setcolor</a></code>
+/ <code><a href="funcref.html#gfx_getcolor">gfx_getcolor</a></code> set and read the
+drawing pen (0&ndash;15, and the source of <code>gfx_clear</code>'s fill colour), and
+<code><a href="funcref.html#gfx_setbgcolor">gfx_setbgcolor</a></code> sets the text
+background pen &mdash; where a value of <strong>0</strong> means a transparent
+background rather than the black pen.</p>
+
+<h2 id="sect-7">7. Sprites, collision and going deeper</h2>
+<p>All non-text drawing goes through
+<code><a href="funcref.html#gfx_sprite">gfx_sprite</a></code>, which renders one sprite
+control block (SCB) or a chain of them synchronously &mdash; it returns only after
+Suzy has finished. Two hardware traps are worth remembering: an 8-byte SCB pen
+palette must not begin at address <code>$xxFA</code> (a hardware bug drops its last
+two bytes, leaving pens C&ndash;F stale), so align or pad the SCB; and you must not
+interleave raw game-cart strobes with sprite calls, because Suzy must be left alone
+for 12&nbsp;ticks after a cart write. The sprite pad-byte rule and the
+<code>$xxFA</code> palette bug are analysed in full in
+<code>design/LYNX_GFX_DESIGN.md</code>&nbsp;&sect;5, with the
+<a href="samples.html">packtest</a> example demonstrating packed-versus-literal
+output.</p>
+<p><code><a href="funcref.html#gfx_setcollisiondetection">gfx_setcollisiondetection</a></code>
+turns Suzy's sprite collision detection on or off (it is off by default); when it is
+on, <code>gfx_clear</code> and <code>gfx_clearrows</code> also erase the matching rows
+of the collision buffer. Collision detection needs somewhere to put that buffer, so a
+program that uses it must link with <code>lynx-coll.cfg</code> to reserve the space.</p>
+<p>For material this page only points at:</p>
+<ul>
+<li><p><strong>Fonts</strong> &mdash; the three bitmap fonts and their glyph tables are
+on the <a href="lynx_gfx_fonts.html">Graphics fonts</a> page.</p></li>
+<li><p><strong>Suzy math</strong> &mdash; the hardware multiply/divide the sprite
+engine shares is documented under <code>suzymath.h</code> in the
+<a href="funcref.html#gfx_init">function reference</a>.</p></li>
+<li><p><strong>Design rationale</strong> &mdash; why TGI was removed and how this
+static library is laid out is in <code>design/LYNX_GFX_DESIGN.md</code>.</p></li>
+</ul>
+
+<h2 id="sect-8">8. License</h2>
+<p>The Lynx runtime, like the rest of the package, is distributed under the cc65 zlib-style license. The full text, together with every other copyright notice in the distribution, is reproduced verbatim on the consolidated <a href="licenses.html">Licenses and copyright notices</a> page.</p></article></main><site-foot></site-foot>
+<script src="doc.js"></script>
+</body></html>
