@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lynxcc - ComLynx serial</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>ComLynx serial</h1></header><div class="abstract">The single-wire ComLynx port &mdash; the Mikey UART hardware and its quirks, the
+static <code>lynx/serial.h</code> library that drives it, and the historical Epyx
+&ldquo;Redeye&rdquo; round-robin protocol that the original multiplayer games ran
+on top of it.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl1"><a href="#sect-2">2. The Mikey UART</a></li>
+<li class="lvl2"><a href="#sect-2-1">2.1. Connector and signals</a></li>
+<li class="lvl2"><a href="#sect-2-2">2.2. Baud-rate generation</a></li>
+<li class="lvl2"><a href="#sect-2-3">2.3. Data format</a></li>
+<li class="lvl2"><a href="#sect-2-4">2.4. Break</a></li>
+<li class="lvl2"><a href="#sect-2-5">2.5. Status, errors and the interrupt quirk</a></li>
+<li class="lvl1"><a href="#sect-3">3. The lynxcc serial library</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. Opening the port</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. Sending and receiving</a></li>
+<li class="lvl2"><a href="#sect-3-3">3.3. Status and error codes</a></li>
+<li class="lvl2"><a href="#sect-3-4">3.4. Closing the port</a></li>
+<li class="lvl2"><a href="#sect-3-5">3.5. Quirks and limitations</a></li>
+<li class="lvl1"><a href="#sect-4">4. The Redeye protocol (historical)</a></li>
+<li class="lvl2"><a href="#sect-4-1">4.1. Round-robin communication frames</a></li>
+<li class="lvl2"><a href="#sect-4-2">4.2. Logon</a></li>
+<li class="lvl2"><a href="#sect-4-3">4.3. Normal communication</a></li>
+<li class="lvl2"><a href="#sect-4-4">4.4. Constants and switches</a></li>
+<li class="lvl2"><a href="#sect-4-5">4.5. Game ID numbers</a></li>
+<li class="lvl2"><a href="#sect-4-6">4.6. Limitations and resource cost</a></li>
+<li class="lvl1"><a href="#sect-5">5. Further reading</a></li>
+<li class="lvl1"><a href="#sect-6">6. License</a></li>
+</ul></nav>
+
+<h2 id="sect-1">1. Overview</h2>
+<p>Every Lynx carries a serial port &mdash; the four-pin <strong>ComLynx</strong>
+jack, driven by a UART inside the Mikey chip. It is how the original games linked
+up to eight (electrically up to&nbsp;18) consoles into a single session. Unlike an
+ordinary RS-232 link it has exactly <em>one</em> data wire shared by everyone:
+transmit and receive are tied together, so it behaves like a party-line bus rather
+than a point-to-point cable.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 214" style="width:100%;height:auto;max-width:700px" role="img" aria-label="ComLynx single-wire bus topology with several consoles sharing one open-collector data line">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="24">ComLynx &mdash; one shared, open-collector data wire</text>
+  </g>
+  <!-- pull-up to +5 -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="var(--accent)" text-anchor="middle">
+    <text x="360" y="54">+5V</text>
+  </g>
+  <line x1="360" y1="60" x2="360" y2="86" stroke="var(--accent)"/>
+  <text x="360" y="76" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--accent)" text-anchor="start" dx="6">R&nbsp;pull-up</text>
+  <!-- the shared bus line -->
+  <line x1="70" y1="98" x2="650" y2="98" stroke="var(--accent)" stroke-width="2"/>
+  <text x="70" y="92" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-faint)" text-anchor="start">DATA (bi-directional)</text>
+  <!-- consoles -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" fill="var(--ink)" text-anchor="middle">
+    <g>
+      <rect x="96"  y="128" width="108" height="56" fill="var(--panel)" stroke="var(--border)"/>
+      <line x1="150" y1="98" x2="150" y2="128" stroke="var(--border)"/>
+      <text x="150" y="152" font-size="11.5">Lynx&nbsp;0</text>
+      <text x="150" y="169" font-size="9" fill="var(--ink-soft)">Tx&nbsp;+&nbsp;Rx tied</text>
+    </g>
+    <g>
+      <rect x="252" y="128" width="108" height="56" fill="var(--panel)" stroke="var(--border)"/>
+      <line x1="306" y1="98" x2="306" y2="128" stroke="var(--border)"/>
+      <text x="306" y="152" font-size="11.5">Lynx&nbsp;1</text>
+      <text x="306" y="169" font-size="9" fill="var(--ink-soft)">Tx&nbsp;+&nbsp;Rx tied</text>
+    </g>
+    <g>
+      <rect x="408" y="128" width="108" height="56" fill="var(--panel)" stroke="var(--border)"/>
+      <line x1="462" y1="98" x2="462" y2="128" stroke="var(--border)"/>
+      <text x="462" y="152" font-size="11.5">Lynx&nbsp;2</text>
+      <text x="462" y="169" font-size="9" fill="var(--ink-soft)">Tx&nbsp;+&nbsp;Rx tied</text>
+    </g>
+    <g>
+      <rect x="564" y="128" width="108" height="56" fill="var(--panel-2)" stroke="var(--border)" stroke-dasharray="3 3"/>
+      <line x1="618" y1="98" x2="618" y2="128" stroke="var(--border)" stroke-dasharray="3 3"/>
+      <text x="618" y="152" font-size="11.5" fill="var(--ink-soft)">Lynx&nbsp;n</text>
+      <text x="618" y="169" font-size="9" fill="var(--ink-faint)">up to 18</text>
+    </g>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">One idle-high, open-collector line pulled up to&nbsp;+5V. Any console can pull it low to send; every console &mdash; including the sender &mdash; hears the result.</figcaption>
+</figure>
+<p>The consequences of that one wire run through the rest of this page. Only one
+console may transmit at a time; there is no hardware arbitration, no handshaking,
+and no framing beyond the byte. If two consoles transmit at once the collision
+usually surfaces as a framing error on everyone. Any real multiplayer protocol
+&mdash; turn-taking, retransmission, player logon &mdash; has to be built in
+software (see the historical Redeye system in <a href="#sect-4">section&nbsp;4</a>).</p>
+<p>lynxcc exposes the port through a small static library (<a href="#sect-3">section&nbsp;3</a>);
+this page first documents the hardware it sits on (<a href="#sect-2">section&nbsp;2</a>),
+because the library deliberately surfaces the hardware's quirks rather than hiding
+them.</p>
+
+<h2 id="sect-2">2. The Mikey UART</h2>
+<p>The serial hardware is a fairly ordinary UART living in the Mikey chip, wired to
+the ComLynx (historically &ldquo;REDEYE&rdquo;) connector. It is controlled through
+the <code>SERCTL</code>/<code>SERDAT</code> registers and clocked by Mikey
+timer&nbsp;4. The paragraphs below distil Mikey's own UART specification.</p>
+
+<h3 id="sect-2-1">2.1. Connector and signals</h3>
+<p>The connector carries one bi-directional serial <strong>data</strong> pin, one
+<strong>ground</strong> and one <strong>VCC</strong>. The data pin idles in an
+open-collector state, held high by a pull-up resistor to&nbsp;+5V; a console sends
+by pulling it low. A fourth signal, <code>NOEXP</code>, indicates whether a plug is
+present in the socket.</p>
+<p>There is a documented power-up defect: the output stage comes up as a TTL high
+rather than open-collector, so <em>all</em> code must set the <code>TXOPEN</code>
+bit to place the driver in its correct open-collector mode before the bus behaves.
+The lynxcc library does this for you as part of <code>ser_open()</code>.</p>
+<p>Any non-Lynx device sharing the socket needs its own intelligent protocol to
+distinguish itself from a genuine Redeye peer.</p>
+
+<h3 id="sect-2-2">2.2. Baud-rate generation</h3>
+<p>The baud rate is generated by timer&nbsp;4 (exposed in <code>lynx/lynx.h</code>
+as <code>_UART_TIMER</code> at <code>$FD14</code>). The bit rate is</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 132" style="width:100%;height:auto;max-width:640px" role="img" aria-label="Baud-rate pipeline: CLOCK4 divided by TIMER4 plus one, divided by eight, yields the baud rate">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10.5" fill="var(--ink-soft)" text-anchor="middle">
+    <text x="360" y="22" font-size="11.5" font-weight="600" fill="var(--ink)">baud = CLOCK4 &divide; (TIMER4 + 1) &divide; 8</text>
+  </g>
+  <!-- pipeline boxes -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11" fill="var(--ink)" text-anchor="middle">
+    <rect x="44"  y="52" width="150" height="46" fill="var(--panel)" stroke="var(--border)"/>
+    <text x="119" y="74">CLOCK4</text>
+    <text x="119" y="90" font-size="9" fill="var(--ink-faint)">1&ndash;15625 &micro;s tick</text>
+
+    <rect x="286" y="52" width="150" height="46" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+    <text x="361" y="74">&divide; (TIMER4+1)</text>
+    <text x="361" y="90" font-size="9" fill="var(--ink-faint)">reload 1&ndash;255</text>
+
+    <rect x="528" y="52" width="150" height="46" fill="var(--panel)" stroke="var(--border)"/>
+    <text x="603" y="74">&divide; 8</text>
+    <text x="603" y="90" font-size="9" fill="var(--ink-faint)">7.63 &ndash; 62500 baud</text>
+  </g>
+  <g stroke="var(--ink-faint)" fill="none">
+    <path d="M194 75 H286" marker-end="url(#cl-arrow)"/>
+    <path d="M436 75 H528" marker-end="url(#cl-arrow)"/>
+  </g>
+  <defs>
+    <marker id="cl-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-faint)"/>
+    </marker>
+  </defs>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Timer&nbsp;4 reload of 1&ndash;255 and a 1&ndash;15625&nbsp;&micro;s source clock give a maximum of 62.5&nbsp;Kbaud and a minimum of about 7.63&nbsp;baud.</figcaption>
+</figure>
+<p>With the fastest clock (1&nbsp;&micro;s) and the smallest reload, a handful of
+common rates come out as follows &mdash; the small residual error is well within a
+UART's tolerance:</p>
+<table>
+<thead><tr><th>Baud (nominal)</th><th>CLOCK4</th><th>TIMER4 reload</th><th>Actual</th></tr></thead>
+<tbody>
+<tr><td>62500</td><td>1&nbsp;&micro;s</td><td>1</td><td>62500</td></tr>
+<tr><td>9600</td><td>1&nbsp;&micro;s</td><td>12</td><td>9615</td></tr>
+<tr><td>2400</td><td>1&nbsp;&micro;s</td><td>51</td><td>2404</td></tr>
+<tr><td>1200</td><td>1&nbsp;&micro;s</td><td>103</td><td>1202</td></tr>
+<tr><td>300</td><td>2&nbsp;&micro;s</td><td>207</td><td>300.5</td></tr>
+</tbody>
+</table>
+<p>The two &ldquo;native&rdquo; Lynx speeds used by the linked games are
+62500&nbsp;and 31250&nbsp;baud; the library exposes those plus the usual RS-232-style
+rates down to 75&nbsp;baud (<a href="#sect-3-1">section&nbsp;3.1</a>).</p>
+
+<h3 id="sect-2-3">2.3. Data format</h3>
+<p>The frame is the standard 11 bits and is not configurable in width: one start
+bit, eight data bits sent least-significant first, a ninth (parity) bit, and one
+stop bit.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 150" style="width:100%;height:auto;max-width:700px" role="img" aria-label="Eleven-bit serial frame: one start bit, eight data bits LSB first, a parity or ninth bit, and one stop bit">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="22">The 11-bit ComLynx frame</text>
+  </g>
+  <!-- 11 cells across -->
+  <!-- start -->
+  <rect x="30"  y="44" width="52" height="44" fill="var(--accent-2)" fill-opacity="0.18" stroke="var(--accent-2)"/>
+  <!-- 8 data -->
+  <rect x="82"  y="44" width="52" height="44" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="134" y="44" width="52" height="44" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="186" y="44" width="52" height="44" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="238" y="44" width="52" height="44" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="290" y="44" width="52" height="44" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="342" y="44" width="52" height="44" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="394" y="44" width="52" height="44" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="446" y="44" width="52" height="44" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <!-- parity / 9th -->
+  <rect x="498" y="44" width="72" height="44" fill="var(--panel-2)" stroke="var(--border)"/>
+  <!-- stop -->
+  <rect x="570" y="44" width="52" height="44" fill="var(--accent-2)" fill-opacity="0.18" stroke="var(--accent-2)"/>
+  <!-- cell labels -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10.5" fill="var(--ink)" text-anchor="middle">
+    <text x="56"  y="71">S</text>
+    <text x="108" y="71">D0</text>
+    <text x="160" y="71">D1</text>
+    <text x="212" y="71">D2</text>
+    <text x="264" y="71">D3</text>
+    <text x="316" y="71">D4</text>
+    <text x="368" y="71">D5</text>
+    <text x="420" y="71">D6</text>
+    <text x="472" y="71">D7</text>
+    <text x="534" y="71">P/9</text>
+    <text x="596" y="71">St</text>
+  </g>
+  <!-- brackets -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="56"  y="106">start</text>
+    <text x="56"  y="118" fill="var(--accent-2)">= 0</text>
+    <text x="290" y="106">8 data bits &mdash; LSB (D0) first</text>
+    <text x="534" y="106">parity or</text>
+    <text x="534" y="118">9th bit</text>
+    <text x="596" y="106">stop</text>
+    <text x="596" y="118" fill="var(--accent-2)">= 1</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Every byte on the wire is 11 bits. Data length (8) and stop bits (1) are fixed; only the parity/9th bit is programmable.</figcaption>
+</figure>
+<p>The ninth bit is where Mikey's UART departs from the rest of the world. On
+transmit the ninth bit is always sent: either the result of a parity calculation
+on the data byte or a fixed value taken from the parity-select bit, chosen by the
+parity-enable bit. On receive the state of the ninth bit is always readable, and
+the hardware always checks parity &mdash; receive parity checking cannot be
+disabled.</p>
+<p>The catch, admitted in Mikey's own documentation, is that the parity
+calculation <em>includes the parity bit itself</em>. That makes the EVEN and ODD
+modes non-standard: they will not agree with a conventional UART. The two modes
+that behave predictably against outside equipment are <strong>MARK</strong> and
+<strong>SPACE</strong> (a fixed 1 or 0 in the ninth bit). For Lynx-to-Lynx traffic,
+where both ends share the same quirk, EVEN parity works fine.</p>
+
+<h3 id="sect-2-4">2.4. Break</h3>
+<p>A <strong>break</strong> is a start bit followed by a data value of&nbsp;0 and
+the absence of a stop bit at the expected time &mdash; effectively holding the line
+in its start state. Setting the transmit-break bit sends a break for as long as the
+bit stays set, so the sender controls its length directly. The receiver only
+recognises a break once the line has been held for at least <strong>24 bit
+times</strong>; that is the specific threshold Mikey chose among the many
+&ldquo;standard&rdquo; break lengths.</p>
+
+<h3 id="sect-2-5">2.5. Status, errors and the interrupt quirk</h3>
+<p>The transmitter exposes two status bits. <code>TXRDY</code> means the holding
+register has been copied into the shift register and can be reloaded with the next
+byte (it is also set after reset). <code>TXEMPTY</code> means both the holding and
+shift registers are empty and nothing more is going out on the wire &mdash; the
+stronger condition to wait on before, say, switching the line around or powering
+down.</p>
+<p>There are three receive errors, all of them always enabled:</p>
+<dl>
+<dt>Parity error</dt>
+<dd><p>The received parity did not match the parity-select setting. Because parity
+checking cannot be turned off, a link that disagrees about parity mode reports this
+constantly &mdash; the reason Lynx-to-PC links need MARK/SPACE.</p></dd>
+<dt>Framing error</dt>
+<dd><p>A non-zero character arrived without the expected stop bit. On the shared
+bus this most often means two consoles transmitted at once and their bits
+collided.</p></dd>
+<dt>Overrun error</dt>
+<dd><p>A new character arrived before the previous one had been read out of the
+receive buffer.</p></dd>
+</dl>
+<p>All three latch until cleared by writing the control byte with the reset-error
+bit set; the reset-error bit is not an enable, and writing with it clear leaves the
+errors untouched.</p>
+<p>The sharpest edge is the interrupt behaviour. Both the transmit and receive
+interrupts are <strong>level-sensitive, not edge-sensitive</strong>: an interrupt
+is asserted continuously for as long as it is enabled and its buffer is ready. The
+software therefore has to <em>disable the interrupt before it clears the
+condition</em>, or the handler re-enters immediately. The lynxcc IRQ handler
+performs exactly this disable-before-clear dance, and it must be preserved
+byte-for-byte &mdash; it is load-bearing, not incidental.</p>
+
+<h2 id="sect-3">3. The lynxcc serial library</h2>
+<p>There is no loadable serial driver in this tree. ComLynx is a static,
+smart-linked library declared in <code>&lt;lynx/serial.h&gt;</code>: five entry
+points, both directions interrupt driven through 256-byte ring buffers. Any use of
+the port pulls in the shared core and its interrupt handler; a program that never
+touches serial links none of it. See <code>design/LYNX_JOY_SER_DESIGN.md</code> for
+the de-driverisation design and <a href="funcref.html#ser_open">the function
+reference</a> for the per-call entries.</p>
+<p>The five functions are
+<code><a href="funcref.html#ser_open">ser_open</a></code>,
+<code><a href="funcref.html#ser_get">ser_get</a></code>,
+<code><a href="funcref.html#ser_put">ser_put</a></code>,
+<code><a href="funcref.html#ser_status">ser_status</a></code> and
+<code>ser_close</code>.</p>
+
+<h3 id="sect-3-1">3.1. Opening the port</h3>
+<p><code>ser_open()</code> takes a <code>struct ser_params</code>, programs
+timer&nbsp;4 and the frame format, fixes the <code>TXOPEN</code> power-up defect
+(<a href="#sect-2-1">section&nbsp;2.1</a>) and enables the serial interrupts. It is
+a <code>__fastcall__</code> function, so a prototype must be in scope. Call it with
+interrupts enabled:</p>
+<pre class="code">#include &lt;lynx/serial.h&gt;
+
+static void initialize (void)
+{
+    struct ser_params params = {
+        SER_BAUD_62500,   /* a Lynx-native rate for Lynx-to-Lynx links */
+        SER_BITS_8,       /* only 8 is accepted                        */
+        SER_STOP_1,       /* only 1 is accepted                        */
+        SER_PAR_EVEN,     /* EVEN is fine between two Lynxes            */
+        SER_HS_NONE       /* the wire cannot handshake                 */
+    };
+    CLI();
+    if (ser_open(&amp;params) != SER_ERR_OK) {
+        /* unsupported baud, or init failed */
+    }
+}</pre>
+<p>The five fields map one-to-one onto the constants in
+<code>&lt;lynx/serial.h&gt;</code>. Only the values noted below are legal; a bad
+combination is reported at open time rather than silently accepted.</p>
+<dl>
+<dt>Baud rate (<code>baudrate</code>)</dt>
+<dd><p>One of <code>SER_BAUD_62500</code>, <code>SER_BAUD_31250</code>,
+<code>SER_BAUD_9600</code>, <code>SER_BAUD_7200</code>, <code>SER_BAUD_4800</code>,
+<code>SER_BAUD_3600</code>, <code>SER_BAUD_2400</code>, <code>SER_BAUD_1800</code>,
+<code>SER_BAUD_1200</code>, <code>SER_BAUD_600</code>, <code>SER_BAUD_300</code>,
+<code>SER_BAUD_150</code>, <code>SER_BAUD_134_5</code>, <code>SER_BAUD_110</code> or
+<code>SER_BAUD_75</code>. A rate the hardware cannot produce returns
+<code>SER_ERR_BAUD_UNAVAIL</code>. 62500 and 31250 are the speeds the original
+linked games used.</p></dd>
+<dt>Data bits (<code>databits</code>)</dt>
+<dd><p><code>SER_BITS_8</code> only &mdash; the frame is fixed at eight data bits
+(<a href="#sect-2-3">section&nbsp;2.3</a>).</p></dd>
+<dt>Stop bits (<code>stopbits</code>)</dt>
+<dd><p><code>SER_STOP_1</code> only &mdash; there is always exactly one stop
+bit.</p></dd>
+<dt>Parity (<code>parity</code>)</dt>
+<dd><p><code>SER_PAR_ODD</code>, <code>SER_PAR_EVEN</code>,
+<code>SER_PAR_MARK</code> or <code>SER_PAR_SPACE</code>. <code>SER_PAR_NONE</code> is
+<em>rejected</em>: the hardware always sends a ninth bit, so there is no
+parity-less mode. Use EVEN between two Lynxes; use MARK or SPACE when talking to a
+standard PC, because the Lynx parity quirk (<a href="#sect-2-3">section&nbsp;2.3</a>)
+makes EVEN/ODD incompatible with ordinary equipment.</p></dd>
+<dt>Handshake (<code>handshake</code>)</dt>
+<dd><p><code>SER_HS_NONE</code> only. The single-wire bus has no room for hardware
+handshake lines, and software (XON/XOFF-style) handshaking is impossible too since
+there is only one data wire shared by all parties.</p></dd>
+</dl>
+
+<h3 id="sect-3-2">3.2. Sending and receiving</h3>
+<p><code>ser_put(b)</code> queues one byte in the transmit ring buffer and kicks the
+transmit interrupt; it returns <code>SER_ERR_OVERFLOW</code> if the buffer is full.
+<code>ser_get(&amp;b)</code> pops one byte from the receive ring buffer and returns
+<code>SER_ERR_NO_DATA</code> when nothing is waiting &mdash; a normal, non-fatal
+condition you poll on:</p>
+<pre class="code">char ch;
+
+ser_put('A');                              /* broadcast one byte      */
+
+while (ser_get(&amp;ch) == SER_ERR_NO_DATA)
+    ;                                      /* wait for a byte to land */
+/* ch now holds the received byte */</pre>
+<p>Remember the open-collector loopback: on the shared wire every byte you transmit
+also comes back to you through <code>ser_get()</code>, which doubles as a simple
+self-test but means a real protocol must account for hearing its own traffic.</p>
+
+<h3 id="sect-3-3">3.3. Status and error codes</h3>
+<p><code>ser_status(&amp;s)</code> returns the status bits the interrupt handler has
+accumulated since the port was opened &mdash; the Mikey error bits plus a
+software-detected receive-buffer overflow:</p>
+<pre class="verb">SER_STATUS_BREAK       0x02   break received
+SER_STATUS_FE          0x04   framing error
+SER_STATUS_OE          0x08   hardware overrun error
+SER_STATUS_PE          0x10   parity error
+SER_STATUS_RXOVERFLOW  0x80   receive ring buffer overflowed</pre>
+<p>A persistent <code>SER_STATUS_FE</code> usually means another console is
+transmitting at the same time (<a href="#sect-2-5">section&nbsp;2.5</a>). The call
+return values are a separate, contiguous set &mdash; always compare against the
+macros, never bare integers, because the static library renumbered them relative to
+stock cc65:</p>
+<pre class="verb">SER_ERR_OK            0x00   not an error &mdash; relax
+SER_ERR_BAUD_UNAVAIL  0x01   baud rate not available
+SER_ERR_NO_DATA       0x02   nothing to read
+SER_ERR_OVERFLOW      0x03   no room in the send buffer
+SER_ERR_INIT_FAILED   0x04   initialisation failed</pre>
+
+<h3 id="sect-3-4">3.4. Closing the port</h3>
+<p><code>ser_close()</code> genuinely closes the port: it disables the serial
+interrupts, stops the baud timer (timer&nbsp;4) and drops any buffered data. This
+is a deliberate behaviour change from the old cc65 driver, whose CLOSE was a stub
+that returned OK without touching the hardware &mdash; so code that closes and then
+expects to keep receiving must be revisited.</p>
+
+<h3 id="sect-3-5">3.5. Quirks and limitations</h3>
+<p>Most of these follow directly from the hardware in
+<a href="#sect-2">section&nbsp;2</a>; the library surfaces them rather than papering
+over them:</p>
+<ul>
+<li><p>Every transmitted byte is received by the sender too (open-collector
+loopback).</p></li>
+<li><p>Only one console may transmit at a time; there is no arbitration. A framing
+error on receive is the usual sign of a collision.</p></li>
+<li><p>EVEN/ODD parity include the parity bit in the calculation and so do not match
+standard UARTs; use MARK or SPACE for a Lynx-to-PC link, EVEN for Lynx-to-Lynx.</p></li>
+<li><p><code>SER_PAR_NONE</code> is rejected &mdash; the hardware always sends a
+ninth bit.</p></li>
+<li><p>The frame is fixed at 8 data bits and 1 stop bit; there is no handshaking of
+any kind.</p></li>
+<li><p>A received break drops all buffered data.</p></li>
+<li><p>The 256-byte ring buffers rely on natural 8-bit pointer wraparound and are
+not resizable without rewriting the pointer logic.</p></li>
+<li><p>Long or frequent interrupts elsewhere (digitised sound, mid-frame palette
+work) steal time from the serial IRQ and can degrade a link &mdash; a constraint the
+Redeye system addressed with its <code>REDEYE_SLOWNESS</code> control
+(<a href="#sect-4-4">section&nbsp;4.4</a>).</p></li>
+</ul>
+
+<h2 id="sect-4">4. The Redeye protocol (historical)</h2>
+<p>The lynxcc library gives you a byte pipe and stops there: &ldquo;there is no
+protocol created for communication &mdash; you are on your own.&rdquo; The original
+Epyx development kit shipped a complete multiplayer layer on top of that pipe,
+called <strong>Redeye</strong> (after the connector name). It is not part of this
+SDK and none of its routines are provided here, but understanding how the shipping
+Lynx games actually linked up is useful background if you are building your own
+protocol, so it is summarised below. The material comes from Epyx's own Redeye
+documentation (dated 15&nbsp;October&nbsp;1990); the names are theirs.</p>
+
+<h3 id="sect-4-1">4.1. Round-robin communication frames</h3>
+<p>Redeye runs a <strong>round-robin</strong>, communication-frame based system.
+When all is well, player&nbsp;0 (the master) sends its data, then player&nbsp;1,
+then player&nbsp;2, and so on around the ring. Acknowledgement is implicit: sending
+your next message tells everyone your previous receipts all arrived. Even a console
+with nothing new to say must still send a message each frame so the others know
+their data got through. If something goes wrong the master acts as director &mdash;
+prompting a late unit for its data, or retransmitting data another unit says it
+missed. All of this happens in the interrupt handlers; the game code only exchanges
+data through a few &ldquo;glue&rdquo; routines.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 250" style="width:100%;height:auto;max-width:520px" role="img" aria-label="Redeye round-robin: the master polls each player in turn around a ring, then the cycle repeats">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="22">Redeye round-robin frame</text>
+  </g>
+  <!-- ring arrows -->
+  <g stroke="var(--accent)" fill="none" stroke-width="1.5">
+    <path d="M360 62 A 78 78 0 0 1 430 170" marker-end="url(#re-arrow)"/>
+    <path d="M420 178 A 78 78 0 0 1 300 178" marker-end="url(#re-arrow)"/>
+    <path d="M290 170 A 78 78 0 0 1 352 62" marker-end="url(#re-arrow)"/>
+  </g>
+  <defs>
+    <marker id="re-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+  <!-- nodes -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" text-anchor="middle">
+    <circle cx="360" cy="60"  r="30" fill="var(--accent)" fill-opacity="0.16" stroke="var(--accent)"/>
+    <text x="360" y="58" font-size="11.5" fill="var(--ink)">Player 0</text>
+    <text x="360" y="72" font-size="8.5" fill="var(--accent)">master</text>
+
+    <circle cx="452" cy="170" r="30" fill="var(--panel)" stroke="var(--border)"/>
+    <text x="452" y="174" font-size="11.5" fill="var(--ink)">Player 1</text>
+
+    <circle cx="268" cy="170" r="30" fill="var(--panel)" stroke="var(--border)"/>
+    <text x="268" y="174" font-size="11.5" fill="var(--ink)">Player 2</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="360" y="232">each unit sends once per frame &mdash; sending implies &ldquo;all received&rdquo;</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Turn order flows from the master around the ring; the master re-prompts or retransmits when a unit is late or reports missing data.</figcaption>
+</figure>
+<p>Note that a Redeye &ldquo;game frame&rdquo; is one pass through the game's main
+loop, not the 60&nbsp;Hz video frame or the 240&nbsp;Hz audio frame; it is usually
+longer and is not tied to them.</p>
+
+<h3 id="sect-4-2">4.2. Logon</h3>
+<p>Because the system needs to learn who is present, communication begins with a
+<strong>logon</strong>, using a scheme close to a two-wire Ethernet-style
+contention protocol. Each unit initially calls itself player&nbsp;0, waits, then
+announces its identity. If it hears another unit claim the number it holds, it
+picks a new, unclaimed number. After any communication a unit waits a random
+interval &mdash; short if it holds the next sequential number, longer otherwise
+&mdash; and the randomness prevents two units that think they share a number from
+speaking in lock-step.</p>
+<p>When every unit agrees on the system state and a player has requested that logon
+end, the request is acknowledged and logon completes; disagreement can delay or
+deny termination until another request. Crucially, once logon finishes Redeye
+<em>shuts down its logon code entirely</em> so the game can reclaim that memory
+before normal play begins.</p>
+
+<h3 id="sect-4-3">4.3. Normal communication</h3>
+<p>After logon the game calls the system routine to re-install the interrupts for
+normal play. From then on each game frame the code writes its outgoing bytes into
+<code>OutGoingData</code> and signals the system that the data is ready. Incoming
+data is trickier: it is accumulated into two parallel buffers,
+<code>PlayerData0</code> and <code>PlayerData1</code>, for the even and odd frame
+<em>sequences</em>. A <code>Seq</code> flag says which sequence to read this frame
+(counter-intuitively, zero means read the ODD buffer). Per-player flag arrays
+(<code>PlayerFlag0</code>/<code>PlayerFlag1</code>) go positive when a player's data
+has arrived; after consuming it the game sets the flag negative to acknowledge, at
+which point the system may immediately overwrite that slot. Receipt of the local
+console's own message must be handshaked exactly like everyone else's, even though
+the data is already known locally.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 118" style="width:100%;height:auto;max-width:640px" role="img" aria-label="Redeye message layout: one size byte, one header byte, the player data bytes, then one checksum byte">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="22">Redeye message &mdash; 3 overhead bytes + data</text>
+  </g>
+  <rect x="60"  y="40" width="90"  height="46" fill="var(--panel)" stroke="var(--border)"/>
+  <rect x="150" y="40" width="90"  height="46" fill="var(--panel)" stroke="var(--border)"/>
+  <rect x="240" y="40" width="330" height="46" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  <rect x="570" y="40" width="90"  height="46" fill="var(--panel)" stroke="var(--border)"/>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" fill="var(--ink)" text-anchor="middle">
+    <text x="105" y="62">size</text>
+    <text x="195" y="62">header</text>
+    <text x="405" y="62">player data</text>
+    <text x="615" y="62">checksum</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="105" y="80">1 B</text>
+    <text x="195" y="80">1 B</text>
+    <text x="405" y="80">0 &ndash; PLAYER_DATA_SIZE</text>
+    <text x="615" y="80">1 B</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Each Redeye message carries three overhead bytes around the payload. Shorter messages mean fewer interrupts, so variable-size data helps performance.</figcaption>
+</figure>
+<p>Redeye ships a ready-made &ldquo;glue&rdquo; layer for the common case of passing
+only joystick and button state: a handful of routines drive logon, start normal
+communication, and once per game frame swap current inputs into
+<code>joystick</code>/<code>switch</code> arrays (keeping the previous frame in
+<code>oldjoystick</code>/<code>oldswitch</code>) so a game can go multiplayer with
+very little code of its own. FLIP and RESET are handled by the glue during both
+logon and play.</p>
+
+<h3 id="sect-4-4">4.4. Constants and switches</h3>
+<p>A game configures Redeye by defining these before including the system files:</p>
+<dl>
+<dt><code>SERIALPORT_USER</code></dt>
+<dd><p>Declares that the program uses the serial (Redeye) port.</p></dd>
+<dt><code>GAME_ID</code></dt>
+<dd><p>A unique game identifier, 1&ndash;65534 (see
+<a href="#sect-4-5">section&nbsp;4.5</a>). Two different games must not try to link.</p></dd>
+<dt><code>MAX_PLAYERS</code></dt>
+<dd><p>The most players this game allows, 2&ndash;16.</p></dd>
+<dt><code>PLAYER_DATA_SIZE</code></dt>
+<dd><p>Maximum bytes in one player's message, 1&ndash;256/<code>MAX_PLAYERS</code>.</p></dd>
+<dt><code>VAR_SIZE_DATA</code></dt>
+<dd><p>Optional switch enabling variable-length messages &mdash; larger code, but
+better performance because only changed data need be sent.</p></dd>
+<dt><code>REDEYE_SLOWNESS</code></dt>
+<dd><p>Slows the link to survive heavy interrupt load (digitised sound, for
+example). Values 0&ndash;3 select 62500, 31250, 15625 or 7812.5&nbsp;baud; each step
+halves the rate. At the maximum, communication runs eight times slower but still
+supports a four-player, two-byte-per-player game at about 15 frames per second. It
+does not change the logon baud rate.</p></dd>
+</dl>
+<p>The system also expects the game to supply variables &mdash; preferably in zero
+page &mdash; that it reads: <code>NumberOfPlayers</code> (players logged in, minus
+one) and <code>PlayerNumber</code> (this unit's assigned number), plus the
+logon-control pair <code>EndLogonRequest</code> and <code>LogonInProgress</code>.</p>
+
+<h3 id="sect-4-5">4.5. Game ID numbers</h3>
+<p>Each linked game needed a unique <code>GAME_ID</code> so that only matching
+titles would communicate. The IDs Epyx listed as in use were:</p>
+<table>
+<thead><tr><th>ID</th><th>Game</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>test programs</td></tr>
+<tr><td>1</td><td>Gauntlet &mdash; The Third Encounter</td></tr>
+<tr><td>2</td><td>Zarlor Mercenary</td></tr>
+<tr><td>3</td><td>California Games</td></tr>
+<tr><td>4</td><td>Xenophobe</td></tr>
+<tr><td>5</td><td>Slime World</td></tr>
+<tr><td>6</td><td>RoboSquash</td></tr>
+<tr><td>7</td><td>Warbirds (Space Wars?)</td></tr>
+<tr><td>83</td><td>Shanghai</td></tr>
+<tr><td>4949</td><td>Rampage</td></tr>
+<tr><td>65535</td><td>test programs</td></tr>
+</tbody>
+</table>
+
+<h3 id="sect-4-6">4.6. Limitations and resource cost</h3>
+<p>The hardware can electrically support up to 18 connected consoles, but Redeye
+caps a session at 16 players (and the two per-sequence data buffers must each fit in
+a single page, so <code>MAX_PLAYERS&nbsp;&times;&nbsp;PLAYER_DATA_SIZE</code> cannot
+exceed 256). Players may only join or leave during logon; a game that needs
+drop-in/drop-out has to re-enter logon and re-sort who is who afterwards.</p>
+<p>Redeye uses the serial port (timer&nbsp;4) plus two general-purpose timers
+(timers&nbsp;1 and&nbsp;5) during logon, then shuts all three interrupts down; during
+normal play it uses timer&nbsp;4 and one more timer, and with a single player no
+timers at all. A byte takes about 176&nbsp;&micro;s to send &mdash; slightly longer
+than one scan line &mdash; and each message adds three overhead bytes (size, header,
+checksum). Heavy or lengthy interrupts elsewhere raise the overhead sharply, which
+is what <code>REDEYE_SLOWNESS</code> exists to mitigate. As a synchronisation
+mechanism Redeye ties the game frame across consoles, but it does not guarantee a
+fixed frame rate, so it is not tight enough for sample-accurate events such as two
+consoles playing different voices of the same tune.</p>
+
+<h2 id="sect-5">5. Further reading</h2>
+<p>The hardware details in <a href="#sect-2">section&nbsp;2</a> are drawn from
+Mikey's UART specification, reproduced in 42Bastian's Lynx documentation
+(<a href="https://www.monlynx.de/lynx/lynx8a.html">monlynx.de, chapter&nbsp;11 &mdash;
+UART</a>). The Redeye summary in <a href="#sect-4">section&nbsp;4</a> follows Epyx's
+original &ldquo;Documentation for Redeye (ComLynx) support code&rdquo; (15&nbsp;October&nbsp;1990),
+transcribed at the
+<a href="https://atarilynxdeveloper.wordpress.com/documentation/redeye/">Diary of an
+Atari Lynx developer</a>. For the lynxcc library internals see
+<code>design/LYNX_JOY_SER_DESIGN.md</code>, the per-function pages in the
+<a href="funcref.html#ser_open">function reference</a>, and the timer/register map
+on the <a href="lynx.html">Lynx specifics</a> page.</p>
+
+<h2 id="sect-6">6. License</h2>
+<p>The Lynx runtime, like the rest of the package, is distributed under the cc65 zlib-style license. The full text, together with every other copyright notice in the distribution, is reproduced verbatim on the consolidated <a href="licenses.html">Licenses and copyright notices</a> page.</p></article></main><site-foot></site-foot>
+<script src="doc.js"></script>
+</body></html>
