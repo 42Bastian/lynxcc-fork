@@ -10,12 +10,9 @@
 ; function, so you need to change the compiler source if you change it!
 ;
 
-
         .export          tosaslax, tosshlax, aslaxy, shlaxy
         .import          popax
         .importzp        tmp1
-
-        .macpack        cpu
 
 tosshlax:
 tosaslax:
@@ -55,15 +52,8 @@ L2:     pla
 
 ; Shift count is exactly 8
 
-.if (.cpu .bitand CPU_ISET_65SC02)
 L3:     plx                     ; Low byte from stack into X
         rts                     ; A is already zero
-.else
-L3:     pla                     ; Low byte from stack ...
-        tax                     ; ... into X
-        lda     #$00            ; Clear low byte
-        rts
-.endif
 
 ; Shift count is less than 8
 

@@ -8,19 +8,13 @@
         .export         _strchr
         .import         popax
         .importzp       ptr1, tmp1
-        .macpack        cpu
 
 _strchr:
         sta tmp1        ; Save c
         jsr popax       ; get s
         tay             ; low byte of pointer to y
         stx ptr1+1
-.if (.cpu .bitand ::CPU_ISET_65SC02)
         stz ptr1
-.else
-        lda #0
-        sta ptr1        ; access from page start, y contains low byte
-.endif
 
 Loop:   lda (ptr1),y    ; Get next char
         beq EOS         ; Jump on end of string

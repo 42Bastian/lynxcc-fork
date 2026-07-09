@@ -9,8 +9,6 @@
         .import         incsp2
         .importzp       sp, tmp1, ptr1
 
-        .macpack        cpu
-
 .proc   staxspidx
 
         sty     tmp1            ; Save Y
@@ -18,12 +16,7 @@
         ldy     #1
         lda     (sp),y
         sta     ptr1+1
-.if (.cpu .bitand ::CPU_ISET_65SC02)
         lda     (sp)
-.else
-        dey
-        lda     (sp),y
-.endif
         sta     ptr1            ; Address now in ptr1
         ldy     tmp1            ; Restore Y
         iny                     ; Address high byte
@@ -35,5 +28,4 @@
         jmp     incsp2          ; Drop address
 
 .endproc
-
 

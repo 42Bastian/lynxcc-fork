@@ -11,14 +11,10 @@
         .export         tosadda0, tosaddax
         .importzp       sp, tmp1
 
-        .macpack        cpu
-
 tosadda0:
         ldx     #0
 tosaddax:
         clc                     ; (2)
-
-.if (.cpu .bitand ::CPU_ISET_65SC02)
 
         adc     (sp)            ; 7
         tay                     ; 9
@@ -44,22 +40,4 @@ hiadd1:
         tya                     ; 49
         inc     sp              ; 54   no check needed!
 
-.else
-
-        ldy     #0              ; (4)
-        adc     (sp),y          ; (9) lo byte
-        iny                     ; (11)
-        sta     tmp1            ; (14) save it
-        txa                     ; (16)
-        adc     (sp),y          ; (21) hi byte
-        tax                     ; (23)
-        clc                     ; (25)
-        lda     sp              ; (28)
-        adc     #2              ; (30)
-        sta     sp              ; (33)
-        bcc     L1              ; (36)
-        inc     sp+1            ; (-1+5)
-L1:     lda     tmp1            ; (39) restore low byte
-
-.endif
         rts                     ; (6502: 45 cycles, 26 bytes <-> 65SC02: best case 34cycles

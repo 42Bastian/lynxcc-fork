@@ -8,11 +8,8 @@
         .import         incsp2
         .importzp       sp, tmp1, ptr1
 
-        .macpack        cpu
-
 .proc   staspidx
 
-.if (.cpu .bitand ::CPU_ISET_65SC02)
 ; 65SC02: save the index on the CPU stack instead of tmp1 (frees tmp1) and
 ; fetch the pointer low byte through (sp). Exit state matches the 6502
 ; version: Y restored to the entry index, value stored, address dropped.
@@ -27,21 +24,6 @@
         pla                     ; Restore value
         sta     (ptr1),y        ; Store
         jmp     incsp2          ; Drop address
-.else
-        pha
-        sty     tmp1            ; Save Index
-        ldy     #1
-        lda     (sp),y
-        sta     ptr1+1
-        dey
-        lda     (sp),y
-        sta     ptr1            ; Pointer now in ptr1
-        ldy     tmp1            ; Restore offset
-        pla                     ; Restore value
-        sta     (ptr1),y        ; Store
-        jmp     incsp2          ; Drop address
-.endif
 
 .endproc
-
 

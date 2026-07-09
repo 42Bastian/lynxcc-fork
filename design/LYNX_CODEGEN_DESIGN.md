@@ -36,6 +36,16 @@ validated at 0 mismatches over 150 instruction/mode pairs against an authoritati
 timing reference; both inlined sites in the sample corpus emit byte-for-byte the runtime
 bodies and assemble clean.
 
+**Later cleanup — `.cpu` guards removed:** the `.if (.cpu .bitand ::CPU_ISET_65SC02)` /
+`.else` blocks that once wrapped the §2.1 fast paths (and their `.macpack cpu` includes) have
+since been deleted from the runtime and libc. The assembler is permanently fixed to the
+65SC02 (`ca65` calls `SetCPU (CPU_65SC02)` unconditionally; `--cpu` is validated but ignored),
+so the `.else` 6502 branches were dead code that never assembled and the guards were always
+taken. Each affected file now carries its 65SC02 body directly, with no `.cpu` conditional —
+output is byte-identical. The `.cpu`/`CPU_ISET_*` assembler machinery and `asminc/cpu.mac`
+are retained as the extension seam described in §3 (a future 65C02 mode would re-introduce
+`.if (.cpu .bitand ::CPU_ISET_65C02)` guards only where a Rockwell op actually helps).
+
 ## 1. Background
 
 ### 1.1 The Lynx CPU and why cycles map to bytes
@@ -81,10 +91,13 @@ Every other `g_*` routine (≈90 of them) emits plain 6502.
 
 **Branch shortening** (`compiler/cc65/coptind.c:2181-2188`) converts short-distance `JMP` → `BRA`.
 
-**Runtime library**: only 34 of 200 files in `runtime/rt/` contain
-`.if (.cpu .bitand ::CPU_ISET_65SC02)` fast paths. The hottest entry points are 6502-only:
-`pushax` (the single most-called runtime routine, 44 cycles), `ldaxsp`, `staxsp`, `staspidx`,
-`popptr1`, `ldauisp`, `pusha`, `enter`, `mul`, `shr`, `asr`, `lshl`, `lshr`.
+**Runtime library** (state at the time of this analysis): only 34 of 200 files in
+`runtime/rt/` carried a 65SC02 fast path, then written as an
+`.if (.cpu .bitand ::CPU_ISET_65SC02)` / `.else` pair. The hottest entry points were still
+6502-only: `pushax` (the single most-called runtime routine, 44 cycles), `ldaxsp`, `staxsp`,
+`staspidx`, `popptr1`, `ldauisp`, `pusha`, `enter`, `mul`, `shr`, `asr`, `lshl`, `lshr`.
+(§2.1 has since added these fast paths, and the `.cpu` guards were later removed — the bodies
+are now unconditional 65SC02; see the *Later cleanup* note under Implementation status above.)
 
 **Switch statements** (`codegen.c g_switch`, line 4305): always a `CMP #imm / JEQ` cascade —
 no jump tables, so an N-case switch costs O(N) compares at runtime.
@@ -97,9 +110,11 @@ trade size for speed have no cycle data to consult.
 ### 2.1 Runtime library fast paths (highest payoff, lowest risk)
 
 Compiled C on cc65 spends much of its time in `runtime/rt/`. These routines run on every
-stack access, so cycle savings here multiply across the whole program. Add
-`.if (.cpu .bitand ::CPU_ISET_65SC02)` variants — the build already compiles the library
-per-target with the right CPU, and 34 files prove the pattern. No compiler changes needed.
+stack access, so cycle savings here multiply across the whole program. Give the hot routines
+their 65SC02 form — the assembler always targets the 65SC02, so no compiler changes are
+needed. (As originally implemented these were `.if (.cpu .bitand ::CPU_ISET_65SC02)` variants;
+the guards were later removed and the bodies made unconditional — see the *Later cleanup*
+note under Implementation status.)
 
 Priority list (current cost → estimated new cost):
 

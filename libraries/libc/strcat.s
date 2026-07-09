@@ -8,7 +8,6 @@
         .export         _strcat
         .import         popax
         .importzp       ptr1, ptr2, tmp3
-        .macpack        cpu
 
 _strcat:
         sta ptr1        ; Save src
@@ -16,12 +15,7 @@ _strcat:
         jsr popax       ; Get dest
         sta tmp3        ; Remember for function return
         tay
-.if (.cpu .bitand ::CPU_ISET_65SC02)
         stz ptr2
-.else
-        lda #0
-        sta ptr2        ; access from page start, y contains low byte
-.endif
         stx ptr2+1
 
 findEndOfDest:

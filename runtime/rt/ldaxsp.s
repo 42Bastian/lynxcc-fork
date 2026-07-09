@@ -7,14 +7,11 @@
         .export         ldax0sp, ldaxysp
         .importzp       sp
 
-        .macpack        cpu
-
 ; Beware: The optimizer knows about the value in Y after return! (The
 ; compiler's function info table marks Y as changed/unknown for both
 ; entry points, and all inline-replacement passes match the ldaxysp call
 ; itself, so the differing exit value of Y below is safe.)
 
-.if (.cpu .bitand ::CPU_ISET_65SC02)
 ; 65SC02: load the low byte through (sp), saving the DEY. Exits with
 ; Y = 1 instead of 0.
 ldax0sp:
@@ -23,10 +20,6 @@ ldax0sp:
         tax                     ; and save it
         lda     (sp)            ; load low byte
         rts
-.else
-ldax0sp:
-        ldy     #1
-.endif
 ldaxysp:
         lda     (sp),y          ; get high byte
         tax                     ; and save it

@@ -9,8 +9,6 @@
         .import         incsp4
         .importzp       sp, sreg
 
-        .macpack        cpu
-
 popeax: ldy     #3
         lda     (sp),y
         sta     sreg+1
@@ -20,12 +18,6 @@ popeax: ldy     #3
         dey
         lda     (sp),y
         tax
-.if (.cpu .bitand ::CPU_ISET_65SC02)
         lda     (sp)
-.else        
-        dey
-        lda     (sp),y
-.endif
         jmp     incsp4
-
 

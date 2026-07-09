@@ -9,19 +9,11 @@
         .import         addysp1
         .importzp       sp, tmp1
 
-        .macpack        cpu
-
 tosxora0:
         ldx     #$00
 tosxorax:
-.if (.cpu .bitand CPU_ISET_65SC02)
         eor     (sp)
         ldy     #1
-.else
-        ldy     #0
-        eor     (sp),y
-        iny
-.endif
         sta     tmp1
         txa
         eor     (sp),y

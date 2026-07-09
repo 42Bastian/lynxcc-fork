@@ -12,12 +12,9 @@
 ; be called from the platform specific startup code.  (The Lynx runs no
 ; module destructors -- see the note by initlib below.)
 
-
         .export initlib, condes
 
         .import __CONSTRUCTOR_TABLE__, __CONSTRUCTOR_COUNT__
-
-        .macpack        cpu
 
 ; --------------------------------------------------------------------------
 ; Initialize library modules
@@ -38,7 +35,6 @@ exit:   rts
 ; NOTE: there is no donelib (module-destructor) counterpart on the Lynx.  The
 ; program never returns to a host and the runtime runs no teardown, so only the
 ; startup constructor pass (initlib) is provided.
-
 
 ; --------------------------------------------------------------------------
 ; Generic table call handler. The code uses self modifying code and goes
@@ -66,5 +62,4 @@ index:  ldy     #$FF                    ; Patched at runtime
         rts
 
 .endproc
-
 

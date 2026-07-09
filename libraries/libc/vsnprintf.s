@@ -13,7 +13,6 @@
         .include        "errno.inc"
 
         .macpack        generic
-        .macpack        cpu
 
 .data
 
@@ -142,14 +141,9 @@ L0:     ldy     #EINVAL
         pla
         tya
         jsr     __seterrno      ; Set errno (returns with .A = 0)
-.if (.cpu .bitand CPU_ISET_65SC02)
         dec     a
-.else
-        lda     #$FF            ; Return -1
-.endif
         tax
         jmp     incsp6          ; Drop parameters, return -1
-
 
 ; ----------------------------------------------------------------------------
 ; Callback routine used for the actual output.
@@ -219,6 +213,4 @@ out:
 ; Jump to memcpy, which will cleanup the stack and return to the caller
 
 @L2:    jmp     _memcpy
-
-
 

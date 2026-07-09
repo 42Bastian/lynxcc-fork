@@ -8,7 +8,6 @@
         .export         _strncat
         .import         popax, popptr1
         .importzp       ptr1, ptr2, ptr3, tmp1, tmp2
-        .macpack        cpu
         
 _strncat:
     eor #$FF        ; one's complement to count upwards
@@ -24,12 +23,7 @@ _strncat:
     stx ptr3+1          
     stx ptr2+1
     tay             ; low byte as offset in Y
-.if (.cpu .bitand ::CPU_ISET_65SC02)
     stz ptr2
-.else
-    ldx #0
-    stx ptr2        ; destination on page boundary
-.endif
 
 ; find end of dest
 

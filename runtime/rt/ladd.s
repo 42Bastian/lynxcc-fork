@@ -8,8 +8,6 @@
         .import         addysp1
         .importzp       sp, sreg, tmp1
 
-        .macpack        cpu
-
 ; EAX = TOS + EAX
 
 tosadd0ax:
@@ -19,14 +17,8 @@ tosadd0ax:
 
 tosaddeax:
         clc
-.if (.cpu .bitand CPU_ISET_65SC02)
         adc     (sp)            ; 65SC02 version - saves 2 cycles
         ldy     #1
-.else
-        ldy     #0
-        adc     (sp),y          ; lo byte
-        iny
-.endif
         sta     tmp1            ; use as temp storage
         txa
         adc     (sp),y          ; byte 1

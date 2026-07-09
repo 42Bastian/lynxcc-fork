@@ -9,17 +9,9 @@
         .import         getlop, udiv32
         .importzp       sreg, tmp3, tmp4, ptr2
 
-        .macpack        cpu
-
 tosumod0ax:                          
-.if (.cpu .bitand ::CPU_ISET_65SC02)
         stz     sreg
         stz     sreg+1
-.else
-        ldy     #$00
-        sty     sreg
-        sty     sreg+1
-.endif
 
 tosumodeax:
         jsr     getlop          ; Get the paramameters

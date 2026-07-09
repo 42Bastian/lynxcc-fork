@@ -11,7 +11,6 @@
         .import         _strlen, _malloc, _memcpy
         .export         _strdup
 
-        .macpack        cpu
         .macpack        generic
 
 _strdup:
@@ -29,12 +28,7 @@ _strdup:
         txa
         sta     (sp),y
         pla
-.if (.cpu .bitand CPU_ISET_65SC02)
         sta     (sp)
-.else
-        dey
-        sta     (sp),y
-.endif
 
 ; Get length of S (which is still in a/x)
 
@@ -81,5 +75,4 @@ _strdup:
 OutOfMemory:
         tax
         jmp     incsp4          ; Drop stack frame
-
 
