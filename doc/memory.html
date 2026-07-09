@@ -204,6 +204,14 @@ heap floor and is reclaimed once <code>main()</code> begins allocating.</figcapt
   $0200&nbsp;-&nbsp;$A057, so code, data and heap must fit in $9A58 (39,512)
   bytes. This is a hard ceiling: the linked program is copied into RAM at boot,
   and there is no usable RAM above the screen buffers.</p>
+<p>The <code>ONCE</code> one-shot startup code counts against this ceiling only
+  at boot. Once <code>main()</code> begins allocating, the heap grows straight
+  over it and those bytes &mdash; <code>__ONCE_SIZE__</code>, 137&nbsp;($89) bytes
+  in the default build and growing with each module constructor (for example 155
+  bytes when the heap allocator's own constructor is linked in) &mdash; are
+  returned to the heap and become available for allocation. So the effective
+  budget for code and data is the figure above <em>plus</em> the reclaimed
+  <code>ONCE</code> region, which is handed back as free heap.</p>
 <p>A cart can hold far more than this &mdash; 128, 256 or 512&nbsp;KB (see
   <a href="cart.html">Cart ROM and EEPROM</a>) &mdash; but only that ~47&nbsp;KB
   RAM image is directly addressable. Anything beyond it (extra levels, graphics,
@@ -716,6 +724,12 @@ the verbatim copy it lands lower than where it must run &mdash; at
 <code>__ONCE_PHYS__</code> (which equals <code>__BSS_RUN__</code> on the plain
 carts). The permanent relocator copies it up to <code>__ONCE_RUN__</code> before
 entering it; the first allocation then overwrites those very bytes.</p>
+<p>The whole <code>ONCE</code> segment &mdash; <code>__ONCE_SIZE__</code> bytes,
+137&nbsp;($89) in the default <code>lynxdemo</code> build and larger as module
+constructors are linked in (155 bytes in <code>heaptest</code>, for instance)
+&mdash; is therefore reclaimed the moment <code>main()</code> allocates: every
+one of those bytes is added to the heap and becomes available for the program to
+use. Nothing above <code>__ONCE_RUN__</code> stays reserved for startup.</p>
 <figure style="margin:1.2em 0;text-align:center">
 <svg viewBox="0 0 720 300" style="width:100%;height:auto;max-width:700px" role="img" aria-label="Top bar shows ONCE packed after DATA as loaded; the relocator copies it up past the BSS gap to its run address, where the heap later grows over it">
   <!-- row captions -->
