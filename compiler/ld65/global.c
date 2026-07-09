@@ -46,8 +46,6 @@
 const char* OutputName      = "a.out";  /* Name of output file */
 unsigned    OutputNameUsed  = 0;        /* Output name was used by %O */
 
-unsigned ModuleId           = 0;        /* Id for o65 module */
-
 /* Start address */
 unsigned char HaveStartAddr = 0;        /* Start address not given */
 unsigned long StartAddr     = 0x200;    /* Start address */

@@ -140,7 +140,6 @@ static void Usage (void)
             "  --lib file\t\t\tLink this library\n"
             "  --lib-path path\t\tSpecify a library search path\n"
             "  --mapfile name\t\tCreate a map file\n"
-            "  --module-id id\t\tSpecify a module id\n"
             "  --obj file\t\t\tLink this object file\n"
             "  --obj-path path\t\tSpecify an object file search path\n"
             "  --start-addr addr\t\tSet the default start address\n"
@@ -458,18 +457,6 @@ static void OptMapFile (const char* Opt attribute ((unused)), const char* Arg)
 
 
 
-static void OptModuleId (const char* Opt, const char* Arg)
-/* Specify a module id */
-{
-    unsigned long Id = CvtNumber (Opt, Arg);
-    if (Id > 0xFFFFUL) {
-        Error ("Range error in module id");
-    }
-    ModuleId = (unsigned) Id;
-}
-
-
-
 static void OptObj (const char* Opt attribute ((unused)), const char* Arg)
 /* Link an object file */
 {
@@ -618,7 +605,6 @@ static void ParseCommandLine(void)
         { "--lib",                       1,      OptLib                  },
         { "--lib-path",                  1,      OptLibPath              },
         { "--mapfile",                   1,      OptMapFile              },
-        { "--module-id",                 1,      OptModuleId             },
         { "--obj",                       1,      OptObj                  },
         { "--obj-path",                  1,      OptObjPath              },
         { "--start-addr",                1,      OptStartAddr            },

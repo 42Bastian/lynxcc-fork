@@ -33,11 +33,12 @@ or call contract changes.
 >    `#include <lynx/gfx.h>` to `lynx.h`, giving `<lynx.h>` users the canonical
 >    `gfx_` names by default.
 >
-> Out of scope and deliberately left unchanged: the cc65 o65 loadable-driver
-> file format still recognised by the toolchain (`.tgi` extension in
+> Out of scope for this rename: the cc65 o65 loadable-driver file format that
+> the toolchain recognised at the time (`.tgi` extension in
 > `compiler/common/filetype.c`, `doc/cl65.html`, and the `tgi_install` worked
-> example in `doc/co65.html`) — that is the generic o65 driver subsystem, not the
-> Lynx graphics API, and is not part of this rename's footprint (§2).
+> example in `doc/co65.html`) — that was the generic o65 driver subsystem, not
+> the Lynx graphics API. (That o65/co65 subsystem has since been removed entirely
+> as dead non-Lynx code, so those references no longer exist.)
 
 ## 1. Why rename
 

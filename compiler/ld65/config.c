@@ -64,11 +64,9 @@
 #include "expr.h"
 #include "global.h"
 #include "memarea.h"
-#include "o65.h"
 #include "objdata.h"
 #include "scanner.h"
 #include "spool.h"
-#include "xex.h"
 
 
 
@@ -127,13 +125,10 @@ typedef enum {
     CfgSymExport,               /* Not really used in struct CfgSymbol */
     CfgSymImport,               /* Dito */
     CfgSymWeak,                 /* Like export but weak */
-    CfgSymO65Export,            /* An o65 export */
-    CfgSymO65Import,            /* An o65 import */
 } CfgSymType;
 
-/* Symbol structure. It is used for o65 imports and exports, but also for
-** symbols from the SYMBOLS sections (symbols defined in the config file or
-** forced imports).
+/* Symbol structure. It is used for symbols from the SYMBOLS sections (symbols
+** defined in the config file or forced imports).
 */
 typedef struct CfgSymbol CfgSymbol;
 struct CfgSymbol {
@@ -149,8 +144,6 @@ static Collection       CfgSymbols = STATIC_COLLECTION_INITIALIZER;
 
 /* Descriptor holding information about the binary formats */
 static BinDesc* BinFmtDesc      = 0;
-static O65Desc* O65FmtDesc      = 0;
-static XexDesc* XexFmtDesc      = 0;
 
 
 
@@ -545,8 +538,6 @@ static void ParseFiles (void)
         {   "FORMAT",   CFGTOK_FORMAT   },
     };
     static const IdentTok Formats [] = {
-        {   "ATARI",    CFGTOK_ATARIEXE },
-        {   "O65",      CFGTOK_O65      },
         {   "BIN",      CFGTOK_BIN      },
         {   "BINARY",   CFGTOK_BIN      },
     };
@@ -604,14 +595,6 @@ static void ParseFiles (void)
 
                         case CFGTOK_BIN:
                             F->Format = BINFMT_BINARY;
-                            break;
-
-                        case CFGTOK_O65:
-                            F->Format = BINFMT_O65;
-                            break;
-
-                        case CFGTOK_ATARIEXE:
-                            F->Format = BINFMT_ATARIEXE;
                             break;
 
                         default:
@@ -764,7 +747,7 @@ static void ParseSegments (void)
                         case CFGTOK_RO:        S->Flags |= SF_RO;                  break;
                         case CFGTOK_RW:        /* Default */                       break;
                         case CFGTOK_BSS:       S->Flags |= SF_BSS;                 break;
-                        case CFGTOK_ZP:        S->Flags |= (SF_BSS | SF_ZP);       break;
+                        case CFGTOK_ZP:        S->Flags |= SF_BSS;                 break;
                         case CFGTOK_OVERWRITE: S->Flags |= (SF_OVERWRITE | SF_RO); break;
                         default:               Internal ("Unexpected token: %d", CfgTok);
                     }
@@ -837,260 +820,12 @@ static void ParseSegments (void)
 
 
 
-static void ParseO65 (void)
-/* Parse the o65 format section */
-{
-    static const IdentTok Attributes [] = {
-        {   "EXPORT",   CFGTOK_EXPORT           },
-        {   "IMPORT",   CFGTOK_IMPORT           },
-        {   "TYPE",     CFGTOK_TYPE             },
-        {   "OS",       CFGTOK_OS               },
-        {   "ID",       CFGTOK_ID               },
-        {   "VERSION",  CFGTOK_VERSION          },
-    };
-    static const IdentTok Types [] = {
-        {   "SMALL",    CFGTOK_SMALL            },
-        {   "LARGE",    CFGTOK_LARGE            },
-    };
-    static const IdentTok OperatingSystems [] = {
-        {   "LUNIX",    CFGTOK_LUNIX            },
-        {   "OSA65",    CFGTOK_OSA65            },
-        {   "CC65",     CFGTOK_CC65             },
-        {   "OPENCBM",  CFGTOK_OPENCBM          },
-    };
-
-    /* Bitmask to remember the attributes we got already */
-    enum {
-        atNone          = 0x0000,
-        atOS            = 0x0001,
-        atOSVersion     = 0x0002,
-        atType          = 0x0004,
-        atImport        = 0x0008,
-        atExport        = 0x0010,
-        atID            = 0x0020,
-        atVersion       = 0x0040
-    };
-    unsigned AttrFlags = atNone;
-
-    /* Remember the attributes read */
-    unsigned OS = 0;            /* Initialize to keep gcc happy */
-    unsigned Version = 0;
-
-    /* Read the attributes */
-    while (CfgTok == CFGTOK_IDENT) {
-
-        /* Map the identifier to a token */
-        cfgtok_t AttrTok;
-        CfgSpecialToken (Attributes, ENTRY_COUNT (Attributes), "Attribute");
-        AttrTok = CfgTok;
-
-        /* An optional assignment follows */
-        CfgNextTok ();
-        CfgOptionalAssign ();
-
-        /* Check which attribute was given */
-        switch (AttrTok) {
-
-            case CFGTOK_EXPORT:
-                /* Remember we had this token (maybe more than once) */
-                AttrFlags |= atExport;
-                /* We expect an identifier */
-                CfgAssureIdent ();
-                /* Remember it as an export for later */
-                NewCfgSymbol (CfgSymO65Export, GetStrBufId (&CfgSVal));
-                /* Eat the identifier token */
-                CfgNextTok ();
-                break;
-
-            case CFGTOK_IMPORT:
-                /* Remember we had this token (maybe more than once) */
-                AttrFlags |= atImport;
-                /* We expect an identifier */
-                CfgAssureIdent ();
-                /* Remember it as an import for later */
-                NewCfgSymbol (CfgSymO65Import, GetStrBufId (&CfgSVal));
-                /* Eat the identifier token */
-                CfgNextTok ();
-                break;
-
-            case CFGTOK_TYPE:
-                /* Cannot have this attribute twice */
-                FlagAttr (&AttrFlags, atType, "TYPE");
-                /* Get the type of the executable */
-                CfgSpecialToken (Types, ENTRY_COUNT (Types), "Type");
-                switch (CfgTok) {
-
-                    case CFGTOK_SMALL:
-                        O65SetSmallModel (O65FmtDesc);
-                        break;
-
-                    case CFGTOK_LARGE:
-                        O65SetLargeModel (O65FmtDesc);
-                        break;
-
-                    default:
-                        CfgError (&CfgErrorPos, "Unexpected type token");
-                }
-                /* Eat the attribute token */
-                CfgNextTok ();
-                break;
-
-            case CFGTOK_OS:
-                /* Cannot use this attribute twice */
-                FlagAttr (&AttrFlags, atOS, "OS");
-                /* Get the operating system. It may be specified as name or
-                ** as a number in the range 1..255.
-                */
-                if (CfgTok == CFGTOK_INTCON) {
-                    CfgRangeCheck (O65OS_MIN, O65OS_MAX);
-                    OS = (unsigned) CfgIVal;
-                } else {
-                    CfgSpecialToken (OperatingSystems, ENTRY_COUNT (OperatingSystems), "OS type");
-                    switch (CfgTok) {
-                        case CFGTOK_LUNIX:    OS = O65OS_LUNIX;     break;
-                        case CFGTOK_OSA65:    OS = O65OS_OSA65;     break;
-                        case CFGTOK_CC65:     OS = O65OS_CC65;      break;
-                        case CFGTOK_OPENCBM:  OS = O65OS_OPENCBM;   break;
-                        default:              CfgError (&CfgErrorPos, "Unexpected OS token");
-                    }
-                }
-                CfgNextTok ();
-                break;
-
-            case CFGTOK_ID:
-                /* Cannot have this attribute twice */
-                FlagAttr (&AttrFlags, atID, "ID");
-                /* We're expecting a number in the 0..$FFFF range*/
-                ModuleId = (unsigned) CfgCheckedConstExpr (0, 0xFFFF);
-                break;
-
-            case CFGTOK_VERSION:
-                /* Cannot have this attribute twice */
-                FlagAttr (&AttrFlags, atVersion, "VERSION");
-                /* We're expecting a number in byte range */
-                Version = (unsigned) CfgCheckedConstExpr (0, 0xFF);
-                break;
-
-            default:
-                FAIL ("Unexpected attribute token");
-
-        }
-
-        /* Skip an optional comma */
-        CfgOptionalComma ();
-    }
-
-    /* Check if we have all mandatory attributes */
-    AttrCheck (AttrFlags, atOS, "OS");
-
-    /* Check for attributes that may not be combined */
-    if (OS == O65OS_CC65) {
-        if ((AttrFlags & (atImport | atExport)) != 0 && ModuleId < 0x8000) {
-            CfgError (&CfgErrorPos,
-                      "OS type CC65 may not have imports or exports for ids < $8000");
-        }
-    } else {
-        if (AttrFlags & atID) {
-            CfgError (&CfgErrorPos,
-                      "Operating system does not support the ID attribute");
-        }
-    }
-
-    /* Set the O65 operating system to use */
-    O65SetOS (O65FmtDesc, OS, Version, ModuleId);
-}
-
-
-
-static void ParseXex (void)
-/* Parse the o65 format section */
-{
-    static const IdentTok Attributes [] = {
-        {   "RUNAD",    CFGTOK_RUNAD            },
-        {   "INITAD",   CFGTOK_INITAD           },
-    };
-
-    /* Remember the attributes read */
-    /* Bitmask to remember the attributes we got already */
-    enum {
-        atNone          = 0x0000,
-        atRunAd         = 0x0001,
-    };
-    unsigned AttrFlags = atNone;
-    Import *RunAd = 0;
-    Import *InitAd;
-    MemoryArea *InitMem;
-
-    /* Read the attributes */
-    while (CfgTok == CFGTOK_IDENT) {
-
-        /* Map the identifier to a token */
-        cfgtok_t AttrTok;
-        CfgSpecialToken (Attributes, ENTRY_COUNT (Attributes), "Attribute");
-        AttrTok = CfgTok;
-
-        /* An optional assignment follows */
-        CfgNextTok ();
-        CfgOptionalAssign ();
-
-        /* Check which attribute was given */
-        switch (AttrTok) {
-
-            case CFGTOK_RUNAD:
-                /* Cannot have this attribute twice */
-                FlagAttr (&AttrFlags, atRunAd, "RUNAD");
-                /* We expect an identifier */
-                CfgAssureIdent ();
-                /* Generate an import for the symbol */
-                RunAd = InsertImport (GenImport (GetStrBufId (&CfgSVal), ADDR_SIZE_ABS));
-                /* Remember the file position */
-                CollAppend (&RunAd->RefLines, GenLineInfo (&CfgErrorPos));
-                /* Eat the identifier token */
-                CfgNextTok ();
-                break;
-
-            case CFGTOK_INITAD:
-                /* We expect a memory area followed by a colon and an identifier */
-                CfgAssureIdent ();
-                InitMem = CfgGetMemory (GetStrBufId (&CfgSVal));
-                CfgNextTok ();
-                CfgConsumeColon ();
-                CfgAssureIdent ();
-                /* Generate an import for the symbol */
-                InitAd = InsertImport (GenImport (GetStrBufId (&CfgSVal), ADDR_SIZE_ABS));
-                /* Remember the file position */
-                CollAppend (&InitAd->RefLines, GenLineInfo (&CfgErrorPos));
-                /* Eat the identifier token */
-                CfgNextTok ();
-                /* Add to XEX */
-                if (XexAddInitAd (XexFmtDesc, InitMem, InitAd))
-                    CfgError (&CfgErrorPos, "INITAD already given for memory area");
-                break;
-
-            default:
-                FAIL ("Unexpected attribute token");
-
-        }
-
-        /* Skip an optional comma */
-        CfgOptionalComma ();
-    }
-
-    /* Set the RUNAD import if we have one */
-    if ( RunAd )
-        XexSetRunAd (XexFmtDesc, RunAd);
-}
-
-
-
 static void ParseFormats (void)
 /* Parse a target format section */
 {
     static const IdentTok Formats [] = {
-        {   "O65",      CFGTOK_O65      },
         {   "BIN",      CFGTOK_BIN      },
         {   "BINARY",   CFGTOK_BIN      },
-        {   "ATARI",    CFGTOK_ATARIEXE },
     };
 
     while (CfgTok == CFGTOK_IDENT) {
@@ -1106,14 +841,6 @@ static void ParseFormats (void)
 
         /* Parse the format options */
         switch (FormatTok) {
-
-            case CFGTOK_O65:
-                ParseO65 ();
-                break;
-
-            case CFGTOK_ATARIEXE:
-                ParseXex ();
-                break;
 
             case CFGTOK_BIN:
                 /* No attribibutes available */
@@ -1651,8 +1378,6 @@ void CfgRead (void)
 {
     /* Create the descriptors for the binary formats */
     BinFmtDesc = NewBinDesc ();
-    O65FmtDesc = NewO65Desc ();
-    XexFmtDesc = NewXexDesc ();
 
     /* If we have a config name given, open the file, otherwise we will read
     ** from a buffer.
@@ -1753,58 +1478,6 @@ static void ProcessSymbols (void)
 
         /* Check what it is. */
         switch (Sym->Type) {
-
-            case CfgSymO65Export:
-                /* Check if the export symbol is also defined as an import. */
-                if (O65GetImport (O65FmtDesc, Sym->Name) != 0) {
-                    CfgError (
-                        GetSourcePos (Sym->LI),
-                        "Exported o65 symbol '%s' cannot also be an o65 import",
-                        GetString (Sym->Name)
-                    );
-                }
-
-                /* Check if we have this symbol defined already. The entry
-                ** routine will check this also, but we get a more verbose
-                ** error message when checking it here.
-                */
-                if (O65GetExport (O65FmtDesc, Sym->Name) != 0) {
-                    CfgError (
-                        GetSourcePos (Sym->LI),
-                        "Duplicate exported o65 symbol: '%s'",
-                        GetString (Sym->Name)
-                    );
-                }
-
-                /* Insert the symbol into the table */
-                O65SetExport (O65FmtDesc, Sym->Name);
-                break;
-
-            case CfgSymO65Import:
-                /* Check if the import symbol is also defined as an export. */
-                if (O65GetExport (O65FmtDesc, Sym->Name) != 0) {
-                    CfgError (
-                        GetSourcePos (Sym->LI),
-                        "Imported o65 symbol '%s' cannot also be an o65 export",
-                        GetString (Sym->Name)
-                    );
-                }
-
-                /* Check if we have this symbol defined already. The entry
-                ** routine will check this also, but we get a more verbose
-                ** error message when checking it here.
-                */
-                if (O65GetImport (O65FmtDesc, Sym->Name) != 0) {
-                    CfgError (
-                        GetSourcePos (Sym->LI),
-                        "Duplicate imported o65 symbol: '%s'",
-                        GetString (Sym->Name)
-                    );
-                }
-
-                /* Insert the symbol into the table */
-                O65SetImport (O65FmtDesc, Sym->Name);
-                break;
 
             case CfgSymWeak:
                 /* If the symbol is not defined until now, define it */
@@ -2188,14 +1861,6 @@ void CfgWriteTarget (void)
 
                     case BINFMT_BINARY:
                         BinWriteTarget (BinFmtDesc, F);
-                        break;
-
-                    case BINFMT_O65:
-                        O65WriteTarget (O65FmtDesc, F);
-                        break;
-
-                    case BINFMT_ATARIEXE:
-                        XexWriteTarget (XexFmtDesc, F);
                         break;
 
                     default:

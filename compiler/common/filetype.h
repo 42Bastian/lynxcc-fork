@@ -50,8 +50,7 @@ typedef enum {
     FILETYPE_C,                 /* C source file */
     FILETYPE_ASM,               /* Assembler file */
     FILETYPE_OBJ,               /* Object file */
-    FILETYPE_LIB,               /* Library file */
-    FILETYPE_O65                /* O65 object file */
+    FILETYPE_LIB                /* Library file */
 } FILETYPE;
 
 

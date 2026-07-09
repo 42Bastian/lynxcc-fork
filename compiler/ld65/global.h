@@ -47,8 +47,6 @@
 extern const char*      OutputName;     /* Name of output file */
 extern unsigned         OutputNameUsed; /* Output name was used by %O */
 
-extern unsigned         ModuleId;       /* Id for o65 module */
-
 extern unsigned char    HaveStartAddr;  /* True if start address was given */
 extern unsigned long    StartAddr;      /* Start address */
 

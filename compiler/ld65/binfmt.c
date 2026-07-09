@@ -73,12 +73,7 @@ int RelocatableBinFmt (unsigned Format)
     switch (Format) {
 
         case BINFMT_BINARY:
-        case BINFMT_ATARIEXE:
             Reloc = 0;
-            break;
-
-        case BINFMT_O65:
-            Reloc = 1;
             break;
 
         default:

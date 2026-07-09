@@ -6,7 +6,6 @@ PROGS = ar65 \
         ca65 \
         cc65 \
         cl65 \
-        co65 \
         da65 \
         ld65 \
         sp65

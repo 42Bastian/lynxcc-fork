@@ -97,7 +97,6 @@
     <ClInclude Include="ld65\lineinfo.h" />
     <ClInclude Include="ld65\mapfile.h" />
     <ClInclude Include="ld65\memarea.h" />
-    <ClInclude Include="ld65\o65.h" />
     <ClInclude Include="ld65\objdata.h" />
     <ClInclude Include="ld65\objfile.h" />
     <ClInclude Include="ld65\scanner.h" />
@@ -106,7 +105,6 @@
     <ClInclude Include="ld65\span.h" />
     <ClInclude Include="ld65\spool.h" />
     <ClInclude Include="ld65\tpool.h" />
-    <ClInclude Include="ld65\xex.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ld65\asserts.c" />
@@ -131,7 +129,6 @@
     <ClCompile Include="ld65\main.c" />
     <ClCompile Include="ld65\mapfile.c" />
     <ClCompile Include="ld65\memarea.c" />
-    <ClCompile Include="ld65\o65.c" />
     <ClCompile Include="ld65\objdata.c" />
     <ClCompile Include="ld65\objfile.c" />
     <ClCompile Include="ld65\scanner.c" />
@@ -140,7 +137,6 @@
     <ClCompile Include="ld65\span.c" />
     <ClCompile Include="ld65\spool.c" />
     <ClCompile Include="ld65\tpool.c" />
-    <ClCompile Include="ld65\xex.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

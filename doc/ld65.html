@@ -104,7 +104,6 @@ Long options:
   --lib file                    Link this library
   --lib-path path               Specify a library search path
   --mapfile name                Create a map file
-  --module-id id                Specify a module id
   --obj file                    Link this object file
   --obj-path path               Specify an object file search path
   --start-addr addr             Set the default start address
@@ -646,9 +645,7 @@ imported using the <code>.IMPORT</code> directive:</p>
                                 address that is not used by data. If we
                                 don't define any segments for this area,
                                 the value will be the same as START.
-        __STACK_FILEOFFS__      The binary offset in the output file. This
-                                is not defined for relocatable output file
-                                formats (o65).</pre>
+        __STACK_FILEOFFS__      The binary offset in the output file.</pre>
 <p>A memory section may also have a type. Valid types are</p>
 <pre class="verb">        ro      for readonly memory
         rw      for read/write memory.</pre>
@@ -737,50 +734,12 @@ look like this:</p>
 <pre class="verb">        FILES {
             %O: format = bin;
         }</pre>
-<p>There are two other available formats, one is the o65 format specified by Andre
-Fachat (see the <a href="http://www.6502.org/users/andre/o65/fileformat.html">6502 binary relocation format specification</a>). It is defined like this:</p>
-<pre class="verb">        FILES {
-            %O: format = o65;
-        }</pre>
-<p>The other format available is the Atari (xex) segmented file format, this is
-the standard format used by Atari DOS 2.0 and upward file managers in the Atari
-8-bit computers, and it is defined like this:</p>
-<pre class="verb">        FILES {
-            %O: format = atari;
-        }</pre>
-<p>In the Atari segmented file format, the linker will write each <code>MEMORY</code> area
-as a new segment, including a header with the start and end address.</p>
-<p>The necessary o65 or Atari attributes are defined in a special section labeled
-<a href="#FORMAT">FORMAT</a>.</p>
+<p>Straight binary is the only output format in this tree, so the <code>FILES</code>
+section is rarely needed in practice.</p>
 <h3 id="FORMAT">5.9. The FORMAT section</h3>
-<p>The <code>FORMAT</code> section is used to describe file formats. The default (binary)
-format has currently no attributes, so, while it may be listed in this
-section, the attribute list is empty. The second supported format,
-<a href="http://www.6502.org/users/andre/o65/fileformat.html">o65</a>,
-has several attributes that may be defined here.</p>
-<pre class="verb">    FORMATS {
-        o65: os = lunix, version = 0, type = small,
-             import = LUNIXKERNEL,
-             export = _main;
-    }</pre>
-<p>The Atari file format has two attributes:</p>
-<dl>
-<dt><code>RUNAD = symbol</code></dt>
-<dd>
-<p>Specify a symbol as the run address of the binary, the loader will call this
-  address after all the file is loaded in memory. If the attribute is omitted,
-  no run address is included in the file.</p>
-</dd>
-<dt><code>INITAD = memory_area : symbol</code></dt>
-<dd>
-<p>Specify a symbol as the initialization address for the given memory area.
-  The binary loader will call this address just after the memory area is loaded
-  into memory, before continuing loading the rest of the file.</p>
-</dd>
-</dl>
-<pre class="verb">    FORMATS {
-        atari: runad = _start;
-    }</pre>
+<p>The <code>FORMAT</code> section is used to describe file formats. The only supported
+format is the default (binary) format, which has no attributes, so while it may
+be listed in this section its attribute list is always empty.</p>
 <h3 id="FEATURES">5.10. The FEATURES section</h3>
 <p>In addition to the <code>MEMORY</code> and <code>SEGMENTS</code> sections described above, the
 linker has features that may be enabled by an additional section labeled

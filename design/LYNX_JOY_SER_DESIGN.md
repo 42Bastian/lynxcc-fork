@@ -391,8 +391,9 @@ Each step shippable:
 
 ## 10. Out of scope / follow-ups
 
-- `co65` and ld65's o65 *output* support are toolchain features, untouched — only the
-  library-side module loading dies here.
+- Library-side module loading dies here. (`co65` and ld65's o65/Atari-EXE *output*
+  support were left as toolchain features at the time of this cleanup; they were
+  removed later as dead non-Lynx code, along with the o65 file-type wiring in cl65.)
 - A second-player joystick over ComLynx (reading a remote pad via the redeye protocol)
   would be a new feature on top of the static ser core, not part of this cleanup. It
   would need its own entry point, not `joy_read`, which reports only the local pad.

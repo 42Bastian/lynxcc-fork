@@ -93,7 +93,7 @@ lynxcc/                     # repo root == CC65_HOME (dev tree)
 │   ├── common/             #   shared support archive -> wrk/common/common.a
 │   ├── cc65/  ca65/        #   C compiler, macro assembler
 │   ├── ld65/  ar65/        #   linker, librarian
-│   ├── co65/  cl65/        #   o65 converter, build driver
+│   ├── cl65/               #   build driver
 │   ├── sp65/               #   sprite/bitmap converter
 │   ├── da65/               #   disassembler
 │   ├── cc65.sln  *.vcxproj #   MSVC projects (all toolchain binaries)
@@ -561,8 +561,8 @@ directory is **not** added.
     wordmark (`doc/logo.svg`, also shipped as a Makefile asset) and SDK copy:
     "lynxcc is a complete game development SDK for the Atari Lynx…". The hero is
     full-bleed (no `max-width`/character cap) with the logo centred. A scaled
-    `logo.svg` sits in the shared `topbar` brand on every page, and the nine
-    command-line tools (`ar65`, `ca65`, `cc65`, `cl65`, `co65`, `da65`, `ld65`,
+    `logo.svg` sits in the shared `topbar` brand on every page, and the eight
+    command-line tools (`ar65`, `ca65`, `cc65`, `cl65`, `da65`, `ld65`,
     `lnx`, `sp65`) are collapsed into a single **Tools** dropdown there
     (`doc.css` `.dropdown*`, `doc.js` toggle) instead of four loose links; the
     `.nav` no longer wraps/scroll-clips, so the menu overlays page content
@@ -585,7 +585,7 @@ all:  compiler  tools  runtime+libraries  examples  doc  [tests]
 Concretely:
 
 1. `compiler/` — builds `common.a` then the full cc65 suite (`cc65 ca65 ld65
-   ar65 co65 cl65 sp65 da65`) into `bin/`.
+   ar65 cl65 sp65 da65`) into `bin/`.
 2. `tools/` — builds the new utility (`lnx`) into `bin/`.
 3. `runtime/` + `libraries/` — build the object trees and archive them into
    `lib/lynx.lib` (core) and `lib/lynx-*.lib` (optional), in dependency order,

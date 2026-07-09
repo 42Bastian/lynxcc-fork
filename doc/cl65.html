@@ -14,14 +14,14 @@ See doc/licenses.html.
 </head><body>
 <site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>cl65 Users Guide</h1></header><div class="abstract">cl65 is the compile &amp; link utility for cc65, the 6502 C compiler. It was
 designed as a smart frontend for the C compiler (cc65), the assembler (ca65),
-the object file converter (co65), and the linker (ld65).</div><nav class="toc"><h2>Contents</h2><ul>
+and the linker (ld65).</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Overview</a></li>
 <li class="lvl1"><a href="#sect-2">2. Basic Usage</a></li>
 <li class="lvl1"><a href="#sect-3">3. More usage</a></li>
 <li class="lvl1"><a href="#sect-4">4. Examples</a></li>
 <li class="lvl1"><a href="#sect-5">5. Copyright</a></li>
 </ul></nav><h2 id="sect-1">1. Overview</h2>
-<p>cl65 is a frontend for cc65, ca65, co65 and ld65. While you may not use the
+<p>cl65 is a frontend for cc65, ca65 and ld65. While you may not use the
 full power of the tools when calling them through cl65, most features are
 available, and the use of cl65 is much simpler.</p>
 <h2 id="sect-2">2. Basic Usage</h2>
@@ -70,19 +70,16 @@ Long options:
   --asm-define sym[=v]          Define an assembler symbol
   --asm-include-dir dir         Set an assembler include directory
   --bin-include-dir dir         Set an assembler binary include directory
-  --bss-label name              Define and export a BSS segment label
   --bss-name seg                Set the name of the BSS segment
   --cc-args options             Pass options to the compiler
   --cfg-path path               Specify a config file search path
   --check-stack                 Generate stack overflow checks
-  --code-label name             Define and export a CODE segment label
   --code-name seg               Set the name of the CODE segment
   --codesize x                  Accept larger code by factor x
   --config name                 Use linker config file
   --cpu type                    Set cpu type (65C02, 65SC02)
   --create-dep name             Create a make dependency file
   --create-full-dep name        Create a full make dependency file
-  --data-label name             Define and export a DATA segment label
   --data-name seg               Set the name of the DATA segment
   --debug                       Debug mode
   --debug-info                  Add debug info
@@ -97,7 +94,6 @@ Long options:
   --mapfile name                Create a map file
   --no-sdk-libs                 Link only the core SDK library, not the optional set
   --no-target-lib               Don't link the target library
-  --o65-model model             Override the o65 model
   --obj file                    Link this object file
   --obj-path path               Specify an object file search path
   --print-target-path           Print the target file path
@@ -111,8 +107,6 @@ Long options:
   --target sys                  Set the target system
   --version                     Print the version number
   --verbose                     Verbose mode
-  --zeropage-label name         Define and export a ZEROPAGE segment label
-  --zeropage-name seg           Set the name of the ZEROPAGE segment
 ---------------------------------------------------------------------------</pre>
 <p>Most of the options have the same meanings as the corresponding compiler,
 assembler, and linker options. See the documentation for those tools for an
@@ -276,9 +270,6 @@ and debug info enabled.</p>
 </li>
 <li>
 <p>Libraries: <code>.a</code>, <code>.lib</code></p>
-</li>
-<li>
-<p>o65 files: <code>.o65</code>, <code>.emd</code>, <code>.joy</code>, <code>.tgi</code></p>
 </li>
 </ul>
 <p>Please note that the program cannot handle input files with unknown file

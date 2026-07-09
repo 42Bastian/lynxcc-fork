@@ -72,8 +72,6 @@ extern target_t         Target;
 /* Types of available output formats */
 #define BINFMT_DEFAULT          0       /* Default (binary) */
 #define BINFMT_BINARY           1       /* Straight binary format */
-#define BINFMT_O65              2       /* Andre Fachat's o65 format */
-#define BINFMT_ATARIEXE         3       /* Standard Atari binary load */
 
 
 

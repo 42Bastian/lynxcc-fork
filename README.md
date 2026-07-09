@@ -20,7 +20,7 @@ Upstream cc65 documentation: [cc65.github.io/doc](https://cc65.github.io/doc)
 The tree is organised as a Lynx Game Development SDK
 ([design/LYNX_SDK_LAYOUT_DESIGN.md](design/LYNX_SDK_LAYOUT_DESIGN.md)):
 
-- `compiler/` — the cc65 toolchain suite (cc65, ca65, ld65, ar65, co65, cl65,
+- `compiler/` — the cc65 toolchain suite (cc65, ca65, ld65, ar65, cl65,
   sp65, da65).
 - `tools/` — standalone SDK utilities outside the compiler suite. `tools/lnx`
   inspects and patches the 64-byte `.lnx` cartridge header (per-game name,

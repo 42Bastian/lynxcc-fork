@@ -86,7 +86,6 @@ struct SegDesc {
 /* Segment flags */
 #define SF_RO           0x0001          /* Read only segment */
 #define SF_BSS          0x0002          /* Segment is BSS style segment */
-#define SF_ZP           0x0004          /* Zeropage segment (o65 only) */
 #define SF_DEFINE       0x0008          /* Define start and size */
 #define SF_ALIGN        0x0010          /* Align segment in run area */
 #define SF_ALIGN_LOAD   0x0020          /* Align segment in load area */

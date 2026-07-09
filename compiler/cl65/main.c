@@ -109,7 +109,6 @@ struct CmdDesc {
 /* Command descriptors for the different programs */
 static CmdDesc CC65 = { 0, 0, 0, 0, 0, 0, 0 };
 static CmdDesc CA65 = { 0, 0, 0, 0, 0, 0, 0 };
-static CmdDesc CO65 = { 0, 0, 0, 0, 0, 0, 0 };
 static CmdDesc LD65 = { 0, 0, 0, 0, 0, 0, 0 };
 
 /* Variables controlling the steps we're doing */
@@ -768,42 +767,6 @@ static void Compile (const char* File)
 
 
 
-static void ConvertO65 (const char* File)
-/* Convert an o65 object file into an assembler file */
-{
-    /* Remember the current converter argument count */
-    unsigned ArgCount = CO65.ArgCount;
-
-    /* If we won't assemble, this is the final step. In this case, set the
-    ** output name.
-    */
-    if (!DoAssemble && OutputName) {
-        CmdSetOutput (&CO65, OutputName);
-    }
-
-    /* Add the file as argument for the object file converter */
-    CmdAddArg (&CO65, File);
-
-    /* Add a NULL pointer to terminate the argument list */
-    CmdAddArg (&CO65, 0);
-
-    /* Run the converter */
-    ExecProgram (&CO65);
-
-    /* Remove the excess arguments */
-    CmdDelArgs (&CO65, ArgCount);
-
-    /* If this is not the final step, assemble the generated file, then
-    ** remove it
-    */
-    if (DoAssemble) {
-        /* Assemble the intermediate file and remove it */
-        AssembleIntermediate (File);
-    }
-}
-
-
-
 /*****************************************************************************/
 /*                                   Code                                    */
 /*****************************************************************************/
@@ -853,19 +816,16 @@ static void Usage (void)
             "  --asm-define sym[=v]\t\tDefine an assembler symbol\n"
             "  --asm-include-dir dir\t\tSet an assembler include directory\n"
             "  --bin-include-dir dir\t\tSet an assembler binary include directory\n"
-            "  --bss-label name\t\tDefine and export a BSS segment label\n"
             "  --bss-name seg\t\tSet the name of the BSS segment\n"
             "  --cc-args options\t\tPass options to the compiler\n"
             "  --cfg-path path\t\tSpecify a config file search path\n"
             "  --check-stack\t\t\tGenerate stack overflow checks\n"
-            "  --code-label name\t\tDefine and export a CODE segment label\n"
             "  --code-name seg\t\tSet the name of the CODE segment\n"
             "  --codesize x\t\t\tAccept larger code by factor x\n"
             "  --config name\t\t\tUse linker config file\n"
             "  --cpu type\t\t\tSet cpu type (65C02, 65SC02)\n"
             "  --create-dep name\t\tCreate a make dependency file\n"
             "  --create-full-dep name\tCreate a full make dependency file\n"
-            "  --data-label name\t\tDefine and export a DATA segment label\n"
             "  --data-name seg\t\tSet the name of the DATA segment\n"
             "  --debug\t\t\tDebug mode\n"
             "  --debug-info\t\t\tAdd debug info\n"
@@ -880,7 +840,6 @@ static void Usage (void)
             "  --mapfile name\t\tCreate a map file\n"
             "  --no-sdk-libs\t\t\tLink only the core SDK library, not the optional set\n"
             "  --no-target-lib\t\tDon't link the target library\n"
-            "  --o65-model model\t\tOverride the o65 model\n"
             "  --obj file\t\t\tLink this object file\n"
             "  --obj-path path\t\tSpecify an object file search path\n"
             "  --print-target-path\t\tPrint the target file path\n"
@@ -893,9 +852,7 @@ static void Usage (void)
             "  --static-locals\t\tMake local variables static\n"
             "  --target sys\t\t\tSet the target system\n"
             "  --version\t\t\tPrint the version number\n"
-            "  --verbose\t\t\tVerbose mode\n"
-            "  --zeropage-label name\t\tDefine and export a ZEROPAGE segment label\n"
-            "  --zeropage-name seg\t\tSet the name of the ZEROPAGE segment\n",
+            "  --verbose\t\t\tVerbose mode\n",
             ProgName);
 }
 
@@ -950,19 +907,10 @@ static void OptBinIncludeDir (const char* Opt attribute ((unused)), const char* 
 
 
 
-static void OptBssLabel (const char* Opt attribute ((unused)), const char* Arg)
-/* Handle the --bss-label option */
-{
-    CmdAddArg2 (&CO65, "--bss-label", Arg);
-}
-
-
-
 static void OptBssName (const char* Opt attribute ((unused)), const char* Arg)
 /* Handle the --bss-name option */
 {
     CmdAddArg2 (&CC65, "--bss-name", Arg);
-    CmdAddArg2 (&CO65, "--bss-name", Arg);
 }
 
 
@@ -992,19 +940,10 @@ static void OptCheckStack (const char* Opt attribute ((unused)),
 
 
 
-static void OptCodeLabel (const char* Opt attribute ((unused)), const char* Arg)
-/* Handle the --code-label option */
-{
-    CmdAddArg2 (&CO65, "--code-label", Arg);
-}
-
-
-
 static void OptCodeName (const char* Opt attribute ((unused)), const char* Arg)
 /* Handle the --code-name option */
 {
     CmdAddArg2 (&CC65, "--code-name", Arg);
-    CmdAddArg2 (&CO65, "--code-name", Arg);
 }
 
 
@@ -1052,19 +991,10 @@ static void OptCreateFullDep (const char* Opt attribute ((unused)), const char* 
 
 
 
-static void OptDataLabel (const char* Opt attribute ((unused)), const char* Arg)
-/* Handle the --data-label option */
-{
-    CmdAddArg2 (&CO65, "--data-label", Arg);
-}
-
-
-
 static void OptDataName (const char* Opt attribute ((unused)), const char* Arg)
 /* Handle the --data-name option */
 {
     CmdAddArg2 (&CC65, "--data-name", Arg);
-    CmdAddArg2 (&CO65, "--data-name", Arg);
 }
 
 
@@ -1074,7 +1004,6 @@ static void OptDebug (const char* Opt attribute ((unused)),
 /* Debug mode (compiler and cl65 utility) */
 {
     CmdAddArg (&CC65, "-d");
-    CmdAddArg (&CO65, "-d");
     Debug = 1;
 }
 
@@ -1086,7 +1015,6 @@ static void OptDebugInfo (const char* Opt attribute ((unused)),
 {
     CmdAddArg (&CC65, "-g");
     CmdAddArg (&CA65, "-g");
-    CmdAddArg (&CO65, "-g");
 }
 
 
@@ -1219,14 +1147,6 @@ static void OptSDKLibs (const char* Opt attribute ((unused)), const char* Arg)
 
 
 
-static void OptO65Model (const char* Opt attribute ((unused)), const char* Arg)
-/* Handle the --o65-model option */
-{
-    CmdAddArg2 (&CO65, "-m", Arg);
-}
-
-
-
 static void OptObj (const char* Opt attribute ((unused)), const char* Arg)
 /* Object file follows (linker) */
 {
@@ -1327,7 +1247,6 @@ static void OptVerbose (const char* Opt attribute ((unused)),
 {
     CmdAddArg (&CC65, "-v");
     CmdAddArg (&CA65, "-v");
-    CmdAddArg (&CO65, "-v");
     CmdAddArg (&LD65, "-v");
 }
 
@@ -1343,22 +1262,6 @@ static void OptVersion (const char* Opt attribute ((unused)),
 
 
 
-static void OptZeropageLabel (const char* Opt attribute ((unused)), const char* Arg)
-/* Handle the --zeropage-label option */
-{
-    CmdAddArg2 (&CO65, "--zeropage-label", Arg);
-}
-
-
-
-static void OptZeropageName (const char* Opt attribute ((unused)), const char* Arg)
-/* Handle the --zeropage-name option */
-{
-    CmdAddArg2 (&CO65, "--zeropage-name", Arg);
-}
-
-
-
 int main (int argc, char* argv [])
 /* Utility main program */
 {
@@ -1370,19 +1273,16 @@ int main (int argc, char* argv [])
         { "--asm-define",        1, OptAsmDefine      },
         { "--asm-include-dir",   1, OptAsmIncludeDir  },
         { "--bin-include-dir",   1, OptBinIncludeDir  },
-        { "--bss-label",         1, OptBssLabel       },
         { "--bss-name",          1, OptBssName        },
         { "--cc-args",           1, OptCCArgs         },
         { "--cfg-path",          1, OptCfgPath        },
         { "--check-stack",       0, OptCheckStack     },
-        { "--code-label",        1, OptCodeLabel      },
         { "--code-name",         1, OptCodeName       },
         { "--codesize",          1, OptCodeSize       },
         { "--config",            1, OptConfig         },
         { "--cpu",               1, OptCPU            },
         { "--create-dep",        1, OptCreateDep      },
         { "--create-full-dep",   1, OptCreateFullDep  },
-        { "--data-label",        1, OptDataLabel      },
         { "--data-name",         1, OptDataName       },
         { "--debug",             0, OptDebug          },
         { "--debug-info",        0, OptDebugInfo      },
@@ -1397,7 +1297,6 @@ int main (int argc, char* argv [])
         { "--mapfile",           1, OptMapFile        },
         { "--no-sdk-libs",       0, OptNoSDKLibs      },
         { "--no-target-lib",     0, OptNoTargetLib    },
-        { "--o65-model",         1, OptO65Model       },
         { "--obj",               1, OptObj            },
         { "--obj-path",          1, OptObjPath        },
         { "--print-target-path", 0, OptPrintTargetPath},
@@ -1411,8 +1310,6 @@ int main (int argc, char* argv [])
         { "--target",            1, OptTarget         },
         { "--verbose",           0, OptVerbose        },
         { "--version",           0, OptVersion        },
-        { "--zeropage-label",    1, OptZeropageLabel  },
-        { "--zeropage-name",     1, OptZeropageName   },
     };
 
     char* CmdPath;
@@ -1439,7 +1336,6 @@ int main (int argc, char* argv [])
     }
     CmdInit (&CC65, CmdPath, "cc65");
     CmdInit (&CA65, CmdPath, "ca65");
-    CmdInit (&CO65, CmdPath, "co65");
     CmdInit (&LD65, CmdPath, "ld65");
     xfree (CmdPath);
 
@@ -1632,11 +1528,6 @@ int main (int argc, char* argv [])
                 case FILETYPE_LIB:
                     /* Add to the linker files */
                     CmdAddFile (&LD65, Arg);
-                    break;
-
-                case FILETYPE_O65:
-                    /* Add the the object file converter files */
-                    ConvertO65 (Arg);
                     break;
 
                 default:

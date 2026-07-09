@@ -267,7 +267,7 @@ Per `CLAUDE.md`, this design ships alongside:
 
 - `doc/lnx.html` — user guide (CLI, JSON config, header table), carded under
   "Programs" on `index.html` alongside the other utility tool pages
-  (`ar65`/`co65`/`da65`/`sp65`), and using the standard doc nav. (The nav lists
+  (`ar65`/`da65`/`sp65`), and using the standard doc nav. (The nav lists
   only the four primary tools — `cc65`/`ca65`/`ld65`/`cl65` — so utility tools
   are reached via the index cards, the existing convention.)
 - `README.md` — `tools/` line in the repository-layout overview.
