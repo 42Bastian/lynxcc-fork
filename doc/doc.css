@@ -264,7 +264,11 @@ nav.toc li.lvl2 a{color:var(--ink-soft)}
 /* footer */
 /* Custom elements default to display:inline; the shared chrome needs block so
    the sticky topbar and the centered footer lay out like the old <div>/<footer>. */
-site-nav,site-foot{display:block}
+/* site-nav uses display:contents so its child .topbar is a flow child of
+   <body>; a display:block wrapper would confine the sticky bar to its own
+   56px box, letting it scroll away instead of pinning to the viewport. */
+site-nav{display:contents}
+site-foot{display:block}
 .site-foot{
   max-width:var(--maxw);margin:0 auto;padding:26px 22px 50px;
   color:var(--ink-faint);font-size:.85rem;border-top:1px solid var(--border);

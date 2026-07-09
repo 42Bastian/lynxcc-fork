@@ -40,7 +40,12 @@ page through two light-DOM custom elements:
 
 Both elements render into the **light DOM** (no shadow root), so the existing
 `doc.css` rules for `.topbar`, `.nav`, `.dropdown`, `.theme-toggle` and
-`.site-foot` apply unchanged. Because `doc.js` is loaded at the end of `<body>`,
+`.site-foot` apply unchanged. `<site-nav>` itself is `display:contents` so its
+child `.topbar` is a flow child of `<body>`: this is required for the
+`position:sticky` top bar to stay pinned to the viewport when the page scrolls.
+A `display:block` wrapper would confine the sticky bar to the wrapper's own
+56px-tall box and let it scroll away. `<site-foot>` is a normal `display:block`
+wrapper. Because `doc.js` is loaded at the end of `<body>`,
 the markup is already parsed when the elements upgrade; the injected markup is
 identical to what the pages previously hard-coded, so rendering is unchanged.
 
