@@ -36,8 +36,8 @@ SCBs described here.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-4">4. The pen palette</a></li>
 <li class="lvl1"><a href="#sect-5">5. Pixel and data format</a></li>
 <li class="lvl1"><a href="#sect-6">6. Sizing, stretch, tilt and flip</a></li>
-<li class="lvl2"><a href="#sect-6-1">6.1. Flipping about the reference point</a></li>
-<li class="lvl2"><a href="#sect-6-2">6.2. Panning the display window: hoff and voff</a></li>
+<li class="lvl2"><a href="#sect-6-1">6.1. Where the action point sits</a></li>
+<li class="lvl2"><a href="#sect-6-2">6.2. Flipping about the reference point</a></li>
 <li class="lvl1"><a href="#sect-7">7. Driving the engine</a></li>
 <li class="lvl1"><a href="#sect-8">8. License</a></li>
 </ul></nav>
@@ -730,7 +730,104 @@ by <code>DRAWUP</code>&#47;<code>DRAWLEFT</code>, and <code>HFLIP</code>&#47;<co
 mirror the image about the two axes.</figcaption>
 </figure>
 
-<h3 id="sect-6-1">6.1. Flipping about the reference point</h3>
+<h3 id="sect-6-1">6.1. Where the action point sits</h3>
+<p>Because the reference point is a fixed screen pixel, it is the <em>pivot</em>
+every one of these transforms turns about: <code>hsize</code>, <code>vsize</code>,
+<code>stretch</code> and <code>tilt</code> all grow or shear the image
+<em>outward from that pixel</em> along the current draw direction. So the same
+transform paints the result in a different place depending on where the action
+point sits inside the artwork &mdash; the <code>ax,ay</code>
+<a href="sp65.html#sect-6-1">action point you pick when the sprite is compacted</a>.
+Move it, and a doubled or sheared sprite lands somewhere else even though the SCB
+scale fields are byte-for-byte identical.</p>
+<p>One caveat decides what &ldquo;middle&rdquo; even means: a plain
+<em>single-quadrant</em> sprite can only anchor at a <em>corner</em> &mdash; which
+corner is chosen by <code>DRAWUP</code>&#47;<code>DRAWLEFT</code>. To pivot about the
+<em>centre</em> of the image you must draw it as a <em>multi-quadrant</em> sprite
+whose four quadrants share one reference point; that is exactly the case the
+<code>hsizeoff</code>&#47;<code>vsizeoff</code> <code>$007F</code> correction above is
+there to serve. The figure below applies one <code>2&times;</code> scale and one
+<code>tilt</code> shear at three action points to show the pivot staying put while
+the picture moves around it.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 420" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="Two rows of three panels. Each column places the action point (a pinned dot with crosshair) at a different spot in the artwork: top-left corner, centre, bottom-right corner. The top row applies a 2x uniform scale, the bottom row a tilt shear. The dashed 1x base sprite and the pinned dot stay put in each panel while the solid transformed result grows or shears outward from that dot, so the same transform lands in a different place depending on where the action point sits.">
+  <!-- column dividers -->
+  <g stroke="var(--border)" stroke-width="1">
+    <line x1="250" y1="54" x2="250" y2="400"/>
+    <line x1="470" y1="54" x2="470" y2="400"/>
+  </g>
+  <text x="360" y="22" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10.5" fill="var(--ink)" text-anchor="middle">Same transform, three action points &mdash; the pinned pivot holds while the picture moves.</text>
+
+  <!-- column headers -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" fill="var(--ink)" text-anchor="middle">
+    <text x="140" y="46">action point: top-left corner</text>
+    <text x="360" y="46">centre (multi-quadrant)</text>
+    <text x="580" y="46">bottom-right corner</text>
+  </g>
+
+  <!-- row labels -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-faint)" text-anchor="start">
+    <text x="24" y="150">2&times; scale</text>
+    <text x="24" y="325">tilt shear</text>
+  </g>
+
+  <!-- ===== ROW 1: uniform 2x scale ===== -->
+  <!-- Col A: top-left anchor -->
+  <rect x="110" y="110" width="84" height="84" fill="var(--accent)" fill-opacity="0.16" stroke="var(--accent)" stroke-width="1.6"/>
+  <rect x="110" y="110" width="42" height="42" fill="none" stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <!-- Col B: centre anchor -->
+  <rect x="318" y="110" width="84" height="84" fill="var(--accent)" fill-opacity="0.16" stroke="var(--accent)" stroke-width="1.6"/>
+  <rect x="339" y="131" width="42" height="42" fill="none" stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <!-- Col C: bottom-right anchor -->
+  <rect x="526" y="110" width="84" height="84" fill="var(--accent)" fill-opacity="0.16" stroke="var(--accent)" stroke-width="1.6"/>
+  <rect x="568" y="152" width="42" height="42" fill="none" stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 3"/>
+
+  <!-- ===== ROW 2: tilt shear ===== -->
+  <!-- Col A: top anchor pinned, leans right below -->
+  <polygon points="110,288 152,288 186,330 144,330" fill="var(--accent)" fill-opacity="0.16" stroke="var(--accent)" stroke-width="1.6"/>
+  <rect x="110" y="288" width="42" height="42" fill="none" stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <!-- Col B: middle row pinned, shears both ways -->
+  <polygon points="322,288 364,288 398,330 356,330" fill="var(--accent)" fill-opacity="0.16" stroke="var(--accent)" stroke-width="1.6"/>
+  <rect x="339" y="288" width="42" height="42" fill="none" stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <!-- Col C: bottom row pinned, upper rows lean left -->
+  <polygon points="534,288 576,288 610,330 568,330" fill="var(--accent)" fill-opacity="0.16" stroke="var(--accent)" stroke-width="1.6"/>
+  <rect x="568" y="288" width="42" height="42" fill="none" stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 3"/>
+
+  <!-- pinned action-point dots + crosshairs (drawn last, on top) -->
+  <g stroke="var(--accent-2)" stroke-width="1">
+    <!-- row1 -->
+    <line x1="100" y1="110" x2="120" y2="110"/><line x1="110" y1="100" x2="110" y2="120"/>
+    <line x1="350" y1="152" x2="370" y2="152"/><line x1="360" y1="142" x2="360" y2="162"/>
+    <line x1="600" y1="194" x2="620" y2="194"/><line x1="610" y1="184" x2="610" y2="204"/>
+    <!-- row2 -->
+    <line x1="100" y1="288" x2="120" y2="288"/><line x1="110" y1="278" x2="110" y2="298"/>
+    <line x1="350" y1="309" x2="370" y2="309"/><line x1="360" y1="299" x2="360" y2="319"/>
+    <line x1="600" y1="330" x2="620" y2="330"/><line x1="610" y1="320" x2="610" y2="340"/>
+  </g>
+  <g fill="var(--accent-2)">
+    <circle cx="110" cy="110" r="3.5"/><circle cx="360" cy="152" r="3.5"/><circle cx="610" cy="194" r="3.5"/>
+    <circle cx="110" cy="288" r="3.5"/><circle cx="360" cy="309" r="3.5"/><circle cx="610" cy="330" r="3.5"/>
+  </g>
+
+  <!-- footnotes per column -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="140" y="360">grows &#47; shears down-right</text>
+    <text x="360" y="360">grows &#47; shears symmetrically</text>
+    <text x="580" y="360">grows &#47; shears up-left</text>
+  </g>
+  <text x="360" y="392" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--accent-2)" text-anchor="middle">&#9679; = pinned action point (hpos,&nbsp;vpos)</text>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">One <code>2&times;</code> scale (top) and one <code>tilt</code> shear (bottom),
+each applied unchanged at three action points. The dashed 1&times; base and the
+pinned dot stay fixed in every panel; only <em>where the action point sits in the
+artwork</em> changes, and the transformed result grows or shears outward from that
+pixel &mdash; down-right from a top-left corner, symmetrically from a centred
+multi-quadrant anchor, up-left from a bottom-right corner.</figcaption>
+</figure>
+
+<h3 id="sect-6-2">6.2. Flipping about the reference point</h3>
 <p>Two bits in <code>SPRCTL0</code> mirror a sprite as Suzy paints it, so one image
 in RAM can face either way without a second copy:</p>
 <ul>
@@ -794,88 +891,15 @@ two together give a 180&deg; rotation. The reference point never moves, so
 <code>hpos</code>&#47;<code>vpos</code> stay put &mdash; only the image mirrors.</figcaption>
 </figure>
 
-<h3 id="sect-6-2">6.2. Panning the display window: hoff and voff</h3>
-<p>Every <code>hpos</code>&#47;<code>vpos</code> you write is a coordinate in an
-imaginary <strong>display world</strong>, not a pixel address in the frame buffer.
-The 160&times;102 <strong>display window</strong> &mdash; the RAM the video hardware
-actually scans out &mdash; sits somewhere inside that world, and its top-left corner is
-fixed by the two screen-edge offset registers <code>hoff</code> (<code>$FC04</code>)
-and <code>voff</code> (<code>$FC06</code>) in <code>struct __suzy</code>. As Suzy
-paints a sprite it subtracts the offsets from the reference point, so a sprite at
-world position (<code>hpos</code>,&nbsp;<code>vpos</code>) lands at buffer pixel
-(<code>hpos&nbsp;&minus;&nbsp;hoff</code>,&nbsp;<code>vpos&nbsp;&minus;&nbsp;voff</code>).
-Anything that falls outside the window is clipped away.</p>
-<p><code><a href="funcref.html#gfx_init">gfx_init</a></code> loads both offsets with
-<strong>0</strong>, which makes <code>hpos</code>&#47;<code>vpos</code> plain
-on-screen coordinates &mdash; the common case, and why you can usually ignore these
-registers. Their real use is <strong>scrolling</strong>: because the offsets are
-subtracted from <em>every</em> sprite as it is drawn, changing <code>hoff</code>
-and&#47;or <code>voff</code> pans the whole scene at once. You can lay out an entire
-world full of SCBs and move the camera over it by writing two registers, without
-touching a single sprite's <code>hpos</code>&#47;<code>vpos</code>. The offsets are
-16-bit (nine significant bits) and global to all sprites; a new value takes effect
-the next time you render, so set them before writing <code>SPRITE_GO</code>.</p>
-
-<figure style="margin:1.2em 0;text-align:center">
-<svg viewBox="0 0 720 320" style="width:100%;height:auto;max-width:700px"
-     role="img" aria-label="A large display-world rectangle holds three sprites at fixed world coordinates. A smaller 160-by-102 display-window rectangle sits inside it, its top-left corner offset from the world origin by hoff horizontally and voff vertically. A sprite at world position hpos, vpos maps to buffer pixel hpos minus hoff, vpos minus voff. A second, dashed window position to the right shows that increasing hoff and voff pans the window so a different part of the world is on screen, without changing any sprite coordinate.">
-  <!-- display world -->
-  <rect x="40" y="46" width="640" height="248" fill="var(--panel)" stroke="var(--border)" stroke-width="1"/>
-  <text x="52" y="64" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-faint)">display world (sprite coordinate space)</text>
-  <!-- world origin -->
-  <circle cx="40" cy="46" r="3.5" fill="var(--ink-faint)"/>
-  <text x="48" y="42" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--ink-faint)">world (0,0)</text>
-
-  <!-- sprites in the world -->
-  <g fill="var(--accent-2)" fill-opacity="0.5" stroke="var(--accent-2)" stroke-width="1.2">
-    <rect x="250" y="120" width="34" height="34"/>
-    <rect x="470" y="90" width="30" height="30"/>
-    <rect x="150" y="230" width="30" height="30"/>
-  </g>
-  <circle cx="250" cy="120" r="3" fill="var(--accent)"/>
-  <text x="256" y="116" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--ink)">(hpos, vpos)</text>
-
-  <!-- display window (on-screen) -->
-  <rect x="200" y="100" width="220" height="140" fill="var(--accent)" fill-opacity="0.10" stroke="var(--accent)" stroke-width="1.8"/>
-  <text x="310" y="234" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10.5" fill="var(--accent)" text-anchor="middle" font-weight="bold">display window</text>
-  <text x="310" y="248" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8" fill="var(--ink-faint)" text-anchor="middle">160&times;102, scanned out</text>
-
-  <!-- hoff / voff offset arrows from world origin to window corner -->
-  <g stroke="var(--ink)" stroke-width="1.2" fill="none">
-    <path d="M40 84 L200 84" marker-end="url(#off-ar)"/>
-    <path d="M84 46 L84 100" marker-end="url(#off-ar)"/>
-  </g>
-  <line x1="200" y1="46" x2="200" y2="100" stroke="var(--ink-faint)" stroke-width="0.8" stroke-dasharray="3 2"/>
-  <line x1="40" y1="100" x2="200" y2="100" stroke="var(--ink-faint)" stroke-width="0.8" stroke-dasharray="3 2"/>
-  <text x="120" y="80" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink)" text-anchor="middle">hoff</text>
-  <text x="70" y="130" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink)">voff</text>
-
-  <!-- panned window (second position, dashed) -->
-  <rect x="360" y="140" width="220" height="140" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="5 4"/>
-  <text x="470" y="274" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--accent)" text-anchor="middle">larger hoff/voff &rarr; window pans</text>
-  <g stroke="var(--accent)" stroke-width="1.2" fill="none">
-    <path d="M300 170 L360 200" marker-end="url(#off-ar2)"/>
-  </g>
-
-  <defs>
-    <marker id="off-ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--ink)"/></marker>
-    <marker id="off-ar2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--accent)"/></marker>
-  </defs>
-</svg>
-<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Sprites live at fixed coordinates in the display world; <code>hoff</code>&#47;<code>voff</code>
-place the 160&times;102 display window within it. A sprite at (<code>hpos</code>,&nbsp;<code>vpos</code>)
-is drawn at buffer pixel (<code>hpos&minus;hoff</code>,&nbsp;<code>vpos&minus;voff</code>). Raising the
-offsets slides the window across the world, scrolling the whole scene without changing any SCB.</figcaption>
-</figure>
-
 <h2 id="sect-7">7. Driving the engine</h2>
 <p>Normally you never touch these registers &mdash; <code><a href="funcref.html#gfx_init">gfx_init</a></code>
 does the one-time setup and <code><a href="funcref.html#gfx_sprite">gfx_sprite</a></code>
 runs each sprite list &mdash; but the <code>struct __suzy</code> register map in
 <code>_suzy.h</code> shows what they do, and a custom sprite loop needs them. Once,
 after power-up, the engine is initialised: the control byte <code>sprsys</code>, the
-init byte <code>sprinit</code>, the screen-edge offsets <code>hoff</code>&#47;<code>voff</code>,
-the collision buffer base <code>colbase</code> and its offset <code>colloff</code>
+init byte <code>sprinit</code>, the screen-edge offsets <code>hoff</code>&#47;<code>voff</code>
+(which pan the display window &mdash; see the <a href="graphics.html#sect-7">Graphics</a>
+page), the collision buffer base <code>colbase</code> and its offset <code>colloff</code>
 (both covered on the <a href="collisions.html">Collision detection</a> page), the
 size offsets <code>hsizeoff</code>&#47;<code>vsizeoff</code>, and finally
 <code>suzybusen&nbsp;=&nbsp;1</code> to grant Suzy the RAM bus.</p>

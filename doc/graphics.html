@@ -26,8 +26,9 @@ format.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-4">4. Refresh rate and frame timing</a></li>
 <li class="lvl1"><a href="#sect-5">5. Display depth</a></li>
 <li class="lvl1"><a href="#sect-6">6. Colour and the palette</a></li>
-<li class="lvl1"><a href="#sect-7">7. Sprites, collision and going deeper</a></li>
-<li class="lvl1"><a href="#sect-8">8. License</a></li>
+<li class="lvl1"><a href="#sect-7">7. Panning the display window: hoff and voff</a></li>
+<li class="lvl1"><a href="#sect-8">8. Sprites, collision and going deeper</a></li>
+<li class="lvl1"><a href="#sect-9">9. License</a></li>
 </ul></nav>
 
 <h2 id="sect-1">1. The display mode</h2>
@@ -49,7 +50,7 @@ that code ported from stock cc65 keeps compiling.</p>
 drawing is done by Suzy's sprite engine: <code>gfx_sprite</code> renders a sprite
 control block, and text is drawn as sprites too. If you want a shape &mdash; a line,
 a box, a filled region &mdash; you build it as a sprite. See the sprite pad-byte
-rule and the deeper sprite material in <a href="#sect-7">section&nbsp;7</a>.</p>
+rule and the deeper sprite material in <a href="#sect-8">section&nbsp;8</a>.</p>
 <p><code><a href="funcref.html#gfx_init">gfx_init()</a></code> is the one required
 call. It enables the vertical-blank timer interrupt, sets up the collision buffer,
 selects 4&nbsp;bits&nbsp;per&nbsp;pixel, points both the view and draw pages at
@@ -463,7 +464,82 @@ drawing pen (0&ndash;15, and the source of <code>gfx_clear</code>'s fill colour)
 background pen &mdash; where a value of <strong>0</strong> means a transparent
 background rather than the black pen.</p>
 
-<h2 id="sect-7">7. Sprites, collision and going deeper</h2>
+<h2 id="sect-7">7. Panning the display window: hoff and voff</h2>
+<p>Every <code>hpos</code>&#47;<code>vpos</code> a sprite carries is a coordinate in an
+imaginary <strong>display world</strong>, not a pixel address in the frame buffer.
+The 160&times;102 <strong>display window</strong> &mdash; the RAM the video hardware
+actually scans out &mdash; sits somewhere inside that world, and its top-left corner is
+fixed by the two screen-edge offset registers <code>hoff</code> (<code>$FC04</code>)
+and <code>voff</code> (<code>$FC06</code>) in <code>struct __suzy</code>. As Suzy
+paints a sprite it subtracts the offsets from the sprite's
+<a href="sprites.html#sect-6-1">reference point</a>, so a sprite at world position
+(<code>hpos</code>,&nbsp;<code>vpos</code>) lands at buffer pixel
+(<code>hpos&nbsp;&minus;&nbsp;hoff</code>,&nbsp;<code>vpos&nbsp;&minus;&nbsp;voff</code>).
+Anything that falls outside the window is clipped away.</p>
+<p><code><a href="funcref.html#gfx_init">gfx_init</a></code> loads both offsets with
+<strong>0</strong>, which makes <code>hpos</code>&#47;<code>vpos</code> plain
+on-screen coordinates &mdash; the common case, and why you can usually ignore these
+registers. Their real use is <strong>scrolling</strong>: because the offsets are
+subtracted from <em>every</em> sprite as it is drawn, changing <code>hoff</code>
+and&#47;or <code>voff</code> pans the whole scene at once. You can lay out an entire
+world full of SCBs and move the camera over it by writing two registers, without
+touching a single sprite's <code>hpos</code>&#47;<code>vpos</code>. The offsets are
+16-bit (nine significant bits) and global to all sprites; a new value takes effect
+the next time you render, so set them before writing <code>SPRITE_GO</code>.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 320" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="A large display-world rectangle holds three sprites at fixed world coordinates. A smaller 160-by-102 display-window rectangle sits inside it, its top-left corner offset from the world origin by hoff horizontally and voff vertically. A sprite at world position hpos, vpos maps to buffer pixel hpos minus hoff, vpos minus voff. A second, dashed window position to the right shows that increasing hoff and voff pans the window so a different part of the world is on screen, without changing any sprite coordinate.">
+  <!-- display world -->
+  <rect x="40" y="46" width="640" height="248" fill="var(--panel)" stroke="var(--border)" stroke-width="1"/>
+  <text x="52" y="64" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-faint)">display world (sprite coordinate space)</text>
+  <!-- world origin -->
+  <circle cx="40" cy="46" r="3.5" fill="var(--ink-faint)"/>
+  <text x="48" y="42" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--ink-faint)">world (0,0)</text>
+
+  <!-- sprites in the world -->
+  <g fill="var(--accent-2)" fill-opacity="0.5" stroke="var(--accent-2)" stroke-width="1.2">
+    <rect x="250" y="120" width="34" height="34"/>
+    <rect x="470" y="90" width="30" height="30"/>
+    <rect x="150" y="230" width="30" height="30"/>
+  </g>
+  <circle cx="250" cy="120" r="3" fill="var(--accent)"/>
+  <text x="256" y="116" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--ink)">(hpos, vpos)</text>
+
+  <!-- display window (on-screen) -->
+  <rect x="200" y="100" width="220" height="140" fill="var(--accent)" fill-opacity="0.10" stroke="var(--accent)" stroke-width="1.8"/>
+  <text x="310" y="234" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10.5" fill="var(--accent)" text-anchor="middle" font-weight="bold">display window</text>
+  <text x="310" y="248" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8" fill="var(--ink-faint)" text-anchor="middle">160&times;102, scanned out</text>
+
+  <!-- hoff / voff offset arrows from world origin to window corner -->
+  <g stroke="var(--ink)" stroke-width="1.2" fill="none">
+    <path d="M40 84 L200 84" marker-end="url(#off-ar)"/>
+    <path d="M84 46 L84 100" marker-end="url(#off-ar)"/>
+  </g>
+  <line x1="200" y1="46" x2="200" y2="100" stroke="var(--ink-faint)" stroke-width="0.8" stroke-dasharray="3 2"/>
+  <line x1="40" y1="100" x2="200" y2="100" stroke="var(--ink-faint)" stroke-width="0.8" stroke-dasharray="3 2"/>
+  <text x="120" y="80" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink)" text-anchor="middle">hoff</text>
+  <text x="70" y="130" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink)">voff</text>
+
+  <!-- panned window (second position, dashed) -->
+  <rect x="360" y="140" width="220" height="140" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="5 4"/>
+  <text x="470" y="274" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--accent)" text-anchor="middle">larger hoff/voff &rarr; window pans</text>
+  <g stroke="var(--accent)" stroke-width="1.2" fill="none">
+    <path d="M300 170 L360 200" marker-end="url(#off-ar2)"/>
+  </g>
+
+  <defs>
+    <marker id="off-ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--ink)"/></marker>
+    <marker id="off-ar2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--accent)"/></marker>
+  </defs>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Sprites live at fixed coordinates in the display world; <code>hoff</code>&#47;<code>voff</code>
+place the 160&times;102 display window within it. A sprite at (<code>hpos</code>,&nbsp;<code>vpos</code>)
+is drawn at buffer pixel (<code>hpos&minus;hoff</code>,&nbsp;<code>vpos&minus;voff</code>). Raising the
+offsets slides the window across the world, scrolling the whole scene without changing any SCB.</figcaption>
+</figure>
+
+<h2 id="sect-8">8. Sprites, collision and going deeper</h2>
 <p>All non-text drawing goes through
 <code><a href="funcref.html#gfx_sprite">gfx_sprite</a></code>, which renders one sprite
 control block (SCB) or a chain of them synchronously &mdash; it returns only after
@@ -496,7 +572,7 @@ engine shares is documented under <code>suzymath.h</code> in the
 static library is laid out is in <code>design/LYNX_GFX_DESIGN.md</code>.</p></li>
 </ul>
 
-<h2 id="sect-8">8. License</h2>
+<h2 id="sect-9">9. License</h2>
 <p>The Lynx runtime, like the rest of the package, is distributed under the cc65 zlib-style license. The full text, together with every other copyright notice in the distribution, is reproduced verbatim on the consolidated <a href="licenses.html">Licenses and copyright notices</a> page.</p></article></main><site-foot></site-foot>
 <script src="doc.js"></script>
 </body></html>
