@@ -132,10 +132,11 @@ still covered by this copyright. It is reproduced here verbatim:</p>
 <h2 id="sect-4">4. Bundled third-party components</h2>
 <p>The SDK bundles some code it did not author. The decompression components in
 sections&nbsp;4.1&ndash;4.2 ship inside the runtime library under the same
-zlib-style terms as section&nbsp;2; the vendored external tool in
-section&nbsp;4.3 keeps its own, different licence. None of these are relicensed:
-each carries the copyright notice shown here, and the full notice also remains in
-the source files it covers (<code>include/lynx/zlib.h</code>,
+zlib-style terms as section&nbsp;2; the vendored external tools in
+sections&nbsp;4.3&ndash;4.4 each keep their own, different terms &mdash; one under
+Apache-2.0, one with <em>no declared licence at all</em>. None of these are
+relicensed: each carries the copyright notice shown here, and the full notice
+also remains in the source files it covers (<code>include/lynx/zlib.h</code>,
 <code>include/lynx/lz4.h</code>, the corresponding <code>libraries/</code> sources,
 and the <code>tools/extern/</code> subtrees).</p>
 <h3 id="sect-4-1">4.1. zlib / inflate decompression</h3>
@@ -176,6 +177,31 @@ the project-owned build glue that compiles the tool into <code>bin/sprpck</code>
 lives outside the vendored tree (<code>tools/Makefile</code>,
 <code>tools/extern/README.md</code>) and does not alter it. See
 <code>design/LYNX_EXTERN_TOOLS_DESIGN.md</code> for the vendoring policy.</p>
+
+<h3 id="sect-4-4">4.4. lynxdir &mdash; Lynx ROM Builder (no declared licence)</h3>
+<p>The <code>lynxdir</code> ROM builder is a third-party host tool vendored under
+<code>tools/extern/lynxdir/</code> as a pristine
+<a href="https://github.com/bspruck/lynxdir">git subtree</a>. It assembles a
+bootable cartridge ROM from a list of files and an encrypted loader, driven by a
+<code>.mak</code> config file. Like every vendored tool it is <strong>never
+modified</strong> and is <strong>not</strong> relicensed under the SDK's Mozilla
+Public License. Its copyright notice is:</p>
+<pre class="verb">LYNXDIR - Lynx ROM Builder, Version 1.9
+(c) Björn Spruck 2010-2017</pre>
+<p><strong>Important licence caveat.</strong> Unlike <code>sprpck</code>,
+<code>lynxdir</code> ships <strong>no licence file</strong> and its upstream
+repository declares no open-source licence &mdash; only the copyright line above.
+Under default copyright law that means <strong>all rights are reserved</strong>
+by the author. The tool is vendored here byte-identical to upstream and used
+<strong>as-is, pending an explicit licence grant</strong> from Björn Spruck; no
+grant of redistribution or modification rights should be inferred from its
+inclusion. Anyone redistributing this SDK should resolve the tool's licensing
+with the upstream author first, or omit <code>tools/extern/lynxdir/</code> and
+its <code>bin/lynxdir</code> output. The project-owned build glue that compiles
+the tool into <code>bin/lynxdir</code> lives outside the vendored tree
+(<code>tools/Makefile</code>, <code>tools/extern/README.md</code>) and does not
+alter it. See <code>design/LYNX_EXTERN_TOOLS_DESIGN.md</code> for the vendoring
+policy.</p>
 
 <h2 id="sect-5">5. SDK toolchain &mdash; Mozilla Public License 2.0</h2>
 <p>The source files this fork has <em>authored from scratch</em> &mdash; the Suzy

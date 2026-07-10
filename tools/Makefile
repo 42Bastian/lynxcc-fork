@@ -40,9 +40,21 @@ EXTERN_PROGS = sprpck
 sprpck_SRC      = extern/sprpck/src
 sprpck_CPPFLAGS = -DUNIX
 
-# All tool binaries (project-authored + vendored) share the build/install/clean
-# machinery below and the single root bin/.
-ALL_PROGS = $(PROGS) $(EXTERN_PROGS)
+# Vendored third-party tools written in C++.  Same policy as EXTERN_PROGS, but
+# their sources are .cpp and must be compiled and linked with the C++ driver
+# ($(CXX)); they use EXTERN_CXX_template below instead of EXTERN_template.  A
+# tool's sources may sit at its own repo root, so $($1_SRC) points there and the
+# glob is $($1_SRC)/*.cpp.
+#
+#   lynxdir  Lynx ROM builder (no upstream licence declared — all rights
+#            reserved, (c) Björn Spruck 2010-2017; https://github.com/bspruck/lynxdir)
+EXTERN_CXX_PROGS = lynxdir
+
+lynxdir_SRC = extern/lynxdir
+
+# All tool binaries (project-authored + vendored, C and C++) share the
+# build/install/clean machinery below and the single root bin/.
+ALL_PROGS = $(PROGS) $(EXTERN_PROGS) $(EXTERN_CXX_PROGS)
 
 .PHONY: all mostlyclean clean install zip avail unavail bin abcrom-template $(ALL_PROGS)
 
@@ -62,10 +74,12 @@ else
 endif
 
 CC = $(CROSS_COMPILE)gcc
+CXX = $(CROSS_COMPILE)g++
 AR = $(CROSS_COMPILE)ar
 
 ifdef CROSS_COMPILE
   $(info CC: $(CC))
+  $(info CXX: $(CXX))
   $(info AR: $(AR))
 endif
 
@@ -80,6 +94,10 @@ CFLAGS += -MMD -MP -O3 \
 # warnings in code we are forbidden to modify, so drop the strict -W flags for
 # EXTERN_PROGS while keeping optimisation and dependency generation.
 EXTERN_CFLAGS = -MMD -MP -O3 -w $(USER_CFLAGS)
+
+# C++ counterpart of EXTERN_CFLAGS for EXTERN_CXX_PROGS.  Same relaxed policy
+# (optimise + generate deps, no linting of code we do not own).
+EXTERN_CXXFLAGS = -MMD -MP -O3 -w $(USER_CFLAGS)
 
 ifdef CMD_EXE
   EXE_SUFFIX=.exe
@@ -202,7 +220,40 @@ $1: ../bin/$1$(EXE_SUFFIX)
 
 endef # EXTERN_template
 
+# Vendored third-party tools written in C++: same shape as EXTERN_template but
+# sources are globbed as $($1_SRC)/*.cpp and both compiled and linked with the
+# C++ driver ($(CXX)) using EXTERN_CXXFLAGS.  Objects still land in ../wrk/$1 and
+# the binary in the shared ../bin, so clean/install/zip treat them identically.
+define EXTERN_CXX_OBJS_template
+
+$1_OBJS := $$(patsubst %.cpp,../wrk/$1/%.o,$$(notdir $$(wildcard $$($1_SRC)/*.cpp)))
+
+$$($1_OBJS): | ../wrk/$1
+
+../wrk/$1:
+	@$$(call MKDIR,$$@)
+
+DEPS += $$($1_OBJS:.o=.d)
+
+endef # EXTERN_CXX_OBJS_template
+
+define EXTERN_CXX_template
+
+$$(eval $$(call EXTERN_CXX_OBJS_template,$1))
+
+../bin/$1$(EXE_SUFFIX): $$($1_OBJS) | ../bin
+	$$(CXX) $$(LDFLAGS) -o $$@ $$^ $$(LDLIBS)
+
+$1: ../bin/$1$(EXE_SUFFIX)
+
+../wrk/$1/%.o: $$($1_SRC)/%.cpp
+	@echo $$<
+	@$$(CXX) -c $$(EXTERN_CXXFLAGS) $$($1_CPPFLAGS) -o $$@ $$<
+
+endef # EXTERN_CXX_template
+
 $(foreach prog,$(PROGS),$(eval $(call PROG_template,$(prog))))
 $(foreach prog,$(EXTERN_PROGS),$(eval $(call EXTERN_template,$(prog))))
+$(foreach prog,$(EXTERN_CXX_PROGS),$(eval $(call EXTERN_CXX_template,$(prog))))
 
 -include $(DEPS)
