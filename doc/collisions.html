@@ -38,7 +38,8 @@ example.</div><nav class="toc"><h2>Contents</h2><ul>
 
 <h2 id="sect-1">1. The collision buffer</h2>
 <p>The Lynx draws nothing to the screen a pixel at a time; every visible thing is a
-sprite painted by Suzy's blitter into a video buffer (see <a href="graphics.html">Graphics</a>).
+sprite painted by Suzy's blitter into a video buffer (see <a href="graphics.html">Graphics</a>,
+and <a href="sprites.html">Sprites</a> for the SCB itself).
 Alongside that video buffer Suzy can keep a second bitmap of exactly the same
 geometry &mdash; 160&nbsp;&times;&nbsp;102 cells &mdash; called the <strong>collision
 buffer</strong>. It never reaches the display. Where the video buffer holds a
@@ -109,7 +110,7 @@ the matching cells of the collision buffer; empty cells read&nbsp;0.</figcaption
 <h2 id="sect-2">2. Collision numbers and the depository</h2>
 <p>Every sprite carries a 4-bit <strong>collision number</strong> in the low nibble
 of the third SCB byte, <code>SPRCOLL</code> (the <code>sprcoll</code> field of the
-<code>SCB_*</code> structs in <code>&lt;lynx/gfx.h&gt;</code>). Values run
+<code>SCB_*</code> structs in <code>&lt;lynx/_suzy.h&gt;</code>). Values run
 <code>0&ndash;15</code>; the software assigns them and their meaning is entirely up
 to the game. Bit&nbsp;5 of the same byte is the per-sprite <em>don't-collide</em>
 flag (the <code>NO_COLLIDE</code> constant, <code>$20</code>), covered in
@@ -227,8 +228,9 @@ the SCB. The collision <em>number</em> the sprite carries is a different field,
 <h2 id="sect-3">3. Sprite types: opting in and out</h2>
 <p>Whether a sprite takes part in collision at all is governed by its
 <strong>type</strong> (the low three bits of <code>SPRCTL0</code>, the
-<code>TYPE_*</code> constants in <code>&lt;lynx/gfx.h&gt;</code>) and by a couple of
-override bits. Not every sprite should collide &mdash; a scoreboard, a cloud or a
+<code>TYPE_*</code> constants in <code>&lt;lynx/_suzy.h&gt;</code>) and by a couple of
+override bits. The full sprite-type table, with the pen semantics of every type, is
+on the <a href="sprites.html#sect-3">Sprites</a> page. Not every sprite should collide &mdash; a scoreboard, a cloud or a
 cockpit frame is visible but should never register &mdash; and skipping collision
 also makes a sprite paint faster, because Suzy can drop the read-modify-write of the
 collision buffer. The types that matter for collision are:</p>

@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lynxcc - Sprites</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>Sprites</h1></header><div class="abstract">Everything the Atari Lynx draws is a <strong>sprite</strong> painted by Suzy's
+blitter: there is no pixel-plot instruction, so a line, a box or a glyph is all
+built as sprite imagery. A sprite is described to the hardware by a
+<strong>sprite control block</strong> (SCB) &mdash; a short structure in RAM that
+points at packed pixel data, a following SCB, a pen palette, and the position,
+size, stretch and tilt to paint at. This page explains the SCB and its
+<a href="#sect-2-1">linking</a>, the <a href="#sect-2-2">eight SCB struct
+variants</a> and the reload bits that produce them, the eight
+<a href="#sect-3">sprite types</a>, the <a href="#sect-4">pen palette</a>, the
+<a href="#sect-5">packed pixel format</a>, and <a href="#sect-6">scaling, stretch,
+tilt and flipping</a> &mdash; all grounded in the structs and defines in
+<code>&lt;lynx/_suzy.h&gt;</code>. It is the companion to the
+<a href="collisions.html">Collision detection</a> page, which owns the collision
+half of the same hardware, and the <a href="graphics.html">Graphics</a> page,
+whose <code><a href="funcref.html#gfx_sprite">gfx_sprite</a></code> paints the
+SCBs described here.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. The hardware sprite model</a></li>
+<li class="lvl1"><a href="#sect-2">2. The sprite control block</a></li>
+<li class="lvl2"><a href="#sect-2-1">2.1. Linking and painter's order</a></li>
+<li class="lvl2"><a href="#sect-2-2">2.2. The eight struct variants and the reload bits</a></li>
+<li class="lvl1"><a href="#sect-3">3. Sprite types</a></li>
+<li class="lvl1"><a href="#sect-4">4. The pen palette</a></li>
+<li class="lvl1"><a href="#sect-5">5. Pixel and data format</a></li>
+<li class="lvl1"><a href="#sect-6">6. Sizing, stretch, tilt and flip</a></li>
+<li class="lvl1"><a href="#sect-7">7. Driving the engine</a></li>
+<li class="lvl1"><a href="#sect-8">8. License</a></li>
+</ul></nav>
+
+<h2 id="sect-1">1. The hardware sprite model</h2>
+<p>The Lynx draws nothing a pixel at a time. Every visible thing is a sprite that
+Suzy paints into the video buffer, and the software's job is to hand Suzy a list
+of sprites to paint each frame. Two features set this engine apart from an
+ordinary blitter. First, sprites are <strong>sized in real time</strong> as they
+are painted &mdash; reduced or enlarged, horizontally and vertically by independent
+factors &mdash; so one image can be drawn at any scale. Second, each scan line of
+sprite pixels is encoded as either <strong>packed</strong> (run-length compressed)
+or <strong>literal</strong> (verbatim) data in RAM, and Suzy decodes it on the fly.</p>
+<p>The hardware fixes a few limits. A sprite's vertical size is unlimited, but a
+single scan line of source data may be at most <strong>254 bytes</strong> (about
+508 unscaled pixels). Each pixel carries a <strong>1, 2, 3 or 4 bit</strong>
+pen&nbsp;index (the <code>BPP_1</code>&hellip;<code>BPP_4</code> selectors in
+<code>SPRCTL0</code>). Pixels that fall off-screen are clipped by the hardware;
+sprites can be flipped horizontally and&#47;or vertically about their reference
+point; and any individual sprite can be <em>skipped</em>. Neither the SCB nor the
+sprite data may live in Mikey ROM &mdash; both are reached by pointer and may sit
+anywhere else in RAM.</p>
+<p>In <strong>lynxcc</strong> you rarely start the engine by hand.
+<code><a href="funcref.html#gfx_sprite">gfx_sprite</a></code> (see the
+<a href="graphics.html">Graphics</a> page) takes a pointer to an SCB, performs the
+register writes, and busy-waits until Suzy has finished. This page describes the
+data structure <code>gfx_sprite</code> consumes, and what you are building when you
+author an SCB directly &mdash; as
+<a href="samples.html#spritetest-c"><code>spritetest.c</code></a>,
+<a href="samples.html#packtest-c"><code>packtest.c</code></a>,
+<a href="samples.html#spriteslice-c"><code>spriteslice.c</code></a> and
+<a href="samples.html#spritesheet-c"><code>spritesheet.c</code></a> all do.</p>
+
+<h2 id="sect-2">2. The sprite control block</h2>
+<p>A sprite control block is a small structure with a fixed field order the
+hardware requires. It has three parts: a <strong>five-field fixed head</strong>
+that is always present and always loaded; a <strong>reloadable body</strong> of
+position, size, stretch and tilt whose presence is governed by the reload bits in
+<code>SPRCTL1</code> (<a href="#sect-2-2">section&nbsp;2.2</a>); and a
+<strong>pen palette</strong>, which the hardware treats as a separate reloadable
+block. <code>&lt;lynx/_suzy.h&gt;</code> (pulled in by <code>&lt;lynx/lynx.h&gt;</code>)
+declares one C struct for every legal shape; the fullest is
+<code>SCB_REHVST_PAL</code>:</p>
+<pre class="code">typedef struct SCB_REHVST_PAL {   /* SCB with every attribute present   */
+  unsigned char sprctl0;          /* $FC80: bpp, H/V flip, sprite type    */
+  unsigned char sprctl1;          /* $FC81: pack, reload, reuse-pal, skip  */
+  unsigned char sprcoll;          /* $FC82: collision number + no-collide  */
+  char          *next;            /* -&gt; next SCB in the list, 0 = last    */
+  unsigned char *data;            /* -&gt; packed sprite pixel data          */
+  signed   int  hpos, vpos;       /* screen position of the reference pt   */
+  unsigned int  hsize, vsize;     /* 8.8 fixed-point scale (256 = 1x)      */
+  unsigned int  stretch, tilt;    /* per-scan-line H-size / H-pos adders    */
+  unsigned char penpal[8];        /* pen-index palette (4bpp = 8 bytes)    */
+} SCB_REHVST_PAL;</pre>
+<p>The first three bytes are control (detailed in sections
+<a href="#sect-2-2">2.2</a>, <a href="#sect-3">3</a> and &mdash; for
+<code>sprcoll</code> &mdash; the <a href="collisions.html">Collision detection</a>
+page). Then come two 16-bit pointers: <code>next</code>, the address of the
+following SCB, and <code>data</code>, the address of the packed pixel data. The
+body holds the signed screen position (<code>hpos</code>,&nbsp;<code>vpos</code>),
+the unsigned 8.8 scale (<code>hsize</code>,&nbsp;<code>vsize</code>), and the
+per-scan-line <code>stretch</code> and <code>tilt</code> adders. The palette closes
+the block.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 210" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="Byte layout of a full SCB: a fixed head of sprctl0, sprctl1, sprcoll, next and data; a reloadable body of hpos, vpos, hsize, vsize, stretch and tilt; and a separate eight-byte pen palette block">
+  <!-- region tint bands -->
+  <rect x="24"  y="60" width="260" height="58" fill="var(--accent)"   fill-opacity="0.08"/>
+  <rect x="284" y="60" width="312" height="58" fill="var(--accent)"   fill-opacity="0.16"/>
+  <rect x="596" y="60" width="96"  height="58" fill="var(--accent-2)" fill-opacity="0.20"/>
+  <!-- region labels -->
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" fill="var(--ink)" text-anchor="middle" font-weight="bold">
+    <text x="154" y="44">fixed head</text>
+    <text x="440" y="44">reloadable body</text>
+    <text x="644" y="44">pen palette</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="8.5" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="154" y="56">always present</text>
+    <text x="440" y="56">gated by SPRCTL1 reload bits</text>
+    <text x="644" y="56">separate block</text>
+  </g>
+  <!-- cells -->
+  <g stroke="var(--border)" stroke-width="1" fill="var(--panel)">
+    <rect x="24"  y="60" width="52" height="46"/>
+    <rect x="76"  y="60" width="52" height="46"/>
+    <rect x="128" y="60" width="52" height="46"/>
+    <rect x="180" y="60" width="52" height="46"/>
+    <rect x="232" y="60" width="52" height="46"/>
+    <rect x="284" y="60" width="52" height="46"/>
+    <rect x="336" y="60" width="52" height="46"/>
+    <rect x="388" y="60" width="52" height="46"/>
+    <rect x="440" y="60" width="52" height="46"/>
+    <rect x="492" y="60" width="52" height="46"/>
+    <rect x="544" y="60" width="52" height="46"/>
+    <rect x="596" y="60" width="96" height="46"/>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink)" text-anchor="middle">
+    <text x="50"  y="82">sprctl0</text>
+    <text x="102" y="82">sprctl1</text>
+    <text x="154" y="82">sprcoll</text>
+    <text x="206" y="82">next</text>
+    <text x="258" y="82">data</text>
+    <text x="310" y="82">hpos</text>
+    <text x="362" y="82">vpos</text>
+    <text x="414" y="82">hsize</text>
+    <text x="466" y="82">vsize</text>
+    <text x="518" y="82">stretch</text>
+    <text x="570" y="82">tilt</text>
+    <text x="644" y="82">penpal</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="50"  y="98">1 B</text><text x="102" y="98">1 B</text><text x="154" y="98">1 B</text>
+    <text x="206" y="98">2 B</text><text x="258" y="98">2 B</text>
+    <text x="310" y="98">2 B</text><text x="362" y="98">2 B</text>
+    <text x="414" y="98">2 B</text><text x="466" y="98">2 B</text>
+    <text x="518" y="98">2 B</text><text x="570" y="98">2 B</text>
+    <text x="644" y="98">8 B</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="358" y="140">Shorter SCBs drop trailing body fields and&#47;or the palette &mdash; see &sect;2.2. Optional software-only</text>
+    <text x="358" y="154">bytes (collision depository, id, Z, back-pointer) may sit outside this block; the hardware ignores them.</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">A full <code>SCB_REHVST_PAL</code>: the fixed head, the reloadable body, and the
+separately reloadable pen palette. The penpal cell is drawn wider to hint that it
+is eight bytes.</figcaption>
+</figure>
+
+<h3 id="sect-2-1">2.1. Linking and painter's order</h3>
+<p>SCBs form a singly linked list. Each block's <code>next</code> field holds the
+address of the following SCB; the engine walks the chain until it reads a
+<code>next</code> of <strong>0</strong>, which marks the last sprite. You start a
+frame by giving Suzy the address of the first SCB; the hardware follows the
+pointers from there. Because every block is reached by pointer, SCBs and their data
+may be scattered anywhere in RAM.</p>
+<p>The list is painted in <strong>painter's order</strong>: the first SCB is drawn
+first and each later sprite overwrites whatever it overlaps, so the chain runs
+back-to-front in depth. This is also the order that makes collision numbers
+meaningful &mdash; a sprite only ever discovers things drawn <em>before</em> it (see
+the <a href="collisions.html">Collision detection</a> page). One SCB is needed for
+each on-screen occurrence.</p>
+<p>Each SCB carries its own <code>data</code> pointer, so the usual case is that
+every sprite in a chain points at a <em>different</em> pixel block &mdash; the first
+diagram below shows three SCBs each with its own image. Sharing is an option, not a
+requirement: because the <code>data</code> field is just a pointer, several SCBs
+<em>may</em> aim at the <em>same</em> block when you want the same picture more than
+once. A repeated tile or a sprite sheet then costs one small control block per
+instance and a single copy of the pixels &mdash; the second diagram shows SCB&nbsp;0
+and SCB&nbsp;1 sharing one block while SCB&nbsp;2 keeps its own
+(<a href="samples.html#spritesheet-c"><code>spritesheet.c</code></a> and
+<a href="samples.html#spriteslice-c"><code>spriteslice.c</code></a> show this). The
+two cases can be mixed freely within one chain.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 240" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="Three SCBs chained by their next pointers, the last terminating with zero; each SCB points at its own separate sprite data block below it">
+  <!-- painter order arrow -->
+  <g stroke="var(--ink-faint)" stroke-width="1.2" fill="none">
+    <path d="M60 32 L640 32" marker-end="url(#sp-ar)"/>
+  </g>
+  <text x="350" y="24" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-faint)" text-anchor="middle">painter's order &mdash; SCB&nbsp;0 first (back), SCB&nbsp;2 last (front)</text>
+  <!-- SCB boxes -->
+  <g stroke="var(--border)" stroke-width="1">
+    <rect x="40"  y="52" width="160" height="60" fill="var(--panel)"/>
+    <rect x="280" y="52" width="160" height="60" fill="var(--panel)"/>
+    <rect x="520" y="52" width="160" height="60" fill="var(--panel)"/>
+    <rect x="40"  y="168" width="160" height="48" fill="var(--accent-2)" fill-opacity="0.18"/>
+    <rect x="280" y="168" width="160" height="48" fill="var(--accent-2)" fill-opacity="0.18"/>
+    <rect x="520" y="168" width="160" height="48" fill="var(--accent-2)" fill-opacity="0.18"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle" font-weight="bold">
+    <text x="120" y="78">SCB 0</text>
+    <text x="360" y="78">SCB 1</text>
+    <text x="600" y="78">SCB 2</text>
+    <text x="120" y="190">data block A</text>
+    <text x="360" y="190">data block B</text>
+    <text x="600" y="190">data block C</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="120" y="98">next &middot; data</text>
+    <text x="360" y="98">next &middot; data</text>
+    <text x="600" y="98">next = 0</text>
+    <text x="120" y="206">own pixels</text>
+    <text x="360" y="206">own pixels</text>
+    <text x="600" y="206">own pixels</text>
+  </g>
+  <!-- next arrows -->
+  <g stroke="var(--accent)" stroke-width="1.5" fill="none">
+    <path d="M200 82 L280 82" marker-end="url(#sp-ar2)"/>
+    <path d="M440 82 L520 82" marker-end="url(#sp-ar2)"/>
+  </g>
+  <!-- terminator -->
+  <g stroke="var(--ink-faint)" stroke-width="1.5">
+    <line x1="662" y1="100" x2="662" y2="118"/>
+    <line x1="652" y1="118" x2="672" y2="118"/>
+    <line x1="656" y1="123" x2="668" y2="123"/>
+  </g>
+  <!-- data arrows (one each) -->
+  <g stroke="var(--accent-2)" stroke-width="1.4" fill="none" stroke-dasharray="4 3">
+    <path d="M120 112 L120 168" marker-end="url(#sp-ar3)"/>
+    <path d="M360 112 L360 168" marker-end="url(#sp-ar3)"/>
+    <path d="M600 112 L600 168" marker-end="url(#sp-ar3)"/>
+  </g>
+  <defs>
+    <marker id="sp-ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--ink-faint)"/></marker>
+    <marker id="sp-ar2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--accent)"/></marker>
+    <marker id="sp-ar3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--accent-2)"/></marker>
+  </defs>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The common case: three SCBs linked by <code>next</code>, the last terminating
+with&nbsp;0, and <strong>each pointing at its own <code>data</code> block</strong>.
+A <em>skipped</em> sprite (<code>SKIP</code> bit) is still read far enough to follow
+its <code>next</code>, so skipping never breaks the chain.</figcaption>
+</figure>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 240" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="Three SCBs chained by their next pointers; SCB 0 and SCB 1 both point at one shared sprite data block while SCB 2 points at its own separate block">
+  <!-- painter order arrow -->
+  <g stroke="var(--ink-faint)" stroke-width="1.2" fill="none">
+    <path d="M60 32 L640 32" marker-end="url(#sp2-ar)"/>
+  </g>
+  <text x="350" y="24" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-faint)" text-anchor="middle">painter's order &mdash; SCB&nbsp;0 first (back), SCB&nbsp;2 last (front)</text>
+  <!-- SCB boxes -->
+  <g stroke="var(--border)" stroke-width="1">
+    <rect x="40"  y="52" width="160" height="60" fill="var(--panel)"/>
+    <rect x="280" y="52" width="160" height="60" fill="var(--panel)"/>
+    <rect x="520" y="52" width="160" height="60" fill="var(--panel)"/>
+    <rect x="160" y="168" width="160" height="48" fill="var(--accent-2)" fill-opacity="0.18"/>
+    <rect x="400" y="168" width="160" height="48" fill="var(--accent-2)" fill-opacity="0.18"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle" font-weight="bold">
+    <text x="120" y="78">SCB 0</text>
+    <text x="360" y="78">SCB 1</text>
+    <text x="600" y="78">SCB 2</text>
+    <text x="240" y="190">shared block</text>
+    <text x="480" y="190">data block B</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="120" y="98">next &middot; data</text>
+    <text x="360" y="98">next &middot; data</text>
+    <text x="600" y="98">next = 0</text>
+    <text x="240" y="206">one copy, drawn twice</text>
+    <text x="480" y="206">own pixels</text>
+  </g>
+  <!-- next arrows -->
+  <g stroke="var(--accent)" stroke-width="1.5" fill="none">
+    <path d="M200 82 L280 82" marker-end="url(#sp2-ar2)"/>
+    <path d="M440 82 L520 82" marker-end="url(#sp2-ar2)"/>
+  </g>
+  <!-- terminator -->
+  <g stroke="var(--ink-faint)" stroke-width="1.5">
+    <line x1="662" y1="100" x2="662" y2="118"/>
+    <line x1="652" y1="118" x2="672" y2="118"/>
+    <line x1="656" y1="123" x2="668" y2="123"/>
+  </g>
+  <!-- data arrows: SCB0 and SCB1 -> shared; SCB2 -> own -->
+  <g stroke="var(--accent-2)" stroke-width="1.4" fill="none" stroke-dasharray="4 3">
+    <path d="M120 112 L120 150 L200 150 L220 168" marker-end="url(#sp2-ar3)"/>
+    <path d="M360 112 L360 150 L280 150 L260 168" marker-end="url(#sp2-ar3)"/>
+    <path d="M600 112 L600 150 L500 150 L480 168" marker-end="url(#sp2-ar3)"/>
+  </g>
+  <defs>
+    <marker id="sp2-ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--ink-faint)"/></marker>
+    <marker id="sp2-ar2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--accent)"/></marker>
+    <marker id="sp2-ar3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--accent-2)"/></marker>
+  </defs>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The optional shared case: SCB&nbsp;0 and SCB&nbsp;1 point at one
+<code>data</code> block to draw the same picture twice, while SCB&nbsp;2 still points
+at its own. Sharing and distinct data can be mixed freely in one chain.</figcaption>
+</figure>
+
+<h3 id="sect-2-2">2.2. The eight struct variants and the reload bits</h3>
+<p>Why does <code>&lt;lynx/_suzy.h&gt;</code> declare eight SCB structs? Because the
+hardware lets an SCB omit its trailing fields. The <strong>reload</strong> field in
+<code>SPRCTL1</code> selects how much of the size&#47;stretch&#47;tilt tail this SCB
+carries; anything it does not reload keeps the value left in Suzy's registers by
+the <em>previous</em> sprite. A separate bit, <code>REUSEPAL</code>, drops the pen
+palette the same way. Each struct is the exact C shape of one legal combination, so
+picking a struct <em>is</em> picking the reload bits:</p>
+<table>
+<thead><tr><th><code>SPRCTL1</code> reload</th><th>Body fields loaded from this SCB</th><th>Palette</th><th><code>_suzy.h</code> struct</th></tr></thead>
+<tbody>
+<tr><td><code>REHVST</code> (<code>$30</code>)</td><td>hpos, vpos, hsize, vsize, stretch, tilt</td><td>own</td><td><code>SCB_REHVST_PAL</code></td></tr>
+<tr><td><code>REHVST</code> + <code>REUSEPAL</code></td><td>hpos, vpos, hsize, vsize, stretch, tilt</td><td>reused</td><td><code>SCB_REHVST</code></td></tr>
+<tr><td><code>REHVS</code> (<code>$20</code>)</td><td>hpos, vpos, hsize, vsize, stretch</td><td>own</td><td><code>SCB_REHVS_PAL</code></td></tr>
+<tr><td><code>REHVS</code> + <code>REUSEPAL</code></td><td>hpos, vpos, hsize, vsize, stretch</td><td>reused</td><td><code>SCB_REHVS</code></td></tr>
+<tr><td><code>REHV</code> (<code>$10</code>)</td><td>hpos, vpos, hsize, vsize</td><td>own</td><td><code>SCB_REHV_PAL</code></td></tr>
+<tr><td><code>REHV</code> + <code>REUSEPAL</code></td><td>hpos, vpos, hsize, vsize</td><td>reused</td><td><code>SCB_REHV</code></td></tr>
+<tr><td><code>RENONE</code> (<code>$00</code>)</td><td>hpos, vpos</td><td>own</td><td><code>SCB_RENONE_PAL</code></td></tr>
+<tr><td><code>RENONE</code> + <code>REUSEPAL</code></td><td>hpos, vpos</td><td>reused</td><td><code>SCB_RENONE</code></td></tr>
+</tbody>
+</table>
+<p>Every variant still carries the five-byte head and <code>hpos</code>&#47;<code>vpos</code>;
+the ladder is only about how much of the size&#47;stretch&#47;tilt tail and the
+palette travel with <em>this</em> block. Shorter SCBs are smaller in RAM and paint a
+touch faster, so a natural pattern is: the first sprite of a group uses a
+<code>_PAL</code> struct with full reload to load the registers, and its followers
+reuse those values with a shorter, non-<code>_PAL</code> struct. The
+<code>REUSEPAL</code> half of the name is literally &ldquo;reuse the previous
+sprite's palette&rdquo;: pick the <code>_PAL</code> struct to carry a palette, the
+plain struct to inherit one. Reusing a palette that was never loaded (for instance
+on the very first sprite) is undefined &mdash; give the first sprite its own.</p>
+<p>Two more <code>SPRCTL1</code> bits round out the byte: the draw-direction bits
+<code>DRAWUP</code> and <code>DRAWLEFT</code> (which pick the starting quadrant, see
+<a href="#sect-6">section&nbsp;6</a>) and <code>ALGO3</code>, a legacy
+packing-algorithm select left at&nbsp;0 for the standard data format.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 250" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="Nested reload brackets over the SCB body: RENONE covers hpos and vpos, REHV extends to hsize and vsize, REHVS adds stretch, REHVST adds tilt; the palette is a separate block dropped by REUSEPAL">
+  <text x="360" y="24" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10.5" fill="var(--ink)" text-anchor="middle">Each reload level extends how far into the body the hardware loads from this SCB.</text>
+  <!-- penpal bracket above -->
+  <g stroke="var(--accent-2)" stroke-width="1.3" fill="none">
+    <path d="M540 100 L540 90 L620 90 L620 100"/>
+  </g>
+  <text x="580" y="84" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--accent-2)" text-anchor="middle">present unless REUSEPAL (_PAL structs)</text>
+  <!-- body cells -->
+  <g stroke="var(--border)" stroke-width="1" fill="var(--panel)">
+    <rect x="180" y="104" width="60" height="34"/>
+    <rect x="240" y="104" width="60" height="34"/>
+    <rect x="300" y="104" width="60" height="34"/>
+    <rect x="360" y="104" width="60" height="34"/>
+    <rect x="420" y="104" width="60" height="34"/>
+    <rect x="480" y="104" width="60" height="34"/>
+    <rect x="540" y="104" width="80" height="34" fill="var(--accent-2)" fill-opacity="0.16"/>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink)" text-anchor="middle">
+    <text x="210" y="125">hpos</text>
+    <text x="270" y="125">vpos</text>
+    <text x="330" y="125">hsize</text>
+    <text x="390" y="125">vsize</text>
+    <text x="450" y="125">stretch</text>
+    <text x="510" y="125">tilt</text>
+    <text x="580" y="125">penpal</text>
+  </g>
+  <!-- nested brackets below -->
+  <g stroke-width="1.4" fill="none">
+    <path d="M180 150 L180 158 L300 158 L300 150" stroke="var(--accent)"/>
+    <path d="M180 172 L180 180 L420 180 L420 150" stroke="var(--accent)"/>
+    <path d="M180 194 L180 202 L480 202 L480 150" stroke="var(--accent)"/>
+    <path d="M180 216 L180 224 L540 224 L540 150" stroke="var(--accent)"/>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" text-anchor="start" fill="var(--ink)">
+    <text x="308" y="162">RENONE &middot; <tspan fill="var(--ink-soft)">SCB_RENONE[_PAL]</tspan></text>
+    <text x="428" y="184">REHV &middot; <tspan fill="var(--ink-soft)">SCB_REHV[_PAL]</tspan></text>
+    <text x="488" y="206">REHVS &middot; <tspan fill="var(--ink-soft)">SCB_REHVS[_PAL]</tspan></text>
+    <text x="548" y="228">REHVST &middot; <tspan fill="var(--ink-soft)">SCB_REHVST[_PAL]</tspan></text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The reload ladder: <code>RENONE</code>&nbsp;&sub;&nbsp;<code>REHV</code>&nbsp;&sub;&nbsp;<code>REHVS</code>&nbsp;&sub;&nbsp;<code>REHVST</code>
+choose how much of the body loads; <code>REUSEPAL</code> independently drops the
+palette. Each pairing is one <code>_suzy.h</code> struct.</figcaption>
+</figure>
+
+<h2 id="sect-3">3. Sprite types</h2>
+<p>The low bits of <code>SPRCTL0</code> select the sprite <strong>type</strong>
+(the <code>TYPE_*</code> constants). The type decides which pen numbers are
+transparent, which are collideable, and whether the video data is overwritten or
+combined. Pens&nbsp;1&ndash;13 are always opaque and collideable; the type only
+changes the treatment of pen&nbsp;0, pen&nbsp;14 (shadow) and pen&nbsp;15.</p>
+<table>
+<thead><tr><th>Type</th><th>Constant</th><th>Value</th><th>Behaviour</th></tr></thead>
+<tbody>
+<tr><td>Normal</td><td><code>TYPE_NORMAL</code></td><td><code>$04</code></td><td>The workhorse. Pen&nbsp;0 transparent and non-colliding; all other pens opaque and collideable.</td></tr>
+<tr><td>Boundary</td><td><code>TYPE_BOUNDARY</code></td><td><code>$03</code></td><td>Normal, but pen&nbsp;15 is transparent yet still collideable &mdash; an invisible wall a ball bounces off.</td></tr>
+<tr><td>Shadow</td><td><code>TYPE_SHADOW</code></td><td><code>$07</code></td><td>Normal, but pen&nbsp;14 is non-collideable yet still opaque &mdash; a drawn shadow that does not register hits.</td></tr>
+<tr><td>Boundary&#8209;shadow</td><td><code>TYPE_BSHADOW</code></td><td><code>$02</code></td><td>Both of the above: pen&nbsp;15 transparent-collideable, pen&nbsp;14 opaque-non-collideable.</td></tr>
+<tr><td>Background</td><td><code>TYPE_BACKGROUND</code></td><td><code>$00</code></td><td>Overwrites video <em>and</em> collision buffers (pens&nbsp;0 and&nbsp;15 no longer transparent); no collision detection. Used to lay down a scene. Paints ~&frac14; faster.</td></tr>
+<tr><td>Background&#8209;non&#8209;collide</td><td><code>TYPE_BACKNONCOLL</code></td><td><code>$01</code></td><td>Background, but leaves the collision buffer untouched entirely. Paints ~&frac13; faster than a background sprite.</td></tr>
+<tr><td>Non&#8209;collideable</td><td><code>TYPE_NONCOLL</code></td><td><code>$05</code></td><td>Never touches the collision buffer; pen&nbsp;15 is non-collideable. For HUD, clouds, cockpits. Paints ~&frac14; faster.</td></tr>
+<tr><td>Exclusive&#8209;or</td><td><code>TYPE_XOR</code></td><td><code>$06</code></td><td>Normal collision, but the sprite data is XORed with the video buffer. The read-modify-write can cost up to ~&frac14; more time.</td></tr>
+</tbody>
+</table>
+<p>The hardware realises these from a small set of flags. The truth table below is
+the authoritative version &mdash; and it already incorporates a hardware quirk: the
+shadow generator is missing an inverter, so <code>TYPE_XOR</code> and the two
+background types come out with <em>shadow enabled</em> whether they asked for it or
+not. The practical consequence is that pen&nbsp;14 is non-collideable on those
+types, so a background sprite used to <em>clear</em> the collision buffer will not
+clear pixels drawn in pen&nbsp;14. See the
+<a href="collisions.html#sect-3">Collision detection</a> page for how the type and
+its override bits gate collision.</p>
+<table>
+<thead><tr><th>&nbsp;</th><th>Shadow</th><th>B&#8209;shadow</th><th>Normal</th><th>Boundary</th><th>Bg&#8209;shadow</th><th>Bg&#8209;no&#8209;coll</th><th>Non&#8209;coll</th><th>XOR&#8209;shadow</th></tr></thead>
+<tbody>
+<tr><td>15 is opaque</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+<tr><td>14 is collideable</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>0 is opaque &amp; collideable</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>collision detect</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td></tr>
+<tr><td>collision buffer access</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+<tr><td>XOR the video data</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td></tr>
+</tbody>
+</table>
+<p>The third SCB byte, <code>sprcoll</code>, carries the sprite's 4-bit collision
+number and a per-sprite <em>don't-collide</em> bit (<code>NO_COLLIDE</code>,
+<code>$20</code>). That is the whole of what this page says about collision; the
+numbering scheme, the depository byte and the <code>COLLOFF</code> register are on
+the <a href="collisions.html">Collision detection</a> page.</p>
+
+<h2 id="sect-4">4. The pen palette</h2>
+<p>A sprite's pixels do not store colours directly. Each pixel holds a small
+<strong>pen index</strong> &mdash; 0 to 2<sup>bpp</sup>&minus;1 &mdash; and the
+sprite's own <strong>pen palette</strong> maps that index to a 4-bit
+<strong>pen number</strong> (0&ndash;15). The pen number then indexes the 16-entry
+display palette to produce the actual colour (documented on the
+<a href="graphics.html#sect-6">Graphics</a> page). So there are two lookups: the
+per-sprite penpal in the SCB, then the global display palette.</p>
+<p>The palette is <strong>2<sup>bpp</sup> nibbles</strong> long, packed two nibbles
+to a byte, which is exactly why <code>_suzy.h</code> ships four penpal structs:</p>
+<table>
+<thead><tr><th>Depth</th><th>Pens</th><th>Palette size</th><th>Struct</th></tr></thead>
+<tbody>
+<tr><td><code>BPP_1</code></td><td>2</td><td>1 byte</td><td><code>PENPAL_1</code></td></tr>
+<tr><td><code>BPP_2</code></td><td>4</td><td>2 bytes</td><td><code>PENPAL_2</code></td></tr>
+<tr><td><code>BPP_3</code></td><td>8</td><td>4 bytes</td><td><code>PENPAL_3</code></td></tr>
+<tr><td><code>BPP_4</code></td><td>16</td><td>8 bytes</td><td><code>PENPAL_4</code></td></tr>
+</tbody>
+</table>
+<p>The generic SCB structs declare <code>penpal[8]</code> because that covers the
+4bpp case; when you hand-build a lower-depth sprite you populate only the first
+2<sup>bpp&minus;1</sup> bytes and the SCB is that much shorter. Within a byte, pen
+index 0's pen number is the <strong>upper</strong> nibble.
+<a href="samples.html#packtest-c"><code>packtest.c</code></a> uses an identity
+penpal <code>{0x01,0x23,&hellip;,0xEF}</code> (pen index&nbsp;<em>k</em> maps to pen
+number&nbsp;<em>k</em>);
+<a href="samples.html#spritetest-c"><code>spritetest.c</code></a> gives pen
+index&nbsp;0 a pen that the display palette leaves transparent.</p>
+<p>Because the palette is a separately reloadable block, consecutive sprites can
+share it via <code>REUSEPAL</code> (<a href="#sect-2-2">section&nbsp;2.2</a>). One
+alignment trap: an 8-byte penpal must not begin at address <code>$xxFA</code> &mdash;
+a hardware bug drops its last two bytes, leaving pens&nbsp;12&ndash;15 stale &mdash;
+so align or pad the SCB (<code>gfx_sprite</code> notes this too; the
+<code>design/LYNX_GFX_DESIGN.md</code> rationale doc analyses it).</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 230" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="Left: a frame-buffer byte holds two pixels, the high nibble painting to the left. Right: a pixel's pen index selects a nibble of the sprite penpal to give a pen number, which then indexes the display palette to give a colour">
+  <!-- left: pixel packing -->
+  <text x="170" y="30" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" fill="var(--ink)" text-anchor="middle" font-weight="bold">One frame-buffer byte = 2 pixels</text>
+  <g stroke="var(--border)" stroke-width="1">
+    <rect x="70"  y="46" width="100" height="50" fill="var(--accent)" fill-opacity="0.16"/>
+    <rect x="170" y="46" width="100" height="50" fill="var(--panel)"/>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="var(--ink)" text-anchor="middle">
+    <text x="120" y="70">pixel 0</text>
+    <text x="220" y="70">pixel 1</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="120" y="86">bits 7&ndash;4</text>
+    <text x="220" y="86">bits 3&ndash;0</text>
+    <text x="120" y="112">paints LEFT</text>
+    <text x="220" y="112">paints right</text>
+  </g>
+  <text x="170" y="140" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="8.5" fill="var(--ink-faint)" text-anchor="middle">bytes ascend left &rarr; right across the line</text>
+  <!-- right: two-stage lookup chain -->
+  <text x="520" y="30" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" fill="var(--ink)" text-anchor="middle" font-weight="bold">Pen index &rarr; pen number &rarr; colour</text>
+  <g stroke="var(--border)" stroke-width="1">
+    <rect x="360" y="52" width="90" height="40" fill="var(--panel)"/>
+    <rect x="360" y="118" width="90" height="40" fill="var(--accent)" fill-opacity="0.16"/>
+    <rect x="500" y="118" width="90" height="40" fill="var(--panel)"/>
+    <rect x="500" y="52" width="90" height="40" fill="var(--accent-2)" fill-opacity="0.18"/>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink)" text-anchor="middle">
+    <text x="405" y="70">pen index</text>
+    <text x="405" y="84" font-size="8" fill="var(--ink-faint)">0 .. 2^bpp-1</text>
+    <text x="405" y="136">sprite penpal</text>
+    <text x="405" y="150" font-size="8" fill="var(--ink-faint)">nibble lookup</text>
+    <text x="545" y="136">pen number</text>
+    <text x="545" y="150" font-size="8" fill="var(--ink-faint)">0 .. 15</text>
+    <text x="545" y="70">display palette</text>
+    <text x="545" y="84" font-size="8" fill="var(--ink-faint)">&rarr; colour</text>
+  </g>
+  <g stroke="var(--accent)" stroke-width="1.4" fill="none">
+    <path d="M405 92 L405 118" marker-end="url(#pp-ar)"/>
+    <path d="M450 138 L500 138" marker-end="url(#pp-ar)"/>
+    <path d="M545 118 L545 92" marker-end="url(#pp-ar)"/>
+  </g>
+  <text x="475" y="180" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--ink-faint)" text-anchor="middle">index 0 = upper nibble of penpal byte 0</text>
+  <defs>
+    <marker id="pp-ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--accent)"/></marker>
+  </defs>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Left, the two-pixels-per-byte packing (high nibble on the left). Right, the two
+lookups: the sprite's penpal turns a pen index into a pen number, and the display
+palette turns that into a colour.</figcaption>
+</figure>
+
+<h2 id="sect-5">5. Pixel and data format</h2>
+<p>In the frame buffer two pixels share a byte: on an un-flipped, right-drawing
+sprite the high nibble is the left pixel, and bytes ascend from left to right along
+the line (the same order the penpal nibbles follow). The <em>source</em> data a
+sprite points at is separately encoded &mdash; a stream of offsets and pixel runs
+that Suzy unpacks as it paints.</p>
+<p>Each scan line of source data is either <strong>packed</strong> or
+<strong>literal</strong>, chosen by the <code>PACKED</code>&#47;<code>LITERAL</code>
+bit in <code>SPRCTL1</code>. Packed data run-length-encodes repeated pixel groups;
+literal data stores every pixel verbatim, which is convenient for text and score
+digits you rewrite often. The two produce identical output &mdash;
+<a href="samples.html#packtest-c"><code>packtest.c</code></a> confirms it at all four
+depths. The full encoding, and how the <code>sp65</code> tool emits it, are on the
+<a href="sp65.html">sp65</a> page; this page does not re-derive it.</p>
+<p>One authoring rule does belong here, because it is a Suzy trap you hit when
+building SCBs: the sprite-data shift register drops the final pixel group of any
+scan line whose data ends on a byte boundary. Literal lines always end that way, so
+<strong>every literal line needs a trailing pad byte</strong> (and its offset
+incremented) whose pixels resolve to pen&nbsp;0 &mdash; usually value <code>$00</code>,
+but a value the penpal maps to pen&nbsp;0 if you have repurposed value&nbsp;0. Packed
+lines only need the pad in the roughly one-in-eight case where the last meaningful
+bit lands on bit&nbsp;0 of a byte. The <code>design/LYNX_SPRITE_PADBYTE_DESIGN.md</code>
+note and the <code>sprctl1</code> comment in <code>_suzy.h</code> have the full
+story; <strong>lynxcc</strong>'s <code>sp65</code> handles the padding for data it
+generates.</p>
+
+<h2 id="sect-6">6. Sizing, stretch, tilt and flip</h2>
+<p><code>hsize</code> and <code>vsize</code> are 8.8 fixed-point scale factors:
+<code>$0100</code> is 1&times;, <code>$0080</code> is half size, <code>$0200</code>
+double. Horizontal and vertical scale are independent, and Suzy resizes the image
+as it paints &mdash; there is no pre-scaled copy in RAM.</p>
+<p>Two 16-bit adders modify the sprite <em>per scan line</em> and are only applied
+when the reload bits carry them (<code>REHVS</code> for stretch,
+<code>REHVST</code> for stretch and tilt):</p>
+<ul>
+<li><p><strong>Stretch</strong> (<code>stretch</code>) is added to <code>hsize</code>
+after each line, so the sprite widens (or narrows, past a wrap) down its height &mdash;
+a trapezoid. Setting the <code>VSTRETCH</code> bit in <code>SPRSYS</code> applies the
+same value to <code>vsize</code> as well.</p></li>
+<li><p><strong>Tilt</strong> (<code>tilt</code>) is added, through the tilt
+accumulator, to the horizontal position each line, shearing the sprite sideways;
+positive values lean it right. Stretch and tilt together let you paint arbitrary
+quadrilaterals, which is how
+<a href="samples.html#spriteslice-c"><code>spriteslice.c</code></a> and the
+<code>raycaster</code> example draw scaled wall slices.</p></li>
+</ul>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 500" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="Four panels comparing a base sprite (dashed outline) with its transformed result (solid tint): hsize scales the sprite horizontally into a wide rectangle; vsize scales it vertically into a tall rectangle; stretch adds to hsize each scan line so the sprite widens into a trapezoid; tilt adds to the horizontal position each scan line so the sprite shears into a parallelogram">
+  <!-- panel dividers -->
+  <g stroke="var(--border)" stroke-width="1">
+    <line x1="360" y1="30" x2="360" y2="470"/>
+    <line x1="30"  y1="250" x2="690" y2="250"/>
+  </g>
+
+  <!-- === Panel A: hsize (top-left) === -->
+  <text x="185" y="56" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">hsize &mdash; horizontal scale</text>
+  <rect x="60" y="90" width="140" height="70" fill="var(--accent)" fill-opacity="0.18" stroke="var(--accent)" stroke-width="1.6"/>
+  <rect x="60" y="90" width="70" height="70" fill="none" stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <g stroke="var(--accent)" stroke-width="1.2" marker-end="url(#sz-ar)"><line x1="130" y1="200" x2="198" y2="200"/></g>
+  <line x1="130" y1="194" x2="130" y2="206" stroke="var(--ink-faint)" stroke-width="1"/>
+  <text x="185" y="184" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-soft)" text-anchor="middle">hsize $0200 = 2&times; wide</text>
+  <text x="60"  y="224" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--ink-faint)">dashed = 1&times; base sprite</text>
+
+  <!-- === Panel B: vsize (top-right) === -->
+  <text x="535" y="56" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">vsize &mdash; vertical scale</text>
+  <rect x="470" y="80" width="70" height="140" fill="var(--accent)" fill-opacity="0.18" stroke="var(--accent)" stroke-width="1.6"/>
+  <rect x="470" y="80" width="70" height="70" fill="none" stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <g stroke="var(--accent)" stroke-width="1.2" marker-end="url(#sz-ar)"><line x1="560" y1="80" x2="560" y2="218"/></g>
+  <line x1="554" y1="80" x2="566" y2="80" stroke="var(--ink-faint)" stroke-width="1"/>
+  <text x="600" y="152" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-soft)" text-anchor="middle">vsize $0200</text>
+  <text x="600" y="165" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-soft)" text-anchor="middle">= 2&times; tall</text>
+
+  <!-- === Panel C: stretch (bottom-left) === -->
+  <text x="185" y="286" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">stretch &mdash; hsize adder / line</text>
+  <polygon points="90,310 160,310 230,395 90,395" fill="var(--accent)" fill-opacity="0.18" stroke="var(--accent)" stroke-width="1.6"/>
+  <rect x="90" y="310" width="70" height="70" fill="none" stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <g stroke="var(--accent-2)" stroke-width="1.2" marker-end="url(#sz-ar2)">
+    <line x1="245" y1="322" x2="245" y2="388"/>
+  </g>
+  <text x="255" y="360" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--accent-2)">wider each line</text>
+  <text x="185" y="440" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-soft)" text-anchor="middle">widens down its height &rarr; trapezoid</text>
+
+  <!-- === Panel D: tilt (bottom-right) === -->
+  <text x="535" y="286" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">tilt &mdash; hpos adder / line</text>
+  <polygon points="450,310 520,310 585,380 515,380" fill="var(--accent)" fill-opacity="0.18" stroke="var(--accent)" stroke-width="1.6"/>
+  <rect x="450" y="310" width="70" height="70" fill="none" stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <g stroke="var(--accent-2)" stroke-width="1.2" marker-end="url(#sz-ar2)">
+    <line x1="485" y1="395" x2="550" y2="395"/>
+  </g>
+  <text x="518" y="412" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" fill="var(--accent-2)" text-anchor="middle">shifts right each line</text>
+  <text x="535" y="440" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink-soft)" text-anchor="middle">shears sideways &rarr; parallelogram</text>
+
+  <defs>
+    <marker id="sz-ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--accent)"/></marker>
+    <marker id="sz-ar2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--accent-2)"/></marker>
+  </defs>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Each panel overlays the 1&times; base sprite (dashed) with the result of one
+transform. <code>hsize</code>&#47;<code>vsize</code> are whole-sprite 8.8 scale
+factors; <code>stretch</code> and <code>tilt</code> are per-scan-line adders that
+turn the rectangle into a trapezoid or parallelogram.</figcaption>
+</figure>
+
+<p>A sprite is painted outward from a fixed <strong>reference point</strong> &mdash;
+chosen when the image is compacted &mdash; into one of four quadrants. The starting
+quadrant is set at run time by <code>DRAWUP</code> and <code>DRAWLEFT</code> in
+<code>SPRCTL1</code>; with neither bit set the sprite paints down and to the right of
+the reference point. <code>HFLIP</code> and <code>VFLIP</code> in <code>SPRCTL0</code>
+mirror the image left&#47;right and up&#47;down about that same point. Changing the
+starting quadrant shifts the sprite's position slightly, which is what the
+<code>hsizeoff</code>&#47;<code>vsizeoff</code> registers exist to balance: at
+initialisation they are loaded with the &ldquo;magic&rdquo; <code>$007F</code> on the
+right and down directions (and 0 on left and up) to cancel the one-pixel bump at the
+reference point of a scaled multi-quadrant sprite. They are shared by all sprites, so
+restore them if you change them.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 260" style="width:100%;height:auto;max-width:560px"
+     role="img" aria-label="A reference point at the centre with two dashed axes; the four quadrants around it; HFLIP mirrors left-right across the vertical axis and VFLIP mirrors up-down across the horizontal axis; without draw bits the sprite paints into the lower-right quadrant">
+  <!-- quadrant tints -->
+  <g stroke="none">
+    <rect x="180" y="40"  width="180" height="90" fill="var(--accent)" fill-opacity="0.06"/>
+    <rect x="360" y="40"  width="180" height="90" fill="var(--accent)" fill-opacity="0.10"/>
+    <rect x="180" y="130" width="180" height="90" fill="var(--accent)" fill-opacity="0.10"/>
+    <rect x="360" y="130" width="180" height="90" fill="var(--accent)" fill-opacity="0.20"/>
+  </g>
+  <!-- axes -->
+  <g stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 3">
+    <line x1="180" y1="130" x2="540" y2="130"/>
+    <line x1="360" y1="40"  x2="360" y2="220"/>
+  </g>
+  <!-- reference point -->
+  <circle cx="360" cy="130" r="4" fill="var(--accent)"/>
+  <text x="360" y="234" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9.5" fill="var(--ink)" text-anchor="middle">reference point (hpos, vpos)</text>
+  <!-- default draw glyph in lower-right -->
+  <g stroke="var(--accent)" stroke-width="1.6" fill="none">
+    <path d="M372 142 L470 142 L470 205" marker-end="url(#q-ar)"/>
+  </g>
+  <text x="450" y="160" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--accent)" text-anchor="middle">default paint</text>
+  <text x="450" y="172" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8" fill="var(--ink-faint)" text-anchor="middle">(no DRAWUP/DRAWLEFT)</text>
+  <!-- axis labels -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink-soft)">
+    <text x="366" y="52">HFLIP mirrors L&harr;R across this axis</text>
+    <text x="190" y="124">VFLIP mirrors U&harr;D across this axis</text>
+  </g>
+  <text x="360" y="24" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10.5" fill="var(--ink)" text-anchor="middle">DRAWUP / DRAWLEFT choose which quadrant painting starts in.</text>
+  <defs>
+    <marker id="q-ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="var(--accent)"/></marker>
+  </defs>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The reference point anchors the sprite; the four quadrants around it are selected
+by <code>DRAWUP</code>&#47;<code>DRAWLEFT</code>, and <code>HFLIP</code>&#47;<code>VFLIP</code>
+mirror the image about the two axes.</figcaption>
+</figure>
+
+<h2 id="sect-7">7. Driving the engine</h2>
+<p>Normally you never touch these registers &mdash; <code><a href="funcref.html#gfx_init">gfx_init</a></code>
+does the one-time setup and <code><a href="funcref.html#gfx_sprite">gfx_sprite</a></code>
+runs each sprite list &mdash; but the <code>struct __suzy</code> register map in
+<code>_suzy.h</code> shows what they do, and a custom sprite loop needs them. Once,
+after power-up, the engine is initialised: the control byte <code>sprsys</code>, the
+init byte <code>sprinit</code>, the screen-edge offsets <code>hoff</code>&#47;<code>voff</code>,
+the collision buffer base <code>colbase</code> and its offset <code>colloff</code>
+(both covered on the <a href="collisions.html">Collision detection</a> page), the
+size offsets <code>hsizeoff</code>&#47;<code>vsizeoff</code>, and finally
+<code>suzybusen&nbsp;=&nbsp;1</code> to grant Suzy the RAM bus.</p>
+<p>To paint a frame you set the video build address (<code>vidadr</code>&#47;<code>sprbase</code>),
+write the address of the first SCB into <code>scbnext</code>, and start the engine
+by writing <code>SPRITE_GO</code> (<code>$01</code>, or <code>EVER_ON | SPRITE_GO</code>
+= <code>$05</code>) to <code>sprgo</code>. Suzy then walks the chain until a
+<code>next</code> of&nbsp;0. The read side of <code>sprsys</code> reports progress:
+<code>SPRITEWORKING</code> is set while the engine runs, <code>SPRITETOSTOP</code>
+while a requested stop is pending, and <code>UNSAFE_ACCESS</code> flags a register
+access collision. The write side offers <code>SPRITESTOP</code> (finish the current
+sprite and halt), <code>CLR_UNSAFE</code>, the global <code>NO_COLLIDE</code>
+disable, and <code>VSTRETCH</code>. The engine only ever restarts from the beginning
+of the list &mdash; it cannot resume from where it stopped. (The <code>SIGNMATH</code>
+and <code>ACCUMULATE</code> bits in the same register belong to Suzy's hardware
+multiply&#47;divide, documented under <code>suzymath.h</code> in the
+<a href="funcref.html">function reference</a>, not to sprites.)</p>
+
+<h2 id="sect-8">8. License</h2>
+<p>The Lynx runtime, like the rest of the package, is distributed under the cc65 zlib-style license. The full text, together with every other copyright notice in the distribution, is reproduced verbatim on the consolidated <a href="licenses.html">Licenses and copyright notices</a> page.</p></article></main><site-foot></site-foot>
+<script src="doc.js"></script>
+</body></html>

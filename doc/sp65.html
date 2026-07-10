@@ -245,7 +245,10 @@ available for writing the loaded bitmap straight out as bytes.)</p>
 <h3 id="sect-6-1">6.1. Lynx sprite</h3>
 <p>Lynx can handle 1, 2, 3 and 4 bits per pixel indexed sprites. The maximum size
 of a sprite is roughly 508 pixels but in reality the Lynx screen is only 160 by
-102 pixels which makes very large sprites useless.</p>
+102 pixels which makes very large sprites useless. This tool produces the pixel
+<em>data</em> a sprite points at; the sprite control block that references it, and
+how the hardware paints it, are covered on the <a href="sprites.html">Sprites</a>
+reference page.</p>
 <p>The number per pixels is taken from the number of colors of the input bitmap.</p>
 <p>There are a few attributes that you can give to the conversion software.</p>
 <dl>
