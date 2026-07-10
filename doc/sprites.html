@@ -541,7 +541,9 @@ literal data stores every pixel verbatim, which is convenient for text and score
 digits you rewrite often. The two produce identical output &mdash;
 <a href="samples.html#packtest-c"><code>packtest.c</code></a> confirms it at all four
 depths. The full encoding, and how the <code>sp65</code> tool emits it, are on the
-<a href="sp65.html">sp65</a> page; this page does not re-derive it.</p>
+<a href="sp65.html">sp65</a> page; the <a href="sprpck.html">sprpck</a> packer
+produces the same packed data from BMP and ASCII SPS art. This page does not
+re-derive the encoding.</p>
 <p>One authoring rule does belong here, because it is a Suzy trap you hit when
 building SCBs: the sprite-data shift register drops the final pixel group of any
 scan line whose data ends on a byte boundary. Literal lines always end that way, so
@@ -551,8 +553,9 @@ but a value the penpal maps to pen&nbsp;0 if you have repurposed value&nbsp;0. P
 lines only need the pad in the roughly one-in-eight case where the last meaningful
 bit lands on bit&nbsp;0 of a byte. The <code>design/LYNX_SPRITE_PADBYTE_DESIGN.md</code>
 note and the <code>sprctl1</code> comment in <code>_suzy.h</code> have the full
-story; <strong>lynxcc</strong>'s <code>sp65</code> handles the padding for data it
-generates.</p>
+story; <strong>lynxcc</strong>'s <code>sp65</code> and
+<a href="sprpck.html">sprpck</a> converters both handle the padding for data they
+generate.</p>
 
 <h2 id="sect-6">6. Sizing, stretch, tilt and flip</h2>
 <p><code>hsize</code> and <code>vsize</code> are 8.8 fixed-point scale factors:

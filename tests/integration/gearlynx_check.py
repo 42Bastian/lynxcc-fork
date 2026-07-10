@@ -46,6 +46,7 @@ EXAMPLES = [
     "suzy/spritetest",     # Suzy sprite engine, packed vs literal
     "suzy/spritesheet",    # sp65 --sprite-sheet driver: generated frame table
     "suzy/spriteslice",    # sp65 --slice/--pop: hand-tabled frames
+    "suzy/sprpcktest",     # sprpck: BMP + ASCII SPS inputs, .spr via .incbin
     "suzy/fonttest",       # TGI scaled fonts
     "suzy/collision",      # Suzy collision buffer + depository read-back
     "mikey/setbpp",        # Mikey display-DMA bit depths

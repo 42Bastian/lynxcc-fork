@@ -18,13 +18,20 @@ examples/*/*.o
 examples/*/*.s
 # ...except the hand-authored tune/effect streams that are committed beside their
 # examples (theme.s is the abccc-compiled sndtune tune; invtheme.s is the two-voice
-# invaders theme extracted from the reference cartridge).
+# invaders theme extracted from the reference cartridge; sprpckdata.s is the
+# .incbin glue that embeds sprpck's binary .spr output for sprpcktest).
 !examples/mikey/theme.s
 !examples/games/invtheme.s
+!examples/suzy/sprpckdata.s
 
 # sp65-generated sprite headers (rebuilt from suzy/heart.pcx)
 examples/suzy/heart_packed.h
 examples/suzy/heart_literal.h
+
+# sprpck-generated sprite/palette assets (rebuilt from suzy/logo.bmp + icon.sps)
+examples/suzy/logo.spr
+examples/suzy/icon.spr
+examples/suzy/logo.pal
 
 # sp65-generated sprite-sheet headers (rebuilt from suzy/sheet.pcx)
 examples/suzy/sheet_anim.h

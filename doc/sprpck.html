@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lynxcc - sprpck</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>sprpck Users Guide</h1></header><div class="abstract">sprpck is the original Atari Lynx sprite packer by 42Bastian Schick, vendored
+into <strong>lynxcc</strong> under <code>tools/extern/sprpck</code>. It converts
+images into packed Lynx sprite data, and complements the in-tree
+<a href="sp65.html">sp65</a> converter by reading input formats sp65 does
+not &mdash; most usefully Windows <strong>BMP</strong> files and plain-ASCII
+<strong>SPS</strong> files.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl1"><a href="#sect-2">2. Usage</a></li>
+<li class="lvl2"><a href="#sect-2-1">2.1. Command line option overview</a></li>
+<li class="lvl2"><a href="#sect-2-2">2.2. Command line options in detail</a></li>
+<li class="lvl1"><a href="#input-formats">3. Input formats</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. BMP</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. SPS (ASCII)</a></li>
+<li class="lvl1"><a href="#output">4. Output</a></li>
+<li class="lvl2"><a href="#sect-4-1">4.1. Sprite data (.spr)</a></li>
+<li class="lvl2"><a href="#sect-4-2">4.2. Palette (.pal)</a></li>
+<li class="lvl1"><a href="#example">5. Worked example</a></li>
+<li class="lvl1"><a href="#vs-sp65">6. sprpck versus sp65</a></li>
+<li class="lvl1"><a href="#sect-7">7. Copyright</a></li>
+</ul></nav><h2 id="sect-1">1. Overview</h2>
+<p>sprpck is the sprite/bitmap packer that predates <a href="sp65.html">sp65</a>;
+it was written for the BLL Lynx development kit and is still the canonical tool
+for turning artwork into the Suzy sprite-data format. <strong>lynxcc</strong>
+vendors it verbatim (unmodified, Apache-2.0) as an external tool under
+<code>tools/extern/sprpck</code>; see
+<code>design/LYNX_EXTERN_TOOLS_DESIGN.md</code> for the vendoring policy and
+<a href="licenses.html">Licenses</a> for the notice.</p>
+<p>It is kept alongside sp65 rather than in place of it because the two tools
+cover different input formats. sp65 reads only PCX; sprpck reads BMP, PI1 (Atari
+ST), raw pixel dumps and the human-editable ASCII SPS format, and adds an action
+point, tiling and a batch mode. Both emit the same packed Suzy sprite data, so
+the choice is driven by where your art comes from. This page concentrates on the
+two inputs you are most likely to reach sprpck for: <a href="#sect-3-1">BMP</a>
+and <a href="#sect-3-2">SPS</a>.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 250" style="width:100%;height:auto;max-width:700px" role="img" aria-label="sprpck packs a BMP or an ASCII SPS file into a binary .spr sprite-data block that a program links with .incbin">
+  <!-- inputs -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11" text-anchor="middle">
+    <rect x="24" y="34" width="150" height="52" rx="6" fill="var(--accent)" fill-opacity="0.12" stroke="var(--accent)"/>
+    <text x="99" y="58" font-size="12" fill="var(--ink)">logo.bmp</text>
+    <text x="99" y="74" font-size="9.5" fill="var(--ink-soft)">indexed Windows BMP</text>
+    <rect x="24" y="118" width="150" height="52" rx="6" fill="var(--accent-2)" fill-opacity="0.14" stroke="var(--accent-2)"/>
+    <text x="99" y="142" font-size="12" fill="var(--ink)">icon.sps</text>
+    <text x="99" y="158" font-size="9.5" fill="var(--ink-soft)">ASCII, one hex/pixel</text>
+  </g>
+  <!-- arrows to sprpck -->
+  <path d="M178 60 C 220 60, 230 96, 268 100" stroke="var(--ink-faint)" fill="none" stroke-width="1.5" marker-end="url(#a)"/>
+  <path d="M178 144 C 220 144, 230 108, 268 104" stroke="var(--ink-faint)" fill="none" stroke-width="1.5" marker-end="url(#a)"/>
+  <defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--ink-faint)"/></marker></defs>
+  <!-- sprpck -->
+  <rect x="272" y="72" width="120" height="60" rx="8" fill="var(--panel-2)" stroke="var(--border)"/>
+  <text x="332" y="98" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" fill="var(--ink)" text-anchor="middle">sprpck</text>
+  <text x="332" y="116" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink-soft)" text-anchor="middle">pack &amp; encode</text>
+  <path d="M394 102 H454" stroke="var(--ink-faint)" fill="none" stroke-width="1.5" marker-end="url(#a)"/>
+  <!-- .spr -->
+  <rect x="456" y="74" width="120" height="56" rx="6" fill="var(--panel)" stroke="var(--border)"/>
+  <text x="516" y="98" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12" fill="var(--ink)" text-anchor="middle">logo.spr</text>
+  <text x="516" y="114" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--ink-faint)" text-anchor="middle">binary Suzy data</text>
+  <path d="M576 102 H636" stroke="var(--ink-faint)" fill="none" stroke-width="1.5" marker-end="url(#a)"/>
+  <!-- consumer -->
+  <rect x="600" y="60" width="96" height="84" rx="6" fill="var(--accent)" fill-opacity="0.08" stroke="var(--border)"/>
+  <text x="648" y="86" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10.5" fill="var(--ink)" text-anchor="middle">.incbin</text>
+  <text x="648" y="104" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--ink-soft)" text-anchor="middle">ca65 embeds</text>
+  <text x="648" y="120" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--ink-soft)" text-anchor="middle">the blob;</text>
+  <text x="648" y="134" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--ink-soft)" text-anchor="middle">SCB.data &rarr; it</text>
+  <text x="24" y="206" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-soft)">Unlike sp65, sprpck writes the packed sprite as a raw binary <tspan font-family="ui-monospace,Menlo,Consolas,monospace">.spr</tspan> (not a C array), so it is pulled in with ca65's <tspan font-family="ui-monospace,Menlo,Consolas,monospace">.incbin</tspan>.</text>
+  <text x="24" y="222" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-faint)">A palette (<tspan font-family="ui-monospace,Menlo,Consolas,monospace">.pal</tspan>) is written alongside for the colour-bearing formats (BMP/PCX/PI1); SPS carries pen indices only.</text>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The sprpck pipeline as used by the <a href="samples.html#sprpcktest-c">sprpcktest</a> sample: a BMP and an ASCII SPS become <code>.spr</code> blobs linked in with <code>.incbin</code>.</figcaption>
+</figure>
+<h2 id="sect-2">2. Usage</h2>
+<h3 id="sect-2-1">2.1. Command line option overview</h3>
+<p>Run sprpck with no arguments to print the built-in help:</p>
+<pre class="verb">Usage :
+sprpck [-c][-v][-O0][-e#][-s#][-t#][-u][-p#]
+[-axxxyyy][-Swwwhhh][-oxxxyyy][-iwwwhhh]
+[-rxxxyyy] [-z] in [out]
+or
+sprpck batchfile
+-O0      : do no optimize literal/packed
+-e&lt;pen&gt;  : compress until color is only &lt;pen&gt;
+-c       : compress color index
+-v       : don't be quiet
+-s       : sprite-depth 4,3,2,1 bit(s) per pixel (4 default)
+-t       : type 0 = 4bit raw,  1 = 8bit raw, 2 = SPS, 3 = PCX (3 is default)
+           type 4 = 1bit raw type 5 = PI1 (Atari ST), 6 = MS Windows BMP
+-u       : unpacked     (packed is default)
+-p       : palette output-format : 0 - C, 1 - ASM, 2 - LYXASS(default)
+-axxxyyy : action point (e.g. -a200020)
+-Swwwhhh : sprite width and height (input-size is default)
+-oxxxyyy : offset in data (e.g. -o010200 )
+-iwwwhhh : input size (not needed for PCX)
+-rxxxyyy : split picture into yyy * xxx tiles
+-z       : (only possible with -c) auto-set sprite-depth
+in       : input data
+out      : output filename, optional, default is in.spr</pre>
+<h3 id="sect-2-2">2.2. Command line options in detail</h3>
+<p>All six-digit <code>xxxyyy</code> arguments (<code>-a</code>, <code>-i</code>,
+<code>-o</code>, <code>-S</code>, <code>-r</code>) are <strong>decimal</strong>,
+three digits each &mdash; e.g. <code>-i016016</code> is width 16, height 16.</p>
+<dl>
+<dt><code>-t&lt;n&gt;</code></dt>
+<dd>
+<p>Input file type. <code>0</code> = 4-bit raw, <code>1</code> = 8-bit raw,
+  <code>2</code> = <a href="#sect-3-2">SPS</a>, <code>3</code> = PCX (default),
+  <code>4</code> = 1-bit raw, <code>5</code> = PI1 (Atari ST),
+  <code>6</code> = <a href="#sect-3-1">Windows BMP</a>. sprpck does not sniff the
+  extension &mdash; state the type explicitly for anything but PCX.</p>
+</dd>
+<dt><code>-s&lt;n&gt;</code></dt>
+<dd>
+<p>Sprite depth in bits per pixel: 4 (default), 3, 2 or 1. Determines how the pen
+  indices are packed; keep your pen values inside the range the depth allows
+  (0&ndash;15 for 4&nbsp;bpp, down to 0&ndash;1 for 1&nbsp;bpp).</p>
+</dd>
+<dt><code>-i&lt;wwwhhh&gt;</code></dt>
+<dd>
+<p>Input width and height. Required for the raw and SPS formats, which carry no
+  dimensions of their own; not needed for BMP/PCX/PI1, which are
+  self-describing.</p>
+</dd>
+<dt><code>-u</code></dt>
+<dd>
+<p>Emit an <em>unpacked</em> (literal) sprite. The default is packed
+  (run-length + literal, chosen per run), the same encoding sp65 calls
+  <code>packed</code>.</p>
+</dd>
+<dt><code>-c</code>, <code>-z</code>, <code>-e&lt;pen&gt;</code></dt>
+<dd>
+<p>Colour handling. <code>-c</code> compacts the pen indices actually used down to
+  a dense range and emits a redirection table; <code>-z</code> (only with
+  <code>-c</code>) then picks the smallest depth that fits; <code>-e&lt;pen&gt;</code>
+  clips a trailing transparent edge pen (like sp65's <code>shaped</code> mode).</p>
+</dd>
+<dt><code>-p&lt;n&gt;</code></dt>
+<dd>
+<p>Palette output format: <code>0</code> = C, <code>1</code> = ASM,
+  <code>2</code> = LYXASS (default). <strong>Note:</strong> <code>-p0</code> also
+  changes the <em>sprite</em> output &mdash; it is written as a cc65-style object
+  (<code>.obj</code>) instead of a raw <code>.spr</code>. That object is the
+  legacy BLL/sendobj format, not an <a href="ld65.html">ld65</a> object, so for
+  linking into a <strong>lynxcc</strong> program take the raw <code>.spr</code>
+  (any non-<code>-p0</code> run) and <code>.incbin</code> it &mdash; see
+  <a href="#sect-4-1">4.1</a>.</p>
+</dd>
+<dt><code>-a&lt;xxxyyy&gt;</code></dt>
+<dd>
+<p>Action (anchor) point the sprite is painted and scaled around, in pixels.</p>
+</dd>
+<dt><code>-r&lt;xxxyyy&gt;</code>, <code>-o&lt;xxxyyy&gt;</code>, <code>-S&lt;wwwhhh&gt;</code></dt>
+<dd>
+<p>Split the input into <code>xxx</code>&times;<code>yyy</code> tiles, start at a
+  data <code>-o</code>ffset, or force a sprite <code>-S</code>ize smaller than the
+  input.</p>
+</dd>
+<dt><code>-v</code></dt>
+<dd>
+<p>Verbose: echo the parsed options and, for BMP, dump the decoded file/​info
+  header while reading.</p>
+</dd>
+</dl>
+<p>A <em>batch file</em> may be given instead of options: each line has the same
+form as a command line, and an input filename given on one line may be omitted
+on the following ones.</p>
+<h2 id="input-formats">3. Input formats</h2>
+<p>sprpck reads several formats (see <code>-t</code> above); the two most useful
+in this SDK are BMP and SPS, covered here. In every case the pixel values are
+Lynx <em>pen indices</em>, and the packed depth is set by <code>-s</code>.</p>
+<h3 id="sect-3-1">3.1. BMP</h3>
+<p>With <code>-t6</code> sprpck reads an uncompressed (non-RLE) Windows BMP, either
+8-bit or 4-bit indexed. This is the in-tree path for art that comes out of a
+paint program as BMP, since <a href="sp65.html">sp65</a> reads only PCX. An
+ordinary indexed BMP works &mdash; for example one saved by PIL:</p>
+<pre class="verb">        sprpck -v -t6 -s4 logo.bmp logo.spr</pre>
+<p>sprpck reads the BMP palette, <strong>compacts the pen indices actually used
+down to a dense range starting at 0</strong>, and writes the matching Lynx
+palette to <code>logo.pal</code> (see <a href="#sect-4-2">4.2</a>). So a source
+image drawn with palette slots <code>{0,3,4,5}</code> becomes sprite pens
+<code>{0,1,2,3}</code>; program your display palette from the emitted
+<code>.pal</code> (or reproduce those first entries by hand) rather than assuming
+the original slot numbers survive. Pen 0 is the transparent background of a
+<code>TYPE_NORMAL</code> sprite.</p>
+<h3 id="sect-3-2">3.2. SPS (ASCII)</h3>
+<p>An <strong>SPS</strong> file is the simplest possible sprite source: plain
+text, <strong>one hexadecimal digit per pixel</strong> giving that pixel's pen
+(0&ndash;F), with a <em>space</em> standing in for pen 0. You can author or tweak
+a small sprite in any text editor and read it straight back. Convert it with
+<code>-t2</code>, and because the file has no header give the dimensions with
+<code>-i</code>:</p>
+<pre class="verb">        sprpck -t2 -i016016 -s4 icon.sps icon.spr</pre>
+<p>The 16&times;16 star used by the <a href="#example">example</a> below is
+literally typed out (spaces are pen&nbsp;0, <code>6</code> is the gold body,
+<code>8</code> the white highlight):</p>
+<pre class="verb">       6
+       6
+      686
+      686
+     68886
+666668888866666
+ 6688888888866
+   688888886
+    6888886
+    6888886
+    6886886
+   6866 6686
+   66     66
+   6       6</pre>
+<p><strong>Alignment gotcha:</strong> the reader ignores line breaks and simply
+streams every non-newline character as a pixel, so the grid is only correct if
+<em>every row is exactly the width</em> passed to <code>-i</code>. Pad short rows
+out to full width with trailing spaces (they are pen&nbsp;0); a ragged file
+shifts every row after the first. Unlike a BMP, an SPS carries no colours, so no
+<code>.pal</code> is written and the pen digits are used verbatim &mdash; you
+supply the palette in your program.</p>
+<h2 id="output">4. Output</h2>
+<h3 id="sect-4-1">4.1. Sprite data (.spr)</h3>
+<p>sprpck writes the packed Suzy sprite-data block &mdash; the exact bytes an
+SCB's <code>data</code> pointer addresses, terminated by a zero offset byte
+&mdash; as a raw binary <code>.spr</code> (default name <code>in.spr</code>). This
+differs from <a href="sp65.html">sp65</a>, which can emit a ready-made C array.
+The idiomatic way to link a <code>.spr</code> into a <strong>lynxcc</strong>
+program is to embed it with <a href="ca65.html">ca65</a>'s <code>.incbin</code>
+and export a label:</p>
+<pre class="verb">        .export _logo_data
+        .rodata
+        _logo_data:
+                .incbin "logo.spr"</pre>
+<p>and reference it from C as <code>extern const unsigned char logo_data[];</code>,
+assigning <code>scb.data = (unsigned char *)logo_data</code>. Because sprpck's
+default output is <em>packed</em>, the SCB's <code>SPRCTL1</code> carries the
+<code>PACKED</code> (not <code>LITERAL</code>) bit. See the
+<a href="sprites.html">Sprites</a> reference for the SCB and how Suzy paints it.</p>
+<h3 id="sect-4-2">4.2. Palette (.pal)</h3>
+<p>For the colour-bearing input formats (BMP, PCX, PI1) sprpck also writes a
+<code>.pal</code> file holding the Lynx palette (16 green nibbles then 16
+blue/red bytes, as <code>gfx_setpalette</code> expects) plus an 8-byte pen
+redirection table. The format follows <code>-p</code>: LYXASS by default,
+assembler with <code>-p1</code>, or C with <code>-p0</code>. The C form is
+directly <code>#include</code>-able:</p>
+<pre class="verb">        char logo_redir[]={0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF};
+        char logo_pal[]={
+                0x00,0x02,0x06,0x0D,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+                0x00,0x71,0xF3,0xFA,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};</pre>
+<p>Remember the <a href="#sect-2-2">caveat</a>: passing <code>-p0</code> to get
+the C palette also flips the sprite output from <code>.spr</code> to a legacy
+<code>.obj</code>. To get both a linkable <code>.spr</code> and a C palette, run
+sprpck twice (once without <code>-p0</code> for the sprite, once with it for the
+palette), or just program the palette from the values shown.</p>
+<h2 id="example">5. Worked example</h2>
+<p>The <a href="samples.html#sprpcktest-c">sprpcktest</a> sample packs one sprite
+from each format and draws them side by side. Its build wires sprpck into the
+examples <code>Makefile</code>:</p>
+<pre class="verb">        sprpck -t6 -s4 logo.bmp logo.spr          # BMP  -> packed 4bpp sprite
+        sprpck -t2 -i016016 -s4 icon.sps icon.spr  # SPS  -> packed 4bpp sprite</pre>
+<p>Both <code>.spr</code> blobs are embedded by <code>suzy/sprpckdata.s</code>
+with <code>.incbin</code> (assembled with <code>--bin-include-dir suzy</code> so
+the generated files are found beside it) and drawn through one SCB with a shared
+palette &mdash; the crystal in the BMP's compacted pens 1&ndash;3, the star in
+its SPS pens 6 and 8:</p>
+<figure class="shot" style="text-align:center;margin:1.2em 0">
+<img src="img/suzy__sprpcktest.png" alt="sprpcktest on GearLynx: a blue crystal labelled BMP beside a gold star labelled SPS, under the title sprpck" style="image-rendering:pixelated;width:320px;max-width:100%;border:1px solid var(--border)">
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Left: <code>logo.bmp</code> packed with <code>-t6</code>. Right: <code>icon.sps</code> packed with <code>-t2</code>. Both are ordinary packed Lynx sprites once converted.</figcaption>
+</figure>
+<h2 id="vs-sp65">6. sprpck versus sp65</h2>
+<p>The two converters produce the same kind of packed Lynx sprite; pick by input
+format and workflow.</p>
+<div class="table-wrap">
+<table class="grid">
+<thead><tr><th></th><th><a href="sp65.html">sp65</a></th><th>sprpck</th></tr></thead>
+<tbody>
+<tr><td>Input formats</td><td>PCX only</td><td>BMP, SPS, PI1, raw dumps (no PCX-only limit)</td></tr>
+<tr><td>Sprite output</td><td>C, assembler or binary, chosen per <code>--write</code></td><td>raw binary <code>.spr</code> (or legacy <code>.obj</code> with <code>-p0</code>)</td></tr>
+<tr><td>Linking</td><td><code>#include</code> the emitted C header</td><td><code>.incbin</code> the <code>.spr</code></td></tr>
+<tr><td>Encodings</td><td><code>literal</code>, <code>packed</code>, <code>shaped</code></td><td>packed (default) or unpacked (<code>-u</code>); edge clip via <code>-e</code></td></tr>
+<tr><td>Sprite sheets</td><td><code>--sprite-sheet</code> / <code>--slice</code> drivers</td><td><code>-r</code> tiling</td></tr>
+<tr><td>Extras</td><td>Lynx-focused, part of the cc65 suite</td><td>action point, batch mode, LYXASS palette; vendored, unmodified</td></tr>
+<tr><td>Provenance</td><td>MPL-2.0 fork of cc65</td><td>Apache-2.0, external (<code>tools/extern/sprpck</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<p>In short: reach for sp65 when your art is PCX and you want a C array dropped
+straight into the build; reach for sprpck when the art is a BMP, when you want to
+hand-write a small sprite as ASCII, or when you need its action point / batch
+features.</p>
+<h2 id="sect-7">7. Copyright</h2>
+<p>sprpck is (C) Copyright 1997&ndash;2021 42Bastian Schick and contributors
+(Matthias Domin, Karri Kaksonen, LordKraken), licensed under the Apache License
+2.0. It is vendored into <strong>lynxcc</strong> unmodified. The full licence
+text, together with every other copyright notice in the distribution, is on the
+consolidated <a href="licenses.html">Licenses and copyright notices</a>
+page.</p></article></main><site-foot></site-foot>
+<script src="doc.js"></script>
+</body></html>

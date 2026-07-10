@@ -79,7 +79,32 @@ to the shared `../bin/$1`. Because the output paths match, the existing
 identically once they iterate `$(ALL_PROGS)` instead of `$(PROGS)`.
 
 Per-tool source globs matter because upstream layouts differ: `sprpck` keeps its
-sources in `src/` (`io.c`, `sprpck.c`), so a flat `$1/*.c` glob would miss them.
+sources in `src/` (`io.c`, `sprpck.c`), so a flat `$1/*.c` glob would miss them;
+`lynxdir` keeps its `.cpp` sources at its repo root, so `lynxdir_SRC =
+extern/lynxdir` and the glob picks them up there.
+
+### 3.1. C++ tools (`EXTERN_CXX_PROGS`)
+
+`EXTERN_template` compiles and links C sources with `$(CC)`. Tools written in
+C++ (first case: `lynxdir`, `lynxdir.cpp` + `lynxrom.cpp`) need the C++ driver
+for both compilation and linking, so they use a separate, parallel path rather
+than overloading the C one:
+
+```make
+EXTERN_CXX_PROGS = lynxdir
+lynxdir_SRC      = extern/lynxdir     # .cpp sources live at the tool's repo root
+ALL_PROGS        = $(PROGS) $(EXTERN_PROGS) $(EXTERN_CXX_PROGS)
+```
+
+`EXTERN_CXX_template` is identical in shape to `EXTERN_template` but (a) globs
+`$($1_SRC)/*.cpp`, (b) compiles with `EXTERN_CXXFLAGS` (same relaxed `-O3 -w`
+policy as `EXTERN_CFLAGS`) plus the tool's own `$($1_CPPFLAGS)`, and (c) both
+compiles and **links** with `$(CXX)` so the C++ runtime is pulled in. Objects
+still land in `../wrk/$1` and the binary in the shared `../bin/$1`, so the
+`all`/`clean`/`install`/`zip`/`avail` targets — which iterate `$(ALL_PROGS)` —
+treat C and C++ vendored tools identically. A separate template (rather than a
+per-tool language switch inside `EXTERN_template`) keeps each path simple and the
+C tools' recipe byte-unchanged.
 
 ## 4. Licence handling
 
@@ -96,19 +121,32 @@ notice" invariant (`LYNX_LICENSE_POLICY_DESIGN.md`) holds. Apache §4(b)'s
 vendored code is never changed; the project-owned build glue that lives outside
 the tree is the only thing the SDK authored.
 
+**Tools with no declared licence.** `lynxdir` ships **no licence file** — its
+upstream repository declares only `(c) Björn Spruck 2010-2017`, which under
+default copyright law reserves all rights. The vendoring policy still applies
+(byte-identical, not relicensed), but the `doc/licenses.html` §4.4 entry and the
+`tools/extern/README.md` registry both **flag this explicitly**: the tool is used
+as-is pending an explicit grant from the author, and anyone redistributing the
+SDK must resolve it upstream or drop `tools/extern/lynxdir/`. Vendoring an
+unlicensed tool is a deliberate, documented exception — not the norm — and the
+preferred resolution is an upstream licence.
+
 ## 5. Current tools
 
 | Tool | Upstream | Pinned | Licence | Notes |
 |------|----------|--------|---------|-------|
-| `sprpck` | codeberg.org/42Bastian/sprpck (`master`) | `b4cdc2202a` | Apache-2.0 | Lynx sprite/bitmap packer. Complementary to `sp65` (adds action points, PI1/BMP input, batch mode, LYXASS palette, `-p0` cc65-object output). |
+| `sprpck` | codeberg.org/42Bastian/sprpck (`master`) | `b4cdc2202a` | Apache-2.0 | Lynx sprite/bitmap packer. Complementary to `sp65` (adds action points, PI1/BMP input, batch mode, LYXASS palette, `-p0` cc65-object output). Documented on `doc/sprpck.html`; exercised by the `examples/suzy/sprpcktest` sample (BMP + ASCII SPS inputs, `.spr` linked via ca65 `.incbin`). |
+| `lynxdir` | github.com/bspruck/lynxdir (`master`) | `3e46f9610b` | **None declared** (all rights reserved, © 2010–2017 Björn Spruck) | Lynx ROM builder (C++). `.mak`-driven cart assembly with EPYX/BLL/NewMini loaders. Overlaps `lnx`/`lnx bll` but covers loader layouts and multi-file ROM assembly it does not; not wired into `cl65` or examples. Licence caveat flagged in §4.4 and the README. |
 
 ## 6. Adding another tool (checklist)
 
 1. `git subtree add --prefix tools/extern/<tool> <url> <branch> --squash`.
-2. In `tools/Makefile`: append `<tool>` to `EXTERN_PROGS`; define
-   `<tool>_SRC` and any `<tool>_CPPFLAGS`.
+2. In `tools/Makefile`: append `<tool>` to `EXTERN_PROGS` (C) or
+   `EXTERN_CXX_PROGS` (C++, §3.1); define `<tool>_SRC` and any `<tool>_CPPFLAGS`.
 3. Add the tool to the `tools/extern/README.md` registry (pinned commit, licence).
 4. Add its upstream licence entry to `doc/licenses.html` §4 and regenerate the
-   doc search index (`make -C doc doc-search-index`).
+   doc search index (`make -C doc doc-search-index`). If the tool declares **no**
+   licence, flag that explicitly in both the registry and §4 rather than leaving
+   it blank.
 5. Full rebuild; confirm `bin/<tool>` builds and the rest of the tree is
    unchanged.
