@@ -271,22 +271,43 @@ Chapter 6 §6.4/§6.5, expressed via the `PENPAL_*` structs:
 - `hsize`/`vsize` are 8.8 fixed-point scale (256 = 1×). Hardware scales during
   paint; H and V independent.
 - `stretch` (`SPRCTL1` reload-gated) is added to `hsize` each scanline — sub-unit
-  to many-unit, wraps past 128 units. `VSTRETCH` (`SPRSYS`) enables applying the
-  same value to `vsize`. Used for trapezoids/polygons.
+  to many-unit (1/256 unit … 128 units), wraps past 128 units into a size
+  reduction. Given its own bullet from the vertical-stretch mode.
+- **Vertical stretch** gets its own bullet and a dedicated figure (Diagram G):
+  `VSTRETCH` (`SPRSYS` bit `0x10`) feeds the *same* `stretch` value into `vsize`
+  too, so the sprite grows in both axes each scanline (uniform zoom, not a
+  flat-topped trapezoid). It is a **global mode bit**, not an SCB field — stays set
+  until cleared, affects every sprite while on; the new vsize takes effect at the
+  next source-line fetch. There is no separate vertical adder.
 - `tilt` is added (via the tilt accumulator, integer part) to `hpos` each
   scanline — shears the sprite; positive tilts right; combine with stretch for
   arbitrary quads.
-- Flip and direction: `HFLIP`/`VFLIP` (`SPRCTL0`) mirror about the reference
-  point; `DRAWUP`/`DRAWLEFT` (`SPRCTL1`) set the starting draw quadrant. The
-  reference point is fixed at compaction time; the **starting quadrant is
-  runtime-changeable** and shifts position when changed. Diagram F: reference
+- Flip and direction: `DRAWUP`/`DRAWLEFT` (`SPRCTL1`) set the starting draw
+  quadrant. The reference point is fixed at compaction time; the **starting quadrant
+  is runtime-changeable** and shifts position when changed. Diagram F: reference
   point at centre, the four quadrants, flip axes.
+- **§6.1 Flipping about the reference point** is a dedicated subsection (`sect-6-1`)
+  covering `HFLIP`/`VFLIP` (`SPRCTL0` `0x20`/`0x10`): each mirrors the paint
+  direction left↔right / up↔down about the reference point (not the centre or a
+  screen axis), so `hpos`/`vpos` are untouched; both together = 180° rotation; flip
+  is independent of size/stretch/tilt and of the draw quadrant. Diagram H: the same
+  asymmetric `F` glyph in the four flip states about a fixed reference point.
 - `HSIZEOFF`/`VSIZEOFF` (`hsizeoff`/`vsizeoff` in `struct __suzy`, set at init to
   the "magic" `$007F` on the right/down directions, `0` left/up) balance the
   one-pixel visual bump at the reference point of a scaled multi-quadrant sprite;
   they are common to all sprites — restore them if you change them.
 - `spriteslice.c` (per-scanline hsize) and `raycaster.c` (scaled wall slices) are
   the worked references.
+- **§6.2 Panning the display window: hoff and voff** is a dedicated subsection
+  (`sect-6-2`) covering `hoff`/`voff` (`$FC04`/`$FC06` in `struct __suzy`): `hpos`/`vpos`
+  are display-*world* coordinates, and `hoff`/`voff` fix the top-left corner of the
+  160×102 display window within that world, so a sprite draws at buffer pixel
+  (`hpos−hoff`, `vpos−voff`) and off-window pixels clip. `gfx_init` sets both to 0
+  (making `hpos`/`vpos` plain screen coordinates); their purpose is scrolling —
+  because the offsets are subtracted from every sprite, changing them pans the whole
+  scene at once with no per-SCB edits. 16-bit/global/next-render latch. Diagram I:
+  display world holding sprites, the offset window rectangle, the (hpos−hoff,vpos−voff)
+  mapping, and a panned second window position.
 
 ### 3.9 Driving the engine (§7)
 
@@ -299,9 +320,16 @@ Grounded in the `struct __suzy` register block in `_suzy.h`:
   address, then `sprgo = SPRITE_GO` (`0x01`, or `EVER_ON|SPRITE_GO` = `0x05`),
   ack sleep, and let Suzy take the bus.
 - `sprsys` read side (`SPRITEWORKING`, `SPRITETOSTOP`, `UNSAFE_ACCESS`,
-  `MATHWORKING` …) — how to tell the engine is running / has stopped, and the
-  `SPRITESTOP` / `CLR_UNSAFE` write bits. The engine only restarts from the
-  beginning; it cannot resume mid-list.
+  `VSTRETCHING`, `LEFTHANDED`, `MATHWORKING`/`MATHWARNING`/`MATHCARRY` …) — how to
+  tell the engine is running / has stopped, plus the read-back of the `VSTRETCH` and
+  `LEFTHAND` mode bits (and the math-status bits). Write bits `SPRITESTOP` /
+  `CLR_UNSAFE` / `NO_COLLIDE` / `VSTRETCH` / `LEFTHAND`. The engine only restarts
+  from the beginning; it cannot resume mid-list.
+- `LEFTHAND` (`SPRSYS` `0x08`) selects the console's drawing handedness: it reverses
+  Suzy's video-buffer fill direction so the image is correct in the flipped
+  orientation, and pairs with the `JOYSTICK` up/down + left/right axis swap. Global
+  console-orientation setting written once at init (leave as `gfx_init` sets it
+  unless implementing screen flip); `LEFTHANDED` reads it back.
 - Frame this whole section as "what `gfx_sprite` and `gfx_init` do for you"
   (link `graphics.html`), so the reader knows they normally don't hand-write these
   writes, but can when they need a custom sprite loop.
@@ -328,6 +356,12 @@ variables only, mono for bytes/registers, sans for labels, each in
   hardware columns, with the shadow-inverter-bug footnote.
 - **Diagram F — reference point, quadrants, flip.** Reference pixel, four paint
   quadrants, `HFLIP`/`VFLIP` axes, `DRAWUP`/`DRAWLEFT` starting-quadrant note.
+- **Diagram G — vertical stretch.** Two panels: `stretch` alone (flat-topped
+  trapezoid, fixed height) vs `stretch` + `VSTRETCH` (grows in width and height,
+  uniform zoom), each over the dashed 1× base sprite.
+- **Diagram H — flip states.** The same asymmetric `F` glyph in four cells (normal,
+  `HFLIP`, `VFLIP`, `HFLIP|VFLIP`) mirrored about a fixed reference point, with the
+  mirror axes dashed through the reference dot.
 - **(Reuse, don't redraw)** the packed-vs-literal data figure — link
   `sp65.html`'s existing one rather than duplicating it.
 
