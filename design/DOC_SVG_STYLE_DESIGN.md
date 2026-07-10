@@ -8,7 +8,7 @@ See doc/licenses.html.
 # Documentation SVG style
 
 Reference for the inline SVG diagrams in `doc/*.html` (memory maps in
-`lynx.html`, the cart/dirent layouts, the packed-vs-literal figure in
+`memory.html`, the cart/dirent layouts, the packed-vs-literal figure in
 `sp65.html`, etc.). Follow this so new diagrams match the existing ones without
 re-deriving the conventions each time.
 
