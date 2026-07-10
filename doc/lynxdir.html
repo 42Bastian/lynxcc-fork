@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lynxcc - lynxdir</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>lynxdir Users Guide</h1></header><div class="abstract">lynxdir is Björn Spruck's Atari Lynx ROM builder, vendored into
+<strong>lynxcc</strong> under <code>tools/extern/lynxdir</code>. Driven by a
+<code>.mak</code> config file, it assembles a bootable cartridge image from a
+title picture, a main executable and any data files, prepends an
+<em>encrypted loader</em> that the Lynx boot ROM will accept, and writes both a
+plain <code>.lyx</code> ROM and an emulator-style <code>.lnx</code>. It overlaps
+the in-tree <a href="lnx.html">lnx</a> tool but comes from the wider Lynx
+homebrew ecosystem and covers loader layouts and multi-file assembly that
+<code>lnx</code> does not.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl1"><a href="#sect-2">2. Usage</a></li>
+<li class="lvl2"><a href="#sect-2-1">2.1. Command line</a></li>
+<li class="lvl2"><a href="#sect-2-2">2.2. The two required files</a></li>
+<li class="lvl1"><a href="#mak">3. The .mak config file</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. Syntax</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. Choosing a loader</a></li>
+<li class="lvl2"><a href="#sect-3-3">3.3. ROM-wide commands</a></li>
+<li class="lvl2"><a href="#sect-3-4">3.4. Per-file switches</a></li>
+<li class="lvl2"><a href="#sect-3-5">3.5. Bank switching</a></li>
+<li class="lvl2"><a href="#sect-3-6">3.6. .lnx header and EEPROM flags</a></li>
+<li class="lvl1"><a href="#output">4. Output</a></li>
+<li class="lvl1"><a href="#examples">5. Config examples</a></li>
+<li class="lvl1"><a href="#vs-lnx">6. lynxdir versus lnx</a></li>
+<li class="lvl1"><a href="#sect-7">7. Copyright and licence</a></li>
+</ul></nav><h2 id="sect-1">1. Overview</h2>
+<p>lynxdir builds a complete cartridge ROM: it lays out a small
+<strong>directory</strong> of the files that go on the cart, prepends an
+<strong>encrypted loader</strong> (the code the Lynx boot ROM decrypts and runs
+at power-on), and pads the result to a cart size. The loader shows the first
+file &mdash; the <em>title picture</em> &mdash; and loads the second file &mdash;
+your <em>main executable</em> &mdash; for execution. No checksums are written and
+no directory entries are baked into the loader, so the loader is copied verbatim
+and the cart contents can even be patched by hand afterwards.</p>
+<p><strong>lynxcc</strong> vendors it verbatim (unmodified) as an external tool
+under <code>tools/extern/lynxdir</code>; see
+<code>design/LYNX_EXTERN_TOOLS_DESIGN.md</code> for the vendoring policy and
+<a href="licenses.html">Licenses</a> for the notice. It is written in C++
+(<code>lynxdir.cpp</code>, <code>lynxrom.cpp</code>) and builds through the
+Makefile's C++ external-tools path into the shared <code>bin/lynxdir</code>. It
+is a standalone convenience tool: it is <em>not</em> wired into
+<a href="cl65.html">cl65</a> or any example, and the SDK's own
+<a href="lnx.html">lnx</a> tool (with <code>lnx bll</code>) is the supported way
+to produce a bootable <code>.lnx</code> from a linked program &mdash; lynxdir is
+here for projects that want its loader layouts or its <code>.mak</code>-driven
+multi-file assembly. See <a href="#vs-lnx">§6</a> for the comparison.</p>
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 250" style="width:100%;height:auto;max-width:700px" role="img" aria-label="lynxdir reads a .mak config listing a title picture, a main executable and data files, and writes a bootable .lyx ROM and an emulator-style .lnx">
+  <defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--ink-faint)"/></marker></defs>
+  <!-- inputs -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11" text-anchor="middle">
+    <rect x="20" y="26" width="150" height="40" rx="6" fill="var(--accent)" fill-opacity="0.12" stroke="var(--accent)"/>
+    <text x="95" y="45" font-size="12" fill="var(--ink)">cart.mak</text>
+    <text x="95" y="59" font-size="9" fill="var(--ink-soft)">loader + file list</text>
+    <rect x="20" y="76" width="150" height="34" rx="6" fill="var(--panel)" stroke="var(--border)"/>
+    <text x="95" y="97" font-size="11" fill="var(--ink)">title.o</text>
+    <rect x="20" y="120" width="150" height="34" rx="6" fill="var(--panel)" stroke="var(--border)"/>
+    <text x="95" y="141" font-size="11" fill="var(--ink)">main.o</text>
+    <rect x="20" y="164" width="150" height="34" rx="6" fill="var(--panel)" stroke="var(--border)"/>
+    <text x="95" y="185" font-size="11" fill="var(--ink)">data&hellip;</text>
+  </g>
+  <!-- arrows to lynxdir -->
+  <path d="M172 46  C 214 46, 236 96, 276 100"  stroke="var(--ink-faint)" fill="none" stroke-width="1.5" marker-end="url(#a)"/>
+  <path d="M172 93  C 214 93, 240 100, 276 102" stroke="var(--ink-faint)" fill="none" stroke-width="1.5" marker-end="url(#a)"/>
+  <path d="M172 137 C 214 137, 240 106, 276 104" stroke="var(--ink-faint)" fill="none" stroke-width="1.5" marker-end="url(#a)"/>
+  <path d="M172 181 C 214 181, 236 112, 276 108" stroke="var(--ink-faint)" fill="none" stroke-width="1.5" marker-end="url(#a)"/>
+  <!-- lynxdir -->
+  <rect x="280" y="76" width="122" height="60" rx="8" fill="var(--panel-2)" stroke="var(--border)"/>
+  <text x="341" y="102" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" fill="var(--ink)" text-anchor="middle">lynxdir</text>
+  <text x="341" y="120" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9.5" fill="var(--ink-soft)" text-anchor="middle">loader + directory</text>
+  <!-- outputs -->
+  <path d="M404 96 C 444 96, 452 70, 492 70"   stroke="var(--ink-faint)" fill="none" stroke-width="1.5" marker-end="url(#a)"/>
+  <path d="M404 116 C 444 116, 452 142, 492 142" stroke="var(--ink-faint)" fill="none" stroke-width="1.5" marker-end="url(#a)"/>
+  <rect x="494" y="48" width="150" height="46" rx="6" fill="var(--accent-2)" fill-opacity="0.14" stroke="var(--accent-2)"/>
+  <text x="569" y="69" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12" fill="var(--ink)" text-anchor="middle">cart.lyx</text>
+  <text x="569" y="84" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--ink-faint)" text-anchor="middle">plain ROM image</text>
+  <rect x="494" y="120" width="150" height="46" rx="6" fill="var(--accent-2)" fill-opacity="0.14" stroke="var(--accent-2)"/>
+  <text x="569" y="141" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12" fill="var(--ink)" text-anchor="middle">cart.lnx</text>
+  <text x="569" y="156" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--ink-faint)" text-anchor="middle">64-byte header + ROM</text>
+  <text x="20" y="224" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-soft)">The first two listed files are always the title picture and the main executable; the encrypted loader shows the first and runs the second.</text>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">The lynxdir pipeline: a <code>.mak</code> lists the loader and the files, and lynxdir emits a raw <code>.lyx</code> plus an emulator <code>.lnx</code>.</figcaption>
+</figure>
+<h2 id="sect-2">2. Usage</h2>
+<h3 id="sect-2-1">2.1. Command line</h3>
+<p>Almost everything about a ROM is decided in the <a href="#mak"><code>.mak</code>
+file</a>; the command line carries only a handful of global switches. Run lynxdir
+with no arguments (or <code>-h</code>) to print the built-in help:</p>
+<pre class="verb">LynxDir Generator Version 1.9
+ a replacement for the lynxer
+(c) 2010-2017 Bjoern Spruck
+ based on the lynxer by Bastian Schick
+ It can create ROMs with
+ * BLL type 1024 bytes/block, using Troyan Horse
+ * EPXY Loader 512/1024/2048 w/o checksum
+ * EPXY Loader with BLL type file system
+ * CC65/Karri MiniLoader @ $F000 and $FB68
+ * or without loader for later encryption
+ ... and a few other things
+
+Usage :
+lynxdir [-hvsif01r] batchfile.mak
+lynxdir mainexe.o
+-h this help
+-v verbose
+-f[01r] fill ROM with 0,1,random
+-s dont skip exec header (adds extra 10 bytes per exec)
+-i remove imp (overwrite with random)
+-x dont write LNX
+-y dont write LYX
+all other options should be set in MAK file, see examples!</pre>
+<dl>
+<dt><code>batchfile.mak</code></dt>
+<dd><p>The config file that lists the loader, the files and the ROM parameters.
+  This is the normal way to invoke lynxdir; see <a href="#mak">§3</a>.</p></dd>
+<dt><code>lynxdir mainexe.o</code></dt>
+<dd><p>Shorthand for a trivial single-executable cart: given a linked object
+  instead of a <code>.mak</code>, lynxdir builds a minimal ROM around it.</p></dd>
+<dt><code>-v</code></dt>
+<dd><p>Verbose &mdash; echo every command as the <code>.mak</code> is parsed and
+  report the chosen loader, blocksize and per-file placement. Invaluable when a
+  layout does not boot.</p></dd>
+<dt><code>-f0</code>, <code>-f1</code>, <code>-fr</code></dt>
+<dd><p>Fill the unused tail of the ROM with zero bytes, <code>$FF</code> bytes, or
+  random bytes. (See also the <code>BLOCKLIMIT</code> command, which caps how much
+  is filled.)</p></dd>
+<dt><code>-s</code></dt>
+<dd><p>Do <em>not</em> skip the 10-byte execution header on files &mdash; keep it,
+  at a cost of 10 bytes per executable. The default strips it.</p></dd>
+<dt><code>-i</code></dt>
+<dd><p>Overwrite the <code>imp</code> (loader work area) with random bytes rather
+  than leaving it intact; a compatibility/obfuscation knob.</p></dd>
+<dt><code>-x</code>, <code>-y</code></dt>
+<dd><p>Suppress one of the two outputs: <code>-x</code> writes no <code>.lnx</code>,
+  <code>-y</code> writes no <code>.lyx</code>. The same effect is available inside
+  the <code>.mak</code> as <code>NOLNX</code> / <code>NOLYX</code>.</p></dd>
+</dl>
+<h3 id="sect-2-2">2.2. The two required files</h3>
+<p>The first two filenames in a <code>.mak</code> are fixed by convention:</p>
+<p>The <strong>first</strong> file is the <em>title picture</em>, in the boot
+loader's own picture format (not a Suzy sprite). If you have no artwork, either
+put in a 40-byte file of zeros for a black screen, or use the
+<a href="#sect-3-4"><code>PUTTITLE</code></a> command to drop in lynxdir's
+built-in &ldquo;Insert Name&rdquo; picture. Some layouts also need a
+<a href="#sect-3-4"><code>TITLEADR</code></a> to say where the picture loads.</p>
+<p>The <strong>second</strong> file is the <em>main executable</em> &mdash; the
+program the loader jumps to. With <strong>lynxcc</strong> this is what
+<a href="ld65.html">ld65</a> produced for a cart config; the mini-loader layouts
+skip the title picture, so there the executable is the only required file.</p>
+<h2 id="mak">3. The .mak config file</h2>
+<h3 id="sect-3-1">3.1. Syntax</h3>
+<p>A <code>.mak</code> is a plain-text list, read top to bottom:</p>
+<dl>
+<dt>Comments</dt><dd><p>A line (or trailing text) starting with <code>;</code>.</p></dd>
+<dt>Commands</dt><dd><p>A line starting with <code>#</code>, optionally followed by
+  a value &mdash; e.g. <code>#BLOCKSIZE 512</code>.</p></dd>
+<dt>Filenames</dt><dd><p>Anything else is a filename, relative to the working
+  directory or absolute. Avoid spaces and special characters in names.</p></dd>
+<dt>Blank lines</dt><dd><p>Ignored; most whitespace is ignored.</p></dd>
+</dl>
+<p>Commands split into two groups: <a href="#sect-3-3">ROM-wide commands</a> that
+affect the whole image no matter where they appear, and
+<a href="#sect-3-4">per-file switches</a> whose <em>position</em> matters because
+they apply to the next file (or all following files). For readability keep the
+ROM-wide commands at the top. A <code>.mak</code> can pull in another with
+<code>#INCLUDE&nbsp;other.mak</code> for large projects.</p>
+<h3 id="sect-3-2">3.2. Choosing a loader</h3>
+<p>Every ROM needs a loader; if none is selected (or <code>NOLOADER</code> is
+given) lynxdir exits. The loader command also fixes the block size, the directory
+start offset and the first directory entry's mode, so it is normally the first
+line of the file.</p>
+<div class="table-wrap">
+<table class="grid">
+<thead><tr><th>Command</th><th>Loader</th><th>Blocksize</th><th>DIRSTART</th><th>Mode</th></tr></thead>
+<tbody>
+<tr><td><code>HACK512</code></td><td>EPYX &ldquo;hacked&rdquo; loader, 512&nbsp;B/block (128k)</td><td>512</td><td>203</td><td>EPYX</td></tr>
+<tr><td><code>HACK1024</code></td><td>EPYX hacked loader, 1024&nbsp;B/block (256k)</td><td>1024</td><td>203</td><td>EPYX</td></tr>
+<tr><td><code>HACK2048</code></td><td>EPYX hacked loader, 2048&nbsp;B/block (512k)</td><td>2048</td><td>203</td><td>EPYX</td></tr>
+<tr><td><code>HACKAUTO</code></td><td>Pick the hacked loader that matches the selected blocksize</td><td>as set</td><td>203</td><td>EPYX</td></tr>
+<tr><td><code>NEWMINI_F000</code></td><td>CC65/Karri mini-loader at <code>$F000</code></td><td>variable (512 default)</td><td>203</td><td>EPYX</td></tr>
+<tr><td><code>NEWMINI_FB68</code></td><td>CC65/Karri mini-loader at <code>$FB68</code></td><td>variable (512 default)</td><td>203</td><td>EPYX</td></tr>
+<tr><td><code>INTERNAL</code></td><td>BLL &ldquo;new&rdquo; loader (needs <code>TROYAN</code>)</td><td>1024</td><td>896</td><td>BLL</td></tr>
+<tr><td><code>NOLOADER</code></td><td>No loader &mdash; just zeros, for a later external encryption pass (EPYX layouts only)</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+</tbody>
+</table>
+</div>
+<p>The mini-loaders skip the title picture entirely, so
+<a href="#sect-3-4"><code>PUTTITLE</code></a> is not allowed with them. The BLL
+<code>INTERNAL</code> loader must be paired with <code>TROYAN</code> (§3.4).
+Because these commands set <code>BLOCKSIZE</code> and <code>DIRSTART</code>, you
+normally do not set those by hand; the explicit forms below exist for mixed and
+special layouts.</p>
+<h3 id="sect-3-3">3.3. ROM-wide commands</h3>
+<dl>
+<dt><code>BLOCKSIZE &lt;n&gt;</code></dt>
+<dd><p>Block size in bytes: <code>512</code> (default, 128k), <code>1024</code>
+  (256k) or <code>2048</code> (512k). Usually set for you by the loader command;
+  one of the most important values when set by hand.</p></dd>
+<dt><code>DIRSTART &lt;n&gt;</code></dt>
+<dd><p>Byte offset where the directory begins: <code>410</code> for the EPYX
+  loader, <code>896</code> for BLL, <code>203</code> for NewMini. Set by the loader
+  command in the normal case.</p></dd>
+<dt><code>BLOCKLIMIT &lt;n&gt;</code></dt>
+<dd><p>Cap the number of unused blocks that get filled when the ROM is smaller
+  than the cart. Default 256 (effectively no limit).</p></dd>
+<dt><code>DIROFFSET &lt;n&gt;</code></dt>
+<dd><p>Move the directory pointer to a higher offset &mdash; needed only for mixed
+  BLL/EPYX/MINI loader layouts.</p></dd>
+<dt><code>FILEADR &lt;addr&gt;</code></dt>
+<dd><p>Default load address for files that carry no address in their own header
+  (default <code>0000</code>). A rarely needed, not fully supported knob.</p></dd>
+</dl>
+<h3 id="sect-3-4">3.4. Per-file switches</h3>
+<p>These apply to the <em>next</em> file, or switch a mode for all files that
+follow, so their order in the file matters.</p>
+<dl>
+<dt><code>TROYAN</code></dt>
+<dd><p>Place the &ldquo;Troyan horse&rdquo; entry (file position 16) &mdash; required
+  by the BLL <code>INTERNAL</code> loader.</p></dd>
+<dt><code>PUTTITLE</code></dt>
+<dd><p>Insert lynxdir's built-in &ldquo;Insert Name&rdquo; title picture in place of
+  a first file. Not allowed with the mini-loaders.</p></dd>
+<dt><code>TITLEADR &lt;addr&gt;</code></dt>
+<dd><p>Load address for the title picture, when the title file has no header of its
+  own (do not give it for a <code>.o</code> file). It <strong>must</strong> match
+  the address the title file was created for.</p></dd>
+<dt><code>EPYX</code> / <code>BLL</code></dt>
+<dd><p>Switch subsequent directory entries to EPYX or BLL style (BLL XORs some
+  fields). Normally set by the loader command.</p></dd>
+<dt><code>ALIGN</code></dt>
+<dd><p>Align the next file to a block boundary (block offset zero) in the ROM.</p></dd>
+<dt><code>COPY [n]</code></dt>
+<dd><p>Add a directory entry that is a copy of an earlier one (of the previous
+  entry if <code>n</code> is omitted) without duplicating the file data; adapted
+  if the mode changed in between.</p></dd>
+<dt><code>NONE</code> / <code>EMPTY</code></dt>
+<dd><p>Write one empty directory entry.</p></dd>
+<dt><code>SKIP &lt;n&gt;</code></dt>
+<dd><p>Skip <code>n</code> entries (write <code>n</code> empty entries).</p></dd>
+<dt><code>SKIP_BANK</code></dt>
+<dd><p>Skip forward to the next bank, if one is available (see §3.5).</p></dd>
+<dt><code>INCLUDE &lt;file.mak&gt;</code></dt>
+<dd><p>Splice in another <code>.mak</code> at this point.</p></dd>
+</dl>
+<h3 id="sect-3-5">3.5. Bank switching</h3>
+<p>Two commands double the number of banks on the cart, for ROMs larger than a
+single bank can address:</p>
+<dl>
+<dt><code>AUDIN</code></dt>
+<dd><p>Use the AUDIN line to select the extra banks.</p></dd>
+<dt><code>BANK2</code></dt>
+<dd><p>Use the second read strobe to select the extra banks.</p></dd>
+</dl>
+<p><strong>Your program is responsible for switching banks and reading files</strong>
+&mdash; there is no runtime support and no official bank ordering (it is discussed
+by ROM length in the AtariAge Lynx development forum). Both flags also set extra
+bits in the <code>.lnx</code> header (§3.6) that only recent emulator builds
+(Handy 0.98 and later) honour. Use <code>SKIP_BANK</code> to jump the directory to
+the next bank.</p>
+<h3 id="sect-3-6">3.6. .lnx header and EEPROM flags</h3>
+<p>These fill in fields of the 64-byte <a href="cart.html">.lnx header</a> that
+emulators read; they do not change the raw <code>.lyx</code>.</p>
+<dl>
+<dt><code>LNXNAME &lt;text&gt;</code></dt>
+<dd><p>Cartridge name in the header (up to 31 characters).</p></dd>
+<dt><code>LNXMANU &lt;text&gt;</code></dt>
+<dd><p>Manufacturer string (up to 15 characters).</p></dd>
+<dt><code>LNXROT &lt;0|1|2&gt;</code></dt>
+<dd><p>Rotation flag for emulation: <code>0</code> none, <code>1</code> left,
+  <code>2</code> right.</p></dd>
+<dt><code>EE_93C46</code> &hellip; <code>EE_93C86</code></dt>
+<dd><p>Tell the emulator an SPI EEPROM of that type (93C46/56/66/76/86) is present.
+  See the <a href="cart.html">Cart ROM &amp; EEPROM</a> reference for the chips the
+  runtime supports.</p></dd>
+<dt><code>EE_8BIT</code> / <code>EE_16BIT</code></dt>
+<dd><p>EEPROM access width; 16-bit is the default.</p></dd>
+<dt><code>NOLYX</code> / <code>NOLNX</code></dt>
+<dd><p>Suppress the plain <code>.lyx</code> or the <code>.lnx</code> output (same as
+  the <code>-y</code> / <code>-x</code> command-line flags).</p></dd>
+</dl>
+<h2 id="output">4. Output</h2>
+<p>lynxdir writes two files for a ROM built as <code>cart</code>:</p>
+<p><code>cart.lyx</code> is the <strong>plain ROM image</strong> &mdash; exactly the
+bytes a flash cart or a real EPROM holds, loader and directory included, padded to
+the cart size. This is what you burn or feed to a hardware flasher, and the file
+you would run an external encryption pass over after a <code>NOLOADER</code> build.</p>
+<p><code>cart.lnx</code> is the same ROM behind a <strong>64-byte
+<a href="cart.html">.lnx header</a></strong> &mdash; the emulator-friendly format
+carrying the block size, name, manufacturer, rotation, bank-switch and EEPROM
+flags set in the <code>.mak</code>. This is what you load in Handy/GearLynx. Either
+output can be turned off (<code>NOLYX</code>/<code>NOLNX</code> or <code>-y</code>/
+<code>-x</code>). Because no checksum is computed and the directory is stored
+outside the loader, a built ROM can be inspected or patched afterwards &mdash; the
+in-tree <a href="lnx.html">lnx</a> tool reads and dumps the <code>.lnx</code>
+header.</p>
+<h2 id="examples">5. Config examples</h2>
+<p>The vendored tree ships a full set of annotated <code>.mak</code> files under
+<code>tools/extern/lynxdir/examples/</code>, grouped by layout
+(<code>minimal_layout</code>, <code>epyx_layout</code>, <code>bll_layout</code>).
+Three representative ones:</p>
+<p>A minimal 128k cart with the mini-loader at <code>$F000</code> and no title
+picture &mdash; the leanest layout, and the closest to what
+<a href="lnx.html"><code>lnx bll</code></a> produces:</p>
+<pre class="verb">; miniloader @ $F000, 512-byte blocks
+#NEWMINI_F000
+#BLOCKSIZE 512
+#DIRSTART 203
+#EPYX
+main.o</pre>
+<p>An EPYX-standard 128k cart with a title picture and the hacked 512-byte
+loader:</p>
+<pre class="verb">; EPYX standard, 512 bytes/block
+#HACK512
+#BLOCKSIZE 512
+#DIRSTART 410
+#EPYX
+title.o
+main.o</pre>
+<p>A BLL 256k cart: the BLL &ldquo;new&rdquo; loader with the Troyan horse at file
+position 16 and the built-in title picture:</p>
+<pre class="verb">; BLL 1024 bytes/block, EPYX loader, troyan @ 16
+#TROYAN
+#INTERNAL
+#BLOCKSIZE 1024
+#DIRSTART 896
+#BLL
+#PUTTITLE
+main.o
+; data1.dat
+; data2.dat</pre>
+<p>Build any of them by pointing lynxdir at the file:</p>
+<pre class="verb">        lynxdir -v cart.mak</pre>
+<h2 id="vs-lnx">6. lynxdir versus lnx</h2>
+<p>The SDK ships its own <a href="lnx.html">lnx</a> cartridge tool. The two
+overlap where they both turn a program into a bootable cart, but they come at it
+from opposite ends: <code>lnx</code> is a tightly focused <code>.lnx</code> header
+inspector/patcher plus a single <code>lnx bll</code> build path, while lynxdir is a
+flexible, config-driven multi-loader ROM builder from the wider homebrew scene.</p>
+<div class="table-wrap">
+<table class="grid">
+<thead><tr><th></th><th><a href="lnx.html">lnx</a></th><th>lynxdir</th></tr></thead>
+<tbody>
+<tr><td>Role</td><td>Inspect / patch <code>.lnx</code> headers; one BLL build path (<code>lnx bll</code>)</td><td>Build a whole ROM (loader + directory + files) from a <code>.mak</code></td></tr>
+<tr><td>Loaders</td><td>The SDK's own BLL loader</td><td>EPYX 512/1024/2048, BLL, NewMini <code>$F000</code>/<code>$FB68</code>, or none</td></tr>
+<tr><td>Multiple files</td><td>Single executable</td><td>Title + main + arbitrary data files, copies, skips, alignment</td></tr>
+<tr><td>Bank switching</td><td>Header bits only</td><td><code>AUDIN</code> / <code>BANK2</code> layouts (program-driven)</td></tr>
+<tr><td>Output</td><td><code>.lnx</code></td><td><code>.lyx</code> and <code>.lnx</code></td></tr>
+<tr><td>Config</td><td>Command line / JSON</td><td><code>.mak</code> config file (with <code>#INCLUDE</code>)</td></tr>
+<tr><td>Provenance</td><td>MPL-2.0, part of the SDK; wired into <code>cl65</code></td><td>External (<code>tools/extern/lynxdir</code>), unmodified; standalone, not in <code>cl65</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>In short: reach for <a href="lnx.html">lnx</a> for the normal
+<strong>lynxcc</strong> flow of building and inspecting a <code>.lnx</code> from a
+linked program; reach for lynxdir when you need a specific loader layout (EPYX,
+BLL, NewMini), a multi-file directory, hand-tuned bank switching, or the
+<code>.mak</code>-driven workflow familiar from the older Lynx toolchains.</p>
+<h2 id="sect-7">7. Copyright and licence</h2>
+<p>lynxdir is (C) Copyright 2010&ndash;2017 Björn Spruck, based on the earlier
+<em>lynxer</em> by Bastian Schick. It is vendored into <strong>lynxcc</strong>
+unmodified under <code>tools/extern/lynxdir</code>.</p>
+<p><strong>Licence caveat.</strong> lynxdir ships <strong>no licence file</strong>
+&mdash; its upstream repository declares only <code>(c) Björn Spruck
+2010-2017</code>, which under default copyright law reserves all rights. It is
+vendored as-is, <em>not</em> relicensed under the SDK's MPL-2.0, pending an
+explicit grant from the author. If you redistribute the SDK, resolve this with
+upstream first or omit <code>tools/extern/lynxdir/</code>. This is recorded in
+full on the consolidated <a href="licenses.html">Licenses and copyright
+notices</a> page (§4.4).</p></article></main><site-foot></site-foot>
+<script src="doc.js"></script>
+</body></html>

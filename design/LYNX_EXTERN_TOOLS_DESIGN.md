@@ -136,7 +136,7 @@ preferred resolution is an upstream licence.
 | Tool | Upstream | Pinned | Licence | Notes |
 |------|----------|--------|---------|-------|
 | `sprpck` | codeberg.org/42Bastian/sprpck (`master`) | `b4cdc2202a` | Apache-2.0 | Lynx sprite/bitmap packer. Complementary to `sp65` (adds action points, PI1/BMP input, batch mode, LYXASS palette, `-p0` cc65-object output). Documented on `doc/sprpck.html`; exercised by the `examples/suzy/sprpcktest` sample (BMP + ASCII SPS inputs, `.spr` linked via ca65 `.incbin`). |
-| `lynxdir` | github.com/bspruck/lynxdir (`master`) | `3e46f9610b` | **None declared** (all rights reserved, © 2010–2017 Björn Spruck) | Lynx ROM builder (C++). `.mak`-driven cart assembly with EPYX/BLL/NewMini loaders. Overlaps `lnx`/`lnx bll` but covers loader layouts and multi-file ROM assembly it does not; not wired into `cl65` or examples. Licence caveat flagged in §4.4 and the README. |
+| `lynxdir` | github.com/bspruck/lynxdir (`master`) | `3e46f9610b` | **None declared** (all rights reserved, © 2010–2017 Björn Spruck) | Lynx ROM builder (C++). `.mak`-driven cart assembly with EPYX/BLL/NewMini loaders. Overlaps `lnx`/`lnx bll` but covers loader layouts and multi-file ROM assembly it does not; not wired into `cl65` or examples. Documented on `doc/lynxdir.html`; no example sample. Licence caveat flagged in §4.4 and the README. |
 
 ## 6. Adding another tool (checklist)
 
