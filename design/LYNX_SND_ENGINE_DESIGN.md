@@ -498,19 +498,28 @@ to `snd_play` with a compiled stream, or to `mikey_snd_*` for direct SFX.
 
 A separate command-line utility (like `abccc`, it lives under `tools/abcrom/`, builds
 into the root `bin/`, and is **host-compiled** — it does not depend on the cc65
-compiler suite) that turns a tune into a runnable `.lnx` for auditioning in an
-emulator.
+compiler suite) that patches a compiled tune stream into a runnable `.lnx` for
+auditioning in an emulator.
 
-### 9.1 Approach: template patcher (zero toolchain at test time)
+### 9.1 Approach: template patcher (pure file-to-file transform)
 
-`abcrom` does **not** invoke cc65. It ships a pre-assembled **template `.lnx`** that
-already contains the `snd` engine plus a tiny boot harness, with a fixed region
-reserved for the tune stream. To make a test ROM it (1) compiles the tune to a stream
-(via `abccc`, or accepts a `.bin`), (2) **patches those bytes into the reserved
-region** of a copy of the template, (3) writes the result. No compile, no link — so a
-tune reaches a playable `.lnx` in milliseconds with no cc65 installed. Because the
-region is fixed-size, patching never changes the file length, so the `.lnx` header
-stays valid.
+`abcrom` does **not** invoke cc65, `abccc`, or any other program — it never shells out
+(no `system()`), never creates temporary files, and never launches an emulator. Its
+input is an **already-compiled event stream** — a `.bin` produced by `abccc -f bin`;
+the caller compiles the tune first and hands `abcrom` the named file. It ships a
+pre-assembled **template `.lnx`** that already contains the `snd` engine plus a tiny
+boot harness, with a fixed region reserved for the tune stream. To make a test ROM it
+(1) reads the compiled stream from the input file, (2) **patches those bytes into the
+reserved region** of a copy of the template, (3) writes the result to the **required**
+output path (`-o`). No compile, no link, no subprocess, no temp files — so a tune
+reaches a playable `.lnx` in milliseconds with no cc65 installed. Because the region
+is fixed-size, patching never changes the file length, so the `.lnx` header stays
+valid.
+
+Keeping `abcrom` a pure file-to-file transform is deliberate: with no `system()`
+calls, no `/tmp` assumption, and no `PATH` dependency on `abccc`/`handy`, it builds and
+behaves identically on every host (Linux, macOS, Windows/MSVC) — see §9.6. Launching
+the emulator and compiling the `.abc` source are the caller's responsibility.
 
 ### 9.2 The template ROM
 
@@ -545,14 +554,36 @@ fits `capacity`, then writes `used` and the payload.
 ### 9.4 CLI
 
 ```
-abcrom  [opts]  tune.abc
-  -o FILE          output .lnx (default: <tune>.lnx)
+abcrom  -o FILE.lnx  [opts]  tune.bin
+  -o FILE          output .lnx  (REQUIRED — abcrom never derives a name or writes in place)
   -t FILE          template .lnx (default: bundled template)
-  --channels MAP   place tunes on channels, e.g. 0:bass.abc,1:lead.abc
+  --channels MAP   place streams on channels, e.g. 0:bass.bin,1:lead.bin
   --name STR       cart-name field in the .lnx header
-  --run [EMU]      launch emulator after patching
-  --bin            input is already a compiled stream, skip abccc
 ```
+
+The positional input and every `--channels` entry are **compiled streams** (`abccc -f
+bin` output), not `.abc` source. `abcrom` neither runs `abccc` nor launches an
+emulator: compile first, then open the written `.lnx` in your emulator of choice. The
+old `--run`/`--bin` flags are gone — `--run` because `abcrom` no longer starts an
+emulator, `--bin` because a compiled stream is now the only accepted input.
+
+Auditioning is therefore a three-step, fully portable flow:
+
+```
+abccc -f bin -o tune.bin tune.abc     # compile the stream (once per tune edit)
+abcrom -o test.lnx tune.bin           # patch it into the template ROM
+<emulator> test.lnx                   # launch by hand: handy / mednafen / felix
+```
+
+**Envelope pointers and `--org`.** A tune that uses pointer envelopes needs its
+stream compiled at the runtime address it will occupy. Since `abcrom` no longer
+invokes `abccc`, it can no longer read that address from the template `.map` and pass
+`--org` automatically — the caller supplies it. The payload for channel *c* lives 10
+bytes past the template's `_abcr_regionC` symbol (the reserved-region header, §9.3);
+with the bundled template that is `$0AD8 + 10 = $0AE2` for channel&nbsp;0, so
+`abccc -f bin --org 0x0AE2 -o tune.bin tune.abc`. Tunes without pointer envelopes are
+position-independent and need no `--org`. This trade — one extra explicit flag for a
+tool with zero subprocess/temp-file/PATH dependencies — is deliberate (§9.6).
 
 ### 9.5 Tradeoffs
 
@@ -566,6 +597,20 @@ abcrom  [opts]  tune.abc
 - **Emulator target only.** The patched `.lnx` carries the standard 64-byte header
   and runs in Handy / Mednafen / Felix. Real-hardware carts need the encrypted
   micro-loader — a separate path, out of scope for quick testing.
+- **Caller drives compile + launch.** `abcrom` does not compile `.abc` source or start
+  an emulator; those are two explicit extra commands (§9.4). The gain is a tool with no
+  subprocess, temp-file, or `PATH` dependencies — see §9.6.
+
+### 9.6 Portability
+
+Because `abcrom` is a pure file-to-file transform, its host build depends only on ISO
+C stdio/stdlib (`fopen`/`fread`/`fwrite`) and opens every file in binary mode
+(`"rb"`/`"wb"`). It must **not** use `system()`, `popen()`, `mkstemp`/`mkstemps`,
+`<unistd.h>`, a hard-coded `/tmp` path, or any other POSIX-only facility — those were
+the sole reasons the earlier design failed to compile under MSVC. This keeps `abcrom`
+in line with the other standalone tools (`abccc`, `lnx`), which are already
+host-portable, and lets all three build unchanged from their `.vcxproj` files on
+Windows as well as under the Linux/macOS toolchain.
 
 ---
 
@@ -661,5 +706,5 @@ busy?:     if (snd_active()) ...
 SFX:       mikey_snd_volume(c, v); mikey_snd_pitch(c, p); ...
 
 author:    edit tune.abc  ->  abccc -f s -l name_music -o name.s tune.abc
-audition:  abcrom --run tune.abc
+audition:  abccc -f bin -o tune.bin tune.abc  ->  abcrom -o test.lnx tune.bin  ->  <emulator> test.lnx
 ```

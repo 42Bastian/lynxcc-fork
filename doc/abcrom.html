@@ -12,14 +12,16 @@ See doc/licenses.html.
 <link rel="stylesheet" href="doc.css">
 <script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
 </head><body>
-<site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>abcrom Users Guide</h1></header><div class="abstract">abcrom is a standalone Lynx Game Development SDK utility that turns a tune into a
-runnable <code>.lnx</code> cartridge for auditioning in an emulator, with no
-toolchain at test time. It ships a pre-assembled <em>template</em> ROM &mdash; the
-<code>snd</code> sound engine plus a tiny boot harness &mdash; and patches a
-compiled tune stream into a reserved region, so a tune reaches a playable ROM in
-milliseconds. It is host-compiled and does not invoke cc65. Tunes are authored in
-ABC and compiled by <a href="abccc.html">abccc</a>; for how the engine plays a
-stream, see the <a href="sound.html">Sound</a> page.</div><nav class="toc"><h2>Contents</h2><ul>
+<site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>abcrom Users Guide</h1></header><div class="abstract">abcrom is a standalone Lynx Game Development SDK utility that patches a compiled
+tune stream into a runnable <code>.lnx</code> cartridge for auditioning in an
+emulator, with no toolchain at test time. It ships a pre-assembled <em>template</em>
+ROM &mdash; the <code>snd</code> sound engine plus a tiny boot harness &mdash; and
+patches the stream into a reserved region, so a tune reaches a playable ROM in
+milliseconds. It is a pure file-to-file transform: host-compiled, and it never
+invokes cc65 or <a href="abccc.html">abccc</a>, never shells out, and never launches
+an emulator. Tunes are authored in ABC and compiled to a stream by
+<a href="abccc.html">abccc</a> first; for how the engine plays a stream, see the
+<a href="sound.html">Sound</a> page.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Overview</a></li>
 <li class="lvl1"><a href="#sect-2">2. How the template patcher works</a></li>
 <li class="lvl1"><a href="#sect-3">3. Usage</a></li>
@@ -27,16 +29,19 @@ stream, see the <a href="sound.html">Sound</a> page.</div><nav class="toc"><h2>C
 <li class="lvl1"><a href="#sect-5">5. Copyright</a></li>
 </ul></nav><h2 id="sect-1">1. Overview</h2>
 <p>Once a tune is written, you usually want to hear it before wiring it into a
-game. abcrom gives that fast feedback loop: it takes an ABC tune (or an
-already-compiled stream) and produces a bootable <code>.lnx</code> that plays the
-tune on load in any Lynx emulator &mdash; no compile, no link, no cc65 installed.
-It is the preview companion to <a href="abccc.html">abccc</a>, which does the actual
-ABC&nbsp;&rarr;&nbsp;stream compilation.</p>
+game. abcrom gives that fast feedback loop: you compile the tune to a stream with
+<a href="abccc.html">abccc</a>, and abcrom patches that stream into a bootable
+<code>.lnx</code> that plays it on load in any Lynx emulator &mdash; no link, no cc65
+installed. It is the preview companion to <a href="abccc.html">abccc</a>, which does
+the actual ABC&nbsp;&rarr;&nbsp;stream compilation.</p>
 <p>abcrom lives under <code>tools/abcrom/</code> and its binary installs into the
-root <code>bin/</code> alongside the rest of the SDK utilities. It shells out to
-<code>abccc</code> (which must be on <code>PATH</code>) to compile a tune, then does
-its own patching; pass <code>--bin</code> if the input is already a compiled
-stream.</p>
+root <code>bin/</code> alongside the rest of the SDK utilities. It is a pure
+file-to-file transform &mdash; it reads a compiled <code>.bin</code> stream and writes
+a <code>.lnx</code>, and never runs <code>abccc</code>, never creates a temporary
+file, and never launches an emulator. Compile the tune first with
+<code>abccc -f bin</code>, then run the patched ROM in the emulator of your choice.
+Keeping abcrom free of subprocess, temp-file and <code>PATH</code> dependencies lets
+it build and behave identically on Linux, macOS and Windows.</p>
 <h2 id="sect-2">2. How the template patcher works</h2>
 <p>abcrom ships a pre-assembled <em>template</em> ROM &mdash; the <code>snd</code>
 engine plus a tiny boot harness and four fixed, reserved tune regions &mdash; and
@@ -50,18 +55,31 @@ compiler. On boot the harness calls <code>snd_init()</code> then
 <code>snd_play()</code> for each non-empty region and loops; an empty region is a
 single <code>END</code> byte and that channel stays silent.</p>
 <h2 id="sect-3">3. Usage</h2>
-<p>abcrom is invoked with a tune and options:</p>
-<pre class="verb">abcrom  [opts]  tune.abc
-  -o FILE          output .lnx (default: &lt;tune&gt;.lnx)
+<p>abcrom is invoked with a compiled stream and options. The input (and every
+<code>--channels</code> entry) is an <code>abccc -f bin</code> stream, not ABC source,
+and <code>-o</code> is required:</p>
+<pre class="verb">abcrom  -o FILE.lnx  [opts]  tune.bin
+  -o FILE          output .lnx (REQUIRED)
   -t FILE          template .lnx (default: bundled template)
-  --channels MAP   place tunes on channels, e.g. 0:bass.abc,1:lead.abc
-  --name STR       cart-name field in the .lnx header
-  --run [EMU]      launch emulator after patching
-  --bin            input is already a compiled stream, skip abccc</pre>
-<p>The simplest run patches one tune onto channel&nbsp;0 and writes a ROM beside it:</p>
-<pre class="verb">        abcrom tune.abc                        # -&gt; tune.lnx
-        abcrom --channels 0:bass.abc,1:lead.abc -o song.lnx bass.abc
-        abcrom --run tune.abc                   # patch, then launch an emulator</pre>
+  --channels MAP   place streams on channels, e.g. 0:bass.bin,1:lead.bin
+  --name STR       cart-name field in the .lnx header</pre>
+<p>The audition loop is three explicit steps &mdash; compile, patch, launch:</p>
+<pre class="verb">        abccc -f bin -o tune.bin tune.abc      # compile the stream
+        abcrom -o test.lnx tune.bin            # patch it into the template
+        handy test.lnx                         # launch the emulator yourself
+
+        # two voices, one ROM:
+        abccc -f bin -o bass.bin bass.abc
+        abccc -f bin -o lead.bin lead.abc
+        abcrom --channels 0:bass.bin,1:lead.bin -o song.lnx</pre>
+<p>A tune that uses <em>pointer envelopes</em> must be compiled at the runtime address
+its channel region occupies. Because abcrom no longer runs abccc, you pass that
+address to abccc yourself with <code>--org</code>: the payload sits 10&nbsp;bytes past
+the template's <code>_abcr_region<var>C</var></code> symbol, which with the bundled
+template is <code>$0AE2</code> for channel&nbsp;0. Tunes without pointer envelopes are
+position-independent and need no <code>--org</code>.</p>
+<pre class="verb">        abccc -f bin --org 0x0AE2 -o tune.bin tune.abc
+        abcrom -o test.lnx tune.bin</pre>
 <h2 id="sect-4">4. The template ROM</h2>
 <p>The template embeds a specific engine build and stream-format version. Its
 source lives in <code>tools/abcrom/template/</code> and the bundled default

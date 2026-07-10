@@ -350,12 +350,18 @@ mikey_snd_octave   (2, 2);
 mikey_snd_volume   (2, 96);    /* a short burst -> snare-like hit */</code></pre>
 
 <h2 id="audition">5. Auditioning with abcrom</h2>
-<p>The <code>abcrom</code> tool turns a tune into a runnable <code>.lnx</code> with
-no toolchain at test time: it patches a compiled stream into a reserved region of a
-pre-assembled template ROM (the <code>snd</code> engine plus a boot harness), so a
-tune reaches a playable cartridge in milliseconds and plays on load in any Lynx
-emulator. The template, its rebuild (<code>make&nbsp;abcrom-template</code>), the
-channel mapping and every option are documented on the dedicated
+<p>The <code>abcrom</code> tool patches a compiled tune stream into a runnable
+<code>.lnx</code> with no toolchain at test time: it drops the stream into a reserved
+region of a pre-assembled template ROM (the <code>snd</code> engine plus a boot
+harness), so a tune reaches a playable cartridge in milliseconds and plays on load in
+any Lynx emulator. It is a pure file-to-file transform &mdash; you compile the stream
+with <code>abccc -f bin</code> first, then launch the written ROM in your emulator
+yourself:</p>
+<pre class="verb">        abccc -f bin -o tune.bin tune.abc
+        abcrom -o test.lnx tune.bin
+        handy test.lnx</pre>
+<p>The template, its rebuild (<code>make&nbsp;abcrom-template</code>), the channel
+mapping and every option are documented on the dedicated
 <a href="abcrom.html">abcrom</a> tool page.</p>
 
 <h2 id="sfx">6. Sound effects (sfx)</h2>
