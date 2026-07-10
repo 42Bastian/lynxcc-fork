@@ -827,6 +827,13 @@ pixel &mdash; down-right from a top-left corner, symmetrically from a centred
 multi-quadrant anchor, up-left from a bottom-right corner.</figcaption>
 </figure>
 
+<p>The <a href="samples.html#spritefx-c"><code>spritefx.c</code></a> sample turns this
+figure into something you can drive: it animates <code>hsize</code>, <code>vsize</code>,
+<code>stretch</code> and <code>tilt</code> on a choice of shapes and lets you cycle the
+action point through all five spots &mdash; the four corners and the centre &mdash;
+with a magenta cross pinned at the anchor so you can watch each shape grow or shear
+around it exactly as drawn here.</p>
+
 <h3 id="sect-6-2">6.2. Flipping about the reference point</h3>
 <p>Two bits in <code>SPRCTL0</code> mirror a sprite as Suzy paints it, so one image
 in RAM can face either way without a second copy:</p>

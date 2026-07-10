@@ -40,6 +40,30 @@ examples/suzy/frame1.h
 examples/suzy/frame2.h
 examples/suzy/frame3.h
 
+# sp65-generated action-point sprite headers (rebuilt from the spritefx PCX
+# shapes: 5 variants per shape + the marker; see suzy/spritefx.c)
+examples/suzy/cube_tl.h
+examples/suzy/cube_tr.h
+examples/suzy/cube_c.h
+examples/suzy/cube_bl.h
+examples/suzy/cube_br.h
+examples/suzy/crystal_tl.h
+examples/suzy/crystal_tr.h
+examples/suzy/crystal_c.h
+examples/suzy/crystal_bl.h
+examples/suzy/crystal_br.h
+examples/suzy/star_tl.h
+examples/suzy/star_tr.h
+examples/suzy/star_c.h
+examples/suzy/star_bl.h
+examples/suzy/star_br.h
+examples/suzy/ball_tl.h
+examples/suzy/ball_tr.h
+examples/suzy/ball_c.h
+examples/suzy/ball_bl.h
+examples/suzy/ball_br.h
+examples/suzy/marker.h
+
 # Python bytecode cache
 __pycache__/
 

@@ -51,7 +51,7 @@ endif
 
 ROOT_EXAMPLES = lynxdemo
 GAMES         = breakout invaders raycaster sybil
-SUZY          = muldivtest spritetest spritesheet spriteslice sprpcktest suzyasync suzyasyncbench suzybench packtest fonttest fontvar textdir collision
+SUZY          = muldivtest spritetest spritesheet spriteslice sprpcktest spritefx suzyasync suzyasyncbench suzybench packtest fonttest fontvar textdir collision
 MIKEY         = setbpp sndtune sfxtest sfxdemo
 MEMORY        = heaptest zeropage
 NETWORK       = comlynx
@@ -140,6 +140,38 @@ suzy/spritesheet.o: suzy/spritesheet.c suzy/sheet_anim.h
 suzy/spriteslice.o: suzy/spriteslice.c $(SHEET_FRAMES)
 
 # --------------------------------------------------------------------------
+# Build-time sprite assets for the transform tour (suzy/spritefx.c). Five
+# source PCX images (four 16x16 shapes + a 5x5 marker) are drawn by
+# suzy/spritefx_shapes.py and committed; sp65 compacts each shape FIVE times,
+# once per action point (ax,ay), because the reference point is baked into the
+# sprite data, not the SCB. That yields 20 shape headers plus the marker, all
+# regenerated whenever an image or the converter changes (see suzy/spritefx.c
+# and doc/sprites.html sec. 6, sec. 6.1). The action-point coordinates below
+# match the ap_name[] order the program tables them in.
+
+SPRITEFX_SHAPES = cube crystal star ball
+SPRITEFX_HDRS   = $(foreach s,$(SPRITEFX_SHAPES),\
+                    suzy/$(s)_tl.h suzy/$(s)_tr.h suzy/$(s)_c.h \
+                    suzy/$(s)_bl.h suzy/$(s)_br.h) \
+                  suzy/marker.h
+
+# One sp65 run per shape emits its five action-point variants. Each -c converts
+# the whole loaded image (no --slice, so no --pop): only the ax,ay action point
+# differs between them, which is the whole point of the demo.
+suzy/%_tl.h suzy/%_tr.h suzy/%_c.h suzy/%_bl.h suzy/%_br.h: suzy/%.pcx
+	$(SP65) -r $< \
+	  -c lynx-sprite,mode=packed,ax=0,ay=0   -w suzy/$*_tl.h,format=c,ident=$*_tl \
+	  -c lynx-sprite,mode=packed,ax=15,ay=0  -w suzy/$*_tr.h,format=c,ident=$*_tr \
+	  -c lynx-sprite,mode=packed,ax=8,ay=8   -w suzy/$*_c.h,format=c,ident=$*_c   \
+	  -c lynx-sprite,mode=packed,ax=0,ay=15  -w suzy/$*_bl.h,format=c,ident=$*_bl \
+	  -c lynx-sprite,mode=packed,ax=15,ay=15 -w suzy/$*_br.h,format=c,ident=$*_br
+
+suzy/marker.h: suzy/marker.pcx
+	$(SP65) -r $< -c lynx-sprite,mode=packed,ax=8,ay=8 -w $@,format=c,ident=marker
+
+suzy/spritefx.o: suzy/spritefx.c $(SPRITEFX_HDRS)
+
+# --------------------------------------------------------------------------
 # sprpcktest packs two sprites offline with sprpck (tools/extern/sprpck) to show
 # its BMP and SPS inputs - the formats sp65 does not read. sprpck emits the
 # packed Suzy sprite-data block as a raw binary .spr (not a C array), so
@@ -226,6 +258,7 @@ install:
 	$(INSTALL) -m0644 suzy/heart.pcx suzy/heart.pcx.py $(DESTDIR)$(examplesdir)/suzy
 	$(INSTALL) -m0644 suzy/sheet.pcx suzy/sheet.pcx.py $(DESTDIR)$(examplesdir)/suzy
 	$(INSTALL) -m0644 suzy/sprpckdata.s suzy/logo.bmp suzy/logo.bmp.py suzy/icon.sps $(DESTDIR)$(examplesdir)/suzy
+	$(INSTALL) -m0644 suzy/cube.pcx suzy/crystal.pcx suzy/star.pcx suzy/ball.pcx suzy/marker.pcx suzy/spritefx_shapes.py $(DESTDIR)$(examplesdir)/suzy
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/mikey
 	$(INSTALL) -m0644 $(addprefix mikey/,$(addsuffix .c,$(MIKEY))) $(DESTDIR)$(examplesdir)/mikey
 	$(INSTALL) -m0644 mikey/theme.abc mikey/theme.s mikey/sfx.s $(DESTDIR)$(examplesdir)/mikey
@@ -246,7 +279,7 @@ zip:
 # Clean-up rules
 
 mostlyclean:
-	@$(DEL) $(EXELIST:.lnx=.map) $(EXELIST:.lnx=.o) $(EXELIST:.lnx=.s) $(SPRITETEST_HDRS) suzy/sheet_anim.h $(SHEET_FRAMES) $(SPRPCK_SPR) suzy/sprpckdata.o suzy/logo.pal mikey/theme.o mikey/sfx.o games/invtheme.o 2>$(NULLDEV)
+	@$(DEL) $(EXELIST:.lnx=.map) $(EXELIST:.lnx=.o) $(EXELIST:.lnx=.s) $(SPRITETEST_HDRS) suzy/sheet_anim.h $(SHEET_FRAMES) $(SPRITEFX_HDRS) $(SPRPCK_SPR) suzy/sprpckdata.o suzy/logo.pal mikey/theme.o mikey/sfx.o games/invtheme.o 2>$(NULLDEV)
 
 clean: mostlyclean
 	@$(DEL) $(EXELIST) 2>$(NULLDEV)
