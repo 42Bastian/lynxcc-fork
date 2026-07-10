@@ -44,11 +44,12 @@ the example games and project templates under the <strong>MIT License</strong>
 (section&nbsp;6); and the documentation under <strong>Creative Commons
 Attribution 4.0</strong> (section&nbsp;7). Every source file carries an
 <code>SPDX-License-Identifier</code> tag recording which of these applies, so the
-per-file scope is machine-checkable. Inherited cc65 files and the bundled
-third-party headers are <em>not</em> relicensed &mdash; they keep their own
-notices, exactly as the Mozilla Public License's per-file scope intends. The
-full policy and the exact file mapping live in
-<code>design/LYNX_LICENSE_POLICY_DESIGN.md</code>.</p>
+per-file scope is machine-checkable. Inherited cc65 files, the bundled
+third-party headers, and vendored external tools under <code>tools/extern/</code>
+(e.g. the Apache-2.0 <code>sprpck</code>, section&nbsp;4.3) are <em>not</em>
+relicensed &mdash; they keep their own notices, exactly as the Mozilla Public
+License's per-file scope intends. The full policy and the exact file mapping live
+in <code>design/LYNX_LICENSE_POLICY_DESIGN.md</code>.</p>
 <p>Where a page on this site (notably this one) reproduces a third party's
 license verbatim, that quoted text remains under its own terms; the documentation
 license in section&nbsp;7 covers each page's own prose, not the licenses it
@@ -129,11 +130,14 @@ still covered by this copyright. It is reproduced here verbatim:</p>
 --------------------------------------------------------------------------</pre>
 
 <h2 id="sect-4">4. Bundled third-party components</h2>
-<p>The following components ship with the runtime library. Each is distributed
-under the same zlib-style terms as section&nbsp;2, and each carries the
-copyright notice shown. The full notice also remains in the header of every
-source file it covers (<code>include/lynx/zlib.h</code>, <code>include/lynx/lz4.h</code>,
-and the corresponding <code>libraries/</code> sources).</p>
+<p>The SDK bundles some code it did not author. The decompression components in
+sections&nbsp;4.1&ndash;4.2 ship inside the runtime library under the same
+zlib-style terms as section&nbsp;2; the vendored external tool in
+section&nbsp;4.3 keeps its own, different licence. None of these are relicensed:
+each carries the copyright notice shown here, and the full notice also remains in
+the source files it covers (<code>include/lynx/zlib.h</code>,
+<code>include/lynx/lz4.h</code>, the corresponding <code>libraries/</code> sources,
+and the <code>tools/extern/</code> subtrees).</p>
 <h3 id="sect-4-1">4.1. zlib / inflate decompression</h3>
 <p>The <code>inflatemem</code> / zlib decompression support in
 <code>libraries/compress/</code> and <code>include/lynx/zlib.h</code>:</p>
@@ -151,6 +155,27 @@ library, version 1.1.3, (C) 1995-1998 Jean-loup Gailly and Mark Adler.
 free for any purpose including commercial use, alterable and redistributable,
 provided the origin is not misrepresented, altered versions are marked as such,
 and the notice is not removed from any source distribution.</p>
+
+<h3 id="sect-4-3">4.3. sprpck &mdash; Lynx Sprite Packer (Apache-2.0)</h3>
+<p>The <code>sprpck</code> sprite/bitmap converter is a third-party host tool
+vendored under <code>tools/extern/sprpck/</code> as a pristine
+<a href="https://codeberg.org/42Bastian/sprpck">git subtree</a>. It is
+<strong>never modified</strong> and is <strong>not</strong> relicensed under the
+SDK's Mozilla Public License; it keeps its upstream <strong>Apache License,
+version&nbsp;2.0</strong>:</p>
+<pre class="verb">Lynx Sprite Packer
+(C) 1997..2021 42Bastian Schick
+              Matthias  Domin
+Contributions from Karri Kaksonen and LordKraken</pre>
+<p>The full, verbatim Apache-2.0 text ships with the tool as
+<code>tools/extern/sprpck/LICENSE</code>; the canonical licence is published at
+<a href="https://www.apache.org/licenses/LICENSE-2.0">https://www.apache.org/licenses/LICENSE-2.0</a>.
+Because the vendored sources are kept byte-identical to upstream, no
+&ldquo;changed the files&rdquo; notice under Apache&nbsp;&sect;4(b) is required;
+the project-owned build glue that compiles the tool into <code>bin/sprpck</code>
+lives outside the vendored tree (<code>tools/Makefile</code>,
+<code>tools/extern/README.md</code>) and does not alter it. See
+<code>design/LYNX_EXTERN_TOOLS_DESIGN.md</code> for the vendoring policy.</p>
 
 <h2 id="sect-5">5. SDK toolchain &mdash; Mozilla Public License 2.0</h2>
 <p>The source files this fork has <em>authored from scratch</em> &mdash; the Suzy

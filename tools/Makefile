@@ -25,7 +25,26 @@ endif
 # after tools/). See design/LYNX_SND_ENGINE_DESIGN.md §7/§9.
 PROGS = lnx abccc abcrom
 
-.PHONY: all mostlyclean clean install zip avail unavail bin abcrom-template $(PROGS)
+# Vendored third-party host tools.  Each lives in extern/<tool>/ as a pristine
+# git subtree that is NEVER modified (see design/LYNX_EXTERN_TOOLS_DESIGN.md and
+# extern/README.md).  They build with the rest of tools/ into the shared root
+# bin/, but every project-owned bit — this build glue included — stays OUTSIDE
+# the vendored tree so a `git subtree pull` never has to touch our files.  Since
+# upstream code cannot be edited, each tool declares its own source glob, any
+# upstream-required defines, and builds with warnings suppressed (we do not lint
+# code we do not own).  Their upstream licenses are recorded in doc/licenses.html.
+#
+#   sprpck  Lynx sprite packer (Apache-2.0, https://codeberg.org/42Bastian/sprpck)
+EXTERN_PROGS = sprpck
+
+sprpck_SRC      = extern/sprpck/src
+sprpck_CPPFLAGS = -DUNIX
+
+# All tool binaries (project-authored + vendored) share the build/install/clean
+# machinery below and the single root bin/.
+ALL_PROGS = $(PROGS) $(EXTERN_PROGS)
+
+.PHONY: all mostlyclean clean install zip avail unavail bin abcrom-template $(ALL_PROGS)
 
 .SUFFIXES:
 
@@ -57,6 +76,11 @@ endif
 CFLAGS += -MMD -MP -O3 \
           -Wall -Wextra -Wno-char-subscripts $(USER_CFLAGS)
 
+# Vendored third-party sources are compiled but not linted: we cannot fix
+# warnings in code we are forbidden to modify, so drop the strict -W flags for
+# EXTERN_PROGS while keeping optimisation and dependency generation.
+EXTERN_CFLAGS = -MMD -MP -O3 -w $(USER_CFLAGS)
+
 ifdef CMD_EXE
   EXE_SUFFIX=.exe
 endif
@@ -65,7 +89,7 @@ ifdef CROSS_COMPILE
   EXE_SUFFIX=.exe
 endif
 
-all bin: $(PROGS)
+all bin: $(ALL_PROGS)
 
 # (Re)build the abcrom template ROM with the lynxcc toolchain.  On demand only:
 # the committed abcrom/template.lnx is the default and clean does NOT remove it.
@@ -73,10 +97,10 @@ abcrom-template:
 	$(MAKE) -C abcrom/template all
 
 mostlyclean:
-	$(call RMDIR,$(foreach prog,$(PROGS),../wrk/$(prog)))
+	$(call RMDIR,$(foreach prog,$(ALL_PROGS),../wrk/$(prog)))
 
 clean:
-	$(call RMDIR,$(foreach prog,$(PROGS),../wrk/$(prog)))
+	$(call RMDIR,$(foreach prog,$(ALL_PROGS),../wrk/$(prog)))
 
 ifdef CMD_EXE
 
@@ -101,18 +125,18 @@ endef # UNAVAIL_recipe
 install:
 	$(if $(PREFIX),,$(error variable "PREFIX" must be set))
 	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(foreach prog,$(PROGS),$(INSTALL) ../bin/$(prog) $(DESTDIR)$(bindir);)
+	$(foreach prog,$(ALL_PROGS),$(INSTALL) ../bin/$(prog) $(DESTDIR)$(bindir);)
 
 avail:
-	$(foreach prog,$(PROGS),$(AVAIL_recipe))
+	$(foreach prog,$(ALL_PROGS),$(AVAIL_recipe))
 
 unavail:
-	$(foreach prog,$(PROGS),$(UNAVAIL_recipe))
+	$(foreach prog,$(ALL_PROGS),$(UNAVAIL_recipe))
 
 endif # CMD_EXE
 
 zip:
-	@cd .. && zip cc65 $(foreach prog,$(PROGS),bin/$(prog)$(EXE_SUFFIX))
+	@cd .. && zip cc65 $(foreach prog,$(ALL_PROGS),bin/$(prog)$(EXE_SUFFIX))
 
 define OBJS_template
 
@@ -145,6 +169,40 @@ endef # PROG_template
 ../bin:
 	@$(call MKDIR,$@)
 
+# Vendored third-party tools: same shape as PROG_template, but sources come from
+# the tool's own (unmodifiable) layout via $($1_SRC), compiled with the relaxed
+# EXTERN_CFLAGS plus the tool's own $($1_CPPFLAGS).  Object files still land in
+# ../wrk/$1 and the binary in the shared ../bin, so clean/install/zip treat
+# vendored tools identically to project-authored ones.
+define EXTERN_OBJS_template
+
+$1_OBJS := $$(patsubst %.c,../wrk/$1/%.o,$$(notdir $$(wildcard $$($1_SRC)/*.c)))
+
+$$($1_OBJS): | ../wrk/$1
+
+../wrk/$1:
+	@$$(call MKDIR,$$@)
+
+DEPS += $$($1_OBJS:.o=.d)
+
+endef # EXTERN_OBJS_template
+
+define EXTERN_template
+
+$$(eval $$(call EXTERN_OBJS_template,$1))
+
+../bin/$1$(EXE_SUFFIX): $$($1_OBJS) | ../bin
+	$$(CC) $$(LDFLAGS) -o $$@ $$^ $$(LDLIBS)
+
+$1: ../bin/$1$(EXE_SUFFIX)
+
+../wrk/$1/%.o: $$($1_SRC)/%.c
+	@echo $$<
+	@$$(CC) -c $$(EXTERN_CFLAGS) $$($1_CPPFLAGS) -o $$@ $$<
+
+endef # EXTERN_template
+
 $(foreach prog,$(PROGS),$(eval $(call PROG_template,$(prog))))
+$(foreach prog,$(EXTERN_PROGS),$(eval $(call EXTERN_template,$(prog))))
 
 -include $(DEPS)

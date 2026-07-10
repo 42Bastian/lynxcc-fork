@@ -660,6 +660,7 @@ var SEARCH_INDEX = [
   ["licenses.html","sect-4","4. Bundled third-party components"],
   ["licenses.html","sect-4-1","4.1. zlib / inflate decompression"],
   ["licenses.html","sect-4-2","4.2. lz4 decompression"],
+  ["licenses.html","sect-4-3","4.3. sprpck — Lynx Sprite Packer (Apache-2.0)"],
   ["licenses.html","sect-5","5. SDK toolchain — Mozilla Public License 2.0"],
   ["licenses.html","sect-6","6. Example games and templates — MIT License"],
   ["licenses.html","sect-7","7. Documentation — Creative Commons Attribution 4.0"],

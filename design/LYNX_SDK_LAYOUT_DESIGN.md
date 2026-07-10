@@ -37,7 +37,7 @@ stay in sync at every commit, per `CLAUDE.md`.
 - Give the new standalone SDK utility (`.lnx` manipulation) a home of its own,
   separate from the cc65-derived compiler.
 - Add the scaffolding a real SDK needs: `templates/`, `examples/`, `tests/`,
-  `extern/`.
+  and a home for vendored third-party tools (`tools/extern/`).
 - Do all of the above **without** breaking the working toolchain or its
   `CC65_HOME` discovery contract.
 
@@ -102,6 +102,8 @@ lynxcc/                     # repo root == CC65_HOME (dev tree)
 │   ├── lnx/                #   .lnx header/segment tool  (NEW, see §8)
 │   ├── abccc/              #   ABC tune -> event stream compiler (host, MIT)
 │   ├── abcrom/             #   tune test-ROM patcher + template/  (host, MIT)
+│   ├── extern/             #   vendored third-party tools (subtrees; see below)
+│   │   └── sprpck/         #     Lynx sprite packer (Apache-2.0, never modified)
 │   ├── *.vcxproj           #   MSVC projects (tool binaries)
 │   └── Makefile
 ├── runtime/                # C runtime + startup (was libsrc/runtime + crt0)
@@ -131,7 +133,6 @@ lynxcc/                     # repo root == CC65_HOME (dev tree)
 ├── examples/               # sample projects (was samples/), grouped by subsystem (§10)
 ├── tests/                  # automated tests + harness (NEW, see §10)
 │   └── emu/gearlynx/       #   local test emulator (NOT shipped, see §8/§10)
-├── extern/                 # placeholder for future vendored third-party code
 ├── doc/                    # documentation (name unchanged)
 ├── design/                 # *_DESIGN.md source-of-truth docs (unchanged)
 ├── Makefile                # top-level orchestrator
@@ -157,9 +158,10 @@ Deviations from the originally proposed layout, with rationale:
   proposal omitted them.
 - **`doc/` keeps its name** (not renamed to `docs/`).
 - **GearLynx is not shipped.** The emulator is a local testing tool only; it
-  lives under `tests/emu/` and is excluded from every release artifact. `extern/`
-  remains as a placeholder for any genuinely-vendored third-party code added
-  later, but holds nothing today.
+  lives under `tests/emu/` and is excluded from every release artifact.
+  Genuinely-vendored third-party code now lives under **`tools/extern/`** (git
+  subtrees, built into the shared `bin/`), not a top-level `extern/`; see
+  `LYNX_EXTERN_TOOLS_DESIGN.md`.
 
 ---
 
@@ -415,18 +417,23 @@ existing toolchain capability — wrap or rename instead.
 | `abccc` | IMPLEMENTED | compile ABC tune text into the sound engine's binary event stream (`-f s`/`h`/`bin`). Host-compiled, MIT; see `design/LYNX_SND_ENGINE_DESIGN.md` §7. | No overlap: there is no on-target or toolchain ABC compiler. |
 | `abcrom` | IMPLEMENTED | patch an `abccc`-compiled tune into a reserved region of a pre-built template `.lnx` for zero-toolchain emulator auditioning. Host-compiled, MIT; see `design/LYNX_SND_ENGINE_DESIGN.md` §9. Its template ROM is rebuilt on demand with `make abcrom-template`. | Does **not** invoke `ld65`; it patches an already-linked template rather than linking a new ROM. |
 
-Sprite/bitmap conversion is **not** a `tools/` entry: that is `sp65`, which
-already exists in the toolchain (`compiler/`). No duplicate sprite engine and no
-separate `sprpck` wrapper are built. The `lnx` tool is deliberately scoped to
-post-link manipulation so it does not re-implement `ld65`. Cart/EEPROM image
-construction stays handled by `ld65` + `cfg/*.cfg` as today; no `romtool` is
+The project does **not** build its own sprite/bitmap converter: that is `sp65`,
+which already exists in the toolchain (`compiler/`). As of 2026-07-10, however,
+the third-party `sprpck` packer is **vendored** under `tools/extern/sprpck/`
+(Apache-2.0) — not as a project-authored duplicate but as an unmodified upstream
+tool that complements `sp65` (it adds action points, PI1/BMP input, batch mode,
+LYXASS palette output and `-p0` cc65-object output). Vendored tools follow their
+own policy and build glue; see `LYNX_EXTERN_TOOLS_DESIGN.md`. The `lnx` tool is
+deliberately scoped to post-link manipulation so it does not re-implement
+`ld65`. Cart/EEPROM image construction stays handled by `ld65` + `cfg/*.cfg` as
+today; no `romtool` is
 built.
 
 The GearLynx headless emulator + MCP harness (currently `tools/gearlynx`) is
 **not** part of the SDK and is never shipped. It is a local testing tool only:
 it lives under `tests/emu/gearlynx`, is driven by the integration tests (§10),
-and is excluded from all release artifacts (§11). It is not placed in `extern/`,
-which is reserved for genuinely-vendored code that *does* ship.
+and is excluded from all release artifacts (§11). It is not placed in
+`tools/extern/`, which is reserved for genuinely-vendored code that *does* ship.
 
 ---
 
@@ -536,9 +543,14 @@ binaries expect, and **exclude `tests/` (including `tests/emu/gearlynx`)** — t
 emulator and test harness never ship in an SDK release. A dedicated `packaging/`
 directory is **not** added.
 
-- **`extern/`** — placeholder for genuinely-vendored third-party code that
-  *ships* (e.g. a future compression reference). It holds nothing today;
-  GearLynx is **not** here — it is a non-shipped test tool under `tests/emu/`.
+- **`tools/extern/`** — genuinely-vendored third-party tools that *ship*, brought
+  in as git subtrees and built into the shared `bin/` alongside the other
+  `tools/` utilities. First occupant: `sprpck` (Apache-2.0). Vendored code is
+  never modified; the build glue and provenance live outside the subtree. Full
+  policy in `LYNX_EXTERN_TOOLS_DESIGN.md`. (This realises what earlier drafts
+  called a root-level `extern/` placeholder; it is a subdirectory of `tools/`,
+  and GearLynx is **not** here — it is a non-shipped test tool under
+  `tests/emu/`.)
 - **`doc/`** — keeps its name (not renamed). The HTML doc build (`doc/Makefile`,
   `doc.css`, `doc.js`) is updated in place as code moves: internal links and
   `design/` cross-references re-pathed, new tool/library pages added. Per

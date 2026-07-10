@@ -45,6 +45,13 @@ cc65 zlib-style license (root `LICENSE`), the John R. Dunning notice, and the
 bundled third-party decompression notices (`include/lynx/zlib.h`,
 `include/lynx/lz4.h` and their `libraries/compress/` sources).
 
+Vendored external tools under `tools/extern/` are a further third-party category:
+each keeps its **own** upstream licence and is never relicensed or modified. The
+first is `sprpck` (**Apache-2.0**), recorded in `doc/licenses.html` §4.3; the
+vendoring and build policy is `LYNX_EXTERN_TOOLS_DESIGN.md`. Because the code is
+kept byte-identical to upstream, the SDK adds no SPDX tag to those files — the
+project-authored parts (build glue, provenance) live outside the subtree.
+
 ### 2.1 Why these three
 
 - **MPL-2.0 is file-scoped by design.** Its copyleft attaches per *file* (it
