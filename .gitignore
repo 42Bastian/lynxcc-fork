@@ -75,3 +75,5 @@ templates/*/game.lnx
 templates/*/game.map
 templates/*/src/*.o
 templates/*/src/*.s
+examples/multicart/multicart.lyx
+examples/multicart/multicart.mak
