@@ -237,7 +237,8 @@ This is the core new capability: a small **always-linked core** plus
 | Core platform | (in `lynx.lib`) | always | `libraries/core` cart, load, lseek, clock, eeprom, joy, ser |
 | C stdlib | (in `lynx.lib`) | always | `libraries/libc` |
 | Graphics | `lynx-graphics.lib` | opt-in | `libraries/graphics` Lynx graphics + fonts |
-| Audio | `lynx-audio.lib` | opt-in | `libraries/audio` Mikey sound |
+| Audio | `lynx-audio.lib` | opt-in | `libraries/audio` Mikey sound (snd engine + sfx) |
+| HandyMusic | `lynx-handymusic.lib` | opt-in | `libraries/audio/handymusic` BGM+SFX engine, mutually exclusive with `lynx-audio` (design/LYNX_HANDYMUSIC_DESIGN.md) |
 | Math | `lynx-math.lib` | opt-in | `libraries/math` Suzy hw mul/div + async |
 | Compress | `lynx-compress.lib` | opt-in | `libraries/compress` zlib + lz4 |
 | SD/GD cart | `lynx-sdcard-gd.lib` | opt-in | `libraries/sdcard-gd` RetroHQ SD/GD flash cart (design/LYNX_SDCARD_GD_API_DESIGN.md) |

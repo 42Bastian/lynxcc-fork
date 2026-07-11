@@ -69,7 +69,7 @@ EXELIST = \
 # --------------------------------------------------------------------------
 # Generic rules
 
-.PHONY: all mostlyclean clean install zip examples multicart-example
+.PHONY: all mostlyclean clean install zip examples multicart-example handymusic-example
 
 %: %.c
 %: %.s
@@ -230,7 +230,7 @@ games/invaders.lnx: games/invaders.o games/invtheme.o
 
 # --------------------------------------------------------------------------
 
-examples: $(EXELIST) multicart-example
+examples: $(EXELIST) multicart-example handymusic-example
 
 # The multicart example bundles a menu and several game ROMs into one cart with
 # "lnx multicart" + lynxdir, so it has its own Makefile rather than the flat
@@ -238,6 +238,13 @@ examples: $(EXELIST) multicart-example
 # multicart/Makefile and design/LYNX_MULTICART_DESIGN.md.
 multicart-example:
 	@$(MAKE) --no-print-directory -C multicart clean all
+
+# The HandyMusic example drives the hmcc script compiler to build its music/SFX
+# data blobs and links against the reserved-region cfg/lynx-handymusic.cfg, so it
+# has its own Makefile rather than the flat .c -> .lnx rule above. See
+# mikey/handymusic/Makefile and design/LYNX_HANDYMUSIC_DESIGN.md.
+handymusic-example:
+	@$(MAKE) --no-print-directory -C mikey/handymusic clean all
 
 # The top-level Makefile invokes "make -C examples all". Always rebuild the
 # examples from scratch here so that a changed toolchain, library or config is
@@ -269,6 +276,9 @@ install:
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/mikey
 	$(INSTALL) -m0644 $(addprefix mikey/,$(addsuffix .c,$(MIKEY))) $(DESTDIR)$(examplesdir)/mikey
 	$(INSTALL) -m0644 mikey/theme.abc mikey/theme.s mikey/sfx.s $(DESTDIR)$(examplesdir)/mikey
+	$(INSTALL) -d $(DESTDIR)$(examplesdir)/mikey/handymusic
+	$(INSTALL) -m0644 mikey/handymusic/Makefile mikey/handymusic/handymusic.c mikey/handymusic/hmdemo.s $(DESTDIR)$(examplesdir)/mikey/handymusic
+	$(INSTALL) -m0644 mikey/handymusic/instr.txt mikey/handymusic/sfx.txt mikey/handymusic/track1.txt mikey/handymusic/track2.txt mikey/handymusic/track3.txt mikey/handymusic/track4.txt $(DESTDIR)$(examplesdir)/mikey/handymusic
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/memory
 	$(INSTALL) -m0644 $(addprefix memory/,$(addsuffix .c,$(MEMORY))) $(DESTDIR)$(examplesdir)/memory
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/network
@@ -293,3 +303,4 @@ mostlyclean:
 clean: mostlyclean
 	@$(DEL) $(EXELIST) 2>$(NULLDEV)
 	@$(MAKE) --no-print-directory -C multicart clean 2>$(NULLDEV) || true
+	@$(MAKE) --no-print-directory -C mikey/handymusic clean 2>$(NULLDEV) || true

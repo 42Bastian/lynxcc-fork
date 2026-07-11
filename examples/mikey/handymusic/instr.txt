@@ -1,0 +1,324 @@
+;****************************************************************
+; Demo HMCC Instruments
+;
+; FB, Duty
+; $01 50%
+; $03 33%
+; $07 25%
+; $0F 20%
+; $3F 14.29%
+;****************************************************************
+;**************************************
+; Mellow Triangle
+;**************************************
+MellowTriangle
+	waveform $2040
+	volume 24 4
+	tuning 22.0
+	{
+		rest 3
+		volume 32 0
+		loop -1
+			rest 255
+		endloop
+		noteoff
+		volume 32 -4
+		rest 6
+		end
+	}
+;**************************************
+; Standard Pulses
+;**************************************
+Pulse50
+	waveform $1
+	volume 60 8
+	tuning 2.0
+	{
+		rest 3
+		volume 80 0
+		rest 20
+		frequency 0 -1
+		rest 2
+		loop -1
+			frequency -2 1
+			rest 4
+			frequency 2 -1
+			rest 4
+		endloop
+		noteoff
+		frequency 0
+		volume 60 -8
+		rest 6
+		end
+	}
+Pulse33
+	waveform $3
+	volume 60 8
+	tuning 3.0
+	{
+		rest 3
+		volume 80 0
+		rest 20
+		frequency 0 -1
+		rest 2
+		loop -1
+			frequency -2 1
+			rest 4
+			frequency 2 -1
+			rest 4
+		endloop
+		noteoff
+		frequency 0
+		volume 60 -8
+		rest 6
+		end
+	}
+Pulse25
+	waveform $7
+	volume 60 8
+	tuning 4.0
+	{
+		rest 3
+		volume 80 0
+		rest 20
+		frequency 0 -1
+		rest 2
+		loop -1
+			frequency -2 1
+			rest 4
+			frequency 2 -1
+			rest 4
+		endloop
+		noteoff
+		frequency 0
+		volume 60 -8
+		rest 6
+		end
+	}
+Pulse20
+	waveform $F
+	volume 60 8
+	tuning 5.0
+	{
+		rest 3
+		volume 80 0
+		rest 20
+		frequency 0 -1
+		rest 2
+		loop -1
+			frequency -2 1
+			rest 4
+			frequency 2 -1
+			rest 4
+		endloop
+		noteoff
+		frequency 0
+		volume 60 -8
+		rest 6
+		end
+	}
+Pulse14
+	waveform $3F
+	volume 60 8
+	tuning 7.0
+	{
+		rest 3
+		volume 80 0
+		rest 20
+		frequency 0 -1
+		rest 2
+		loop -1
+			frequency -2 1
+			rest 4
+			frequency 2 -1
+			rest 4
+		endloop
+		noteoff
+		frequency 0
+		volume 60 -8
+		rest 6
+		end
+	}
+;**************************************
+; Kind of a Sine
+;**************************************
+SharpySine
+	waveform $2080 $C0F3
+	volume 24 4
+	tuning 24.0
+	{
+		rest 3
+		volume 32 0
+		loop -1
+			rest 255
+		endloop
+		noteoff
+		volume 32 -4
+		rest 6
+		end
+	}
+;**************************************
+; Maybe an Electric Guitar?
+;**************************************
+Electar
+	waveform $9
+	volume 50 2
+	frequency 30 -2
+	tuning 15.0
+	{
+		rest 14
+		volume 80 0
+		rest 4
+		frequency 0 -1
+		rest 2
+		loop -1
+			frequency -2 1
+			rest 4
+			frequency 2 -1
+			rest 4
+		endloop
+		noteoff
+		frequency 0
+		volume 70 -8
+		rest 6
+		end
+	}
+;**************************************
+; Weirdos
+;**************************************
+PulseWap
+	waveform $8
+	volume 60 8
+	tuning 8.0
+	{
+		rest 3
+		volume 80 -1
+		rest 3
+		waveform $19 $A
+		rest 3
+		waveform $2A
+		volume 73 0
+		rest 14
+		frequency 0 -1
+		rest 2
+		loop -1
+			frequency -2 1
+			rest 4
+			frequency 2 -1
+			rest 4
+		endloop
+		noteoff
+		frequency 0
+		volume 60 -8
+		rest 6
+		end
+	}
+WaWap
+	waveform $10 $6
+	volume 60 8
+	tuning 10.0
+	{
+		rest 3
+		volume 80 -1
+		rest 3
+		waveform $10 $E
+		rest 3
+		waveform $10 $1E
+		volume 73 0
+		rest 14
+		frequency 0 -1
+		rest 2
+		loop -1
+			frequency -2 1
+			rest 4
+			frequency 2 -1
+			rest 4
+		endloop
+		noteoff
+		frequency 0
+		volume 60 -8
+		rest 6
+		end
+	}
+DoWap
+	waveform $19 $D
+	volume 60 8
+	tuning 8.0
+	{
+		rest 3
+		volume 80 -1
+		rest 6
+		waveform $19 $F
+		volume 73 0
+		rest 14
+		frequency 0 -1
+		rest 2
+		loop -1
+			frequency -2 1
+			rest 4
+			frequency 2 -1
+			rest 4
+		endloop
+		noteoff
+		frequency 0
+		volume 60 -8
+		rest 6
+		end
+	}
+;**************************************
+; Percussion, Best used through SFX
+;**************************************
+Tish
+	waveform $7B
+	volume 70 -13
+	frequency 4
+	{
+		rest 4
+		noteoff
+		end
+	}
+UpTish
+	waveform $7B
+	volume 0 12
+	frequency 4
+	{
+		rest 8
+		noteoff
+		end
+	}
+Cymbal
+	waveform $7B
+	volume 70 -2
+	frequency 4
+	{
+		rest 34
+		noteoff
+		end
+	}
+SnareLong
+	waveform $7B
+	volume 74 -3
+	frequency 100
+	{
+		rest 23
+		noteoff
+		end
+	}
+SnareShort
+	waveform $7B
+	volume 90 -8
+	frequency 100
+	{
+		rest 8
+		noteoff
+		end
+	}
+Kick
+	waveform $A0E0 $F7	; $8F
+	volume 100 -10
+	frequency 400 20
+	{
+		rest 6
+		noteoff
+		end
+	}

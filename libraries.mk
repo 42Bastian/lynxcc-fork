@@ -60,12 +60,17 @@ export CC65_HOME := $(abspath .)
 CORE_DIRS     = runtime/rt runtime/lynx libraries/core libraries/libc
 GRAPHICS_DIRS = libraries/graphics
 AUDIO_DIRS    = libraries/audio libraries/audio/sfx
+# HandyMusic is a large, opt-in BGM+SFX engine that is mutually exclusive with
+# lynx-audio (design/LYNX_HANDYMUSIC_DESIGN.md sec. 9.1), so it gets its own
+# archive rather than folding into lynx-audio.lib.  Its subdir is deliberately
+# NOT under AUDIO_DIRS's glob (libraries/audio/*.s is non-recursive).
+HANDYMUSIC_DIRS = libraries/audio/handymusic
 MATH_DIRS     = libraries/math
 COMPRESS_DIRS = libraries/compress
 SDCARD_GD_DIRS = libraries/sdcard-gd
 
-ALL_DIRS = $(CORE_DIRS) $(GRAPHICS_DIRS) $(AUDIO_DIRS) $(MATH_DIRS) $(COMPRESS_DIRS) \
-           $(SDCARD_GD_DIRS)
+ALL_DIRS = $(CORE_DIRS) $(GRAPHICS_DIRS) $(AUDIO_DIRS) $(HANDYMUSIC_DIRS) \
+           $(MATH_DIRS) $(COMPRESS_DIRS) $(SDCARD_GD_DIRS)
 
 vpath %.s $(ALL_DIRS)
 vpath %.c $(ALL_DIRS)
@@ -83,19 +88,21 @@ objs = $(addprefix $(WRK)/,$(sort $(notdir \
 CORE_OBJS     = $(filter-out $(WRK)/multicartldr.o,$(call objs,$(CORE_DIRS)))
 GRAPHICS_OBJS = $(call objs,$(GRAPHICS_DIRS))
 AUDIO_OBJS    = $(call objs,$(AUDIO_DIRS))
+HANDYMUSIC_OBJS = $(call objs,$(HANDYMUSIC_DIRS))
 MATH_OBJS     = $(call objs,$(MATH_DIRS))
 COMPRESS_OBJS = $(call objs,$(COMPRESS_DIRS))
 SDCARD_GD_OBJS = $(call objs,$(SDCARD_GD_DIRS))
 
-OBJS = $(CORE_OBJS) $(GRAPHICS_OBJS) $(AUDIO_OBJS) $(MATH_OBJS) $(COMPRESS_OBJS) \
-       $(SDCARD_GD_OBJS)
+OBJS = $(CORE_OBJS) $(GRAPHICS_OBJS) $(AUDIO_OBJS) $(HANDYMUSIC_OBJS) $(MATH_OBJS) \
+       $(COMPRESS_OBJS) $(SDCARD_GD_OBJS)
 DEPS = $(OBJS:.o=.d)
 
-LIBS = lib/lynx.lib          \
-       lib/lynx-graphics.lib \
-       lib/lynx-audio.lib    \
-       lib/lynx-math.lib     \
-       lib/lynx-compress.lib \
+LIBS = lib/lynx.lib             \
+       lib/lynx-graphics.lib    \
+       lib/lynx-audio.lib       \
+       lib/lynx-handymusic.lib  \
+       lib/lynx-math.lib        \
+       lib/lynx-compress.lib    \
        lib/lynx-sdcard-gd.lib
 
 # The cl65 auto-library manifest (design sec. 6.6): one archive per line, in the
@@ -163,6 +170,9 @@ lib/lynx-graphics.lib: $(GRAPHICS_OBJS) | dirs
 lib/lynx-audio.lib: $(AUDIO_OBJS) | dirs
 	$(ARCHIVE_recipe)
 
+lib/lynx-handymusic.lib: $(HANDYMUSIC_OBJS) | dirs
+	$(ARCHIVE_recipe)
+
 lib/lynx-math.lib: $(MATH_OBJS) | dirs
 	$(ARCHIVE_recipe)
 
@@ -183,6 +193,7 @@ $(MANIFEST): libraries.mk | dirs
 	@$(RM) $@
 	@echo lynx-graphics.lib>>$@
 	@echo lynx-audio.lib>>$@
+	@echo lynx-handymusic.lib>>$@
 	@echo lynx-compress.lib>>$@
 	@echo lynx-math.lib>>$@
 	@echo lynx-sdcard-gd.lib>>$@

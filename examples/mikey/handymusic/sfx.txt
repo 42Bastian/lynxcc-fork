@@ -1,0 +1,100 @@
+;****************************************************************
+; Demo HMCC Sound Effects, Usual home is $A6B0
+; Format Notes:
+;
+; sfx_name priority
+;	waveform feedback [shift]
+;	volume amplitude [adjustment]
+;	frequency divider [adjustment]
+;	tuning value
+;	{
+;		waveform feedback [shift]
+;		volume amplitude [adjustment]
+;		frequency divider [adjustment]
+;		loop count
+;			rest delay
+;		endloop
+;		noteoff
+;		end
+;	}
+;
+;****************************************************************
+;**************************************
+; Zaku_RapidShot 128
+;	Zaku's Rapid shot
+;**************************************
+Zaku_RapidShot 128
+	waveform $A01A
+	volume 30 -5
+	frequency $2E $FFFF.70
+	{
+		rest 4
+		end
+	}
+;**************************************
+; Zaku_BackBlaster 130
+;	Zaku's Back Blaster
+;**************************************
+Zaku_BackBlaster 130
+	waveform $1054
+	volume 80 -10
+	frequency $9C
+	{
+		rest 3
+		frequency $A0 15
+		volume 70 -3
+		rest 14
+		end
+	}
+;**************************************
+; Zaku_ChargeUp 132
+;	Zaku's Charge Up
+;**************************************
+Zaku_ChargeUp 132
+	waveform $2008 1
+	volume 70
+	frequency $29C $FFF8
+	{
+		rest 50
+		loop 3
+			frequency $2FF $FFA0
+			rest 5
+		endloop
+		end
+	}
+;**************************************
+; Zaku_ChargeUp 133
+;	Zaku's Charge Shot
+;**************************************
+Zaku_ChargeShot 133
+	waveform $A 1
+	volume 50 5
+	frequency $300 $FFE0
+	{
+		rest 10
+		end
+	}
+;**************************************
+; VWFBuzzy 160
+;	VWF Character Beep (Buzzy)
+;**************************************
+VWFBuzzy 160
+	waveform $A
+	volume 110 -5
+	frequency $240
+	{
+		rest 6
+		end
+	}
+;**************************************
+; VWFSquare 160
+;	VWF Character Beep (25% Square)
+;**************************************
+VWFSquare 160
+	waveform 8 1
+	volume 90 -15
+	frequency 512
+	{
+		rest 4
+		end
+	}

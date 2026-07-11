@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lynxcc - HandyMusic engine</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>HandyMusic engine</h1></header><div class="abstract"><strong>HandyMusic</strong> is a script-driven, macro-instrument BGM&nbsp;+&nbsp;SFX
+sound driver for the Atari Lynx by Osman Celimli, ported into <strong>lynxcc</strong> as an
+opt-in runtime library (<code>lib/lynx-handymusic.lib</code>, <code>&lt;lynx/handymusic.h&gt;</code>).
+Instruments and sound effects are byte-code envelope scripts, music is four parallel track
+scripts, all compiled from text by the <a href="hmcc.html">hmcc</a> host tool. It is a
+heavier, more capable alternative to the <a href="sound.html">snd engine</a> and its
+sfx catalogue &mdash; a game opts into <em>one</em> engine or the other, never both. This
+page covers how the ca65 driver is laid out, the reserved memory model, the VBL tick, the
+C API, and the worked example. The script <em>languages</em> live on the
+<a href="hmcc.html">hmcc</a> page and are not repeated here.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. What HandyMusic is</a></li>
+<li class="lvl1"><a href="#sect-2">2. Building against the engine</a></li>
+<li class="lvl1"><a href="#sect-3">3. The reserved data regions</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. Why the data is absolute</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. Copying the blobs at startup</a></li>
+<li class="lvl1"><a href="#sect-4">4. Channels, the VBL tick and decoding</a></li>
+<li class="lvl1"><a href="#sect-5">5. The C API</a></li>
+<li class="lvl2"><a href="#sect-5-1">5.1. Playback control</a></li>
+<li class="lvl2"><a href="#sect-5-2">5.2. Pointing the driver at the SFX tables</a></li>
+<li class="lvl1"><a href="#sect-6">6. PCM sample playback</a></li>
+<li class="lvl1"><a href="#sect-7">7. Worked example: handymusic.c</a></li>
+<li class="lvl1"><a href="#sect-8">8. License</a></li>
+</ul></nav>
+
+<h2 id="sect-1">1. What HandyMusic is</h2>
+<p>HandyMusic plays four independent <em>track</em> scripts across Mikey's four audio
+channels. Each track references <strong>instruments</strong> &mdash; small envelope programs
+that shape a channel's waveform, volume and frequency over time &mdash; and can fire
+<strong>sound effects</strong>, which are the same kind of envelope script but requested
+on demand and slotted into a channel by priority. Everything is authored as text and
+compiled to compact byte-code blobs by <a href="hmcc.html">hmcc</a>; the driver walks those
+blobs once per frame and writes Mikey's registers.</p>
+<p>Because it carries a full instrument model, per-channel frequency and volume envelopes,
+loop/pattern control and a priority mixer, HandyMusic is <em>larger</em> than the snd
+engine. The two are mutually exclusive by design: link one library or the other. Reach for
+HandyMusic when you want its instrument/envelope expressiveness and pattern reuse; reach for
+<a href="sound.html">snd</a> when a lighter compiled-stream player is enough.</p>
+<p>This port covers <strong>music and SFX</strong>. PCM sample streaming from the original
+driver is a separate planned phase and is currently a no-op (<a href="#sect-6">section&nbsp;6</a>).</p>
+
+<h2 id="sect-2">2. Building against the engine</h2>
+<p>HandyMusic needs two things at link time: its library, and a memory config that reserves
+the data regions. The library is pulled in automatically &mdash; it is on the SDK
+auto-library manifest, so any program that references a <code>handymusic_*</code> symbol
+drags the driver out of <code>lib/lynx-handymusic.lib</code> with no <code>-l</code> flag.
+The config is the one thing you must select explicitly, exactly as the
+<a href="collisions.html">collision</a> demo selects <code>lynx-coll.cfg</code>:</p>
+<pre><code>#include &lt;lynx/handymusic.h&gt;
+...
+cl65 -C lynx-handymusic.cfg -o game.lnx game.o data.o</code></pre>
+<p><code>cfg/lynx-handymusic.cfg</code> is the stock Lynx cart layout with <code>MAIN</code>
+shrunk so that two fixed regions sit above the C stack, reserved for the compiled song and
+SFX blobs (<a href="#sect-3">section&nbsp;3</a>). The engine installs its own 60&nbsp;Hz
+update on the VBL interrupt chain, so the VBL timer must be running before you play anything
+&mdash; call <code><a href="funcref.html#gfx_init">gfx_init</a></code> (which enables the VBL
+interrupt) and <code>CLI()</code> first.</p>
+
+<h2 id="sect-3">3. The reserved data regions</h2>
+<p>hmcc emits two blobs: a <strong>song</strong> (<code>.mus</code>) and a
+<strong>SFX</strong> block (<code>.sfx</code>). <code>lynx-handymusic.cfg</code> reserves a
+fixed base for each, exported as <code>__HMMUS_START__</code> and
+<code>__HMSFX_START__</code>, in the RAM just below the hardware page and above the stack:</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 210" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="Memory map: MAIN code and data from $0200, the C stack topping out at $AE00, then the reserved SFX region at $AE00 and music region at $B000 up to the hardware page at $C038">
+  <g>
+    <rect x="40"  y="40" width="150" height="120" fill="var(--panel)"   stroke="var(--border)"/>
+    <rect x="210" y="40" width="120" height="120" fill="var(--panel-2)" stroke="var(--border)"/>
+    <rect x="350" y="40" width="120" height="120" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+    <rect x="490" y="40" width="150" height="120" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">
+    <text x="115" y="95" font-weight="bold">MAIN</text>
+    <text x="115" y="112">code + data</text>
+    <text x="270" y="95" font-weight="bold">C stack</text>
+    <text x="270" y="112">(grows down)</text>
+    <text x="410" y="88" font-weight="bold">SFX blob</text>
+    <text x="410" y="105">__HMSFX_</text>
+    <text x="410" y="120">START__</text>
+    <text x="565" y="88" font-weight="bold">song blob</text>
+    <text x="565" y="105">__HMMUS_</text>
+    <text x="565" y="120">START__</text>
+  </g>
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="11" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="40"  y="176">$0200</text>
+    <text x="350" y="176">$AE00</text>
+    <text x="490" y="176">$B000</text>
+    <text x="640" y="176">$C038</text>
+  </g>
+</svg>
+<figcaption style="font-size:12px;color:var(--ink-faint)">The reserved regions sit above the stack, so the heap can never grow into them.</figcaption>
+</figure>
+
+<h3 id="sect-3-1">3.1. Why the data is absolute</h3>
+<p>hmcc bakes <em>absolute</em> pointer tables into each blob at a base address you hand it on
+the command line (see <a href="hmcc.html#sect-5">hmcc &sect;5</a>). The song header at
+<code>__HMMUS_START__</code> holds absolute track and instrument-table pointers; the SFX
+block holds absolute script addresses. The blob is therefore only valid when it lives at the
+base it was compiled for. That is the whole reason the config reserves fixed bases: build the
+blobs at <code>$AE00</code>/<code>$B000</code> and place them there. A relocatable object mode
+for hmcc is deliberately out of scope.</p>
+
+<h3 id="sect-3-2">3.2. Copying the blobs at startup</h3>
+<p>The blobs ride in the cart as ordinary resident data (a small <code>.incbin</code> glue
+file). The Lynx boot loader copies the main image contiguously and the stack sits directly
+above <code>MAIN</code>, so the reserved regions cannot themselves be part of the loaded
+image; instead the program copies each blob to its base once, at startup, before playing:</p>
+<pre><code>memcpy ((void *)0xB000, hm_music_data, music_len);   /* __HMMUS_START__ */
+memcpy ((void *)0xAE00, hm_sfx_data,   sfx_len);     /* __HMSFX_START__ */</code></pre>
+<p>After the copy, every pointer hmcc baked in resolves and the song is ready to play. The
+copies are one-time; the regions are otherwise untouched by the runtime.</p>
+
+<h2 id="sect-4">4. Channels, the VBL tick and decoding</h2>
+<p>HandyMusic keeps per-channel state for all four Mikey channels: a script decode pointer,
+a priority, base and offset frequencies with their per-frame adjustments (16.8 fixed point),
+a volume with its adjustment (8.8), loop stacks, and note-off pointers. Each frame the driver
+runs <code>HandyMusic_Main</code>, which for every channel decodes any due script commands,
+advances the frequency and volume envelopes, computes the final divider and writes Mikey's
+timer, volume and control registers &mdash; skipping the register write when the frequency has
+not changed, to avoid clicks.</p>
+<p><strong>The library owns its own tick.</strong> Rather than making the game call
+<code>Main</code> from its own handler, the driver registers <code>HandyMusic_Main</code> as
+an interruptor on the VBL IRQ chain, so it runs once per vertical blank as soon as the VBL
+interrupt is enabled. A game therefore only ever calls init / play / stop / pause; it never
+touches <code>Main</code>. Priorities arbitrate the four channels between music notes and
+sound effects: a higher-priority request wins a busy channel, and a note or effect that sets
+its priority to zero is silent. Reserve distinct priority bands for notes versus effects so
+<code><a href="funcref.html#handymusic_stop_sfx">handymusic_stop_sfx</a></code> stays useful.</p>
+
+<h2 id="sect-5">5. The C API</h2>
+<p>The public surface is <code>&lt;lynx/handymusic.h&gt;</code>. Single-byte arguments pass in
+the accumulator, matching the driver's assembly entry points exactly.</p>
+
+<h3 id="sect-5-1">5.1. Playback control</h3>
+<table>
+<thead><tr><th>Function</th><th>Effect</th></tr></thead>
+<tbody>
+<tr><td><code><a href="funcref.html#handymusic_init">handymusic_init</a>&nbsp;(void)</code></td><td>Initialize the engine and audio hardware (stereo on, all channels idle). Call once, after the VBL interrupt is running.</td></tr>
+<tr><td><code><a href="funcref.html#handymusic_play_music">handymusic_play_music</a>&nbsp;(void)</code></td><td>Start the song resident at <code>__HMMUS_START__</code>. Stop the current song before loading another.</td></tr>
+<tr><td><code><a href="funcref.html#handymusic_stop_music">handymusic_stop_music</a>&nbsp;(void)</code></td><td>Stop the song, freeing the channels it still controls. A note whose priority no longer matches its track is left to ring out; use <code>handymusic_stop_all</code> for a hard stop.</td></tr>
+<tr><td><code><a href="funcref.html#handymusic_play_sfx">handymusic_play_sfx</a>&nbsp;(unsigned&nbsp;char&nbsp;n)</code></td><td>Queue effect <code>n</code> (an <code>SFX_*</code> index from the hmcc <code>.equ</code>) to start next frame.</td></tr>
+<tr><td><code><a href="funcref.html#handymusic_stop_sfx">handymusic_stop_sfx</a>&nbsp;(unsigned&nbsp;char&nbsp;prio)</code></td><td>Stop the first sound (effect or note) whose priority equals <code>prio</code>.</td></tr>
+<tr><td><code><a href="funcref.html#handymusic_stop_all">handymusic_stop_all</a>&nbsp;(void)</code></td><td>Force-stop every track and effect, freeing all four channels.</td></tr>
+<tr><td><code><a href="funcref.html#handymusic_pause">handymusic_pause</a>&nbsp;(void)</code> / <code><a href="funcref.html#handymusic_unpause">handymusic_unpause</a>&nbsp;(void)</code></td><td>Mute and restore all channels. Both are double-call safe.</td></tr>
+</tbody>
+</table>
+
+<h3 id="sect-5-2">5.2. Pointing the driver at the SFX tables</h3>
+<p>hmcc emits an <code>.equ</code> file with the absolute addresses of the SFX block's three
+tables (low-byte addresses, high-byte addresses, priorities) and one <code>SFX_*</code> index
+per effect. Before the first <code>handymusic_play_sfx</code>, point the driver at those three
+tables. They are contiguous at <code>base</code>, <code>base+count</code> and
+<code>base+2&times;count</code>, so the helper macro takes the three addresses directly:</p>
+<pre><code>handymusic_set_sfx_tables (HandyMusic_SFX_ATableLo,
+                           HandyMusic_SFX_ATableHi,
+                           HandyMusic_SFX_PTable);</code></pre>
+<p>The three underlying pointers (<code>handymusic_sfx_addr_lo</code>,
+<code>handymusic_sfx_addr_hi</code>, <code>handymusic_sfx_prio</code>) live in zero page and
+are exported for direct use as well.</p>
+
+<h2 id="sect-6">6. PCM sample playback</h2>
+<p>The original driver can stream single-channel 8&nbsp;kHz PCM off the cart on channel&nbsp;0
+via a timer-3 interrupt. That path touches BLL filesystem primitives that do not exist in
+<strong>lynxcc</strong>, and long PCM is a poor trade on the Lynx regardless, so it is
+<strong>not part of this build</strong>: the music &ldquo;play sample&rdquo; command is a
+no-op (it still consumes its argument byte so script decoding stays aligned). A future phase
+will re-band it to play short, resident one-shots from a RAM buffer. Until then, treat
+HandyMusic here as a music&nbsp;+&nbsp;SFX engine.</p>
+
+<h2 id="sect-7">7. Worked example: handymusic.c</h2>
+<p><a href="samples.html"><code>examples/mikey/handymusic</code></a> plays Osman Celimli's
+HandyMusic demo song and lets you trigger its effects. Its Makefile shows the whole flow:
+run <a href="hmcc.html">hmcc</a> to compile the SFX and track scripts to blobs at
+<code>$AE00</code>/<code>$B000</code>, turn the SFX <code>.equ</code> into a C header,
+<code>.incbin</code> the blobs, and link with <code>-C lynx-handymusic.cfg</code>. At runtime
+it copies the blobs to their bases, points the driver at the SFX tables,
+<code>handymusic_init()</code>, <code>handymusic_play_music()</code>, then fires effects on
+button&nbsp;A. It is the reference for wiring the engine into a project.</p>
+
+<h2 id="sect-8">8. License</h2>
+<p>The ca65 driver and the <code>&lt;lynx/handymusic.h&gt;</code> surface are a
+<strong>derived work</strong> of Osman Celimli's HandyMusic driver, and so &mdash; like the
+<a href="hmcc.html">hmcc</a> tool &mdash; carry Celimli's original &ldquo;completely free to
+use and modify&rdquo; grant rather than the MPL that covers most of the fork. That grant, the
+attribution to Osman Celimli, and the list of derived files are reproduced on the
+<a href="licenses.html#sect-4-5">Licenses</a> page.</p></article></main><site-foot></site-foot>
+<script src="doc.js"></script>
+</body></html>

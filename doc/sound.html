@@ -49,6 +49,13 @@ that stream on target with no ASCII parsing. For one-off sound effects that do n
 need the stream machinery, the <code>mikey_snd_*</code> helpers poke a single Mikey
 register directly.</p>
 
+<p>The <code>snd</code> engine is not the only music option. <a href="handymusic.html">HandyMusic</a>
+is a heavier, opt-in <strong>alternative</strong> BGM+SFX engine (Osman Celimli's
+macro-instrument driver, compiled with <a href="hmcc.html">hmcc</a>): richer
+instrument and envelope control at a larger footprint. The two are mutually
+exclusive &mdash; link one engine or the other. This page covers <code>snd</code>;
+see the <a href="handymusic.html">HandyMusic</a> page for that engine.</p>
+
 <figure style="margin:1.2em 0;text-align:center">
 <svg viewBox="0 0 720 132" style="width:100%;height:auto;max-width:700px" role="img"
      aria-label="Signal chain from ABC text through abccc to the compiled stream, the snd interrupt, the Mikey channel registers and the speaker">

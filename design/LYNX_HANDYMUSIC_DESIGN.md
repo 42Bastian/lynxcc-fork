@@ -10,9 +10,14 @@ See doc/licenses.html.
 Status: **PARTIALLY IMPLEMENTED.** The **host tool track (§3) is done** — `hmcc`
 lives in `tools/hmcc/`, builds to `bin/hmcc` from the shared `PROGS` list in
 `tools/Makefile`, and is documented at `doc/hmcc.html`. The **runtime library
-track (§4) is still planned** — the ca65 driver port, `lib/lynx-handymusic.lib`,
-`include/lynx/handymusic.h`, the ported example, and the driver reference page do
-not exist yet. This document remains the source of truth for how Osman Celimli's
+track (§4) is done for music + SFX** — the ca65 driver lives in
+`libraries/audio/handymusic/` (`handymusic.s` + `hm-instr.inc` + `hm-mus.inc`),
+archives into `lib/lynx-handymusic.lib` (via `libraries.mk` + the cl65 auto-libs
+manifest), exposes `include/lynx/handymusic.h`, reserves its data regions in
+`cfg/lynx-handymusic.cfg`, ships the `examples/mikey/handymusic/` example, and is
+documented at `doc/handymusic.html`. **PCM sample playback (§4.4) remains the one
+planned piece** — the music "play sample" command is currently a no-op. This
+document remains the source of truth for how Osman Celimli's
 *HandyMusic 1.40cx+* driver and its `HMCC` script compiler are brought into
 **lynxcc** as (1) a host build tool and (2) a linkable audio library games can
 pull in. Section-level status is called out in §3, §6 and §8 below.
@@ -126,7 +131,7 @@ object-output mode for `hmcc` (symbolic tables resolved by ld65) is explicitly
 unmodified in spirit, and the fixed region is sufficient for the Lynx's memory
 budget.
 
-## 4. Runtime library track — `lynx-handymusic`  *(PLANNED — not yet implemented)*
+## 4. Runtime library track — `lynx-handymusic`  *(IMPLEMENTED for music + SFX; PCM §4.4 pending)*
 
 ### 4.1 ca65 syntax port
 
@@ -153,7 +158,14 @@ budget and a `__zeropage__` mechanism. Plan:
 
 - Keep only the genuinely hot, indexed-through pointers in ZP
   (`HandyMusic_Channel_DecodePointer`, `HandyMusic_Music_DecodePointer`, the
-  enable/active/BGM flags).
+  enable/active/BGM flags). *As implemented*, ZP holds exactly the pointers that
+  the 65C02 **requires** to be zero page — the four indirect groups used with
+  `(zp)` / `(zp),Y`: `Channel_DecodePointer`, `Music_DecodePointer`, the three
+  `SFX_AddressTable*` pointers and the two `Instrument_AddrTable*` pointers (14
+  bytes total). Everything else, including the enable/active/BGM flags, moved to
+  the `.bss` `HANDYMUSIC_BSS` block: the addressing audit (below) confirmed those
+  flags are only ever touched by direct/absolute addressing, so keeping them out
+  of ZP costs nothing and keeps the ZP budget minimal.
 - Move the bulk arrays (`HandyMusic_Channel_*` frequency/volume/loop tables,
   `HandyMusic_Music_*`) into a dedicated `HANDYMUSIC_BSS` segment in RAM.
 - Audit the driver for `,X`/`,Y` addressing that *requires* ZP (zero-page
@@ -213,10 +225,15 @@ argument. `PlayPCMSample` changes shape from the upstream "sample number in A" t
 a RAM-sourced call taking a buffer pointer and length (§4.4), e.g.
 `handymusic_play_pcm(const unsigned char *buf, unsigned int len)`.
 
-**Decision: the library installs its own VBlank hook.** `HandyMusic_Main` must
-run once per VBlank; rather than requiring the game to call it from its own
-handler, the library installs its own hook at `HandyMusic_Init` time (and removes
-it on a teardown call). This keeps the game code minimal — init, then just
+**Decision: the library installs its own VBlank hook.** *(IMPLEMENTED.)*
+`HandyMusic_Main` must run once per VBlank; rather than requiring the game to call
+it from its own handler, the library registers `HandyMusic_Main` as a ca65
+`.interruptor` on the shared VBL IRQ chain (the same `__CALLIRQ__` mechanism the
+snd engine and gfx page-flip use). The handler checks the `VBL_INTERRUPT` bit and
+runs `Main` only on VBlank, and `Main` itself bails while the engine is disabled,
+so it is inert until `HandyMusic_Init`. No explicit teardown call is provided (the
+Lynx runtime runs no module destructors); a game that needs silence calls
+`HandyMusic_StopAll`/`HandyMusic_Pause`. This keeps the game code minimal — init, then just
 `play`/`stop`/`pause` — and matches how the driver was always meant to be tied to
 the 60 Hz tick. Document the hook so a game with its own IRQ scheme knows what is
 installed. Header carries the doc comments per the repo's "docs track code" rule.
@@ -252,12 +269,16 @@ PCM samples are ordinary resident byte arrays linked into RAM and handed to
   registered in the shared nav (`TOPBAR_HTML` in `doc.js`, alphabetically between
   `da65` and `ld65`) and the `index.html` Tools grid, and the doc search index was
   regenerated (`make -C doc doc-search-index`).
-- **`doc/handymusic.html` — PLANNED (library track).** A driver Reference page
-  distilled from the manual (memory usage, channel structure, subroutine
-  reference for the ca65 driver and `handymusic.h` API) is still to be written
-  when §4 lands. Follow `DOC_SVG_STYLE_DESIGN.md` for its diagrams (channel-update
-  flow, envelope byte-code layout). The script-format material already lives on
-  `doc/hmcc.html` and need not be duplicated.
+- **`doc/handymusic.html` — DONE.** A driver Reference page covering the reserved
+  memory model (with a theme-aware memory-map SVG per `DOC_SVG_STYLE_DESIGN.md`),
+  the channels/VBL-tick/decoding overview, the `handymusic.h` C API table, the
+  SFX-table wiring, PCM status, and the worked example. Registered in the shared
+  nav (`TOPBAR_HTML` in `doc.js`, Reference dropdown, alphabetically after
+  Graphics fonts), the `index.html` Reference grid, and the doc search index. The
+  script-format material stays on `doc/hmcc.html` and is not duplicated.
+- **`doc/funcref.html` — DONE.** The eight `handymusic_*` entries were added
+  (fnIndex, §2.26 `lynx/handymusic.h` by-header subsection, and §3 alphabetical
+  entries with the whole §3 re-sorted/renumbered per the funcref convention).
 - **`doc/licenses.html` §4.5 — DONE.** Records HandyMusic's origin, Osman
   Celimli's authorship, the verbatim "free to use and modify" grant, and the
   derived `tools/hmcc/` files (see §7).
@@ -300,17 +321,29 @@ sandbox rebuild (toolchain + lib + examples) per project convention:
    Regression-checking its output against the shipped `SASS/DemoMusic`/`DemoSFX`
    reference binaries byte-for-byte (to prove the port is faithful) remains a
    worthwhile follow-up once the demo scripts are brought into the tree.
-2. **Driver ca65 port, music+SFX. — PENDING.** Bring up a minimal example that plays the
-   demo song and a couple of SFX; verify on the headless GearLynx emulator that
-   Mikey audio registers actually change and the output is *audible*, not just
-   boot-and-golden (per the "audio must be hearable" rule).
-3. **Data region + cfg + C header + example** wired into the examples build
-   (fixed-region model, §3.2/§4.3).
-4. **RAM-sourced PCM (§4.4).** Reband `PlayPCMSample`/`PCMSample_IRQ` to a RAM
-   buffer, install the timer-3 IRQ via `set_irq`, and add a short one-shot sample
-   to the example; verify the PCM one-shot is audible and channel 0 hands back to
-   the music engine afterwards.
-5. **Docs** (`handymusic.html`, funcref, nav, search index).
+2. **Driver ca65 port, music+SFX. — DONE.** `libraries/audio/handymusic/` +
+   `lib/lynx-handymusic.lib`; `examples/mikey/handymusic/` plays the demo song and
+   its SFX. Verified on the headless GearLynx emulator: after copying the blobs to
+   the reserved bases the song's byte-identical header lands at `$B000`, and all
+   four Mikey channels are driven with real, rhythmically-changing note volumes
+   (0x6e/0x14/0xac/0x2e observed) from a silent boot state — *audible*, not just
+   boot-and-golden.
+3. **Data region + cfg + C header + example — DONE.** `cfg/lynx-handymusic.cfg`
+   reserves `__HMSFX_START__` ($AE00) / `__HMMUS_START__` ($B000) above the stack;
+   `include/lynx/handymusic.h`; the example's Makefile drives `hmcc` and links
+   `-C lynx-handymusic.cfg`. Note the fixed-region mechanism differs from the §4.3
+   sketch: because the Lynx boot loader copies one contiguous block and crt0 pins
+   the stack directly above MAIN, the blobs cannot be `.incbin`ed *into* the
+   reserved regions. Instead they ride as ordinary RODATA and the program copies
+   each to its base at startup (the collision-buffer "reserve RAM above the stack"
+   precedent). Everything else in §4.3 holds.
+4. **RAM-sourced PCM (§4.4). — PENDING.** Reband `PlayPCMSample`/`PCMSample_IRQ`
+   to a RAM buffer, install the timer-3 IRQ via `set_irq`, and add a short one-shot
+   sample to the example; verify the PCM one-shot is audible and channel 0 hands
+   back to the music engine afterwards. (Currently the "play sample" music command
+   is a no-op that consumes its argument byte.)
+5. **Docs — DONE.** `handymusic.html`, funcref entries, nav, `index.html`,
+   licenses §4.5, search index.
 
 The §4.2 ZP-vs-absolute addressing audit is the highest-risk item and warrants a
 dedicated verification pass (ideally a subagent diffing addressing modes against

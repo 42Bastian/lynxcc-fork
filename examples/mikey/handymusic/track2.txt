@@ -1,0 +1,11 @@
+;****************************************************************
+; Demo HMCC Music Track 2, Usual home is $B000
+;****************************************************************
+MainTrack2 200
+{
+	pan $ff
+	wait 240
+	call TestPulse50
+	call TestPulse33
+	end
+}

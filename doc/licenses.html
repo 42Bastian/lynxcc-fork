@@ -207,9 +207,14 @@ alter it. See <code>design/LYNX_EXTERN_TOOLS_DESIGN.md</code> for the vendoring
 policy.</p>
 
 <h3 id="sect-4-5">4.5. HandyMusic / hmcc &mdash; author's grant (derived port)</h3>
-<p>The <code>hmcc</code> script compiler in <code>tools/hmcc/</code> is a
-<strong>derived port</strong> of Osman Celimli's <em>HandyMusic</em> &ldquo;HMCC&rdquo;
-tool, from the <code>HandyMusic_v1-40cx+</code> package. Unlike the vendored tools
+<p>Two parts of the SDK are <strong>derived ports</strong> of Osman Celimli's
+<em>HandyMusic</em>, from the <code>HandyMusic_v1-40cx+</code> package: the
+<code>hmcc</code> script compiler in <code>tools/hmcc/</code> (ported from the
+Win32 &ldquo;HMCC&rdquo; tool), and the runtime sound driver in
+<code>libraries/audio/handymusic/</code> (<code>handymusic.s</code>,
+<code>hm-instr.inc</code>, <code>hm-mus.inc</code>) with its C surface
+<code>include/lynx/handymusic.h</code> (ported from Celimli's lyxass/BLL driver to
+ca65). Unlike the vendored tools
 in sections&nbsp;4.3&ndash;4.4, it is <strong>not</strong> a
 <code>tools/extern/</code> subtree: HandyMusic ships as a zip with no upstream git
 repository, and the tool <em>had to be modified</em> to build outside Windows
@@ -229,7 +234,9 @@ and is accepted as-is; no standard SPDX licence is sought as a precondition for
 shipping. The ported sources under <code>tools/hmcc/</code> carry that same
 author's-grant notice in their file headers instead of an
 <code>SPDX-License-Identifier</code> tag, the same way the SDK's other derived
-files retain their original notices. There is no upstream repository to pin as a
+files retain their original notices; the ported driver under
+<code>libraries/audio/handymusic/</code> and <code>include/lynx/handymusic.h</code>
+carry the same notice. There is no upstream repository to pin as a
 git subtree, so the provenance is recorded by package name and version
 (<code>HandyMusic_v1-40cx+</code>) rather than a subtree commit. See
 <code>design/LYNX_HANDYMUSIC_DESIGN.md</code>&nbsp;&sect;7 for the licensing

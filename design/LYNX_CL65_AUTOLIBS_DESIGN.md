@@ -52,10 +52,16 @@ per line, in link order — **dependents first, core last**:
 ```
 lynx-graphics.lib
 lynx-audio.lib
+lynx-handymusic.lib
 lynx-compress.lib
 lynx-math.lib
+lynx-sdcard-gd.lib
 lynx.lib
 ```
+
+(`lynx-handymusic.lib` is the opt-in HandyMusic BGM+SFX engine, parallel to and
+mutually exclusive with `lynx-audio.lib`; see
+`design/LYNX_HANDYMUSIC_DESIGN.md`.)
 
 Blank lines and lines beginning with `#` are ignored, so the file may carry
 comments.

@@ -1,0 +1,290 @@
+;****************************************************************
+; Demo HMCC Music Track 1, Usual home is $B000
+;****************************************************************
+DemoTrack1 150
+{
+	pan $ff
+	call TestTriangle
+	wait 1800
+	call TestPulseWap
+	call TestWaWap
+	call TestDoWap
+	call TestSharpySine
+	call TestElectar
+
+	loop 8
+		using Tish
+		sfx 6
+	endloop
+	using UpTish
+	sfx 14
+	loop 2
+		loop 4
+			using Tish
+			sfx 6
+		endloop
+		wait 8
+	endloop
+	wait 20
+
+	using Kick
+	sfx 16
+	sfx 16
+	using SnareShort
+	sfx 12
+	using Kick
+	sfx 16
+	using SnareLong
+	sfx 40
+	using Kick
+	sfx 16
+	using Cymbal
+	sfx 60
+	sample 0
+	wait 20
+	sample 1
+	wait 60
+	end
+}
+
+TestTriangle
+{
+	using MellowTriangle
+	c.4 20
+	rest 10
+	d.4 20
+	rest 10
+	e.4 20
+	rest 10
+	f.4 20
+	rest 10
+	g.4 20
+	rest 10
+	a.4 20
+	rest 10
+	b.4 20
+	rest 10
+	c.5 20
+	rest 10	; 240
+	return
+}
+
+TestPulse50
+{
+	using Pulse50
+	c.4 20
+	rest 10
+	d.4 20
+	rest 10
+	e.4 20
+	rest 10
+	f.4 20
+	rest 10
+	g.4 20
+	rest 10
+	a.4 20
+	rest 10
+	b.4 20
+	rest 10
+	c.5 80
+	rest 10	; 300
+	return
+}
+
+TestPulse33
+{
+	using Pulse33
+	c.4 20
+	rest 10
+	d.4 20
+	rest 10
+	e.4 20
+	rest 10
+	f.4 20
+	rest 10
+	g.4 20
+	rest 10
+	a.4 20
+	rest 10
+	b.4 20
+	rest 10
+	c.5 80
+	rest 10	; 300
+	return
+}
+
+TestPulse25
+{
+	using Pulse25
+	c.4 20
+	rest 10
+	d.4 20
+	rest 10
+	e.4 20
+	rest 10
+	f.4 20
+	rest 10
+	g.4 20
+	rest 10
+	a.4 20
+	rest 10
+	b.4 20
+	rest 10
+	c.5 80
+	rest 10	; 300
+	return
+}
+
+TestPulse20
+{
+	using Pulse20
+	c.4 20
+	rest 10
+	d.4 20
+	rest 10
+	e.4 20
+	rest 10
+	f.4 20
+	rest 10
+	g.4 20
+	rest 10
+	a.4 20
+	rest 10
+	b.4 20
+	rest 10
+	c.5 80
+	rest 10	; 300
+	return
+}
+
+TestPulse14
+{
+	using Pulse14
+	c.4 20
+	rest 10
+	d.4 20
+	rest 10
+	e.4 20
+	rest 10
+	f.4 20
+	rest 10
+	g.4 20
+	rest 10
+	a.4 20
+	rest 10
+	b.4 20
+	rest 10
+	c.5 80
+	rest 10 ; 300
+	return
+}
+
+TestPulseWap
+{
+	using PulseWap
+	c.4 20
+	rest 10
+	d.4 20
+	rest 10
+	e.4 20
+	rest 10
+	f.4 20
+	rest 10
+	g.4 20
+	rest 10
+	a.4 20
+	rest 10
+	b.4 20
+	rest 10
+	c.5 80
+	rest 10 ; 300
+	return
+}
+
+TestWaWap
+{
+	using WaWap
+	c.4 20
+	rest 10
+	d.4 20
+	rest 10
+	e.4 20
+	rest 10
+	f.4 20
+	rest 10
+	g.4 20
+	rest 10
+	a.4 20
+	rest 10
+	b.4 20
+	rest 10
+	c.5 80
+	rest 10 ; 300
+	return
+}
+
+TestDoWap
+{
+	using DoWap
+	c.4 20
+	rest 10
+	d.4 20
+	rest 10
+	e.4 20
+	rest 10
+	f.4 20
+	rest 10
+	g.4 20
+	rest 10
+	a.4 20
+	rest 10
+	b.4 20
+	rest 10
+	c.5 80
+	rest 10 ; 300
+	return
+}
+
+TestSharpySine
+{
+	using SharpySine
+	c.4 20
+	rest 10
+	d.4 20
+	rest 10
+	e.4 20
+	rest 10
+	f.4 20
+	rest 10
+	g.4 20
+	rest 10
+	a.4 20
+	rest 10
+	b.4 20
+	rest 10
+	c.5 20
+	rest 10	; 240
+	return
+}
+
+TestElectar
+{
+	using Electar
+	c.2 40
+	rest 10
+	d.2 40
+	rest 10
+	e.2 40
+	rest 10
+	f.2 40
+	rest 10
+	g.2 40
+	rest 10
+	a.2 40
+	rest 10
+	b.2 40
+	rest 10
+	c.3 80
+	rest 10	; 240
+	return
+}
