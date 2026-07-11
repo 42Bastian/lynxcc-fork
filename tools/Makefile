@@ -17,13 +17,24 @@ endif
 #   lnx     .lnx header/cart tool
 #   abccc   ABC tune text -> compiled event stream (sound engine, MIT)
 #   abcrom  patch a compiled tune into the template .lnx for emulator auditioning
+#   hmcc    HandyMusic script compiler (instrument/SFX/music .txt -> .mus/.sfx)
 #
 # abccc/abcrom are host-compiled like the rest of tools/; unlike them, abcrom
 # also ships a pre-assembled template ROM (abcrom/template.lnx) that IS built
 # with the lynxcc toolchain — rebuilt on demand via the abcrom-template target
 # below, not as part of `all` (it needs the compiler + libraries, which build
 # after tools/). See design/LYNX_SND_ENGINE_DESIGN.md §7/§9.
-PROGS = lnx abccc abcrom
+#
+# hmcc is a first-party portable port of Osman Celimli's HandyMusic "HMCC"
+# script compiler (design/LYNX_HANDYMUSIC_DESIGN.md §3).  Like abccc/abcrom it
+# is a lynxcc-authored derived work — NOT a tools/extern/ subtree — so it builds
+# straight from PROGS with the strict host CFLAGS; its provenance and grant are
+# recorded in doc/licenses.html §4.5.
+PROGS = lnx abccc abcrom hmcc
+
+# hmcc's note-frequency maths (notes.c) uses pow() from libm; the other PROGS
+# link nothing extra.  Per-program LDLIBS keeps that dependency local to hmcc.
+hmcc_LDLIBS = -lm
 
 # Vendored third-party host tools.  Each lives in extern/<tool>/ as a pristine
 # git subtree that is NEVER modified (see design/LYNX_EXTERN_TOOLS_DESIGN.md and
@@ -174,7 +185,7 @@ define PROG_template
 $$(eval $$(call OBJS_template,$1))
 
 ../bin/$1$(EXE_SUFFIX): $$($1_OBJS) | ../bin
-	$$(CC) $$(LDFLAGS) -o $$@ $$^ $$(LDLIBS)
+	$$(CC) $$(LDFLAGS) -o $$@ $$^ $$(LDLIBS) $$($1_LDLIBS)
 
 $1: ../bin/$1$(EXE_SUFFIX)
 

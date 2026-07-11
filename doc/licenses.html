@@ -134,11 +134,14 @@ still covered by this copyright. It is reproduced here verbatim:</p>
 sections&nbsp;4.1&ndash;4.2 ship inside the runtime library under the same
 zlib-style terms as section&nbsp;2; the vendored external tools in
 sections&nbsp;4.3&ndash;4.4 each keep their own, different terms &mdash; one under
-Apache-2.0, one with <em>no declared licence at all</em>. None of these are
+Apache-2.0, one with <em>no declared licence at all</em>. Section&nbsp;4.5 covers
+a fourth case: a <em>derived port</em> of Osman Celimli's HandyMusic tool, brought
+in under the author's own &ldquo;free to use and modify&rdquo; grant rather than a
+standard SPDX licence. None of these are
 relicensed: each carries the copyright notice shown here, and the full notice
 also remains in the source files it covers (<code>include/lynx/zlib.h</code>,
 <code>include/lynx/lz4.h</code>, the corresponding <code>libraries/</code> sources,
-and the <code>tools/extern/</code> subtrees).</p>
+the <code>tools/extern/</code> subtrees, and <code>tools/hmcc/</code>).</p>
 <h3 id="sect-4-1">4.1. zlib / inflate decompression</h3>
 <p>The <code>inflatemem</code> / zlib decompression support in
 <code>libraries/compress/</code> and <code>include/lynx/zlib.h</code>:</p>
@@ -202,6 +205,35 @@ the tool into <code>bin/lynxdir</code> lives outside the vendored tree
 (<code>tools/Makefile</code>, <code>tools/extern/README.md</code>) and does not
 alter it. See <code>design/LYNX_EXTERN_TOOLS_DESIGN.md</code> for the vendoring
 policy.</p>
+
+<h3 id="sect-4-5">4.5. HandyMusic / hmcc &mdash; author's grant (derived port)</h3>
+<p>The <code>hmcc</code> script compiler in <code>tools/hmcc/</code> is a
+<strong>derived port</strong> of Osman Celimli's <em>HandyMusic</em> &ldquo;HMCC&rdquo;
+tool, from the <code>HandyMusic_v1-40cx+</code> package. Unlike the vendored tools
+in sections&nbsp;4.3&ndash;4.4, it is <strong>not</strong> a
+<code>tools/extern/</code> subtree: HandyMusic ships as a zip with no upstream git
+repository, and the tool <em>had to be modified</em> to build outside Windows
+(its Win32 file I/O and CRT debug scaffolding were replaced with portable C; the
+script-compiler logic is otherwise unchanged). It therefore follows the
+first-party <code>abccc</code>/<code>abcrom</code> precedent &mdash; lynxcc-authored
+build glue around ported logic &mdash; while still crediting the original author
+and preserving the original grant. It is <strong>not</strong> relicensed under the
+SDK's Mozilla Public License. Its copyright and grant are:</p>
+<pre class="verb">HandyMusic (driver, HMCC script compiler and samples)
+(C) Osman Celimli
+
+"HandyMusic is completely free to use and modify in your own projects."
+        &mdash; HandyMusic Programmer's Manual</pre>
+<p>The grant above is reproduced verbatim from the HandyMusic Programmer's Manual
+and is accepted as-is; no standard SPDX licence is sought as a precondition for
+shipping. The ported sources under <code>tools/hmcc/</code> carry that same
+author's-grant notice in their file headers instead of an
+<code>SPDX-License-Identifier</code> tag, the same way the SDK's other derived
+files retain their original notices. There is no upstream repository to pin as a
+git subtree, so the provenance is recorded by package name and version
+(<code>HandyMusic_v1-40cx+</code>) rather than a subtree commit. See
+<code>design/LYNX_HANDYMUSIC_DESIGN.md</code>&nbsp;&sect;7 for the licensing
+rationale and the port plan.</p>
 
 <h2 id="sect-5">5. SDK toolchain &mdash; Mozilla Public License 2.0</h2>
 <p>The source files this fork has <em>authored from scratch</em> &mdash; the Suzy
