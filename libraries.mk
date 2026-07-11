@@ -76,7 +76,11 @@ objs = $(addprefix $(WRK)/,$(sort $(notdir \
          $(patsubst %.s,%.o,$(wildcard $(foreach d,$1,$d/*.s))) \
          $(patsubst %.c,%.o,$(wildcard $(foreach d,$1,$d/*.c))))))
 
-CORE_OBJS     = $(call objs,$(CORE_DIRS))
+# multicartldr.o is excluded: runtime/lynx/multicartldr.s is the standalone
+# SOURCE for the relocatable multicart loader, linked on its own at $0040 only
+# to regenerate the committed blob libraries/core/multicartldr_gen.s (via
+# tools/lnx/gen-multicartldr.sh). It must not be archived into the core library.
+CORE_OBJS     = $(filter-out $(WRK)/multicartldr.o,$(call objs,$(CORE_DIRS)))
 GRAPHICS_OBJS = $(call objs,$(GRAPHICS_DIRS))
 AUDIO_OBJS    = $(call objs,$(AUDIO_DIRS))
 MATH_OBJS     = $(call objs,$(MATH_DIRS))

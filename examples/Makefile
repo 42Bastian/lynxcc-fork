@@ -69,7 +69,7 @@ EXELIST = \
 # --------------------------------------------------------------------------
 # Generic rules
 
-.PHONY: all mostlyclean clean install zip examples
+.PHONY: all mostlyclean clean install zip examples multicart-example
 
 %: %.c
 %: %.s
@@ -230,7 +230,14 @@ games/invaders.lnx: games/invaders.o games/invtheme.o
 
 # --------------------------------------------------------------------------
 
-examples: $(EXELIST)
+examples: $(EXELIST) multicart-example
+
+# The multicart example bundles a menu and several game ROMs into one cart with
+# "lnx multicart" + lynxdir, so it has its own Makefile rather than the flat
+# .c -> .lnx rule above. Build it from scratch alongside the rest. See
+# multicart/Makefile and design/LYNX_MULTICART_DESIGN.md.
+multicart-example:
+	@$(MAKE) --no-print-directory -C multicart clean all
 
 # The top-level Makefile invokes "make -C examples all". Always rebuild the
 # examples from scratch here so that a changed toolchain, library or config is
@@ -268,6 +275,8 @@ install:
 	$(INSTALL) -m0644 $(addprefix network/,$(addsuffix .c,$(NETWORK))) $(DESTDIR)$(examplesdir)/network
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/sdcard-gd
 	$(INSTALL) -m0644 $(addprefix sdcard-gd/,$(addsuffix .c,$(SDCARD_GD))) $(DESTDIR)$(examplesdir)/sdcard-gd
+	$(INSTALL) -d $(DESTDIR)$(examplesdir)/multicart
+	$(INSTALL) -m0644 multicart/Makefile multicart/README.md multicart/menu.c multicart/game1.c multicart/game2.c multicart/game3.c $(DESTDIR)$(examplesdir)/multicart
 
 # --------------------------------------------------------------------------
 # Packaging rules
@@ -283,3 +292,4 @@ mostlyclean:
 
 clean: mostlyclean
 	@$(DEL) $(EXELIST) 2>$(NULLDEV)
+	@$(MAKE) --no-print-directory -C multicart clean 2>$(NULLDEV) || true

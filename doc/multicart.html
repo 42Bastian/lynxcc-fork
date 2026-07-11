@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lynxcc - Multicart</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>Multicart</h1></header><div class="abstract">A <strong>multicart</strong> is a single bootable <code>.lnx</code> cartridge that
+bundles a <em>menu</em> program together with several independent <em>game
+ROMs</em>. At power-on the cart's mini-loader runs the menu; when the player picks
+a game, the menu calls <code><a href="funcref.html#multicart_run">multicart_run()</a></code>,
+which pulls that game off the cartridge &mdash; over the top of the menu &mdash; and
+runs it. Launching a game overwrites the menu, so it is one game per power-on:
+returning to the menu means a reboot. This page explains the cart layout, the
+relocatable runtime loader, the <code>multicart_run()</code> hand-off, and the
+<code>lnx multicart</code>&nbsp;+&nbsp;<a href="lynxdir.html">lynxdir</a> build
+flow.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. What a multicart is</a></li>
+<li class="lvl1"><a href="#sect-2">2. Building one</a></li>
+<li class="lvl1"><a href="#sect-3">3. The cart layout</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. The game directory</a></li>
+<li class="lvl1"><a href="#sect-4">4. Launching a game: multicart_run()</a></li>
+<li class="lvl1"><a href="#sect-5">5. The relocatable runtime loader</a></li>
+<li class="lvl1"><a href="#sect-6">6. Writing a menu</a></li>
+<li class="lvl1"><a href="#sect-7">7. Limitations and gotchas</a></li>
+<li class="lvl1"><a href="#sect-8">8. License</a></li>
+</ul></nav>
+
+<h2 id="sect-1">1. What a multicart is</h2>
+<p>The menu and every game are ordinary Lynx programs. Each is compiled and linked
+on its own as a <strong>BLL object</strong> (<code>cl65 -C lynx-bll.cfg</code>) &mdash;
+the same object format the single-program <a href="cart.html">cart</a> tools
+understand. The menu knows nothing about the games beyond their slot number, and
+each game is complete and self-contained: it boots through its own
+<code>crt0</code> exactly as it would if it were the only program on the cart.</p>
+<p>What ties them together is a small runtime <strong>loader</strong> baked into
+the SDK and a directory the ROM builder lays down. When the player selects game
+<em>n</em>, the menu copies the loader into low memory and hands it the number
+<em>n</em>; the loader reads that game off the cartridge and starts it. Because
+the game is loaded on top of the menu, there is no way back without a
+power-cycle.</p>
+
+<h2 id="sect-2">2. Building one</h2>
+<p>Three steps turn a menu and some games into a bootable cart. <code>cl65</code>
+builds each program as a BLL object; <code><a href="lnx.html">lnx</a> multicart</code>
+writes a <a href="lynxdir.html">lynxdir</a> <code>.mak</code> describing the
+layout; and <code>lynxdir</code> assembles the final image (naming its output
+after the <code>.mak</code>):</p>
+<pre><code>cl65 -C lynx-bll.cfg  -o menu.o  menu.c
+cl65 -C lynx-bll.cfg  -o game1.o game1.c      # game2.o, game3.o, ...
+lnx multicart --menu menu.o -o multicart.mak game1.o game2.o game3.o
+lynxdir multicart.mak                          # -> multicart.lnx (+ .lyx)</code></pre>
+<p>The order of the game files on the <code>lnx multicart</code> command line sets
+the game numbers <code>multicart_run()</code> takes: the first game is 0, the
+second is 1, and so on. The <a href="samples.html">multicart example</a> wires all
+of this into a <code>Makefile</code>.</p>
+<p><code>lnx multicart</code> options: <code>--menu&nbsp;&lt;file&gt;</code> (required),
+<code>--blocksize&nbsp;512|1024|2048</code> (default 2048),
+<code>--dirstart&nbsp;N</code>, <code>--diroffset&nbsp;N</code> (default 896), and
+<code>-o&nbsp;&lt;file&gt;</code>. The defaults match the layout the runtime loader
+is built for; change them only if you also rebuild the loader.</p>
+
+<h2 id="sect-3">3. The cart layout</h2>
+<p><code>lnx multicart</code> emits a layout with three fixed regions in cart
+block&nbsp;0. The NewMini mini-loader at <code>$FB68</code> runs the
+<strong>first</strong> directory entry at power-on &mdash; the EPYX-encoded menu.
+Behind the menu sits the <strong>game directory</strong> at byte offset
+<code>$0380</code> (896), followed by the BLL-encoded game images.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 176" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="Cart block 0 holds the NewMini loader, the EPYX menu, a game directory at offset 0x380, and the BLL game images in order">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">
+    <text x="360" y="20" font-weight="bold">Cartridge block 0</text>
+    <!-- loader -->
+    <rect x="20"  y="40" width="120" height="56" rx="4" fill="var(--panel)" stroke="var(--border)"/>
+    <text x="80"  y="66">NewMini</text>
+    <text x="80"  y="82" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--ink-faint)">$FB68</text>
+    <!-- menu -->
+    <rect x="140" y="40" width="150" height="56" rx="4" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+    <text x="215" y="66">EPYX menu</text>
+    <text x="215" y="82" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--ink-faint)">entry 0</text>
+    <!-- directory -->
+    <rect x="290" y="40" width="120" height="56" rx="4" fill="var(--accent-2)" fill-opacity="0.14" stroke="var(--accent-2)"/>
+    <text x="350" y="62">directory</text>
+    <text x="350" y="82" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--ink-faint)">@ $0380</text>
+    <!-- games -->
+    <rect x="410" y="40" width="96"  height="56" rx="4" fill="var(--panel-2)" stroke="var(--border)"/>
+    <text x="458" y="66">BLL game 0</text>
+    <rect x="506" y="40" width="96"  height="56" rx="4" fill="var(--panel-2)" stroke="var(--border)"/>
+    <text x="554" y="66">BLL game 1</text>
+    <rect x="602" y="40" width="96"  height="56" rx="4" fill="var(--panel-2)" stroke="var(--border)"/>
+    <text x="650" y="66">BLL game 2</text>
+    <text x="360" y="128" fill="var(--ink-faint)">block size 2048 B &mdash; reaches the full 512 KiB cart without bank switching</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">
+  The NewMini loader boots the EPYX menu; the runtime loader indexes the game
+  directory to pull each BLL game by number.</figcaption>
+</figure>
+
+<h3 id="sect-3-1">3.1. The game directory</h3>
+<p>Each directory entry is 8 bytes, in Bastian Schick's <code>new_bll</code>
+<code>NEWHEAD</code> format. Entry <em>n</em> lives at
+<code>MULTICART_DIROFFSET&nbsp;+&nbsp;n&times;8</code>:</p>
+<table>
+<thead><tr><th>Offset</th><th>Field</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>0</code></td><td><code>StartBlock</code></td><td>first cart block of the file</td></tr>
+<tr><td><code>1&ndash;2</code></td><td><code>BlockOffset</code></td><td>byte offset within that block (little-endian)</td></tr>
+<tr><td><code>3</code></td><td><code>ExecFlag</code></td><td><code>new_bll</code> exec flag (unused by this loader)</td></tr>
+<tr><td><code>4&ndash;5</code></td><td><code>DestAddr</code></td><td>RAM load address (little-endian); <code>0</code> = append to previous</td></tr>
+<tr><td><code>6&ndash;7</code></td><td><code>FileLen</code></td><td>image length in bytes (little-endian)</td></tr>
+</tbody>
+</table>
+<p>Every bundled program is a full BLL image whose <code>DestAddr</code> is
+<code>$0400</code> (<code>__MAIN_START__</code>), so each game loads to the same
+place the menu ran &mdash; over the top of it.</p>
+
+<h2 id="sect-4">4. Launching a game: multicart_run()</h2>
+<p>From inside the menu, <code><a href="funcref.html#multicart_run">multicart_run(n)</a></code>
+performs the hand-off. It never returns.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 150" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="multicart_run masks interrupts, stops the frame timers, blanks the palette, copies the loader to 0x0040, then jumps to it; the loader reads the game to 0x0400 and runs it">
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11.5" fill="var(--ink)" text-anchor="middle">
+    <g>
+      <rect x="10"  y="46" width="118" height="44" rx="4" fill="var(--panel)" stroke="var(--border)"/>
+      <text x="69"  y="66">sei + stop</text><text x="69" y="82" fill="var(--ink-faint)">TIM0 / TIM2</text>
+      <rect x="150" y="46" width="118" height="44" rx="4" fill="var(--panel)" stroke="var(--border)"/>
+      <text x="209" y="72">blank palette</text>
+      <rect x="290" y="46" width="140" height="44" rx="4" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+      <text x="360" y="66">copy loader</text><text x="360" y="82" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--ink-faint)">&rarr; $0040</text>
+      <rect x="452" y="46" width="118" height="44" rx="4" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)"/>
+      <text x="511" y="66">jmp $0040</text><text x="511" y="82" fill="var(--ink-faint)">A = romNum</text>
+      <rect x="592" y="46" width="118" height="44" rx="4" fill="var(--accent-2)" fill-opacity="0.14" stroke="var(--accent-2)"/>
+      <text x="651" y="60">load game</text><text x="651" y="74" font-family="ui-monospace,Menlo,Consolas,monospace" fill="var(--ink-faint)">&rarr; $0400</text><text x="651" y="86" fill="var(--ink-faint)">+ run</text>
+    </g>
+    <g fill="var(--ink-faint)" font-size="14">
+      <text x="139" y="70">&rarr;</text><text x="279" y="70">&rarr;</text><text x="441" y="70">&rarr;</text><text x="581" y="70">&rarr;</text>
+    </g>
+    <text x="360" y="24" font-weight="bold">multicart_run(romNum)</text>
+    <text x="360" y="122" fill="var(--ink-faint)">the loader runs at $0040 with the menu already being torn down</text>
+  </g>
+</svg>
+</figure>
+
+<p>Step by step, <code>multicart_run()</code>:</p>
+<ol>
+<li>masks interrupts (<code>sei</code>) &mdash; the loader runs with IRQs off;</li>
+<li>clears the timer-interrupt enables on TIM0 (HBL) and TIM2 (VBL) so a pending
+frame IRQ cannot run menu code that is about to be overwritten;</li>
+<li>blanks the palette for a clean hand-off (no garbage flash while the game
+loads and before it installs its own palette);</li>
+<li>copies the <code>_multicart_loader</code> blob down to <code>$0040</code>;</li>
+<li><code>jmp&nbsp;$0040</code> with <code>A&nbsp;=&nbsp;romNum</code>.</li>
+</ol>
+<p>The loaded game re-initialises the timers, palette and everything else from
+scratch in its own <code>crt0</code>, so the blanked/stopped state the menu leaves
+behind is only ever transient.</p>
+
+<h2 id="sect-5">5. The relocatable runtime loader</h2>
+<p>The loader (<code>runtime/lynx/multicartldr.s</code>) is a small, self-contained
+routine &mdash; a trimmed reimplementation of <code>new_bll</code>'s file loader.
+Where the SDK's power-on bootloader only ever loads directory entry&nbsp;0, this
+loader takes a <em>file number</em> in <code>A</code> and indexes the game
+directory at <code>MULTICART_DIROFFSET</code>. It reads bank&nbsp;0 through
+<code>RCART0</code>, strobing the cart block-address shift register to select each
+block, and uses zero page <code>$00&ndash;$0D</code> as scratch (free, because the
+menu is being torn down).</p>
+<p>It is not linked into a program. It is assembled and linked on its own with
+<code>cfg/lynx-multicartldr.cfg</code>, which locates it at <code>$0040</code> and
+emits a headerless raw image; <code>tools/lnx/gen-multicartldr.sh</code>
+(<code>make multicart-loader-gen</code>) captures those bytes as the committed
+blob <code>libraries/core/multicartldr_gen.s</code>. Because the captured bytes
+carry the absolute addresses the linker resolved at <code>$0040</code>, the blob
+is <strong>position-dependent</strong>: it only runs correctly at
+<code>$0040</code>. Regenerate the blob after any change to the loader source.</p>
+<p>The blob is copied to <code>$0040</code> with an ascending count-up loop, not a
+descending one. This matters: the blob is larger than 128 bytes, and a
+<code>dey</code>&nbsp;/&nbsp;<code>bpl</code> loop would treat a starting index of
+128 or more as already negative and copy nothing at all, leaving the CPU to
+execute stale bytes at <code>$0040</code> and hang. An
+<code>.assert&nbsp;multicart_loader_size&nbsp;&le;&nbsp;$100</code> guards the
+one-page bound. See <code>design/LYNX_MULTICART_DESIGN.md</code>.</p>
+
+<h2 id="sect-6">6. Writing a menu</h2>
+<p>A menu is a normal Lynx program. It draws the game list, reads the joypad, and
+calls <code>multicart_run()</code> when the player commits. Include
+<code>&lt;lynx/multicart.h&gt;</code>:</p>
+<pre><code>#include &lt;lynx/multicart.h&gt;
+
+void __fastcall__ multicart_run (unsigned char romNum);
+</code></pre>
+<p><code>multicart_run(romNum)</code> launches bundled game number
+<code>romNum</code> (0 = the first game in the directory the ROM builder laid
+down). It masks interrupts, stops the display timers, blanks the palette, copies
+the runtime loader to <code>$0040</code> and jumps to it; the loader reads the
+selected game off the cartridge and runs it. It <strong>overwrites the menu and
+never returns</strong>, so call it only from a program that was itself built and
+bundled as a multicart menu. The header also exposes the two layout constants for
+reference and tooling:</p>
+<table>
+<thead><tr><th>Macro</th><th>Value</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>MULTICART_DIROFFSET</code></td><td><code>0x0380</code> (896)</td><td>game-directory offset within cart block 0</td></tr>
+<tr><td><code>MULTICART_LOADER_ADDR</code></td><td><code>0x0040</code></td><td>where the runtime loader is copied to and runs</td></tr>
+</tbody>
+</table>
+<p>A minimal launch, once the player has chosen a slot <code>sel</code>:</p>
+<pre><code>if (pressed &amp; JOY_BTN_A_MASK) {
+    multicart_run (sel);        /* load + run game "sel"; never returns */
+}</code></pre>
+
+<h2 id="sect-7">7. Limitations and gotchas</h2>
+<ul>
+<li><strong>One game per power-on.</strong> A launched game overwrites the menu;
+there is no return path without a reboot. Design the menu accordingly.</li>
+<li><strong>Games must be BLL objects.</strong> Build the menu and every game with
+<code>cl65 -C lynx-bll.cfg</code>. A game linked with a different config will not
+carry the BLL header the directory and loader expect.</li>
+<li><strong>The loader is built for the default layout.</strong> The 2048-byte
+block size and the <code>$0380</code> directory offset are baked into the runtime
+loader. If you pass a non-default <code>--blocksize</code> or
+<code>--diroffset</code> to <code>lnx multicart</code>, rebuild the loader to
+match and regenerate its blob.</li>
+<li><strong>No ONCE padding is needed.</strong> A bundled game's own startup
+<a href="memory.html">ONCE reclaim</a> relocation stays within its BSS region and
+does not touch neighbouring files, so no dead-space filler between games is
+required.</li>
+</ul>
+
+<h2 id="sect-8">8. License</h2>
+<p>The Lynx runtime, like the rest of the package, is distributed under the cc65
+zlib-style license. The full text, together with every other copyright notice in
+the distribution, is reproduced verbatim on the consolidated <a href="licenses.html">Licenses
+and copyright notices</a> page.</p></article></main><site-foot></site-foot>
+<script src="doc.js"></script>
+</body></html>

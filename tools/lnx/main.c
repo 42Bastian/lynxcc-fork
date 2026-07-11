@@ -24,6 +24,7 @@
 #include "lnxhdr.h"
 #include "jsoncfg.h"
 #include "bllrom.h"
+#include "multicart.h"
 
 #define LNX_TOOL_VERSION "1.0"
 
@@ -68,6 +69,15 @@ static void Usage(FILE* f)
         "  patch   [field-opts] <file>  rewrite header fields of a .lnx\n"
         "  create  [field-opts] <raw>   wrap a raw image with a fresh header\n"
         "  bll     [bll-opts] <obj.o>   BLL/BS93 object -> bootable cart ROM\n"
+        "  multicart [mc-opts] <game.o>...  write a lynxdir .mak for a multicart\n"
+        "\n"
+        "multicart options:\n"
+        "  --menu <file>                menu executable, BLL object (required)\n"
+        "  --blocksize 512|1024|2048    cart block size (default 2048 = 512 KiB)\n"
+        "  --dirstart <n>               first-entry directory offset (default 203)\n"
+        "  --diroffset <n>              game directory offset (default 896)\n"
+        "  -o, --output <file.mak>      write the .mak here (default: stdout)\n"
+        "  (games are listed in order; game 0 is the first)\n"
         "\n"
         "bll options:\n"
         "  --size 128|256|512           target cart size in KiB (default: smallest fit)\n"
@@ -519,6 +529,9 @@ int main(int argc, char** argv)
     if (strcmp(cmd, "bll") == 0) {
         if (ParseFieldArgs(argc, argv, 2, &o) != 0) { return 1; }
         return CmdBll(&o);
+    }
+    if (strcmp(cmd, "multicart") == 0) {
+        return MulticartMak(argc, argv, 2);
     }
 
     fprintf(stderr, "lnx: unknown command '%s'\n\n", cmd);

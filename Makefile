@@ -1,4 +1,4 @@
-.PHONY: all mostlyclean clean install zip avail unavail bin lib doc html info examples tools tests lnx-loader-gen abcrom-template
+.PHONY: all mostlyclean clean install zip avail unavail bin lib doc html info examples tools tests lnx-loader-gen multicart-loader-gen abcrom-template
 
 .SUFFIXES:
 
@@ -40,6 +40,12 @@ tests:
 # See design/LYNX_LNX_BLL_ROM_DESIGN.md.
 lnx-loader-gen:
 	@sh tools/lnx/gen-loader.sh
+
+# Regenerate the committed multicart runtime-loader blob
+# (libraries/core/multicartldr_gen.s) from runtime/lynx/multicartldr.s. Requires
+# the toolchain to be built first. See design/LYNX_MULTICART_DESIGN.md.
+multicart-loader-gen:
+	@sh tools/lnx/gen-multicartldr.sh
 
 # Rebuild the abcrom tune-audition template ROM (tools/abcrom/template.lnx) with
 # the lynxcc toolchain. Requires the compiler + libraries to be built first;
