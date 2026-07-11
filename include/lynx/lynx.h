@@ -220,6 +220,23 @@ void __fastcall__ lynx_exec (int fileno);
 
 
 /*****************************************************************************/
+/*                              System control                               */
+/*****************************************************************************/
+
+
+
+void poweroff (void);
+/* Turn the Lynx off in software (soft power-off). Clears the power bit
+** (SYSCTL1 bit 1) so the voltage regulator disconnects the system from the
+** battery -- the same mechanism the hardware uses to auto-power-off an idle
+** unit. This does not return on real hardware; masking interrupts and saving
+** any game state (see the eeprom_* family) beforehand is the caller's job.
+** Emulators generally do not model the soft-off, so there the call is a no-op.
+*/
+
+
+
+/*****************************************************************************/
 /*                           Accessing the EEPROM                            */
 /*****************************************************************************/
 

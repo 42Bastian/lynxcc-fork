@@ -52,7 +52,7 @@ endif
 ROOT_EXAMPLES = lynxdemo
 GAMES         = breakout invaders raycaster sybil
 SUZY          = muldivtest spritetest spritesheet spriteslice sprpcktest spritefx suzyasync suzyasyncbench suzybench packtest fonttest fontvar textdir collision
-MIKEY         = setbpp sndtune sfxtest sfxdemo
+MIKEY         = setbpp sndtune sfxtest sfxdemo poweroff
 MEMORY        = heaptest zeropage
 NETWORK       = comlynx
 SDCARD_GD     = sdcardls

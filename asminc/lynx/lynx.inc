@@ -228,7 +228,7 @@ INTSET      = $FD81
 MAGRDY0     = $FD84
 MAGRDY1     = $FD85
 AUDIN       = $FD86
-SYSCTL1     = $FD87
+SYSCTL1     = $FD87             ; b1 power (1=on), b0 cart strobe; see _poweroff
 MIKEYHREV   = $FD88
 MIKEYSREV   = $FD89
 IODIR       = $FD8A

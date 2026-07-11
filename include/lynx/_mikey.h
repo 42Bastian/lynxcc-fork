@@ -79,7 +79,7 @@ struct __mikey {
   unsigned char     magrdy0;        // 0xFD84  mag tape channel0 ready bit
   unsigned char     magrdy1;        // 0xFD85  mag tape channel1 ready bit
   unsigned char     audin;          // 0xFD86  audio in
-  unsigned char     sysctl1;        // 0xFD87  control bits
+  unsigned char     sysctl1;        // 0xFD87  control bits (b1 power 1=on, b0 cart strobe); see poweroff()
   unsigned char     mikeyrev;       // 0xFD88  mikey hardware rev
   unsigned char     mikeysrev;      // 0xFD89  mikey software rev
   unsigned char     iodir;          // 0xFD8A  parallel i/o data dir
