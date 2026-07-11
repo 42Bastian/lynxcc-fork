@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lynxcc - palgen</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<style>
+/* palgen — interactive colour-palette generator widget.  All colours come from
+   the shared doc.css theme variables so the tool tracks the light/dark theme. */
+.pg-tool{margin:1.4em 0}
+.pg-input{width:100%;box-sizing:border-box;resize:vertical;min-height:5.5em;
+  font-family:"SF Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.9rem;line-height:1.5;padding:12px 14px;
+  background:var(--pre-bg);color:var(--pre-ink);
+  border:1px solid var(--pre-border);border-radius:var(--radius)}
+.pg-input:focus{outline:none;border-color:var(--accent-2)}
+.pg-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:.8em 0}
+.pg-note{color:var(--ink-faint);font-size:.85rem}
+.pg-swatches{margin:1.2em 0}
+.pg-row{display:flex;align-items:flex-start;gap:14px;margin:.6em 0;flex-wrap:wrap}
+.pg-rowlabel{width:150px;flex:none;color:var(--ink-soft);font-size:.88rem;
+  padding-top:6px}
+.pg-list{display:flex;flex-wrap:wrap;gap:4px}
+.pg-sw{width:30px;height:30px;border:1px solid var(--border);border-radius:4px}
+.pg-sw-in{position:relative;overflow:hidden;cursor:pointer;padding:0}
+.pg-sw-in:hover{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent)}
+.pg-sw-in input[type=color]{position:absolute;inset:0;width:100%;height:100%;
+  margin:0;padding:0;border:none;opacity:0;cursor:pointer}
+.pg-sw-empty{border-style:dashed;border-color:var(--ink-faint);background:transparent}
+.pg-plus{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;color:var(--ink-faint);font-size:16px;
+  line-height:1;pointer-events:none}
+.pg-warn{margin:1em 0;padding:10px 14px;border-radius:var(--radius);
+  border:1px solid var(--accent);color:var(--ink);font-size:.9rem;
+  background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.pg-out{margin-top:1.2em}
+.pg-out h3{margin:1.2em 0 .4em}
+</style>
+</head><body>
+<site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>palgen &mdash; Palette Generator</h1></header><div class="abstract"><strong>palgen</strong> is a small in-browser tool that turns sixteen ordinary
+HTML colour codes (like <code>#ffcc00</code>) into a ready-to-paste Atari&nbsp;Lynx
+colour palette. The Lynx has a 12-bit colour space &mdash; 4,096 possible colours,
+one nibble per channel &mdash; so each 24-bit web colour is scaled down from its
+eight bits per channel to the Lynx's four. It emits two C arrays from the same
+input so you can pick whichever matches how your program loads its palette, and it
+previews both your input colours and the down-scaled Lynx result as swatches.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Overview</a></li>
+<li class="lvl1"><a href="#generator">2. The generator</a></li>
+<li class="lvl1"><a href="#sect-3">3. The two output arrays</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. The gfx_setpalette() array</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. The setpallete() array</a></li>
+<li class="lvl1"><a href="#sect-4">4. How the conversion works</a></li>
+<li class="lvl1"><a href="#sect-5">5. Copyright</a></li>
+</ul></nav>
+
+<h2 id="sect-1">1. Overview</h2>
+<p>A Lynx palette holds sixteen entries (one per pen, 0&ndash;15). Each entry is a
+12-bit colour: four bits of green, four of blue and four of red. Desktop and web
+colours are 24-bit &mdash; eight bits per channel &mdash; so the top job of
+<strong>palgen</strong> is to scale each channel from the 0&ndash;255 range down to
+the Lynx's 0&ndash;15 range, rounding to the nearest nibble. You paste in sixteen
+familiar hex colours and get back, in real time, the exact bytes to drop into your
+source.</p>
+<p>Because there is more than one way a lynxcc program can install a palette, palgen
+prints <strong>two</strong> arrays from the same set of colours &mdash; a 32-byte
+array for <code><a href="funcref.html#gfx_setpalette">gfx_setpalette()</a></code>
+and a sixteen-entry array for a hand-written <code>setpallete()</code> routine. Use
+whichever one fits your code; they describe the same sixteen colours. See
+<a href="#sect-3">&sect;3</a> for the details of each.</p>
+
+<h2 id="generator">2. The generator</h2>
+<p>Enter up to sixteen HTML colour codes below, separated by commas &mdash; a
+leading <code>#</code> is optional and extra whitespace is ignored. The swatches
+and code update in real time as you type &mdash; there is no button to press. The <em>Input colours</em>
+row shows the colours exactly as you typed them; the <em>Lynx colours</em> row shows
+the same colours after they have been scaled down to the 12-bit Lynx space, so you
+can see how much (or how little) each one shifts.</p>
+<p>You can also edit a colour visually: <strong>click any swatch in the
+<em>Input colours</em> row</strong> to open your browser's colour wheel, and the
+input box, swatches and code all update when you pick a new colour. A Lynx palette
+has exactly sixteen pens, so both swatch rows always show all sixteen: any pens you
+have not supplied a colour for appear as dashed placeholders that you can click to
+fill. palgen also <strong>flags the shortfall</strong> when you supply fewer than
+sixteen colours, and the generated arrays will be short by that many entries;
+anything past the sixteenth colour is ignored.</p>
+
+<div class="pg-tool">
+  <textarea class="pg-input" id="pgColours" rows="4" spellcheck="false" aria-label="HTML colour codes, comma separated">000000, ff0000, 00ff00, 0000ff, ffff00, ff00ff, 00ffff, 990000, 009900, 000099, 999900, 990099, 009999, 333333, 999999, ffffff</textarea>
+  <div class="pg-controls">
+    <span class="pg-note">16 colours &mdash; commas between them, <code>#</code> optional. Output updates as you type; click an input swatch to pick a colour.</span>
+  </div>
+  <div class="pg-warn" id="pgWarn" hidden></div>
+  <div class="pg-swatches" id="pgSwatches"></div>
+  <pre class="code" id="pgCode"></pre>
+</div>
+
+<h2 id="sect-3">3. The two output arrays</h2>
+<p>Both arrays encode the same sixteen 12-bit colours; they differ only in how they
+are laid out in memory, to match the two common ways of loading a palette. Use one
+or the other, not both.</p>
+
+<h3 id="sect-3-1">3.1. The gfx_setpalette() array</h3>
+<p>The first array is an <code>unsigned char palette[]</code> of <strong>32
+bytes</strong> in the wire format that
+<code><a href="funcref.html#gfx_setpalette">gfx_setpalette()</a></code> expects (see
+the <a href="graphics.html#sect-6">Graphics</a> palette section): sixteen
+<strong>green</strong> bytes (one green nibble per pen) followed by sixteen
+<strong>blue/red</strong> bytes (blue in the high nibble, red in the low nibble).
+This is Mikey's <code>GCOLMAP</code> layout, and it is the array to use if you install
+palettes through the <code>gfx_*</code> graphics API:</p>
+<pre class="code">gfx_setpalette(palette);</pre>
+
+<h3 id="sect-3-2">3.2. The setpallete() array</h3>
+<p>The second array is an <code>unsigned short palette[]</code> with one entry per
+pen, each a packed 12-bit value of the form <code>0x0GBR</code> (green nibble in bits
+8&ndash;11, blue in bits 4&ndash;7, red in bits 0&ndash;3). This is the layout used by
+the hand-written <code>setpallete()</code> routine from
+<a href="https://atarilynxdeveloper.wordpress.com/2012/04/25/programming-tutorial-part-6colors/" rel="noopener">Alex&nbsp;Thissen's colours tutorial</a>,
+which writes each entry straight to Mikey's palette registers. Reach for this array
+if you poke the palette hardware directly rather than going through the graphics
+library.</p>
+
+<h2 id="sect-4">4. How the conversion works</h2>
+<p>Each channel is an 8-bit value in the range 0&ndash;255, and the Lynx wants a
+4-bit value in the range 0&ndash;15. palgen divides by 16.5 and rounds to the nearest
+integer, which maps <code>0x00</code>&nbsp;&rarr;&nbsp;<code>0</code> and
+<code>0xff</code>&nbsp;&rarr;&nbsp;<code>15</code> and spreads the values in between
+evenly across the sixteen steps. The three resulting nibbles &mdash; green, blue and
+red &mdash; are then packed into the two output layouts described above. The
+conversion is lossy: many distinct web colours collapse onto the same Lynx colour,
+which is why the <em>Lynx colours</em> swatch row is worth checking before you commit
+to a palette.</p>
+
+<h2 id="sect-5">5. Copyright</h2>
+<p>This palette-generator tool and its documentation are part of the
+<strong>lynxcc</strong> documentation set, (C) Copyright 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International. See the
+<a href="licenses.html">Licenses</a> page.</p>
+
+</article></main><site-foot></site-foot>
+<script src="doc.js"></script>
+<script>
+// palgen — scale up to 16 web colours to the Lynx's 12-bit palette and emit
+// two arrays.  Input swatches double as colour-wheel pickers, and a palette of
+// fewer than 16 colours is flagged.
+(function () {
+  var PENS = 16;
+  var taEl = document.getElementById("pgColours");
+  var swEl = document.getElementById("pgSwatches");
+  var codeEl = document.getElementById("pgCode");
+  var warnEl = document.getElementById("pgWarn");
+
+  // 8-bit channel (hex string) -> 4-bit Lynx nibble (hex digit).
+  function conv(a) { return Math.round(parseInt(a, 16) / 16.5).toString(16); }
+
+  // Strip any HTML the browser might interpret in the textarea value.
+  function strip(a) {
+    return (new DOMParser).parseFromString(a, "text/html").body.textContent || "";
+  }
+
+  // Parse the textarea into a list of hex colours (no '#', no spaces, no blanks).
+  function parseColours() {
+    return strip(taEl.value).replace(/[ #]/g, "").split(",")
+      .filter(function (s) { return s.length > 0; });
+  }
+
+  // Normalise a colour to a 6-digit hex value for the native colour picker.
+  function norm6(col) {
+    col = (col || "").toLowerCase();
+    if (/^[0-9a-f]{6}$/.test(col)) return col;
+    if (/^[0-9a-f]{3}$/.test(col)) return col.replace(/(.)/g, "$1$1");
+    return "000000";
+  }
+
+  // A picker committed a new colour: splice it into the input and regenerate.
+  // Picking an empty pen fills any gap before it with black so the pen index
+  // the user clicked is the one that gets the colour.
+  function onPick(e) {
+    var i = +e.target.getAttribute("data-i");
+    var cur = parseColours();
+    while (cur.length <= i) cur.push("000000");
+    cur[i] = e.target.value.replace("#", "");
+    taEl.value = cur.join(", ");
+    gen();
+  }
+
+  function gen() {
+    var cols = parseColours();
+    var count = Math.min(PENS, cols.length);
+
+    var greenBytes = "", brBytes = "", shorts = "";
+    var inSw = "", outSw = "";
+
+    // The swatch rows always show all 16 pens; pens past the supplied colours
+    // render as clickable dashed placeholders.
+    for (var b = 0; b < PENS; b++) {
+      if (b < count) {
+        var col = cols[b];
+        var g = conv(col.substr(2, 2)); // green nibble
+        var bl = conv(col.substr(4, 2)); // blue nibble
+        var r = conv(col.substr(0, 2)); // red nibble
+
+        // 0x0GBR packed 12-bit value -> its two halves and the packed short.
+        greenBytes += "\t0x0" + g + bl + r + " >> 8, \n";
+        brBytes += "\t0x0" + g + bl + r + " & 0xff, \n";
+        shorts += "\t0x0" + g + bl + r + ", ";
+        if ((b + 1) % 4 === 0) shorts += "\n";
+
+        // Input swatch doubles as a colour-wheel picker.
+        inSw += '<label class="pg-sw pg-sw-in" style="background:#' + col +
+          '" title="Click to pick colour ' + (b + 1) + '">' +
+          '<input type="color" value="#' + norm6(col) + '" data-i="' + b + '"></label>';
+        outSw += '<div class="pg-sw" style="background:#' + r + g + bl + '"></div>';
+      } else {
+        // Empty pen: clickable placeholder in the input row, blank in the output.
+        inSw += '<label class="pg-sw pg-sw-in pg-sw-empty" ' +
+          'title="Click to add colour ' + (b + 1) + '">' +
+          '<span class="pg-plus">+</span>' +
+          '<input type="color" value="#000000" data-i="' + b + '"></label>';
+        outSw += '<div class="pg-sw pg-sw-empty"></div>';
+      }
+    }
+
+    swEl.innerHTML =
+      '<div class="pg-row"><div class="pg-rowlabel">Input colours</div>' +
+      '<div class="pg-list">' + inSw + '</div></div>' +
+      '<div class="pg-row"><div class="pg-rowlabel">Lynx colours</div>' +
+      '<div class="pg-list">' + outSw + '</div></div>';
+
+    // Wire up the freshly rendered pickers.
+    var picks = swEl.querySelectorAll('input[type=color]');
+    for (var p = 0; p < picks.length; p++) picks[p].addEventListener("change", onPick);
+
+    // Flag a palette that does not fill all 16 pens.
+    if (cols.length < PENS) {
+      warnEl.hidden = false;
+      warnEl.innerHTML = "&#9888; Only <strong>" + cols.length + "</strong> of " +
+        PENS + " colours supplied &mdash; the generated arrays are short by " +
+        (PENS - cols.length) + " pen" + (PENS - cols.length === 1 ? "" : "s") +
+        ". A full Lynx palette needs 16.";
+    } else if (cols.length > PENS) {
+      warnEl.hidden = false;
+      warnEl.innerHTML = "&#9888; <strong>" + cols.length + "</strong> colours supplied " +
+        "&mdash; only the first " + PENS + " are used.";
+    } else {
+      warnEl.hidden = true;
+    }
+
+    codeEl.textContent =
+      "// input colours: " + cols.slice(0, count).join(", ") +
+      "\n\n// gfx_setpalette() array\nunsigned char palette[] = {\n" +
+      "\t// green\n" + greenBytes + "\n\t// blue + red\n" + brBytes + "};" +
+      "\n\n// setpallete() array\nunsigned short palette[] = {\n" + shorts + "};";
+  }
+
+  // Regenerate live as the colour list is edited.
+  taEl.addEventListener("input", gen);
+  gen();
+})();
+</script>
+</body></html>
