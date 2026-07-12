@@ -23,9 +23,15 @@
 ** VBL IRQ chain, so once the VBL interrupt is running (gfx_init + CLI) the game
 ** just calls play / stop.
 **
+** PCM (design/LYNX_HANDYMUSIC_DESIGN.md sec. 4.4): two short 8 kHz blips
+** (pcmsamples.h) are registered as samples 0 and 1, so the demo song's own
+** "play sample" commands stream them out channel 0.  Opt1 also fires one
+** directly, and the status line shows when a sample is playing.
+**
 ** Controls:
 **   A     play the selected sound effect
 **   B     stop the music (press again to restart)
+**   Opt1  play a PCM blip directly (borrows channel 0 briefly)
 **   Up/Dn choose which effect A fires
 **
 ** Build:  make   (see the Makefile; it drives hmcc, then cl65 -C
@@ -42,6 +48,7 @@
 #include "sfx_equ.h"             /* generated from sfx.equ by the Makefile:    */
                                 /* HandyMusic_NumSFX, HandyMusic_SFX_ATable*, */
                                 /* and the SFX_* effect indices.              */
+#include "pcmsamples.h"          /* pcm_laser / pcm_blip 8 kHz sample arrays.  */
 
 /* Resident hmcc blobs (hmdemo.s) and their reserved run-time bases. */
 extern const unsigned char hm_music_data[];
@@ -92,6 +99,12 @@ void main (void)
                                HandyMusic_SFX_PTable);
 
     handymusic_init ();
+
+    /* Register the two blips so the song's "sample 0" / "sample 1" commands
+    ** stream them (design sec. 4.4). */
+    handymusic_register_pcm (0, pcm_laser, pcm_laser_len);
+    handymusic_register_pcm (1, pcm_blip,  pcm_blip_len);
+
     handymusic_play_music ();
 
     for (;;) {
@@ -115,6 +128,9 @@ void main (void)
             playing ^= 1;
         }
 
+        if (pressed & JOY_OPT1_MASK)
+            handymusic_play_pcm (pcm_laser, pcm_laser_len);
+
         while (gfx_busy ()) {}
 
         gfx_setcolor (COLOR_BLACK);
@@ -125,6 +141,10 @@ void main (void)
         gfx_outtextxy (4, 4, "HandyMusic engine");
         gfx_setcolor (COLOR_GREY);
         gfx_outtextxy (4, 16, playing ? "Music: playing" : "Music: stopped");
+        if (handymusic_pcm_playing ()) {
+            gfx_setcolor (COLOR_LIGHTBLUE);
+            gfx_outtextxy (120, 16, "PCM");
+        }
 
         for (i = 0; i < SFX_COUNT; ++i) {
             y = 34 + (int)i * 11;
@@ -139,7 +159,7 @@ void main (void)
         }
 
         gfx_setcolor (COLOR_WHITE);
-        gfx_outtextxy (4, 108, "Up/Dn A:sfx B:music");
+        gfx_outtextxy (4, 108, "A:sfx B:music O1:pcm");
 
         gfx_updatedisplay ();
     }

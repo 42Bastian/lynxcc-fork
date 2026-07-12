@@ -11,7 +11,7 @@
 ;   5 Set Loop       [5][count]
 ;   6 Loop           [6]
 ;   7 Wait           [7][delayLo][delayHi]
-;   8 Play Sample    [8][sampleNo]   (PCM stubbed here -- see design §4.4)
+;   8 Play Sample    [8][sampleNo]   (RAM sample from the registry; design §4.4)
 ;   9 Pattern Call   [9][addrLo][addrHi]
 ;   A Pattern Return [A]
 ;   B Short Note On  [B][baseLo][baseHi][delayLo]
@@ -196,12 +196,28 @@ HandyMusic_Mus_Wait:
         rts
 
 ; ---------------------------------------------------------------------------
-; HandyMusic_Mus_Sampl: PCM playback is stubbed in this build (design §4.4).
-; Consume the sample-number byte so script decoding stays aligned; play
-; nothing.
+; HandyMusic_Mus_Sampl: grab channel 0 and play the RAM sample registered under
+; the following number (design §4.4).  Script decoding continues while the
+; sample streams, so delays are added by the script.  An unregistered or empty
+; slot plays nothing.  X (the track index) is preserved.
 ;
 HandyMusic_Mus_Sampl:
-        jsr     HandyMusic_Mus_GetBytes         ; Consume sample number
+        phx
+        jsr     HandyMusic_Mus_GetBytes         ; Sample number
+        tax
+        lda     HandyMusic_Sample_TblLenLo,x    ; Registered / non-empty?
+        sta     HandyMusic_Sample_LenLo
+        ora     HandyMusic_Sample_TblLenHi,x
+        beq     @none
+        lda     HandyMusic_Sample_TblLenHi,x
+        sta     HandyMusic_Sample_LenHi
+        lda     HandyMusic_Sample_TblPtrLo,x
+        sta     HandyMusic_Sample_Pointer
+        lda     HandyMusic_Sample_TblPtrHi,x
+        sta     HandyMusic_Sample_Pointer + 1
+        jsr     HandyMusic_PlayPCM
+@none:
+        plx
         rts
 
 ; ---------------------------------------------------------------------------

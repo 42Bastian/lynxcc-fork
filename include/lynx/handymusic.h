@@ -45,8 +45,12 @@
 ** pause.  The VBL timer must be running -- call gfx_init() (or otherwise enable
 ** the VBL interrupt) before handymusic_init().
 **
-** PCM sample playback is a planned phase and is not in this build: the music
-** "play sample" command is a no-op (design sec. 4.4).
+** PCM sample playback is RAM-sourced (design sec. 4.4): short 8 kHz samples
+** live as ordinary resident byte arrays and are streamed out channel 0 by a
+** timer-3 IRQ.  Play one directly with handymusic_play_pcm(), or register it in
+** the sample table with handymusic_register_pcm() so the song's "play sample"
+** command can trigger it by number.  Channel 0 is borrowed from the music
+** engine while a sample plays and handed back automatically when it ends.
 */
 
 /* Initialize HandyMusic and the audio hardware (stereo on, all channels idle).
@@ -74,6 +78,29 @@ void handymusic_stop_all (void);
 /* Pause / resume all channels (both are double-call safe). */
 void handymusic_pause (void);
 void handymusic_unpause (void);
+
+/* Play the len-byte 8 kHz PCM sample at buf, straight away, out channel 0
+** (design sec. 4.4).  buf must stay resident until playback ends.  The sample
+** borrows channel 0 from the music engine and returns it when finished; a new
+** call pre-empts any sample still playing.  No-op if PCM is muted (see
+** handymusic_disable_pcm) or len is zero. */
+void __fastcall__ handymusic_play_pcm (const unsigned char *buf,
+                                       unsigned int len);
+
+/* Record a PCM sample buffer under slot num (0..7) so the song's "play sample"
+** command can trigger it (design sec. 4.4).  Call before the song references
+** the slot; buf must stay resident.  A slot left unregistered plays nothing. */
+void __fastcall__ handymusic_register_pcm (unsigned char num,
+                                           const unsigned char *buf,
+                                           unsigned int len);
+
+/* Nonzero while a PCM sample is streaming, zero once channel 0 has been handed
+** back to the music engine. */
+unsigned char handymusic_pcm_playing (void);
+
+/* Runtime PCM mute: set nonzero to block all sample playback (music-triggered
+** and direct), zero to allow it (the default).  Music and SFX are unaffected. */
+extern unsigned char handymusic_disable_pcm;
 
 /* Pre-init SFX script-table pointers (zero page).  Before the first
 ** handymusic_play_sfx, point these at the three tables hmcc emitted for the SFX

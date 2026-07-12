@@ -60,8 +60,9 @@ sfx_equ.h: sfx.equ
 music.mus: instr.txt track1.txt track2.txt track3.txt track4.txt
 	$(HMCC) '$$$(MUS_BASE)' $@ instr.txt track1.txt track2.txt track3.txt track4.txt
 
-# 4a. The demo object depends on the generated SFX header.
-handymusic.o: handymusic.c sfx_equ.h
+# 4a. The demo object depends on the generated SFX header and the (committed)
+#     PCM sample data (design sec. 4.4; regenerate with gen-pcm.py).
+handymusic.o: handymusic.c sfx_equ.h pcmsamples.h
 	$(CC) $(CFLAGS) handymusic.c
 	$(AS) handymusic.s
 

@@ -7,17 +7,19 @@ See doc/licenses.html.
 
 # HandyMusic Integration Design (`hmcc` tool + `lynx-handymusic` library)
 
-Status: **PARTIALLY IMPLEMENTED.** The **host tool track (§3) is done** — `hmcc`
+Status: **IMPLEMENTED.** The **host tool track (§3) is done** — `hmcc`
 lives in `tools/hmcc/`, builds to `bin/hmcc` from the shared `PROGS` list in
 `tools/Makefile`, and is documented at `doc/hmcc.html`. The **runtime library
-track (§4) is done for music + SFX** — the ca65 driver lives in
+track (§4) is done, including PCM** — the ca65 driver lives in
 `libraries/audio/handymusic/` (`handymusic.s` + `hm-instr.inc` + `hm-mus.inc`),
 archives into `lib/lynx-handymusic.lib` (via `libraries.mk` + the cl65 auto-libs
 manifest), exposes `include/lynx/handymusic.h`, reserves its data regions in
 `cfg/lynx-handymusic.cfg`, ships the `examples/mikey/handymusic/` example, and is
-documented at `doc/handymusic.html`. **PCM sample playback (§4.4) remains the one
-planned piece** — the music "play sample" command is currently a no-op. This
-document remains the source of truth for how Osman Celimli's
+documented at `doc/handymusic.html`. **PCM sample playback (§4.4) is now
+implemented** — RAM-sourced, streamed to channel 0 by a timer-3 8 kHz IRQ, with
+a small sample registry so the music "play sample" command triggers registered
+samples by number. This document remains the source of truth for how Osman
+Celimli's
 *HandyMusic 1.40cx+* driver and its `HMCC` script compiler are brought into
 **lynxcc** as (1) a host build tool and (2) a linkable audio library games can
 pull in. Section-level status is called out in §3, §6 and §8 below.
@@ -131,7 +133,7 @@ object-output mode for `hmcc` (symbolic tables resolved by ld65) is explicitly
 unmodified in spirit, and the fixed region is sufficient for the Lynx's memory
 budget.
 
-## 4. Runtime library track — `lynx-handymusic`  *(IMPLEMENTED for music + SFX; PCM §4.4 pending)*
+## 4. Runtime library track — `lynx-handymusic`  *(IMPLEMENTED, including PCM §4.4)*
 
 ### 4.1 ca65 syntax port
 
@@ -186,30 +188,48 @@ the music-data region whose base is handed to `hmcc`. The game `.incbin`s the
 variables and the `.mus` header at it. This preserves the "data is absolute to
 its base" contract without patching the tool.
 
-### 4.4 PCM playback — RAM-sourced, not cart-streamed
+### 4.4 PCM playback — RAM-sourced, not cart-streamed  *(IMPLEMENTED)*
 
 The PCM streamer and `LoadPlayBGM` are the only parts touching BLL internals.
 
 **Decision: replace cart streaming with RAM-sourced PCM.** The upstream design
 streams samples byte-by-byte off the cart precisely to keep RAM use tiny, but
 long PCM on the Lynx is a bad trade regardless (cart bandwidth, IRQ overhead), so
-it is not a goal here. Instead:
+it is not a goal here. As implemented in `handymusic.s` (`HandyMusic_PlayPCM` +
+the `handymusic_pcm_irq` interruptor):
 
-- **Reband `PlayPCMSample`/`PCMSample_IRQ` to read from a RAM buffer.** Keep the
-  same timer-3 8 kHz IRQ that writes `$FD22` (direct volume) and the same
-  channel-0 capture via `HandyMusic_Channel_NoWriteBack`, but replace the
+- **`PlayPCMSample`/`PCMSample_IRQ` are rebanded to read from a RAM buffer.** The
+  same timer-3 8 kHz IRQ writes `$FD22` (direct volume) and the same channel-0
+  capture via `HandyMusic_Channel_NoWriteBack` is kept, but the
   `LoadDir`/`SelectBlock`/`ReadOver`/`ReadByte` cart walk and the `entry+…`
-  directory struct with a plain pointer + length over a caller-supplied RAM
-  buffer. The IRQ becomes "fetch next byte from RAM pointer, advance, stop at
-  end" — simpler and with no cart dependency. Install it via `set_irq` on timer
-  3 rather than writing `irq_vecs` directly.
+  directory struct are replaced with a plain zero-page pointer
+  (`HandyMusic_Sample_Pointer`) + a 16-bit remaining-length down-counter over a
+  caller-supplied RAM buffer. The IRQ fetches the next byte via `(zp)`, advances,
+  and stops (killing timer 3, restoring channel-0 attenuation, releasing
+  `NoWriteBack`) when the counter reaches zero.
+- **Deviation from the sketch: a `.interruptor`, not `set_irq`.** The handler is
+  registered as a second ca65 `.interruptor` (`handymusic_pcm_irq`) on the shared
+  IRQ chain — the same mechanism §4.5 chose for the VBL hook — rather than
+  claiming the single shared `set_irq` C-level slot. It checks the
+  `TIMER3_INTERRUPT` bit and returns carry clear (never claims the interrupt), so
+  the VBL tick still runs on the same IRQ pass; the master `IRQStub` acknowledges
+  the pending bits. This keeps `set_irq` free for the game and matches how the
+  VBL hook is installed.
 - **Samples are short, resident data.** The game provides the sample as a normal
-  linked/`.incbin`ed byte array in RAM (or a decoded buffer); `PlayPCMSample`
-  takes its address+length. This keeps the "small footprint" spirit for the
-  short one-shots PCM is actually good for on the Lynx (drum hits, stingers) and
-  drops the streaming machinery entirely.
+  linked byte array in RAM; `handymusic_play_pcm(buf, len)` takes its
+  address+length and plays it straight away. This keeps the "small footprint"
+  spirit for the short one-shots PCM is actually good for on the Lynx (drum hits,
+  stingers) and drops the streaming machinery entirely.
+- **Music-triggered samples use a small registry.** The upstream music "play
+  sample" command carried a sample *number* (`FileNum_SampleBase` file offsets);
+  with no cart files, that number now indexes a small RAM sample table
+  (`HANDYMUSIC_MAX_SAMPLES` slots of pointer+length). The game populates it with
+  `handymusic_register_pcm(num, buf, len)` before the song references the slot;
+  `HandyMusic_Mus_Sampl` looks the slot up and plays it (an unregistered slot
+  plays nothing).
 - **`HandyMusic_Disable_Samples`** is retained as a runtime mute for the PCM
-  path, but PCM is a supported, linkable feature — not gated off.
+  path — exposed to C as `handymusic_disable_pcm` — but PCM is a supported,
+  linkable feature, not gated off.
 
 **`LoadPlayBGM`** depends on `LoadFile` + `FileNum_MusicBase` (cart file load).
 Replace it with a "music data already resident in the reserved region, just
@@ -222,8 +242,13 @@ is dropped along with the streaming path.
 Wrap the asm entry points as C functions where the calling convention allows.
 The number-in-`A` calls (`PlaySFX`, `PlayMusic`) map to a single `unsigned char`
 argument. `PlayPCMSample` changes shape from the upstream "sample number in A" to
-a RAM-sourced call taking a buffer pointer and length (§4.4), e.g.
-`handymusic_play_pcm(const unsigned char *buf, unsigned int len)`.
+a RAM-sourced call taking a buffer pointer and length (§4.4):
+`handymusic_play_pcm(const unsigned char *buf, unsigned int len)`. Alongside it
+the surface adds `handymusic_register_pcm(num, buf, len)` (populate the sample
+registry the music command reads), `handymusic_pcm_playing()` (nonzero while a
+sample streams — the demo uses it to know when channel 0 is borrowed), and the
+`handymusic_disable_pcm` mute variable. These are documented in
+`include/lynx/handymusic.h` and `doc/funcref.html`.
 
 **Decision: the library installs its own VBlank hook.** *(IMPLEMENTED.)*
 `HandyMusic_Main` must run once per VBlank; rather than requiring the game to call
@@ -337,11 +362,18 @@ sandbox rebuild (toolchain + lib + examples) per project convention:
    reserved regions. Instead they ride as ordinary RODATA and the program copies
    each to its base at startup (the collision-buffer "reserve RAM above the stack"
    precedent). Everything else in §4.3 holds.
-4. **RAM-sourced PCM (§4.4). — PENDING.** Reband `PlayPCMSample`/`PCMSample_IRQ`
-   to a RAM buffer, install the timer-3 IRQ via `set_irq`, and add a short one-shot
-   sample to the example; verify the PCM one-shot is audible and channel 0 hands
-   back to the music engine afterwards. (Currently the "play sample" music command
-   is a no-op that consumes its argument byte.)
+4. **RAM-sourced PCM (§4.4). — DONE.** `HandyMusic_PlayPCM` streams a RAM buffer
+   to channel 0's direct-output register via a timer-3 8 kHz `handymusic_pcm_irq`
+   interruptor (installed on the shared IRQ chain, not `set_irq` — see §4.4); a
+   small sample registry lets the music "play sample" command trigger samples by
+   number. The example generates two short 8 kHz blips (`gen-pcm.py` →
+   `pcmsamples.h`), registers them as samples 0/1 so the demo song's own sample
+   commands stream them, and fires one directly on Opt1. Verified on the headless
+   GearLynx emulator: `HandyMusic_PlayPCM` arms timer 3 (backup 125, mode `$D8`),
+   the timer-3 IRQ fires and loads the exact decaying ±60 square-wave bytes of the
+   generated sample from RAM into the channel-0 output register (`$FD22`), and
+   `HandyMusic_Sample_Playing` returns to zero — channel 0 handed back to the
+   music engine — when the buffer is exhausted (*audible*, not just boot-and-golden).
 5. **Docs — DONE.** `handymusic.html`, funcref entries, nav, `index.html`,
    licenses §4.5, search index.
 
@@ -365,6 +397,7 @@ the lyxass original) before phase 2 is considered done.
    output is out of scope.
 
 First deliverable: `hmcc` tool + music/SFX library + RAM PCM + one example + doc
-page, per the phasing in §8. **Delivered so far: the `hmcc` tool and its
-`doc/hmcc.html` page (phase 1);** the library, RAM PCM and example remain
-outstanding.
+page, per the phasing in §8. **All phases delivered:** the `hmcc` tool
+(`doc/hmcc.html`), the ca65 music/SFX driver, RAM-sourced PCM, the
+`examples/mikey/handymusic/` example, and the docs (`doc/handymusic.html`,
+funcref, licenses).

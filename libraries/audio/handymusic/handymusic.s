@@ -11,9 +11,11 @@
 ; HandyMusic is completely free to use and modify in your own projects.
 ;   -- Osman Celimli.  See doc/licenses.html for the verbatim grant.
 ;
-; This build covers music + SFX only.  PCM sample playback (PlayPCMSample /
-; PCMSample_IRQ) is a planned phase (design/LYNX_HANDYMUSIC_DESIGN.md §4.4) and
-; is stubbed here: the "play sample" music command is a no-op.
+; Music, SFX and PCM sample playback.  PCM is RAM-sourced (design
+; /LYNX_HANDYMUSIC_DESIGN.md §4.4): the upstream cart streamer is replaced with a
+; plain pointer+length over a caller-supplied RAM buffer, fed to channel 0's
+; direct-output register ($FD22) by a timer-3 8 kHz IRQ.  The music "play sample"
+; command triggers a sample registered in the small RAM sample table.
 ;
 
         .include        "lynx/lynx.inc"
@@ -64,20 +66,34 @@ HandyMusic_Song_InstrHiHi   = HandyMusic_Song_BaseAddress + 15
         .export         HandyMusic_StopAll
         .export         HandyMusic_PlayMusic, HandyMusic_StopMusic
         .export         HandyMusic_PlaySFX, HandyMusic_StopSoundEffect
+        .export         HandyMusic_PlayPCM
 
         .export         _handymusic_init, _handymusic_main
         .export         _handymusic_play_music, _handymusic_stop_music
         .export         _handymusic_play_sfx, _handymusic_stop_sfx
         .export         _handymusic_stop_all
         .export         _handymusic_pause, _handymusic_unpause
+        .export         _handymusic_play_pcm, _handymusic_register_pcm
+        .export         _handymusic_pcm_playing
+        .export         _handymusic_disable_pcm
 
         .exportzp       _handymusic_sfx_addr_lo
         .exportzp       _handymusic_sfx_addr_hi
         .exportzp       _handymusic_sfx_prio
 
+        .import         popa, popax
+
+; Number of RAM sample slots the music "play sample" command can trigger by
+; number (design §4.4).  Kept small; the game registers buffers with
+; handymusic_register_pcm before the song references them.
+HANDYMUSIC_MAX_SAMPLES  = 8
+
 ; Install HandyMusic_Main on the VBL IRQ chain (design §4.5: the library owns
-; its own 60 Hz hook; the game just calls init/play/stop).
+; its own 60 Hz hook; the game just calls init/play/stop).  A second interruptor
+; services the timer-3 PCM stream (§4.4); it never claims the interrupt, so the
+; VBL tick still runs on the same IRQ pass.
         .interruptor    handymusic_vbl_irq
+        .interruptor    handymusic_pcm_irq
 
 ;****************************************************************************
 ;                          Zero-page variables
@@ -112,6 +128,10 @@ HandyMusic_Instrument_AddrTableHiHi: .res 1
 ; The two shared decode work pointers.
 HandyMusic_Channel_DecodePointer:    .res 2
 HandyMusic_Music_DecodePointer:      .res 2
+
+; PCM read cursor (design §4.4).  Must be zero page for the (zp) indirect fetch
+; in the timer-3 IRQ; advanced one byte per sample.
+HandyMusic_Sample_Pointer:           .res 2
 
 ;****************************************************************************
 ;                        RAM (BSS) variables
@@ -208,7 +228,29 @@ HandyMusic_Music_BasePitAdjDec: .res 4
 
 HandyMusic_Music_LastInstrument: .res 4
 
-HandyMusic_Disable_Samples:     .res 1
+;***********************
+; PCM sample playback  *
+;***********************
+; Runtime mute for the PCM path (design §4.4): nonzero blocks all sample
+; playback, both music-triggered and direct.  Zero (the BSS default) = enabled.
+HandyMusic_Disable_Samples:
+_handymusic_disable_pcm:        .res 1
+
+HandyMusic_Sample_Playing:      .res 1  ; nonzero while a sample streams
+HandyMusic_Sample_PanBackup:    .res 1  ; ch0 attenuation saved during playback
+HandyMusic_Sample_LenLo:        .res 1  ; bytes remaining (16-bit down-counter)
+HandyMusic_Sample_LenHi:        .res 1
+
+; Sample registry: pointer + length per slot, indexed by sample number.  Filled
+; by handymusic_register_pcm; read by the music "play sample" command.
+HandyMusic_Sample_TblPtrLo:     .res HANDYMUSIC_MAX_SAMPLES
+HandyMusic_Sample_TblPtrHi:     .res HANDYMUSIC_MAX_SAMPLES
+HandyMusic_Sample_TblLenLo:     .res HANDYMUSIC_MAX_SAMPLES
+HandyMusic_Sample_TblLenHi:     .res HANDYMUSIC_MAX_SAMPLES
+
+; Scratch for the three-argument register wrapper.
+HandyMusic_Reg_Ptr:             .res 2
+HandyMusic_Reg_Len:             .res 2
 
 ;****************************************************************************
 ;                        Read-only constant tables
@@ -240,6 +282,45 @@ _handymusic_unpause:            jmp HandyMusic_UnPause
 _handymusic_play_sfx:           jmp HandyMusic_PlaySFX
 _handymusic_stop_sfx:           jmp HandyMusic_StopSoundEffect
 
+; void __fastcall__ handymusic_play_pcm (const unsigned char *buf,
+;                                        unsigned int len);
+; len arrives in A/X (cc65 fastcall); buf is on the C parameter stack.
+_handymusic_play_pcm:
+        sta     HandyMusic_Sample_LenLo
+        stx     HandyMusic_Sample_LenHi
+        jsr     popax                           ; buf -> A/X
+        sta     HandyMusic_Sample_Pointer
+        stx     HandyMusic_Sample_Pointer + 1
+        jmp     HandyMusic_PlayPCM
+
+; void __fastcall__ handymusic_register_pcm (unsigned char num,
+;                                            const unsigned char *buf,
+;                                            unsigned int len);
+; len in A/X; buf then num on the C parameter stack (last-pushed on top).
+_handymusic_register_pcm:
+        sta     HandyMusic_Reg_Len
+        stx     HandyMusic_Reg_Len + 1
+        jsr     popax                           ; buf -> A/X
+        sta     HandyMusic_Reg_Ptr
+        stx     HandyMusic_Reg_Ptr + 1
+        jsr     popa                            ; num -> A
+        tay
+        lda     HandyMusic_Reg_Ptr
+        sta     HandyMusic_Sample_TblPtrLo,y
+        lda     HandyMusic_Reg_Ptr + 1
+        sta     HandyMusic_Sample_TblPtrHi,y
+        lda     HandyMusic_Reg_Len
+        sta     HandyMusic_Sample_TblLenLo,y
+        lda     HandyMusic_Reg_Len + 1
+        sta     HandyMusic_Sample_TblLenHi,y
+        rts
+
+; unsigned char handymusic_pcm_playing (void);  -> nonzero while a sample plays.
+_handymusic_pcm_playing:
+        lda     HandyMusic_Sample_Playing
+        ldx     #0
+        rts
+
 ; ---------------------------------------------------------------------------
 ; handymusic_vbl_irq: interruptor.  Runs HandyMusic_Main once per VBL.  Never
 ; claims the interrupt (returns carry clear).
@@ -250,6 +331,73 @@ handymusic_vbl_irq:
         beq     @done
         jsr     HandyMusic_Main
 @done:  clc
+        rts
+
+; ---------------------------------------------------------------------------
+; handymusic_pcm_irq: interruptor.  On each timer-3 tick (8 kHz) feeds the next
+; sample byte to channel 0's direct-output register and advances the RAM cursor,
+; stopping and handing channel 0 back to the music engine when the buffer is
+; exhausted (design §4.4).  Never claims the interrupt (returns carry clear) so
+; the VBL tick still runs on the same IRQ pass.
+;
+handymusic_pcm_irq:
+        lda     HandyMusic_Sample_Playing
+        beq     @done                           ; nothing streaming
+        lda     INTSET
+        and     #TIMER3_INTERRUPT
+        beq     @done                           ; not our timer
+        lda     (HandyMusic_Sample_Pointer)      ; next PCM byte (65SC02 (zp))
+        sta     Lynx_Audio_DirectVol            ; -> ch0 direct output ($FD22)
+        inc     HandyMusic_Sample_Pointer
+        bne     @declen
+        inc     HandyMusic_Sample_Pointer + 1
+@declen:
+        lda     HandyMusic_Sample_LenLo         ; 16-bit remaining-- with borrow
+        bne     @declo
+        dec     HandyMusic_Sample_LenHi
+@declo:
+        dec     HandyMusic_Sample_LenLo
+        lda     HandyMusic_Sample_LenLo
+        ora     HandyMusic_Sample_LenHi
+        bne     @done                           ; more to play
+        stz     TIM3CTLA                        ; buffer exhausted: kill timer 3
+        stz     HandyMusic_Sample_Playing
+        lda     HandyMusic_Sample_PanBackup
+        sta     Lynx_Audio_Atten_0             ; restore ch0 attenuation
+        stz     HandyMusic_Channel_NoWriteBack  ; give channel 0 back to music
+@done:  clc
+        rts
+
+;****************************************************************
+; HandyMusic_PlayPCM:                                          *
+;   Start streaming the RAM buffer at HandyMusic_Sample_Pointer *
+;   (HandyMusic_Sample_LenLo/Hi bytes) out channel 0 via the   *
+;   timer-3 8 kHz IRQ.  Captures channel 0 from the music      *
+;   engine; the IRQ hands it back when the buffer ends.        *
+;   No-op if PCM is muted or the length is zero.  (design §4.4) *
+;****************************************************************
+HandyMusic_PlayPCM:
+        sei
+        lda     HandyMusic_Disable_Samples      ; muted?
+        bne     @done
+        lda     HandyMusic_Sample_LenLo         ; empty buffer?
+        ora     HandyMusic_Sample_LenHi
+        beq     @done
+        lda     #$FF
+        sta     HandyMusic_Channel_NoWriteBack  ; capture channel 0
+        stz     Lynx_Audio_TimerCont            ; stop ch0 timer ($FD25)
+        stz     TIM3CTLA                        ; disable T3 if already running
+        lda     Lynx_Audio_Atten_0             ; back up + force ch0 attenuation
+        sta     HandyMusic_Sample_PanBackup
+        lda     #$FF
+        sta     Lynx_Audio_Atten_0
+        sta     HandyMusic_Sample_Playing       ; mark streaming
+        lda     #125                            ; 125 us backup -> ~8 kHz
+        sta     TIM3BKUP
+        sta     TIM3CNT
+        lda     #$D8                            ; reload + count + IRQ, 1 us clock
+        sta     TIM3CTLA
+@done:  cli
         rts
 
 ;****************************************************************

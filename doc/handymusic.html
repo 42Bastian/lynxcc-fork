@@ -49,8 +49,9 @@ loop/pattern control and a priority mixer, HandyMusic is <em>larger</em> than th
 engine. The two are mutually exclusive by design: link one library or the other. Reach for
 HandyMusic when you want its instrument/envelope expressiveness and pattern reuse; reach for
 <a href="sound.html">snd</a> when a lighter compiled-stream player is enough.</p>
-<p>This port covers <strong>music and SFX</strong>. PCM sample streaming from the original
-driver is a separate planned phase and is currently a no-op (<a href="#sect-6">section&nbsp;6</a>).</p>
+<p>This port covers <strong>music, SFX and PCM samples</strong>. PCM is RAM-sourced &mdash;
+short 8&nbsp;kHz one-shots streamed to channel&nbsp;0 by a timer-3 interrupt
+(<a href="#sect-6">section&nbsp;6</a>).</p>
 
 <h2 id="sect-2">2. Building against the engine</h2>
 <p>HandyMusic needs two things at link time: its library, and a memory config that reserves
@@ -157,6 +158,9 @@ the accumulator, matching the driver's assembly entry points exactly.</p>
 <tr><td><code><a href="funcref.html#handymusic_stop_sfx">handymusic_stop_sfx</a>&nbsp;(unsigned&nbsp;char&nbsp;prio)</code></td><td>Stop the first sound (effect or note) whose priority equals <code>prio</code>.</td></tr>
 <tr><td><code><a href="funcref.html#handymusic_stop_all">handymusic_stop_all</a>&nbsp;(void)</code></td><td>Force-stop every track and effect, freeing all four channels.</td></tr>
 <tr><td><code><a href="funcref.html#handymusic_pause">handymusic_pause</a>&nbsp;(void)</code> / <code><a href="funcref.html#handymusic_unpause">handymusic_unpause</a>&nbsp;(void)</code></td><td>Mute and restore all channels. Both are double-call safe.</td></tr>
+<tr><td><code><a href="funcref.html#handymusic_play_pcm">handymusic_play_pcm</a>&nbsp;(buf,&nbsp;len)</code></td><td>Play an 8&nbsp;kHz PCM sample from a RAM buffer straight away (<a href="#sect-6">section&nbsp;6</a>).</td></tr>
+<tr><td><code><a href="funcref.html#handymusic_register_pcm">handymusic_register_pcm</a>&nbsp;(num,&nbsp;buf,&nbsp;len)</code></td><td>Register a sample in slot <code>num</code> so the song's &ldquo;play sample&rdquo; command can trigger it.</td></tr>
+<tr><td><code><a href="funcref.html#handymusic_pcm_playing">handymusic_pcm_playing</a>&nbsp;(void)</code></td><td>Nonzero while a PCM sample is streaming; zero once channel&nbsp;0 is handed back.</td></tr>
 </tbody>
 </table>
 
@@ -174,13 +178,26 @@ tables. They are contiguous at <code>base</code>, <code>base+count</code> and
 are exported for direct use as well.</p>
 
 <h2 id="sect-6">6. PCM sample playback</h2>
-<p>The original driver can stream single-channel 8&nbsp;kHz PCM off the cart on channel&nbsp;0
-via a timer-3 interrupt. That path touches BLL filesystem primitives that do not exist in
-<strong>lynxcc</strong>, and long PCM is a poor trade on the Lynx regardless, so it is
-<strong>not part of this build</strong>: the music &ldquo;play sample&rdquo; command is a
-no-op (it still consumes its argument byte so script decoding stays aligned). A future phase
-will re-band it to play short, resident one-shots from a RAM buffer. Until then, treat
-HandyMusic here as a music&nbsp;+&nbsp;SFX engine.</p>
+<p>The original driver streamed single-channel 8&nbsp;kHz PCM off the cart via BLL filesystem
+primitives that do not exist in <strong>lynxcc</strong>. This port keeps the same timer-3
+8&nbsp;kHz interrupt and channel-0 capture but makes PCM <strong>RAM-sourced</strong>: a sample
+is an ordinary resident byte array (signed 8-bit), and playback runs off a plain pointer and
+length instead of a cart stream. Long PCM is a poor trade on the Lynx regardless; this suits
+the short one-shots PCM is actually good for &mdash; drum hits, stingers.</p>
+<p>Call <code><a href="funcref.html#handymusic_play_pcm">handymusic_play_pcm</a>&nbsp;(buf,&nbsp;len)</code>
+to play a buffer immediately. The sample borrows channel&nbsp;0 from the music engine and the
+interrupt hands it back automatically when the buffer is exhausted;
+<code><a href="funcref.html#handymusic_pcm_playing">handymusic_pcm_playing</a>()</code> is nonzero
+in the meantime. To let a <em>song</em> trigger samples, register them first with
+<code><a href="funcref.html#handymusic_register_pcm">handymusic_register_pcm</a>&nbsp;(num,&nbsp;buf,&nbsp;len)</code>:
+the music &ldquo;play sample&rdquo; command carries a sample <em>number</em> that indexes this
+small registry (up to eight slots), so <code>sample&nbsp;0</code> in a track plays whatever the
+game registered as slot&nbsp;0. An unregistered slot plays nothing. The
+<code>handymusic_disable_pcm</code> variable is a runtime mute for the whole PCM path; music and
+SFX are unaffected.</p>
+<p>The interrupt is installed as a second entry on the shared IRQ chain (like the engine's VBL
+tick), so it coexists with <code>gfx</code> page-flipping and leaves <code>set_irq</code> free
+for the game.</p>
 
 <h2 id="sect-7">7. Worked example: handymusic.c</h2>
 <p><a href="samples.html"><code>examples/mikey/handymusic</code></a> plays Osman Celimli's
@@ -189,8 +206,10 @@ run <a href="hmcc.html">hmcc</a> to compile the SFX and track scripts to blobs a
 <code>$AE00</code>/<code>$B000</code>, turn the SFX <code>.equ</code> into a C header,
 <code>.incbin</code> the blobs, and link with <code>-C lynx-handymusic.cfg</code>. At runtime
 it copies the blobs to their bases, points the driver at the SFX tables,
-<code>handymusic_init()</code>, <code>handymusic_play_music()</code>, then fires effects on
-button&nbsp;A. It is the reference for wiring the engine into a project.</p>
+<code>handymusic_init()</code>, registers two short PCM blips as samples&nbsp;0 and&nbsp;1 (so the
+demo song's own <code>sample</code> commands play them), <code>handymusic_play_music()</code>,
+then fires effects on button&nbsp;A and a PCM blip on Option&nbsp;1. It is the reference for
+wiring the engine into a project.</p>
 
 <h2 id="sect-8">8. License</h2>
 <p>The ca65 driver and the <code>&lt;lynx/handymusic.h&gt;</code> surface are a
