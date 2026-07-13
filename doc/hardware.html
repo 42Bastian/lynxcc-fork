@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lynxcc - Hardware registers</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>Hardware registers</h1></header><div class="abstract">Everything special the Atari Lynx can do lives in memory-mapped registers at the
+very top of the address space: <strong>Suzy</strong> at <code>$FC00</code>,
+<strong>Mikey</strong> at <code>$FD00</code>, the boot ROM, and &mdash; in the last
+six bytes &mdash; the 6502 <strong>hardware vectors</strong>. A single register,
+<code>MAPCTL</code> at <code>$FFF9</code>, decides which of those overlays the CPU
+actually sees. This page explains the vectors and what happens when you set them to
+various values, the <code>MAPCTL</code> overlay, the single-IRQ interrupt model the
+Lynx funnels every timer through, and the Mikey and Suzy register constants that
+<strong>lynxcc</strong> exposes in <code>&lt;lynx/_mikey.h&gt;</code>,
+<code>&lt;lynx/_suzy.h&gt;</code> and <code>asminc/lynx/lynx.inc</code>.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. Memory-mapped hardware</a></li>
+<li class="lvl1"><a href="#sect-2">2. MAPCTL: the address-space overlay</a></li>
+<li class="lvl2"><a href="#sect-2-1">2.1. The overlay bits</a></li>
+<li class="lvl2"><a href="#sect-2-2">2.2. What lynxcc sets</a></li>
+<li class="lvl1"><a href="#sect-3">3. The 6502 hardware vectors</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. NMI, RESET and IRQ</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. Setting a vector to various values</a></li>
+<li class="lvl1"><a href="#sect-4">4. The single-IRQ interrupt model</a></li>
+<li class="lvl2"><a href="#sect-4-1">4.1. INTSET and INTRST</a></li>
+<li class="lvl2"><a href="#sect-4-2">4.2. Timer interrupt bits</a></li>
+<li class="lvl2"><a href="#sect-4-3">4.3. Installing a handler</a></li>
+<li class="lvl1"><a href="#sect-5">5. Mikey constants and register map</a></li>
+<li class="lvl2"><a href="#sect-5-1">5.1. Timers</a></li>
+<li class="lvl2"><a href="#sect-5-2">5.2. Audio</a></li>
+<li class="lvl2"><a href="#sect-5-3">5.3. System and I/O control</a></li>
+<li class="lvl2"><a href="#sect-5-4">5.4. Full Mikey map</a></li>
+<li class="lvl1"><a href="#sect-6">6. Suzy constants and register map</a></li>
+<li class="lvl2"><a href="#sect-6-1">6.1. The sprite-engine registers</a></li>
+<li class="lvl2"><a href="#sect-6-2">6.2. SPRCTL0, SPRCTL1 and SPRSYS</a></li>
+<li class="lvl2"><a href="#sect-6-3">6.3. Hardware-math registers</a></li>
+<li class="lvl2"><a href="#sect-6-4">6.4. Joypad and switches</a></li>
+<li class="lvl2"><a href="#sect-6-5">6.5. Full Suzy map</a></li>
+<li class="lvl1"><a href="#sect-7">7. Reaching the registers from C and assembly</a></li>
+<li class="lvl1"><a href="#sect-8">8. License</a></li>
+</ul></nav>
+
+<h2 id="sect-1">1. Memory-mapped hardware</h2>
+<p>The Lynx CPU is a 65SC02 with a flat 64&nbsp;KB address space that is almost
+entirely RAM. The top of that space is special: the two custom chips and the boot
+ROM are decoded there, sharing addresses with the RAM underneath them. Reads and
+writes to those addresses reach the hardware, not the RAM, <em>unless</em> the
+overlay is switched off (see <a href="#sect-2">section&nbsp;2</a>).</p>
+<div class="table-wrap"><table class="grid">
+<thead><tr><th>Range</th><th>Overlay</th><th>What lives there</th></tr></thead>
+<tbody>
+<tr><td class="nowrap"><code>$FC00&ndash;$FCFF</code></td><td>Suzy</td><td>The sprite-blitter and hardware-math registers, the joypad and cartridge ports (<code>&lt;lynx/_suzy.h&gt;</code>).</td></tr>
+<tr><td class="nowrap"><code>$FD00&ndash;$FDFF</code></td><td>Mikey</td><td>The eight timers, four audio channels, interrupt registers, video-DMA and serial control, and the 32-byte colour palette (<code>&lt;lynx/_mikey.h&gt;</code>).</td></tr>
+<tr><td class="nowrap"><code>$FE00&ndash;$FFF7</code></td><td>Boot ROM</td><td>The 512-byte cartridge boot loader (<code>bootldr.s</code>); see the <a href="cart.html">Cart ROM</a> page.</td></tr>
+<tr><td class="nowrap"><code>$FFF8</code></td><td>&mdash;</td><td>Reserved.</td></tr>
+<tr><td class="nowrap"><code>$FFF9</code></td><td>always</td><td><code>MAPCTL</code> &mdash; the overlay control register itself, reachable in every mapping.</td></tr>
+<tr><td class="nowrap"><code>$FFFA&ndash;$FFFF</code></td><td>Vector space</td><td>The three 6502 hardware vectors: NMI, RESET and IRQ.</td></tr>
+</tbody>
+</table></div>
+<p>Because the addresses are fixed, code just reads and writes them. From C the two
+overlay structs <code>MIKEY</code> and <code>SUZY</code> and a handful of named
+pointers do this for you; from assembly the <code>asminc/lynx/lynx.inc</code> include
+defines an EQU for every register. <a href="#sect-7">Section&nbsp;7</a> shows both.</p>
+
+<h2 id="sect-2">2. MAPCTL: the address-space overlay</h2>
+<p><code>MAPCTL</code> (<code>$FFF9</code>, the <code>MAPCTL</code> EQU and the
+<code>*SPACE</code> constants in <code>&lt;lynx/_suzy.h&gt;</code>) is the one register
+that is decoded no matter how the rest of the top page is mapped &mdash; it has to be,
+because it is what does the mapping. Each of its low four bits governs one overlay
+region. The sense is &ldquo;<strong>1 = show the RAM underneath</strong>&rdquo;: setting
+a bit <em>disables</em> the hardware/ROM decode for that range and lets the plain RAM
+show through; clearing it puts the chip or ROM back on top.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 300" style="width:100%;height:auto;max-width:560px"
+     role="img" aria-label="The top of the Lynx address space from FC00 to FFFF, showing the Suzy, Mikey, boot ROM, MAPCTL and vector regions and which MAPCTL bit maps each one to RAM">
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11" fill="var(--ink-faint)" text-anchor="end">
+    <text x="150" y="42">$FC00</text>
+    <text x="150" y="92">$FD00</text>
+    <text x="150" y="142">$FE00</text>
+    <text x="150" y="212">$FFF9</text>
+    <text x="150" y="252">$FFFA</text>
+    <text x="150" y="288">$FFFF</text>
+  </g>
+  <g stroke="var(--border)" stroke-width="1">
+    <rect x="170" y="30"  width="360" height="50" fill="var(--accent)" fill-opacity="0.20"/>
+    <rect x="170" y="80"  width="360" height="50" fill="var(--accent)" fill-opacity="0.35"/>
+    <rect x="170" y="130" width="360" height="60" fill="var(--panel)"/>
+    <rect x="170" y="190" width="360" height="30" fill="var(--panel-2)"/>
+    <rect x="170" y="220" width="360" height="60" fill="var(--accent-2)" fill-opacity="0.30"/>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">
+    <text x="350" y="60">Suzy registers</text>
+    <text x="350" y="110">Mikey registers</text>
+    <text x="350" y="165">Boot ROM</text>
+    <text x="350" y="209" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11">MAPCTL</text>
+    <text x="350" y="255">Vectors &mdash; NMI / RESET / IRQ</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10.5" fill="var(--accent)" text-anchor="start">
+    <text x="548" y="60">SUZYSPACE</text>
+    <text x="548" y="110">MIKEYSPACE</text>
+    <text x="548" y="165">ROMSPACE</text>
+    <text x="548" y="255">VECTORSPACE</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--ink-faint)" text-anchor="start">
+    <text x="548" y="73">bit 0</text>
+    <text x="548" y="123">bit 1</text>
+    <text x="548" y="178">bit 2</text>
+    <text x="548" y="268">bit 3</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Each overlay region and the <code>MAPCTL</code> bit that maps it out to RAM.
+<code>MAPCTL</code> at <code>$FFF9</code> is never overlaid, so it is always writable.</figcaption>
+</figure>
+
+<h3 id="sect-2-1">2.1. The overlay bits</h3>
+<div class="table-wrap"><table class="grid">
+<thead><tr><th>Constant</th><th>Value</th><th>Region</th><th>When the bit is set (1)</th></tr></thead>
+<tbody>
+<tr><td class="nowrap"><code>SUZYSPACE</code></td><td class="nowrap"><code>$01</code></td><td class="nowrap"><code>$FC00&ndash;$FCFF</code></td><td>Suzy is mapped out; the RAM under Suzy is readable/writable. Clear = Suzy visible (the normal state).</td></tr>
+<tr><td class="nowrap"><code>MIKEYSPACE</code></td><td class="nowrap"><code>$02</code></td><td class="nowrap"><code>$FD00&ndash;$FDFF</code></td><td>Mikey is mapped out; the RAM under Mikey shows through. Clear = Mikey visible.</td></tr>
+<tr><td class="nowrap"><code>ROMSPACE</code></td><td class="nowrap"><code>$04</code></td><td class="nowrap"><code>$FE00&ndash;$FFF7</code></td><td>The boot ROM is mapped out; RAM shows through. Clear = boot ROM visible.</td></tr>
+<tr><td class="nowrap"><code>VECTORSPACE</code></td><td class="nowrap"><code>$08</code></td><td class="nowrap"><code>$FFFA&ndash;$FFFF</code></td><td>The vectors come from RAM. Clear = the vectors come from the boot ROM.</td></tr>
+<tr><td class="nowrap"><code>HIGHSPEED</code></td><td class="nowrap"><code>$80</code></td><td>CPU timing</td><td>Selects the fast (&ldquo;sequential-disable&rdquo;) CPU clocking. Left clear by the runtime; most code never touches it.</td></tr>
+</tbody>
+</table></div>
+<p>Turning an overlay off is only useful when you need the RAM it hides &mdash; for
+example the couple of hundred bytes under the boot ROM, or the RAM behind a chip you
+are momentarily done talking to. It is a delicate operation: while
+<code>MIKEYSPACE</code> or <code>SUZYSPACE</code> is set you cannot touch that chip's
+registers at all, and while an interrupt could fire you must not have mapped out the
+vectors or Mikey out from under the handler. In practice games leave Suzy and Mikey
+mapped in the whole time.</p>
+
+<h3 id="sect-2-2">2.2. What lynxcc sets</h3>
+<p>On reset the hardware clears <code>MAPCTL</code> to <code>$00</code>, so the boot
+ROM and its vectors are visible &mdash; that is how the machine boots. Almost the first
+thing the <strong>lynxcc</strong> start-up code (<code>crt0.s</code>) does is write:</p>
+<pre class="code">lda #$0C          ; VECTORSPACE | ROMSPACE
+sta MAPCTL        ; $FFF9</pre>
+<p>That maps out the boot ROM and the vector-space ROM, replacing both with the
+program's RAM, while leaving Suzy (<code>bit&nbsp;0</code>) and Mikey
+(<code>bit&nbsp;1</code>) mapped in. From then on the game runs entirely from RAM, owns
+the six vector bytes at <code>$FFFA&ndash;$FFFF</code>, and still has full access to both
+custom chips &mdash; the arrangement every Lynx program uses.</p>
+<p>There is a subtlety the overlay hides: <strong>lynxcc</strong> places its display
+double-buffer at the very top of RAM, and screen buffer&nbsp;0
+(<code>$E018&ndash;$FFF7</code>) shares its physical DRAM with the Suzy, Mikey and
+boot-ROM overlay. So the 512-byte strip at <code>$FC00&ndash;$FDFF</code> is at once the
+top of that video buffer and the window onto the two chips: with the overlay in place
+the CPU sees Suzy and Mikey there, while Suzy's blitter writes pixels straight to the
+RAM underneath, bypassing <code>MAPCTL</code>. That overlap is deliberate and is what
+lets the buffer run all the way to <code>$FFF7</code> without stealing usable RAM. The
+<a href="memory.html#sect-2">Memory</a> page lays out the full map and the CPU-versus-Suzy
+views of this region.</p>
+
+<h2 id="sect-3">3. The 6502 hardware vectors</h2>
+<p>The 65SC02, like every 6502, keeps its three fixed interrupt vectors in the top six
+bytes of memory. Each is a little-endian 16-bit address the CPU loads into the program
+counter when the corresponding event occurs.</p>
+<div class="table-wrap"><table class="grid">
+<thead><tr><th>Vector</th><th>Low / high</th><th>lynx.inc</th><th>Triggered by</th></tr></thead>
+<tbody>
+<tr><td>NMI</td><td><code>$FFFA</code> / <code>$FFFB</code></td><td><code>NMIVECTL</code> / <code>NMIVECTH</code></td><td>A non-maskable interrupt &mdash; no Lynx hardware drives this line.</td></tr>
+<tr><td>RESET</td><td><code>$FFFC</code> / <code>$FFFD</code></td><td><code>RSTVECTL</code> / <code>RSTVECTH</code></td><td>Power-on and hardware reset.</td></tr>
+<tr><td>IRQ / BRK</td><td><code>$FFFE</code> / <code>$FFFF</code></td><td><code>INTVECTL</code> / <code>INTVECTH</code></td><td>Any maskable interrupt, and the <code>BRK</code> instruction.</td></tr>
+</tbody>
+</table></div>
+<p>The <code>VECTORS</code> EQU (<code>$FFFB</code>) names the block for convenience.
+The names match the boot ROM's own labels; in a running game they are just six RAM
+bytes because <code>crt0.s</code> set <code>VECTORSPACE</code>.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 130" style="width:100%;height:auto;max-width:640px"
+     role="img" aria-label="The six vector bytes from FFFA to FFFF grouped into NMI, RESET and IRQ word pairs">
+  <g stroke="var(--border)" stroke-width="1">
+    <rect x="40"  y="40" width="100" height="40" fill="var(--panel)"/>
+    <rect x="140" y="40" width="100" height="40" fill="var(--panel)"/>
+    <rect x="260" y="40" width="100" height="40" fill="var(--panel-2)"/>
+    <rect x="360" y="40" width="100" height="40" fill="var(--panel-2)"/>
+    <rect x="480" y="40" width="100" height="40" fill="var(--accent)" fill-opacity="0.30"/>
+    <rect x="580" y="40" width="100" height="40" fill="var(--accent)" fill-opacity="0.30"/>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="90"  y="34">$FFFA</text><text x="190" y="34">$FFFB</text>
+    <text x="310" y="34">$FFFC</text><text x="410" y="34">$FFFD</text>
+    <text x="530" y="34">$FFFE</text><text x="630" y="34">$FFFF</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11" fill="var(--ink)" text-anchor="middle">
+    <text x="90"  y="65">lo</text><text x="190" y="65">hi</text>
+    <text x="310" y="65">lo</text><text x="410" y="65">hi</text>
+    <text x="530" y="65">lo</text><text x="630" y="65">hi</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="12" fill="var(--ink)" text-anchor="middle">
+    <text x="140" y="102">NMI</text>
+    <text x="360" y="102">RESET</text>
+    <text x="580" y="102" fill="var(--accent)">IRQ / BRK</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Three little-endian word pointers. Only the IRQ vector matters to a running Lynx
+program; the runtime points it at its own stub.</figcaption>
+</figure>
+
+<h3 id="sect-3-1">3.1. NMI, RESET and IRQ</h3>
+<p><strong>NMI</strong> is a dead end on the Lynx: no timer, chip or pin is wired to the
+CPU's non-maskable-interrupt input, so the vector is never fetched. You can leave the
+two bytes as whatever the linker put there; writing an address into them has no effect
+because nothing will ever jump through them.</p>
+<p><strong>RESET</strong> is fetched only by a genuine power-on or reset &mdash; and such
+a reset also clears <code>MAPCTL</code> back to <code>$00</code>, which maps the boot ROM
+back over <code>$FFFC/$FFFD</code>. So the address the CPU actually uses on reset is the
+boot ROM's, not the RAM copy your program left there. The RAM reset vector is therefore
+inert in practice; do not rely on it to restart your game.</p>
+<p><strong>IRQ</strong> is the one that matters. Every maskable interrupt the Lynx can
+raise &mdash; and there are eight potential sources, all of them Mikey timers &mdash;
+enters the CPU through this single vector, as does a <code>BRK</code> instruction. The
+runtime writes this vector during start-up so that interrupts land in its own handler
+(<a href="#sect-4">section&nbsp;4</a>).</p>
+
+<h3 id="sect-3-2">3.2. Setting a vector to various values</h3>
+<p>Because the vectors are ordinary RAM once <code>VECTORSPACE</code> is set, &ldquo;what
+a vector does&rdquo; is entirely a function of the address you store in it:</p>
+<ul>
+<li><p><strong>IRQ &rarr; your handler.</strong> Store the address of a routine that
+ends in <code>RTI</code> and every timer interrupt will run it. This is exactly what
+<code>initirq</code> does, loading <code>INTVECTL/INTVECTH</code> with the address of the
+runtime's <code>IRQStub</code>. Point it somewhere sensible or the first timer tick
+takes the machine with it.</p></li>
+<li><p><strong>IRQ &rarr; a bare <code>RTI</code>.</strong> A valid but do-nothing
+choice: interrupts are taken and immediately returned from. On the Lynx that is still
+dangerous unless you also acknowledge the timer (write <code>INTRST</code>), because an
+un-acknowledged timer interrupt re-asserts the moment you <code>RTI</code> and the CPU
+spins in the vector forever.</p></li>
+<li><p><strong>IRQ &rarr; garbage.</strong> Undefined bytes here mean the next interrupt
+jumps into nowhere. Mask interrupts with <code>SEI</code> before you ever leave the
+vector uninitialised.</p></li>
+<li><p><strong>NMI &rarr; anything.</strong> No effect &mdash; the vector is never
+fetched. There is no supported way to generate an NMI.</p></li>
+<li><p><strong>RESET &rarr; anything.</strong> Overridden by the boot ROM on a real
+reset (which re-maps ROM), so the RAM value is not consulted.</p></li>
+</ul>
+<p>From C you never poke the vector directly; call
+<code><a href="funcref.html#set_irq">set_irq()</a></code> and
+<code><a href="funcref.html#reset_irq">reset_irq()</a></code> instead
+(<a href="#sect-4-3">section&nbsp;4.3</a>).</p>
+
+<h2 id="sect-4">4. The single-IRQ interrupt model</h2>
+<p>The eight Mikey timers are the Lynx's only interrupt sources, and they all share the
+one 6502 IRQ line. When any enabled timer counts down to zero it sets its bit in Mikey's
+interrupt register and pulls IRQ low; the CPU jumps through
+<code>$FFFE/$FFFF</code> into a single handler that has to work out <em>which</em> timer
+fired, service it, and acknowledge it.</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 240" style="width:100%;height:auto;max-width:700px"
+     role="img" aria-label="Eight Mikey timers feed one interrupt register, which drives the single 6502 IRQ line into the runtime IRQStub, which reads INTSET and writes INTRST to acknowledge">
+  <g stroke="var(--border)" stroke-width="1">
+    <rect x="30" y="30" width="120" height="180" fill="var(--panel)"/>
+    <rect x="220" y="90" width="120" height="60" fill="var(--accent)" fill-opacity="0.30"/>
+    <rect x="420" y="90" width="120" height="60" fill="var(--accent-2)" fill-opacity="0.30"/>
+    <rect x="600" y="60" width="100" height="50" fill="var(--panel-2)"/>
+    <rect x="600" y="150" width="100" height="50" fill="var(--panel-2)"/>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="var(--ink)" text-anchor="middle">
+    <text x="90" y="24">timers 0&ndash;7</text>
+    <text x="90" y="55">timer 0 (HBL)</text>
+    <text x="90" y="80">timer 2 (VBL)</text>
+    <text x="90" y="105">timer 4 (UART)</text>
+    <text x="90" y="130">timer 7 (snd)</text>
+    <text x="90" y="160" fill="var(--ink-faint)">&hellip;</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="11" fill="var(--ink)" text-anchor="middle">
+    <text x="280" y="115">INTSET</text>
+    <text x="280" y="132" font-size="9" fill="var(--ink-faint)">pending bits</text>
+    <text x="480" y="115">IRQStub</text>
+    <text x="480" y="132" font-size="9" fill="var(--ink-faint)">callirq chain</text>
+    <text x="650" y="82">read INTSET</text>
+    <text x="650" y="180">write INTRST</text>
+    <text x="650" y="197" font-size="9" fill="var(--ink-faint)">acknowledge</text>
+  </g>
+  <g stroke="var(--accent)" stroke-width="1.5" fill="none" marker-end="url(#ha)">
+    <path d="M150 120 L218 120"/>
+    <path d="M340 120 L418 120"/>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" fill="var(--accent)" text-anchor="middle">
+    <text x="184" y="112">IRQ</text>
+  </g>
+  <defs>
+    <marker id="ha" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">All eight timers pull the same IRQ line. The handler reads
+<code>INTSET</code> to see who fired and writes <code>INTRST</code> to clear it.</figcaption>
+</figure>
+
+<h3 id="sect-4-1">4.1. INTSET and INTRST</h3>
+<p>Two Mikey registers expose the interrupt latch. <code>INTSET</code>
+(<code>$FD81</code>) reads back a bitmask of the currently <em>pending</em> timer
+interrupts &mdash; one bit per timer. <code>INTRST</code> (<code>$FD80</code>)
+<em>clears</em> the bits you write to it; acknowledging an interrupt means writing its
+bit (or the whole pending mask) to <code>INTRST</code>. The runtime's stub does the
+blunt, always-correct thing &mdash; it copies every pending bit straight back:</p>
+<pre class="code">lda INTSET        ; which timers are pending
+sta INTRST        ; acknowledge them all</pre>
+<p>The same two-line idiom appears in <code>crt0.s</code> to clear any stale interrupts
+left over from the boot ROM before the game unmasks IRQ.</p>
+
+<h3 id="sect-4-2">4.2. Timer interrupt bits</h3>
+<p>The bit for each timer is its number as a power of two; <code>lynx.inc</code> gives
+both the numeric names and friendly aliases for the four timers the runtime assigns a
+fixed role.</p>
+<div class="table-wrap"><table class="grid">
+<thead><tr><th>Bit</th><th>Constant</th><th>Alias</th><th>Timer / role</th></tr></thead>
+<tbody>
+<tr><td class="nowrap"><code>$01</code></td><td><code>TIMER0_INTERRUPT</code></td><td><code>HBL_INTERRUPT</code></td><td>Timer&nbsp;0 &mdash; horizontal-blank line timer.</td></tr>
+<tr><td class="nowrap"><code>$02</code></td><td><code>TIMER1_INTERRUPT</code></td><td>&mdash;</td><td>Timer&nbsp;1.</td></tr>
+<tr><td class="nowrap"><code>$04</code></td><td><code>TIMER2_INTERRUPT</code></td><td><code>VBL_INTERRUPT</code></td><td>Timer&nbsp;2 &mdash; vertical-blank timer.</td></tr>
+<tr><td class="nowrap"><code>$08</code></td><td><code>TIMER3_INTERRUPT</code></td><td>&mdash;</td><td>Timer&nbsp;3.</td></tr>
+<tr><td class="nowrap"><code>$10</code></td><td><code>TIMER4_INTERRUPT</code></td><td><code>SERIAL_INTERRUPT</code></td><td>Timer&nbsp;4 &mdash; the UART baud timer (see <a href="comlynx.html">ComLynx</a>).</td></tr>
+<tr><td class="nowrap"><code>$20</code></td><td><code>TIMER5_INTERRUPT</code></td><td>&mdash;</td><td>Timer&nbsp;5.</td></tr>
+<tr><td class="nowrap"><code>$40</code></td><td><code>TIMER6_INTERRUPT</code></td><td>&mdash;</td><td>Timer&nbsp;6.</td></tr>
+<tr><td class="nowrap"><code>$80</code></td><td><code>TIMER7_INTERRUPT</code></td><td><code>SND_INTERRUPT</code></td><td>Timer&nbsp;7 &mdash; the sound-engine tick (see <a href="sound.html">Sound</a>).</td></tr>
+</tbody>
+</table></div>
+<p>A timer only raises interrupts when its own control byte enables them (bit&nbsp;7 of
+<code>TIMnCTLA</code>); <code>crt0.s</code> starts by clearing that bit on every timer so
+nothing fires until a library asks for it.</p>
+
+<h3 id="sect-4-3">4.3. Installing a handler</h3>
+<p>C code does not touch the vector or the registers directly. The runtime installs its
+own IRQ stub at start-up, which saves the registers, calls the chain of C-level
+interrupt handlers, acknowledges the interrupt and returns. You add a handler to that
+chain with <code><a href="funcref.html#set_irq">set_irq()</a></code> and remove it with
+<code><a href="funcref.html#reset_irq">reset_irq()</a></code>:</p>
+<pre class="code">#include &lt;6502.h&gt;
+
+static unsigned char on_irq (void) {
+    /* runs on every timer interrupt; return IRQ_HANDLED if you serviced it */
+    return IRQ_NOT_HANDLED;
+}
+
+set_irq (on_irq, irq_stack, sizeof irq_stack);   /* install  */
+/* ... */
+reset_irq ();                                    /* remove   */</pre>
+<p>The stub always writes <code>INTSET</code> back to <code>INTRST</code> for you, so a C
+handler never has to acknowledge the hardware itself; it only decides whether it
+recognised the interrupt.</p>
+
+<h2 id="sect-5">5. Mikey constants and register map</h2>
+<p>Mikey occupies <code>$FD00&ndash;$FDFF</code>. In C the whole block is the
+<code>MIKEY</code> overlay struct (<code>struct __mikey</code> in
+<code>&lt;lynx/_mikey.h&gt;</code>); in assembly every register has an EQU in
+<code>lynx.inc</code>. The map below groups the block by function; the curated tables
+that precede it give the value semantics of the fields you actually program by hand.</p>
+
+<h3 id="sect-5-1">5.1. Timers</h3>
+<p>The eight timers sit back-to-back from <code>$FD00</code>, four bytes each: a
+<strong>reload</strong> (backup) value, a <strong>control&nbsp;A</strong> byte, the live
+<strong>count</strong>, and a <strong>control&nbsp;B</strong> byte. In C they are
+<code>MIKEY.timer0</code>&hellip;<code>timer7</code> (each a <code>_mikey_timer</code>
+with <code>reload</code>, <code>control</code>, <code>count</code>,
+<code>control2</code>); the named pointers <code>_HBL_TIMER</code>,
+<code>_VBL_TIMER</code> and <code>_UART_TIMER</code> alias timers 0, 2 and 4. In
+assembly the per-byte EQUs are <code>TIMnBKUP</code> / <code>TIMnCTLA</code> /
+<code>TIMnCNT</code> / <code>TIMnCTLB</code>, with <code>HTIMER</code>,
+<code>VTIMER</code> and <code>STIMER</code> naming the horizontal, vertical and sound
+timers.</p>
+
+<h3 id="sect-5-2">5.2. Audio</h3>
+<p>The four audio channels run from <code>$FD20</code>, eight bytes each
+(<code>volume</code>, <code>feedback</code>, <code>dac</code>, <code>shiftlo</code>,
+<code>reload</code>, <code>control</code>, <code>count</code>, <code>other</code>) &mdash;
+<code>MIKEY.channel_a</code>&hellip;<code>channel_d</code>, or the
+<code>AUDnVOL</code>&hellip;<code>AUDnCTLB</code> EQUs. The attenuation and panning
+registers follow at <code>$FD40&ndash;$FD44</code>, and the stereo-enable byte
+<code>MSTEREO</code> is at <code>$FD50</code>. Programming these by hand is covered on
+the <a href="sound.html">Sound</a> page; most code goes through the sound engine.</p>
+
+<h3 id="sect-5-3">5.3. System and I/O control</h3>
+<p>The scattered control registers in the high half of the page are the ones a game
+pokes directly. The most important:</p>
+<div class="table-wrap"><table class="grid">
+<thead><tr><th>Register</th><th>Addr</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td class="nowrap"><code>INTRST</code></td><td class="nowrap"><code>$FD80</code></td><td>Interrupt reset &mdash; writing a bit clears that timer's pending interrupt.</td></tr>
+<tr><td class="nowrap"><code>INTSET</code></td><td class="nowrap"><code>$FD81</code></td><td>Interrupt poll &mdash; reads the pending-interrupt bitmask.</td></tr>
+<tr><td class="nowrap"><code>AUDIN</code></td><td class="nowrap"><code>$FD86</code></td><td>Audio-in / parallel bit, also used as an extra cartridge I/O line.</td></tr>
+<tr><td class="nowrap"><code>SYSCTL1</code></td><td class="nowrap"><code>$FD87</code></td><td>System control: bit&nbsp;1 is system power (1&nbsp;=&nbsp;on), bit&nbsp;0 the cartridge address strobe. Clearing the power bit is how <code><a href="funcref.html#poweroff">poweroff()</a></code> switches the console off.</td></tr>
+<tr><td class="nowrap"><code>MIKEYHREV</code></td><td class="nowrap"><code>$FD88</code></td><td>Mikey hardware revision (read-only).</td></tr>
+<tr><td class="nowrap"><code>IODIR</code></td><td class="nowrap"><code>$FD8A</code></td><td>Direction bits for the parallel I/O port (cartridge, ComLynx, LCD).</td></tr>
+<tr><td class="nowrap"><code>IODAT</code></td><td class="nowrap"><code>$FD8B</code></td><td>Parallel I/O data.</td></tr>
+<tr><td class="nowrap"><code>SERCTL</code></td><td class="nowrap"><code>$FD8C</code></td><td>UART control (write) / status (read). The <code>TxIntEnable</code>&hellip;<code>ParEven</code> and <code>TxReady</code>&hellip;<code>ParityBit</code> bit constants live in <code>lynx.inc</code>; see <a href="comlynx.html">ComLynx</a>.</td></tr>
+<tr><td class="nowrap"><code>SERDAT</code></td><td class="nowrap"><code>$FD8D</code></td><td>UART data register.</td></tr>
+<tr><td class="nowrap"><code>DISPCTL</code></td><td class="nowrap"><code>$FD92</code></td><td>Video-DMA control: enables the display DMA and selects the bit order. The runtime keeps a RAM shadow (<code>_VIDDMA</code>).</td></tr>
+<tr><td class="nowrap"><code>DISPADR</code></td><td class="nowrap"><code>$FD94</code></td><td>Start address of the display buffer Mikey scans out (the <code>scrbase</code> pointer).</td></tr>
+</tbody>
+</table></div>
+
+<h3 id="sect-5-4">5.4. Full Mikey map</h3>
+<div class="table-wrap"><table class="grid">
+<thead><tr><th>Range</th><th>Registers</th></tr></thead>
+<tbody>
+<tr><td class="nowrap"><code>$FD00&ndash;$FD1F</code></td><td>Timers 0&ndash;7 (4 bytes each: reload, control&nbsp;A, count, control&nbsp;B).</td></tr>
+<tr><td class="nowrap"><code>$FD20&ndash;$FD3F</code></td><td>Audio channels A&ndash;D (8 bytes each).</td></tr>
+<tr><td class="nowrap"><code>$FD40&ndash;$FD44</code></td><td>Channel attenuation (<code>attena&ndash;attend</code>) and <code>panning</code>.</td></tr>
+<tr><td class="nowrap"><code>$FD50</code></td><td><code>MSTEREO</code> &mdash; stereo channel-enable bits.</td></tr>
+<tr><td class="nowrap"><code>$FD80&ndash;$FD81</code></td><td><code>INTRST</code>, <code>INTSET</code> &mdash; interrupt reset / poll.</td></tr>
+<tr><td class="nowrap"><code>$FD84&ndash;$FD85</code></td><td><code>MAGRDY0</code>, <code>MAGRDY1</code> &mdash; cartridge (mag-tape) ready bits.</td></tr>
+<tr><td class="nowrap"><code>$FD86&ndash;$FD8D</code></td><td><code>AUDIN</code>, <code>SYSCTL1</code>, <code>MIKEYHREV</code>, <code>MIKEYSREV</code>, <code>IODIR</code>, <code>IODAT</code>, <code>SERCTL</code>, <code>SERDAT</code>.</td></tr>
+<tr><td class="nowrap"><code>$FD90&ndash;$FD95</code></td><td><code>SDONEACK</code> (Suzy-done ack), <code>CPUSLEEP</code>, <code>DISPCTL</code>, <code>PBKUP</code>, <code>DISPADR</code>.</td></tr>
+<tr><td class="nowrap"><code>$FD9C&ndash;$FD9E</code></td><td><code>MTEST0&ndash;2</code> &mdash; test registers (leave alone).</td></tr>
+<tr><td class="nowrap"><code>$FDA0&ndash;$FDBF</code></td><td>The 32-byte hardware palette: <code>GCOLMAP</code> (green, <code>$FDA0</code>) and <code>RBCOLMAP</code> (red-blue, <code>$FDB0</code>). See <a href="graphics.html">Graphics</a>.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="sect-6">6. Suzy constants and register map</h2>
+<p>Suzy occupies <code>$FC00&ndash;$FCFF</code> &mdash; the <code>SUZY</code> overlay
+struct (<code>struct __suzy</code> in <code>&lt;lynx/_suzy.h&gt;</code>) in C, the
+<code>lynx.inc</code> EQUs in assembly. Most of Suzy is the sprite-blitter's working
+registers, which you rarely write by hand; the control and math constants are the part
+you program directly.</p>
+
+<h3 id="sect-6-1">6.1. The sprite-engine registers</h3>
+<p>The block from <code>$FC00</code> to <code>$FC2F</code> is the blitter's scratchpad:
+temporary and offset addresses, the sprite-control-block base and next pointers, the
+video and collision buffer addresses, the running horizontal/vertical positions and
+sizes, and the stretch and tilt adders. The graphics runtime and the sprite engine set
+these up for you from the SCB you pass in; see the <a href="sprites.html">Sprites</a>
+and <a href="collisions.html">Collision detection</a> pages. You mostly touch them
+directly only when driving Suzy math or writing a custom blit.</p>
+
+<h3 id="sect-6-2">6.2. SPRCTL0, SPRCTL1 and SPRSYS</h3>
+<p>The three bytes at <code>$FC80&ndash;$FC81</code> and <code>$FC92</code> carry the
+sprite and system control bits. The first byte of every SCB is a copy of
+<code>SPRCTL0</code>; the second is <code>SPRCTL1</code>. Their meaning is covered in
+full on the <a href="sprites.html">Sprites</a> page; the constants are:</p>
+<div class="table-wrap"><table class="grid">
+<thead><tr><th>Register</th><th>Constants (from <code>&lt;lynx/_suzy.h&gt;</code>)</th></tr></thead>
+<tbody>
+<tr><td class="nowrap"><code>SPRCTL0</code> <code>$FC80</code></td><td>Bit depth <code>BPP_1</code>/<code>BPP_2</code>/<code>BPP_3</code>/<code>BPP_4</code> (<code>$00</code>/<code>$40</code>/<code>$80</code>/<code>$C0</code>); <code>HFLIP</code> (<code>$20</code>), <code>VFLIP</code> (<code>$10</code>); sprite type <code>TYPE_BACKGROUND</code>&hellip;<code>TYPE_SHADOW</code> (<code>$00&ndash;$07</code>).</td></tr>
+<tr><td class="nowrap"><code>SPRCTL1</code> <code>$FC81</code></td><td><code>LITERAL</code> (<code>$80</code>) vs <code>PACKED</code> (<code>$00</code>) data; reload depth <code>RENONE</code>/<code>REHV</code>/<code>REHVS</code>/<code>REHVST</code> (<code>$00</code>/<code>$10</code>/<code>$20</code>/<code>$30</code>); <code>REUSEPAL</code> (<code>$08</code>), <code>SKIP</code> (<code>$04</code>), <code>DRAWUP</code> (<code>$02</code>), <code>DRAWLEFT</code> (<code>$01</code>).</td></tr>
+<tr><td class="nowrap"><code>SPRSYS</code> write <code>$FC92</code></td><td><code>SIGNMATH</code> (<code>$80</code>), <code>ACCUMULATE</code> (<code>$40</code>), <code>NO_COLLIDE</code> (<code>$20</code>), <code>VSTRETCH</code> (<code>$10</code>), <code>LEFTHAND</code> (<code>$08</code>), <code>CLR_UNSAFE</code> (<code>$04</code>), <code>SPRITESTOP</code> (<code>$02</code>).</td></tr>
+<tr><td class="nowrap"><code>SPRSYS</code> read <code>$FC92</code></td><td><code>MATHWORKING</code> (<code>$80</code>), <code>MATHWARNING</code> (<code>$40</code>), <code>MATHCARRY</code> (<code>$20</code>), <code>VSTRETCHING</code> (<code>$10</code>), <code>LEFTHANDED</code> (<code>$08</code>), <code>UNSAFE_ACCESS</code> (<code>$04</code>), <code>SPRITETOSTOP</code> (<code>$02</code>), <code>SPRITEWORKING</code> (<code>$01</code>).</td></tr>
+<tr><td class="nowrap"><code>SPRGO</code> <code>$FC91</code></td><td><code>SPRITE_GO</code> (<code>$01</code>) starts the blitter; <code>EVER_ON</code> (<code>$04</code>) keeps the &ldquo;everon&rdquo; detector active.</td></tr>
+</tbody>
+</table></div>
+<p><code>SPRSYS</code> is one address with two faces: the bits you write (math sign,
+accumulate, global no-collide, stretch, handedness, stop) are not the bits you read back
+(the math-busy/warning/carry and sprite-busy status). <code>NO_COLLIDE</code> here is
+the global collision kill switch that
+<code><a href="funcref.html#gfx_setcollisiondetection">gfx_setcollisiondetection()</a></code>
+toggles.</p>
+
+<h3 id="sect-6-3">6.3. Hardware-math registers</h3>
+<p>Suzy's multiply/divide unit is a set of registers at <code>$FC52&ndash;$FC6F</code>.
+<code>&lt;lynx/_suzy.h&gt;</code> exposes them as the <code>FACTOR_A</code>/<code>FACTOR_B</code>,
+<code>PRODUCT</code>, <code>DIVIDEND</code>/<code>DIVISOR</code>,
+<code>QUOTIENT</code> and <code>REMAINDER</code> access macros; the raw bytes are
+<code>MATHA&ndash;MATHP</code> in <code>lynx.inc</code>. You almost never use these
+directly &mdash; the <code><a href="funcref.html#suzy_umul_start">suzy_*</a></code> operators and
+the async-math API in <code>&lt;lynx/suzymath.h&gt;</code> wrap them, handling the sign
+and normalisation subtleties for you.</p>
+<div class="table-wrap"><table class="grid">
+<thead><tr><th>Operation</th><th>Registers</th></tr></thead>
+<tbody>
+<tr><td>Multiply <code>A&nbsp;&times;&nbsp;B</code></td><td><code>FACTOR_A</code> (<code>$FC54</code>), <code>FACTOR_B</code> (<code>$FC52</code>) &rarr; <code>PRODUCT</code> (<code>$FC60</code>).</td></tr>
+<tr><td>Divide <code>dividend&nbsp;&divide;&nbsp;divisor</code></td><td><code>DIVIDEND</code> (<code>$FC60</code>), <code>DIVISOR</code> (<code>$FC56</code>) &rarr; <code>QUOTIENT</code> (<code>$FC52</code>), <code>REMAINDER</code> (<code>$FC6C</code>).</td></tr>
+</tbody>
+</table></div>
+
+<h3 id="sect-6-4">6.4. Joypad and switches</h3>
+<p>The controller lives in two Suzy registers. <code>JOYSTICK</code>
+(<code>$FCB0</code>) is the d-pad and the four face buttons; <code>SWITCHES</code>
+(<code>$FCB1</code>) holds the Pause switch. The raw bit masks are in
+<code>&lt;lynx/_suzy.h&gt;</code>:</p>
+<div class="table-wrap"><table class="grid">
+<thead><tr><th>Register</th><th>Bits</th></tr></thead>
+<tbody>
+<tr><td class="nowrap"><code>JOYSTICK</code> <code>$FCB0</code></td><td><code>JOYPAD_UP</code> (<code>$80</code>), <code>JOYPAD_DOWN</code> (<code>$40</code>), <code>JOYPAD_LEFT</code> (<code>$20</code>), <code>JOYPAD_RIGHT</code> (<code>$10</code>), <code>BUTTON_OPTION1</code> (<code>$08</code>), <code>BUTTON_OPTION2</code> (<code>$04</code>), <code>BUTTON_INNER</code> (<code>$02</code>), <code>BUTTON_OUTER</code> (<code>$01</code>).</td></tr>
+<tr><td class="nowrap"><code>SWITCHES</code> <code>$FCB1</code></td><td><code>BUTTON_PAUSE</code> (<code>$01</code>).</td></tr>
+</tbody>
+</table></div>
+<p>These are the physical register bits; the direction bits flip when the console is
+held left-handed, and Pause is a separate register. The
+<code><a href="funcref.html#joy_read">joy_read()</a></code> library call reads both,
+normalises the orientation and folds Pause into bit&nbsp;8 of its result &mdash; use its
+<code>JOY_*_MASK</code> constants rather than these raw bits in game code. The
+<a href="joypad.html">Joypad input</a> page covers reading, edge detection and
+debouncing.</p>
+
+<h3 id="sect-6-5">6.5. Full Suzy map</h3>
+<div class="table-wrap"><table class="grid">
+<thead><tr><th>Range</th><th>Registers</th></tr></thead>
+<tbody>
+<tr><td class="nowrap"><code>$FC00&ndash;$FC2F</code></td><td>Sprite-engine working registers (temp/offset addresses, SCB and buffer pointers, positions, sizes, stretch, tilt).</td></tr>
+<tr><td class="nowrap"><code>$FC52&ndash;$FC6F</code></td><td>Hardware-math registers (<code>MATHA&ndash;MATHP</code>, factors, product, dividend/divisor, quotient, remainder).</td></tr>
+<tr><td class="nowrap"><code>$FC80&ndash;$FC83</code></td><td><code>SPRCTL0</code>, <code>SPRCTL1</code>, <code>SPRCOLL</code> (collision number), <code>SPRINIT</code>.</td></tr>
+<tr><td class="nowrap"><code>$FC88&ndash;$FC89</code></td><td><code>SUZYHREV</code>, <code>SUZYSREV</code> &mdash; hardware / software revision (read-only).</td></tr>
+<tr><td class="nowrap"><code>$FC90&ndash;$FC92</code></td><td><code>SUZYBUSEN</code> (bus enable), <code>SPRGO</code> (start blit), <code>SPRSYS</code> (system control / status).</td></tr>
+<tr><td class="nowrap"><code>$FCB0&ndash;$FCB3</code></td><td><code>JOYSTICK</code>, <code>SWITCHES</code>, <code>RCART0</code>, <code>RCART1</code> (cartridge data ports).</td></tr>
+<tr><td class="nowrap"><code>$FCC0&ndash;$FCC4</code></td><td><code>LEDS</code>, <code>PARSTATUS</code>, <code>PARDATA</code> (parallel port), <code>HOWIE</code>.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="sect-7">7. Reaching the registers from C and assembly</h2>
+<p>You do not compute these addresses by hand. From C, <code>&lt;lynx.h&gt;</code> pulls
+in the two overlay structs and a few named pointers:</p>
+<pre class="code">#include &lt;lynx.h&gt;
+
+MIKEY.timer0.reload = 0x9E;   /* Mikey timer 0 backup value      */
+MIKEY.palette[0]    = 0x00;   /* first hardware palette byte     */
+SUZY.sprsys         = ACCUMULATE;   /* Suzy system control       */
+_VBL_TIMER.control  = 0x1F;   /* alias for MIKEY.timer2          */</pre>
+<p><code>MIKEY</code> is <code>(*(struct __mikey *)0xFD00)</code> and <code>SUZY</code>
+is <code>(*(struct __suzy *)0xFC00)</code>, so a struct member access compiles straight
+to an absolute load or store &mdash; no pointer arithmetic at run time. The convenience
+aliases <code>_HBL_TIMER</code>, <code>_VBL_TIMER</code>, <code>_UART_TIMER</code> and
+<code>_VIDDMA</code> name the timers and the video-DMA shadow the runtime cares about.</p>
+<p>From assembly, include the register EQUs and write the addresses by name:</p>
+<pre class="code">.include "lynx/lynx.inc"
+
+        lda #$0C
+        sta MAPCTL          ; $FFF9
+
+        lda INTSET          ; pending timer interrupts
+        sta INTRST          ; acknowledge them</pre>
+<p>Every register named on this page has an EQU in <code>asminc/lynx/lynx.inc</code>,
+and the bit-field constants (interrupt bits, <code>SERCTL</code> flags) are defined
+alongside them. Because the constants are shared between the C headers and the include
+file, the two stay in step.</p>
+
+<h2 id="sect-8">8. License</h2>
+<p>The Lynx runtime, like the rest of the package, is distributed under the cc65 zlib-style license. The full text, together with every other copyright notice in the distribution, is reproduced verbatim on the consolidated <a href="licenses.html">Licenses and copyright notices</a> page.</p></article></main><site-foot></site-foot>
+<script src="doc.js"></script>
+</body></html>

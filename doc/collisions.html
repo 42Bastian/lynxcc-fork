@@ -234,7 +234,7 @@ on the <a href="sprites.html#sect-3">Sprites</a> page. Not every sprite should c
 cockpit frame is visible but should never register &mdash; and skipping collision
 also makes a sprite paint faster, because Suzy can drop the read-modify-write of the
 collision buffer. The types that matter for collision are:</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Type</th><th>Constant</th><th>Collision behaviour</th></tr></thead>
 <tbody>
 <tr><td>Normal</td><td><code>TYPE_NORMAL</code></td><td>The workhorse. Pen&nbsp;0 is transparent and non-colliding; pens 1&ndash;15 are opaque and collideable. Reads and writes the collision buffer, writes a depository.</td></tr>
@@ -243,7 +243,7 @@ collision buffer. The types that matter for collision are:</p>
 <tr><td>Background</td><td><code>TYPE_BACKGROUND</code></td><td>Overwrites both buffers (pens 0 and 15 are no longer transparent) and does no collision <em>detection</em>. Used to initialise a scene &mdash; and, with collision on, to wipe the collision buffer (see below). Faster to paint.</td></tr>
 <tr><td>Shadow / XOR / others</td><td><code>TYPE_SHADOW</code>, <code>TYPE_XOR</code>, &hellip;</td><td>Specialised variants that keep normal collision activity while changing how pens 14/15 or the video data are treated. Rarely needed for collision logic.</td></tr>
 </tbody>
-</table>
+</table></div>
 <p>Three switches can suppress collision regardless of type, each overriding
 everything below it:</p>
 <ul>

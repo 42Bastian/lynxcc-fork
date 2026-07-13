@@ -247,6 +247,10 @@ table.grid th{background:var(--panel-2);color:var(--ink);
   font-weight:600;padding:9px 12px;border-bottom:2px solid var(--border)}
 table.grid td{padding:7px 12px;border-bottom:1px solid var(--border-soft)}
 table.grid tr:hover td{background:var(--panel-2)}
+/* top-align every table cell so multi-line rows line up at the top */
+.doc th,.doc td{vertical-align:top}
+/* utility: keep short cells (addresses, ranges, register names) on one line */
+.nowrap{white-space:nowrap}
 
 /* table of contents */
 nav.toc{
