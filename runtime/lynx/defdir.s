@@ -36,10 +36,9 @@ len0 = __ONCE_PHYS__ + __ONCE_SIZE__ - __MAIN_START__
 __DIRECTORY_END__:
 
 ; ------------------------------------------------------------------------
-; Make sure the optional segments referenced by the layout always exist, even
-; if nothing in the program contributes code to them, so their linker-defined
+; Make sure the optional ONCE segment referenced by the layout always exists,
+; even if nothing in the program contributes code to it, so its linker-defined
 ; boundary symbols resolve. ONCE always holds the crt0 one-shot body, but a
-; program that uses no IRQ/clock code has no LOWCODE otherwise. Declaring the
-; segments empty here costs nothing.
-        .segment "LOWCODE"
+; program with no constructors adds nothing more. Declaring it empty here costs
+; nothing.
         .segment "ONCE"

@@ -60,7 +60,7 @@ __clk_tck:
 ; This interrupt handler increments a 24-bit counter at every video
 ; vertical-blanking time.
 ;
-        .segment        "LOWCODE"
+        .segment        "CODE"
 update_clock:
         lda     INTSET
         and     #%00000100

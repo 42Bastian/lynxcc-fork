@@ -37,9 +37,8 @@ configurable and uses configuration files for high flexibility.</div><nav class=
 <li class="lvl2"><a href="#SYMBOLS">5.11. The SYMBOLS section</a></li>
 <li class="lvl1"><a href="#sect-6">6. Special segments</a></li>
 <li class="lvl2"><a href="#sect-6-1">6.1. ONCE</a></li>
-<li class="lvl2"><a href="#sect-6-2">6.2. LOWCODE</a></li>
-<li class="lvl2"><a href="#sect-6-3">6.3. STARTUP</a></li>
-<li class="lvl2"><a href="#sect-6-4">6.4. ZPSAVE</a></li>
+<li class="lvl2"><a href="#sect-6-3">6.2. STARTUP</a></li>
+<li class="lvl2"><a href="#sect-6-4">6.3. ZPSAVE</a></li>
 <li class="lvl1"><a href="#sect-7">7. Copyright</a></li>
 </ul></nav><h2 id="sect-1">1. Overview</h2>
 <p>The ld65 linker combines several object modules created by the ca65
@@ -869,14 +868,11 @@ config files, you will need the following information.</p>
 execution reaches main() - provided that the program runs in RAM. You
 may for example add the ONCE segment to the heap in really memory
 constrained systems.</p>
-<h3 id="sect-6-2">6.2. LOWCODE</h3>
-<p>For the LOWCODE segment, it is guaranteed that it won't be banked out, so it
-is reachable at any time by interrupt handlers or similar.</p>
-<h3 id="sect-6-3">6.3. STARTUP</h3>
+<h3 id="sect-6-3">6.2. STARTUP</h3>
 <p>This segment contains the startup code which initializes the C software stack
 and the libraries. It is placed in its own segment because it needs to be
 loaded at the lowest possible program address on several platforms.</p>
-<h3 id="sect-6-4">6.4. ZPSAVE</h3>
+<h3 id="sect-6-4">6.3. ZPSAVE</h3>
 <p>The ZPSAVE segment contains the original values of the zeropage locations used
 by the ZEROPAGE segment. It is placed in its own segment because it must not be
 initialized.</p>

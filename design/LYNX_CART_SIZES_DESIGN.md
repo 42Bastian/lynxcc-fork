@@ -118,7 +118,7 @@ the RAM layout is byte‑for‑byte the same as `lynx.cfg`. It is also safe on t
 boot side: the directory entry in `runtime/lynx/defdir.s` sets the loader's copy
 length (`len0`) from the real segment sizes
 (`__STARTUP_SIZE__ + __ONCE_SIZE__ + __CODE_SIZE__ + __DATA_SIZE__ +
-__RODATA_SIZE__ + __LOWCODE_SIZE__`), not from `__MAIN_SIZE__`, so the bootloader
+__RODATA_SIZE__`), not from `__MAIN_SIZE__`, so the bootloader
 still copies only the used code/data to `$0200` and never reads the fill tail.
 
 ## 4. The `ROMFILL` size expression
@@ -191,7 +191,6 @@ SEGMENTS {
     BOOTLDR:   load = BOOT,    type = ro;
     DIRECTORY: load = DIR,     type = ro;
     STARTUP:   load = MAIN,    type = ro,  define = yes;
-    LOWCODE:   load = MAIN,    type = ro,  define = yes, optional = yes;
     ONCE:      load = MAIN,    type = ro,  define = yes, optional = yes;
     CODE:      load = MAIN,    type = ro,  define = yes;
     RODATA:    load = MAIN,    type = ro,  define = yes;
