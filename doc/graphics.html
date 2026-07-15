@@ -468,6 +468,23 @@ drawing pen (0&ndash;15, and the source of <code>gfx_clear</code>'s fill colour)
 background pen &mdash; where a value of <strong>0</strong> means a transparent
 background rather than the black pen.</p>
 
+<p><strong>Why the screen is black at boot, not garbage.</strong> The video DMA is
+already running before your program draws anything &mdash; crt0 enables it
+(<code>DISPCTL&nbsp;=&nbsp;$0D</code>) as part of one-time init &mdash; and the frame
+buffer at that point still holds cold-boot DRAM garbage plus the cartridge
+bootloader's secondary loader, which the Lynx leaves sitting at <code>$FB68</code>,
+<em>inside</em> display page&nbsp;0 (<code>$E018&ndash;$FFB7</code>). None of it is
+visible, because every one of the 16 pens is mapped to black: the encrypted
+bootloader's very first act is to zero <code>GCOLMAP</code>, and neither crt0 nor
+<code><a href="funcref.html#gfx_init">gfx_init</a></code> loads any colour &mdash;
+<code>gfx_init</code> clears the palette to black again and deliberately leaves it
+that way. So the DMA scans the buffer out as a uniformly black screen until you load
+a palette. The loader bytes at <code>$FB68</code> are overwritten the first time you
+draw into page&nbsp;0, so they never need clearing. The practical rule: load your
+palette <em>after</em> you have cleared or drawn the first frame &mdash; installing a
+non-black palette while the buffer still holds boot garbage would flash that garbage
+on screen for a frame.</p>
+
 <h2 id="sect-7">7. Panning the display window: hoff and voff</h2>
 <p>Every <code>hpos</code>&#47;<code>vpos</code> a sprite carries is a coordinate in an
 imaginary <strong>display world</strong>, not a pixel address in the frame buffer.
