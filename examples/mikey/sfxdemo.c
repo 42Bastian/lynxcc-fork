@@ -137,6 +137,7 @@ void main (void)
     int           y;
 
     gfx_init ();
+    gfx_setdefpalette ();
     CLI ();                     /* let the VBL + sound-timer IRQs run */
     while (gfx_busy ()) {}
     snd_init ();

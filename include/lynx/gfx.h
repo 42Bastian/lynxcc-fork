@@ -167,6 +167,11 @@ void __fastcall__ gfx_setpalette (const unsigned char* palette);
 const unsigned char* gfx_getpalette (void);
 /* Return the current palette (the readable hardware palette). */
 
+void gfx_setdefpalette (void);
+/* Load the built-in default palette. gfx_init clears the palette to black,
+** so call this after gfx_init to get the historical 16-colour default.
+*/
+
 const unsigned char* gfx_getdefpalette (void);
 /* Return the default palette. */
 

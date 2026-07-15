@@ -79,7 +79,7 @@ smart linking finally applies. No header, no vectors, no install step, no module
 
 | Function | Implementation notes |
 |---|---|
-| `gfx_init()` | Absorbs old INSTALL+INIT+kernel `gfx_init`: enable VBL timer IRQ, set collision buffer regs ($A058), reset text defaults, set draw/view page 0, default palette, color black (changed from the old driver's white; see §2.8). Cannot fail (fixed hardware) → returns `void`, no error path. |
+| `gfx_init()` | Absorbs old INSTALL+INIT+kernel `gfx_init`: enable VBL timer IRQ, set collision buffer regs ($A058), reset text defaults, set draw/view page 0, clear the palette to black (no longer loads the default palette — call `gfx_setdefpalette()` for that), color black (changed from the old driver's white; see §2.8). Cannot fail (fixed hardware) → returns `void`, no error path. |
 | `gfx_clear()` | The cls sprite + shared `draw_sprite` core. Clears in the current draw colour; see §2.8. |
 | `gfx_clearrows(first, count)` | Lynx extension: clear a horizontal band of rows in the current draw colour. See §2.8. |
 | `gfx_sprite(scb)` | **Promoted from `tgi_ioctl(0,·)` to a real `__fastcall__` function**: `sta/stx` SCB pointer → `draw_sprite`. This is the hot call (once per frame per chain in `breakout.c`); drops the C ioctl wrapper + vector + cmp-chain (~40 cycles/call). |
@@ -91,7 +91,7 @@ smart linking finally applies. No header, no vectors, no install step, no module
 | `gfx_setviewpage(p)` / `gfx_setdrawpage(p)` | Direct; page addresses stay $E018/$C038. |
 | `gfx_setbpp(bpp)` | Select display depth via DISPCTL B2: 4 (default) or 2 bits/pixel. See §2.7. |
 | `gfx_setcolor(c)` / `gfx_getcolor()` | Direct; range check replaced by `and #$0F`. |
-| `gfx_setpalette(p)` / `gfx_getpalette()` / `gfx_getdefpalette()` | Direct. |
+| `gfx_setpalette(p)` / `gfx_getpalette()` / `gfx_setdefpalette()` / `gfx_getdefpalette()` | Direct. `gfx_setdefpalette` loads the built-in default palette (opt-in, in `gfx-defpalette.s`). |
 | `gfx_gotoxy(x,y)` | Kept solely as text cursor positioning for `gfx_outtext`. |
 | `gfx_settextstyle/settextdir/settextscale` | Bitmap-font only; see §2.3. |
 | `gfx_outtext(s)` / `gfx_outtextxy(x,y,s)` | Direct; font + 169-byte `text_bitmap` buffer (`8*(1+20)+1`, §2.3.1) link only when used. |
@@ -199,7 +199,8 @@ libraries/graphics/
   gfx-sprite.s    gfx_sprite
   gfx-page.s      setviewpage, setdrawpage, flip, busy, updatedisplay, irq (.interruptor)
   gfx-color.s     setcolor, getcolor, setbgcolor
-  gfx-palette.s   setpalette, getpalette, getdefpalette + DEFPALETTE
+  gfx-palette.s   setpalette, getpalette
+  gfx-defpalette.s setdefpalette, getdefpalette + default palette table (opt-in)
   gfx-rate.s      setframerate
   gfx-collision.s setcollisiondetection
   gfx-text.s      outtext, outtextxy, gotoxy, settextstyle/dir/scale,
@@ -289,6 +290,16 @@ The flip side: programs that drew (text, sprites) after init *without* an explic
 silently. Both changes are runtime-silent, not compile errors — call them out in the
 `lynx/gfx.h` comments for `gfx_init` and `gfx_clear`, and audit the samples (`breakout.c`,
 `lynxdemo.c`, etc.) for missing `gfx_setcolor(COLOR_WHITE)` in the same commit.
+
+**Behaviour change — default palette no longer auto-loaded.** `gfx_init` used to copy
+the built-in 16-colour default palette into `GCOLMAP`. It now clears the palette to
+**black** instead, and the table plus the calls that use it (`gfx_setdefpalette`,
+`gfx_getdefpalette`) live in their own module `gfx-defpalette.s`, so a program that
+installs its own palette never links the 32-byte table. A program that wants the
+historical default calls `gfx_setdefpalette()` right after `gfx_init()`. Like the
+draw-colour change above this is runtime-silent (a program that drew after init without
+setting a palette now shows black) — call it out in the migration guide and retrofit the
+samples in the same commit.
 
 **Alternative considered**: keying clears off `gfx_bgindex` (`gfx_setbgcolor`) instead.
 Rejected — one colour mechanism (`gfx_setcolor`) for all drawing as specified;

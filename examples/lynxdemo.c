@@ -10,8 +10,9 @@
 ** Minimal Atari Lynx sample for cc65.
 **
 ** Shows the static Lynx graphics library (design/LYNX_GFX_DESIGN.md): no driver install,
-** just gfx_init(). A hardware-scaled sprite bounces around the screen,
-** double buffered, with fractionally scaled text on top.
+** just gfx_init() followed by gfx_setdefpalette() for the built-in palette.
+** A hardware-scaled sprite bounces around the screen, double buffered, with
+** fractionally scaled text on top.
 **
 ** Controls: A grows the ball, B shrinks it, pad left/right changes
 ** its color.
@@ -69,6 +70,7 @@ void main (void)
     unsigned char size;                 /* ball size in pixels  */
 
     gfx_init ();
+    gfx_setdefpalette ();
     CLI ();
 
     gfx_setframerate (60);

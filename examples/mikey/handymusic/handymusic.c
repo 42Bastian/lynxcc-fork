@@ -85,6 +85,7 @@ void main (void)
     int           y;
 
     gfx_init ();
+    gfx_setdefpalette ();
     CLI ();                     /* let the VBL (+ HandyMusic) IRQ run */
     while (gfx_busy ()) {}
 

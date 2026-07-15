@@ -63,6 +63,13 @@ aliases in <code>&lt;lynx/lynx.h&gt;</code> (suppressible with
 <code>LYNX_NO_EEPROM_COMPAT</code>) so existing programs keep compiling unchanged;
 see the <a href="migrating.html#sect-eeprom-rename">EEPROM API rename</a> section
 of the migration guide.</p>
+<p>On 15.07.2026 <code>gfx_init</code> stopped auto-loading the built-in default
+palette: it now clears the hardware palette to black, and the default palette table
+was split into its own module behind the new <code>gfx_setdefpalette</code> call so it
+only links when a program uses it. Programs that relied on the implicit default call
+<code>gfx_setdefpalette()</code> right after <code>gfx_init()</code>; see the
+<a href="migrating.html#sect-defpalette">Default palette no longer auto-loaded</a>
+section of the migration guide.</p>
 
 <h2 id="sect-4">4. Licensing</h2>
 <p>This page records authorship only; it does not change any license. cc65 and its binutils are Copyright &copy; 1998&ndash;2012 Ullrich von Bassewitz and others, distributed under the usual cc65 (zlib-style) terms. The full notice for every component is collected on the consolidated <a href="licenses.html">Licenses and copyright notices</a> page.</p>

@@ -25,6 +25,7 @@ See doc/licenses.html.
 <li class="lvl1"><a href="#sect-5">5. Compatibility deliberately preserved</a></li>
 <li class="lvl1"><a href="#sect-tgi-deprecation">6. TGI Deprecation</a></li>
 <li class="lvl1"><a href="#sect-eeprom-rename">7. EEPROM API rename</a></li>
+<li class="lvl1"><a href="#sect-defpalette">8. Default palette no longer auto-loaded</a></li>
 </ul></nav>
 <h2 id="sect-1">1. Overview</h2>
 <p><strong>lynxcc</strong> is not a drop-in upstream cc65: it is the <strong>Lynx Game Development
@@ -230,6 +231,30 @@ new name with unchanged semantics, arguments and return values.</p>
 <tr><td><code>lynx_eewrite_93c66</code></td><td><code>eeprom_93c66_write</code></td></tr>
 <tr><td><code>lynx_eewrite_93c86</code></td><td><code>eeprom_93c86_write</code></td></tr>
 </table>
+
+<h2 id="sect-defpalette">8. Default palette no longer auto-loaded</h2>
+<p>Historically <code><a href="funcref.html#gfx_init">gfx_init</a></code> copied the
+built-in 16-colour default palette into the hardware palette. It no longer does:
+<code>gfx_init</code> now clears the palette to <strong>black</strong>, and the default
+palette table &mdash; together with the two calls that use it,
+<code><a href="funcref.html#gfx_setdefpalette">gfx_setdefpalette</a></code> and
+<code><a href="funcref.html#gfx_getdefpalette">gfx_getdefpalette</a></code> &mdash; now
+lives in its own object module. The 32-byte table is therefore linked into a program
+<strong>only when it is actually referenced</strong>: a program that installs its own
+palette with <code><a href="funcref.html#gfx_setpalette">gfx_setpalette</a></code> no
+longer pays for the default table it never uses.</p>
+<p>This is a <strong>runtime-silent behaviour change</strong>, not a compile error. A
+program that drew text or sprites after <code>gfx_init</code> while relying on the
+implicit default palette now renders against an all-black palette (everything invisible).
+The fix is one line:</p>
+<pre class="verb">gfx_init ();
+gfx_setdefpalette ();       /* restore the historical 16-colour default */</pre>
+<p>Programs already unaffected are those that call
+<code>gfx_setpalette()</code> with their own palette right after
+<code>gfx_init()</code>; they need no change. If you previously wrote
+<code>gfx_setpalette (gfx_getdefpalette ())</code> to force the default, replace it with
+the shorter <code>gfx_setdefpalette ()</code>, which loads the same table without exposing
+the pointer. All bundled examples were retrofitted this way.</p>
 </article></main><site-foot></site-foot>
 <script src="doc.js"></script>
 </body></html>

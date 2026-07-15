@@ -82,7 +82,7 @@ int main (void)
     gfx_init ();
     CLI ();
     while (gfx_busy ()) {}
-    gfx_setpalette (gfx_getdefpalette ());
+    gfx_setdefpalette ();
 
     for (;;) {
 

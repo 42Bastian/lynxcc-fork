@@ -36,7 +36,7 @@ int main (void)
     FRESULT res;
 
     gfx_init ();
-    gfx_setpalette (gfx_getdefpalette ());
+    gfx_setdefpalette ();
     gfx_setcolor (COLOR_BLACK);
     gfx_clear ();
 

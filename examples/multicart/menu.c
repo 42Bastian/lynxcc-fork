@@ -36,6 +36,7 @@ void main (void)
     unsigned      prev = 0, now, pressed;
 
     gfx_init ();
+    gfx_setdefpalette ();
     CLI ();                             /* the frame timer needs IRQs */
     gfx_setframerate (60);
 

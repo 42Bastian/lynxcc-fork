@@ -63,7 +63,7 @@ void main (void)
     gfx_init ();
     CLI ();
     while (gfx_busy ()) {}
-    gfx_setpalette (gfx_getdefpalette ());
+    gfx_setdefpalette ();
     gfx_setframerate (60);
     gfx_setcollisiondetection (0);
 

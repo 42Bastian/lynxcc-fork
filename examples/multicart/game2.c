@@ -24,6 +24,7 @@
 void main (void)
 {
     gfx_init ();
+    gfx_setdefpalette ();
     CLI ();
     gfx_setframerate (60);
 

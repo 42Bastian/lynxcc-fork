@@ -417,7 +417,7 @@ void main (void)
     gfx_init ();
     CLI ();
     while (gfx_busy ()) {}
-    gfx_setpalette (gfx_getdefpalette ());
+    gfx_setdefpalette ();
     gfx_setfont (GFX_FONT_COMPACT);     /* 5x5 font (6px pitch): all the
                                         ** number columns fit on screen */
     timer_init ();

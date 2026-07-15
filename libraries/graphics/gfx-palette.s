@@ -11,22 +11,20 @@
 ;
 ; void __fastcall__ gfx_setpalette (const unsigned char* palette);
 ; const unsigned char* gfx_getpalette (void);
-; const unsigned char* gfx_getdefpalette (void);
 ;
 ; The palette is 32 bytes: 16 green bytes, then 16 blue/red bytes
 ; (GCOLMAP hardware layout). GCOLMAP is readable, so gfx_getpalette
-; returns the hardware palette itself. The default palette table lives
-; in gfx-init.s (which is always linked and loads it).
+; returns the hardware palette itself. The built-in default palette and
+; the calls that use it (gfx_setdefpalette, gfx_getdefpalette) live in
+; gfx-defpalette.s so they only link when a program uses them.
 ;
 
         .include "lynx/lynx.inc"
 
         .importzp       ptr1
-        .import         gfx_defpalette
 
         .export         _gfx_setpalette
         .export         _gfx_getpalette
-        .export         _gfx_getdefpalette
 
 .code
 
@@ -43,9 +41,4 @@ _gfx_setpalette:
 _gfx_getpalette:
         lda     #<GCOLMAP
         ldx     #>GCOLMAP
-        rts
-
-_gfx_getdefpalette:
-        lda     #<gfx_defpalette
-        ldx     #>gfx_defpalette
         rts

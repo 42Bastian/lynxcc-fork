@@ -58,6 +58,7 @@ static void beep(void)
 void main(void)
 {
     gfx_init();
+    gfx_setdefpalette();
     gfx_setbgcolor(0);
     gfx_setcolor(2);
     gfx_clear();

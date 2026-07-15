@@ -14,10 +14,16 @@
 ; gfx_init absorbs the old INSTALL+INIT driver entries and the kernel's
 ; gfx_init: it enables the VBL timer interrupt, sets up the collision
 ; buffer, resets the display to a known state (4bpp, unflipped, page 0
-; viewed and drawn), loads the default palette and selects black (pen 0)
-; as the drawing color, so that gfx_init + gfx_clear yields a black screen
-; (design/LYNX_GFX_DESIGN.md sec. 2.8; the old driver defaulted to white).
-; The hardware is fixed, so it cannot fail and returns void.
+; viewed and drawn), clears the hardware palette to black and selects
+; black (pen 0) as the drawing color, so that gfx_init + gfx_clear yields
+; a black screen (design/LYNX_GFX_DESIGN.md sec. 2.8; the old driver
+; defaulted to white). The hardware is fixed, so it cannot fail and
+; returns void.
+;
+; gfx_init no longer loads the historical 16-colour default palette: it
+; leaves every pen black. A program that wants the built-in default
+; palette calls gfx_setdefpalette (gfx-defpalette.s) after gfx_init, so
+; the 32-byte table only links when it is actually used.
 ;
 ; Text style and the collision-detection setting are owned by their own
 ; modules and statically initialized to their defaults there; gfx_init
@@ -38,44 +44,6 @@
         .import         gfx_drawpage
 
         .export         _gfx_init
-        .export         gfx_defpalette
-
-.rodata
-
-; Default palette, green bytes first, then blue/red (GCOLMAP layout).
-
-gfx_defpalette: .byte   >$011
-                .byte   >$34d
-                .byte   >$9af
-                .byte   >$9b8
-                .byte   >$777
-                .byte   >$335
-                .byte   >$448
-                .byte   >$75e
-                .byte   >$d5f
-                .byte   >$c53
-                .byte   >$822
-                .byte   >$223
-                .byte   >$484
-                .byte   >$8e5
-                .byte   >$cf5
-                .byte   >$fff
-                .byte   <$011
-                .byte   <$34d
-                .byte   <$9af
-                .byte   <$9b8
-                .byte   <$777
-                .byte   <$335
-                .byte   <$448
-                .byte   <$75e
-                .byte   <$d5f
-                .byte   <$c53
-                .byte   <$822
-                .byte   <$223
-                .byte   <$484
-                .byte   <$8e5
-                .byte   <$cf5
-                .byte   <$fff
 
 .code
 
@@ -124,11 +92,12 @@ _gfx_init:
         sta     DISPADRH
         sta     gfx_drawpage+1
 
-; Load the default palette.
+; Clear the hardware palette to black. gfx_setdefpalette loads the
+; historical default palette on demand (gfx-defpalette.s).
 
+        lda     #0
         ldy     #31
-@L1:    lda     gfx_defpalette,y
-        sta     GCOLMAP,y       ; $FDA0
+@L1:    sta     GCOLMAP,y       ; $FDA0
         dey
         bpl     @L1
 
