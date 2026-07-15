@@ -87,10 +87,11 @@ and cannot drift.</p>
 <tr><td><code><a href="funcref.html#gfx_setframerate">gfx_setframerate</a></code></td><td>Select 50, 60 or 75&nbsp;Hz refresh.</td></tr>
 <tr><td><code><a href="funcref.html#gfx_setcollisiondetection">gfx_setcollisiondetection</a></code></td><td>Enable/disable Suzy collision detection.</td></tr>
 <tr><td><code><a href="funcref.html#gfx_setbpp">gfx_setbpp</a></code></td><td>Select 4bpp (default) or 2bpp display depth.</td></tr>
-<tr><td rowspan="6">Colour / palette</td><td><code><a href="funcref.html#gfx_setcolor">gfx_setcolor</a></code></td><td>Set the drawing pen (0&ndash;15).</td></tr>
+<tr><td rowspan="7">Colour / palette</td><td><code><a href="funcref.html#gfx_setcolor">gfx_setcolor</a></code></td><td>Set the drawing pen (0&ndash;15).</td></tr>
 <tr><td><code><a href="funcref.html#gfx_getcolor">gfx_getcolor</a></code></td><td>Read the current drawing pen.</td></tr>
 <tr><td><code><a href="funcref.html#gfx_setbgcolor">gfx_setbgcolor</a></code></td><td>Set the text background pen (0 = transparent).</td></tr>
 <tr><td><code><a href="funcref.html#gfx_setpalette">gfx_setpalette</a></code></td><td>Load a 32-byte palette.</td></tr>
+<tr><td><code><a href="funcref.html#gfx_setpalette16">gfx_setpalette16</a></code></td><td>Load a condensed 16-entry palette.</td></tr>
 <tr><td><code><a href="funcref.html#gfx_getpalette">gfx_getpalette</a></code></td><td>Read the current palette.</td></tr>
 <tr><td><code><a href="funcref.html#gfx_getdefpalette">gfx_getdefpalette</a></code></td><td>Read the default palette.</td></tr>
 <tr><td rowspan="9">Text</td><td><code><a href="funcref.html#gfx_gotoxy">gfx_gotoxy</a></code></td><td>Move the text cursor.</td></tr>
@@ -461,6 +462,16 @@ blue/red bytes (blue in the high nibble, red in the low nibble). Each pen is thu
 </svg>
 <figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">Greens first, then blue/red pairs &mdash; the order Mikey's <code>GCOLMAP</code> hardware expects.</figcaption>
 </figure>
+<p>If you would rather keep one packed entry per pen than the split-halves wire
+format, <code><a href="funcref.html#gfx_setpalette16">gfx_setpalette16</a></code>
+takes the <strong>condensed 16-entry</strong> form instead: an
+<code>unsigned short palette[16]</code> where each pen is a single 12-bit value of
+the form <code>0x0GBR</code> (green nibble in bits 8&ndash;11, blue in 4&ndash;7,
+red in 0&ndash;3). It splits each entry into the two <code>GCOLMAP</code> halves as
+it loads, so it installs exactly the same colours as
+<code><a href="funcref.html#gfx_setpalette">gfx_setpalette</a></code> &mdash; the
+<a href="palgen.html">palette generator</a> emits both arrays from the same set of
+colours, so you pick whichever matches how your source stores the palette.</p>
 <p>Two more pen controls: <code><a href="funcref.html#gfx_setcolor">gfx_setcolor</a></code>
 / <code><a href="funcref.html#gfx_getcolor">gfx_getcolor</a></code> set and read the
 drawing pen (0&ndash;15, and the source of <code>gfx_clear</code>'s fill colour), and

@@ -164,6 +164,14 @@ void __fastcall__ gfx_setbgcolor (unsigned char color);
 void __fastcall__ gfx_setpalette (const unsigned char* palette);
 /* Set the palette: 32 bytes, 16 green bytes followed by 16 blue/red bytes. */
 
+void __fastcall__ gfx_setpalette16 (const unsigned short* palette);
+/* Set the palette from the condensed 16-entry form: one unsigned short per
+** pen, each a packed 12-bit colour of the form 0x0GBR (green nibble in bits
+** 8-11, blue in 4-7, red in 0-3). Splits each entry into the two GCOLMAP
+** halves that gfx_setpalette expects; the two calls install the same colours
+** from the two arrays the palette generator emits.
+*/
+
 const unsigned char* gfx_getpalette (void);
 /* Return the current palette (the readable hardware palette). */
 

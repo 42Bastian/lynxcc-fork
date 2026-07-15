@@ -91,7 +91,7 @@ smart linking finally applies. No header, no vectors, no install step, no module
 | `gfx_setviewpage(p)` / `gfx_setdrawpage(p)` | Direct; page addresses stay $E018/$C038. |
 | `gfx_setbpp(bpp)` | Select display depth via DISPCTL B2: 4 (default) or 2 bits/pixel. See §2.7. |
 | `gfx_setcolor(c)` / `gfx_getcolor()` | Direct; range check replaced by `and #$0F`. |
-| `gfx_setpalette(p)` / `gfx_getpalette()` / `gfx_setdefpalette()` / `gfx_getdefpalette()` | Direct. `gfx_setdefpalette` loads the built-in default palette (opt-in, in `gfx-defpalette.s`). |
+| `gfx_setpalette(p)` / `gfx_setpalette16(p)` / `gfx_getpalette()` / `gfx_setdefpalette()` / `gfx_getdefpalette()` | Direct. `gfx_setpalette` takes the 32-byte GCOLMAP wire format; `gfx_setpalette16` takes the condensed 16-entry `0x0GBR` short array (the palette generator emits both) and splits each entry into the two GCOLMAP halves. `gfx_setdefpalette` loads the built-in default palette (opt-in, in `gfx-defpalette.s`). |
 | `gfx_gotoxy(x,y)` | Kept solely as text cursor positioning for `gfx_outtext`. |
 | `gfx_settextstyle/settextdir/settextscale` | Bitmap-font only; see §2.3. |
 | `gfx_outtext(s)` / `gfx_outtextxy(x,y,s)` | Direct; font + 169-byte `text_bitmap` buffer (`8*(1+20)+1`, §2.3.1) link only when used. |
@@ -199,7 +199,7 @@ libraries/graphics/
   gfx-sprite.s    gfx_sprite
   gfx-page.s      setviewpage, setdrawpage, flip, busy, updatedisplay, irq (.interruptor)
   gfx-color.s     setcolor, getcolor, setbgcolor
-  gfx-palette.s   setpalette, getpalette
+  gfx-palette.s   setpalette, setpalette16, getpalette
   gfx-defpalette.s setdefpalette, getdefpalette + default palette table (opt-in)
   gfx-rate.s      setframerate
   gfx-collision.s setcollisiondetection

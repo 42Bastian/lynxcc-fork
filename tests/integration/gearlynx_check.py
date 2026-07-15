@@ -49,6 +49,7 @@ EXAMPLES = [
     "suzy/sprpcktest",     # sprpck: BMP + ASCII SPS inputs, .spr via .incbin
     "suzy/fonttest",       # TGI scaled fonts
     "suzy/collision",      # Suzy collision buffer + depository read-back
+    "suzy/palette",        # gfx_setpalette vs gfx_setpalette16: same colours
     "mikey/setbpp",        # Mikey display-DMA bit depths
     "mikey/sndtune",       # snd engine: compiled ABC tune + direct SFX
     "games/breakout",      # a complete game frame
