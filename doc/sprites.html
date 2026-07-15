@@ -320,19 +320,19 @@ carries; anything it does not reload keeps the value left in Suzy's registers by
 the <em>previous</em> sprite. A separate bit, <code>REUSEPAL</code>, drops the pen
 palette the same way. Each struct is the exact C shape of one legal combination, so
 picking a struct <em>is</em> picking the reload bits:</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th><code>SPRCTL1</code> reload</th><th>Body fields loaded from this SCB</th><th>Palette</th><th><code>_suzy.h</code> struct</th></tr></thead>
 <tbody>
-<tr><td><code>REHVST</code> (<code>$30</code>)</td><td>hpos, vpos, hsize, vsize, stretch, tilt</td><td>own</td><td><code>SCB_REHVST_PAL</code></td></tr>
-<tr><td><code>REHVST</code> + <code>REUSEPAL</code></td><td>hpos, vpos, hsize, vsize, stretch, tilt</td><td>reused</td><td><code>SCB_REHVST</code></td></tr>
-<tr><td><code>REHVS</code> (<code>$20</code>)</td><td>hpos, vpos, hsize, vsize, stretch</td><td>own</td><td><code>SCB_REHVS_PAL</code></td></tr>
-<tr><td><code>REHVS</code> + <code>REUSEPAL</code></td><td>hpos, vpos, hsize, vsize, stretch</td><td>reused</td><td><code>SCB_REHVS</code></td></tr>
-<tr><td><code>REHV</code> (<code>$10</code>)</td><td>hpos, vpos, hsize, vsize</td><td>own</td><td><code>SCB_REHV_PAL</code></td></tr>
-<tr><td><code>REHV</code> + <code>REUSEPAL</code></td><td>hpos, vpos, hsize, vsize</td><td>reused</td><td><code>SCB_REHV</code></td></tr>
-<tr><td><code>RENONE</code> (<code>$00</code>)</td><td>hpos, vpos</td><td>own</td><td><code>SCB_RENONE_PAL</code></td></tr>
-<tr><td><code>RENONE</code> + <code>REUSEPAL</code></td><td>hpos, vpos</td><td>reused</td><td><code>SCB_RENONE</code></td></tr>
+<tr><td class="nowrap"><code>REHVST</code> (<code>$30</code>)</td><td>hpos, vpos, hsize, vsize, stretch, tilt</td><td>own</td><td class="nowrap"><code>SCB_REHVST_PAL</code></td></tr>
+<tr><td class="nowrap"><code>REHVST</code> + <code>REUSEPAL</code></td><td>hpos, vpos, hsize, vsize, stretch, tilt</td><td>reused</td><td class="nowrap"><code>SCB_REHVST</code></td></tr>
+<tr><td class="nowrap"><code>REHVS</code> (<code>$20</code>)</td><td>hpos, vpos, hsize, vsize, stretch</td><td>own</td><td class="nowrap"><code>SCB_REHVS_PAL</code></td></tr>
+<tr><td class="nowrap"><code>REHVS</code> + <code>REUSEPAL</code></td><td>hpos, vpos, hsize, vsize, stretch</td><td>reused</td><td class="nowrap"><code>SCB_REHVS</code></td></tr>
+<tr><td class="nowrap"><code>REHV</code> (<code>$10</code>)</td><td>hpos, vpos, hsize, vsize</td><td>own</td><td class="nowrap"><code>SCB_REHV_PAL</code></td></tr>
+<tr><td class="nowrap"><code>REHV</code> + <code>REUSEPAL</code></td><td>hpos, vpos, hsize, vsize</td><td>reused</td><td class="nowrap"><code>SCB_REHV</code></td></tr>
+<tr><td class="nowrap"><code>RENONE</code> (<code>$00</code>)</td><td>hpos, vpos</td><td>own</td><td class="nowrap"><code>SCB_RENONE_PAL</code></td></tr>
+<tr><td class="nowrap"><code>RENONE</code> + <code>REUSEPAL</code></td><td>hpos, vpos</td><td>reused</td><td class="nowrap"><code>SCB_RENONE</code></td></tr>
 </tbody>
-</table>
+</table></div>
 <p>Every variant still carries the five-byte head and <code>hpos</code>&#47;<code>vpos</code>;
 the ladder is only about how much of the size&#47;stretch&#47;tilt tail and the
 palette travel with <em>this</em> block. Shorter SCBs are smaller in RAM and paint a
@@ -401,19 +401,19 @@ palette. Each pairing is one <code>_suzy.h</code> struct.</figcaption>
 transparent, which are collideable, and whether the video data is overwritten or
 combined. Pens&nbsp;1&ndash;13 are always opaque and collideable; the type only
 changes the treatment of pen&nbsp;0, pen&nbsp;14 (shadow) and pen&nbsp;15.</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Type</th><th>Constant</th><th>Value</th><th>Behaviour</th></tr></thead>
 <tbody>
-<tr><td>Normal</td><td><code>TYPE_NORMAL</code></td><td><code>$04</code></td><td>The workhorse. Pen&nbsp;0 transparent and non-colliding; all other pens opaque and collideable.</td></tr>
-<tr><td>Boundary</td><td><code>TYPE_BOUNDARY</code></td><td><code>$03</code></td><td>Normal, but pen&nbsp;15 is transparent yet still collideable &mdash; an invisible wall a ball bounces off.</td></tr>
-<tr><td>Shadow</td><td><code>TYPE_SHADOW</code></td><td><code>$07</code></td><td>Normal, but pen&nbsp;14 is non-collideable yet still opaque &mdash; a drawn shadow that does not register hits.</td></tr>
-<tr><td>Boundary&#8209;shadow</td><td><code>TYPE_BSHADOW</code></td><td><code>$02</code></td><td>Both of the above: pen&nbsp;15 transparent-collideable, pen&nbsp;14 opaque-non-collideable.</td></tr>
-<tr><td>Background</td><td><code>TYPE_BACKGROUND</code></td><td><code>$00</code></td><td>Overwrites video <em>and</em> collision buffers (pens&nbsp;0 and&nbsp;15 no longer transparent); no collision detection. Used to lay down a scene. Paints ~&frac14; faster.</td></tr>
-<tr><td>Background&#8209;non&#8209;collide</td><td><code>TYPE_BACKNONCOLL</code></td><td><code>$01</code></td><td>Background, but leaves the collision buffer untouched entirely. Paints ~&frac13; faster than a background sprite.</td></tr>
-<tr><td>Non&#8209;collideable</td><td><code>TYPE_NONCOLL</code></td><td><code>$05</code></td><td>Never touches the collision buffer; pen&nbsp;15 is non-collideable. For HUD, clouds, cockpits. Paints ~&frac14; faster.</td></tr>
-<tr><td>Exclusive&#8209;or</td><td><code>TYPE_XOR</code></td><td><code>$06</code></td><td>Normal collision, but the sprite data is XORed with the video buffer. The read-modify-write can cost up to ~&frac14; more time.</td></tr>
+<tr><td>Normal</td><td class="nowrap"><code>TYPE_NORMAL</code></td><td class="nowrap"><code>$04</code></td><td>The workhorse. Pen&nbsp;0 transparent and non-colliding; all other pens opaque and collideable.</td></tr>
+<tr><td>Boundary</td><td class="nowrap"><code>TYPE_BOUNDARY</code></td><td class="nowrap"><code>$03</code></td><td>Normal, but pen&nbsp;15 is transparent yet still collideable &mdash; an invisible wall a ball bounces off.</td></tr>
+<tr><td>Shadow</td><td class="nowrap"><code>TYPE_SHADOW</code></td><td class="nowrap"><code>$07</code></td><td>Normal, but pen&nbsp;14 is non-collideable yet still opaque &mdash; a drawn shadow that does not register hits.</td></tr>
+<tr><td>Boundary&#8209;shadow</td><td class="nowrap"><code>TYPE_BSHADOW</code></td><td class="nowrap"><code>$02</code></td><td>Both of the above: pen&nbsp;15 transparent-collideable, pen&nbsp;14 opaque-non-collideable.</td></tr>
+<tr><td>Background</td><td class="nowrap"><code>TYPE_BACKGROUND</code></td><td class="nowrap"><code>$00</code></td><td>Overwrites video <em>and</em> collision buffers (pens&nbsp;0 and&nbsp;15 no longer transparent); no collision detection. Used to lay down a scene. Paints ~&frac14; faster.</td></tr>
+<tr><td>Background&#8209;non&#8209;collide</td><td class="nowrap"><code>TYPE_BACKNONCOLL</code></td><td class="nowrap"><code>$01</code></td><td>Background, but leaves the collision buffer untouched entirely. Paints ~&frac13; faster than a background sprite.</td></tr>
+<tr><td>Non&#8209;collideable</td><td class="nowrap"><code>TYPE_NONCOLL</code></td><td class="nowrap"><code>$05</code></td><td>Never touches the collision buffer; pen&nbsp;15 is non-collideable. For HUD, clouds, cockpits. Paints ~&frac14; faster.</td></tr>
+<tr><td>Exclusive&#8209;or</td><td class="nowrap"><code>TYPE_XOR</code></td><td class="nowrap"><code>$06</code></td><td>Normal collision, but the sprite data is XORed with the video buffer. The read-modify-write can cost up to ~&frac14; more time.</td></tr>
 </tbody>
-</table>
+</table></div>
 <p>The hardware realises these from a small set of flags. The truth table below is
 the authoritative version &mdash; and it already incorporates a hardware quirk: the
 shadow generator is missing an inverter, so <code>TYPE_XOR</code> and the two
@@ -423,7 +423,7 @@ types, so a background sprite used to <em>clear</em> the collision buffer will n
 clear pixels drawn in pen&nbsp;14. See the
 <a href="collisions.html#sect-3">Collision detection</a> page for how the type and
 its override bits gate collision.</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>&nbsp;</th><th>Shadow</th><th>B&#8209;shadow</th><th>Normal</th><th>Boundary</th><th>Bg&#8209;shadow</th><th>Bg&#8209;no&#8209;coll</th><th>Non&#8209;coll</th><th>XOR&#8209;shadow</th></tr></thead>
 <tbody>
 <tr><td>15 is opaque</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
@@ -433,7 +433,7 @@ its override bits gate collision.</p>
 <tr><td>collision buffer access</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
 <tr><td>XOR the video data</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td></tr>
 </tbody>
-</table>
+</table></div>
 <p>The third SCB byte, <code>sprcoll</code>, carries the sprite's 4-bit collision
 number and a per-sprite <em>don't-collide</em> bit (<code>NO_COLLIDE</code>,
 <code>$20</code>). That is the whole of what this page says about collision; the
@@ -450,15 +450,15 @@ display palette to produce the actual colour (documented on the
 per-sprite penpal in the SCB, then the global display palette.</p>
 <p>The palette is <strong>2<sup>bpp</sup> nibbles</strong> long, packed two nibbles
 to a byte, which is exactly why <code>_suzy.h</code> ships four penpal structs:</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Depth</th><th>Pens</th><th>Palette size</th><th>Struct</th></tr></thead>
 <tbody>
-<tr><td><code>BPP_1</code></td><td>2</td><td>1 byte</td><td><code>PENPAL_1</code></td></tr>
-<tr><td><code>BPP_2</code></td><td>4</td><td>2 bytes</td><td><code>PENPAL_2</code></td></tr>
-<tr><td><code>BPP_3</code></td><td>8</td><td>4 bytes</td><td><code>PENPAL_3</code></td></tr>
-<tr><td><code>BPP_4</code></td><td>16</td><td>8 bytes</td><td><code>PENPAL_4</code></td></tr>
+<tr><td class="nowrap"><code>BPP_1</code></td><td>2</td><td>1 byte</td><td class="nowrap"><code>PENPAL_1</code></td></tr>
+<tr><td class="nowrap"><code>BPP_2</code></td><td>4</td><td>2 bytes</td><td class="nowrap"><code>PENPAL_2</code></td></tr>
+<tr><td class="nowrap"><code>BPP_3</code></td><td>8</td><td>4 bytes</td><td class="nowrap"><code>PENPAL_3</code></td></tr>
+<tr><td class="nowrap"><code>BPP_4</code></td><td>16</td><td>8 bytes</td><td class="nowrap"><code>PENPAL_4</code></td></tr>
 </tbody>
-</table>
+</table></div>
 <p>The generic SCB structs declare <code>penpal[8]</code> because that covers the
 4bpp case; when you hand-build a lower-depth sprite you populate only the first
 2<sup>bpp&minus;1</sup> bytes and the SCB is that much shorter. Within a byte, pen

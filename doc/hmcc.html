@@ -107,13 +107,13 @@ each name to its absolute address. With an output name, an instrument script and
 four track scripts it runs in <strong>Music mode</strong>: it assembles the tracks,
 appends the instrument/SFX table after a 16-byte header, and writes a single
 <code>.mus</code> binary.</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Mode</th><th>Invocation</th><th>Reads</th><th>Writes</th></tr></thead>
 <tbody>
 <tr><td>SFX</td><td><code>hmcc $addr sfx.txt</code></td><td>one instrument/SFX script</td><td><code>sfx.sfx</code> + <code>sfx.equ</code></td></tr>
 <tr><td>Music</td><td><code>hmcc $addr out.mus inst.txt trk1.txt&hellip;</code></td><td>instrument script + 1&ndash;4 tracks</td><td><code>out.mus</code></td></tr>
 </tbody>
-</table>
+</table></div>
 <p>Both modes share the same instrument/SFX script language (section&nbsp;<a href="#sect-3">3</a>);
 Music mode adds the track language (section&nbsp;<a href="#sect-4">4</a>). In Music mode
 the SFX table is placed 16 bytes after the base (<code>$addr&nbsp;+&nbsp;16</code>) to
@@ -170,7 +170,7 @@ fields allow it. The same <code>waveform</code>, <code>volume</code> and
 <code>frequency</code> commands appear in both the header (setting the starting value)
 and the body (issuing a change over time); the loop, rest, note-off and end commands are
 body-only.</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Long</th><th>Short</th><th>Arguments</th><th>Where</th><th>Effect</th></tr></thead>
 <tbody>
 <tr><td><code>tuning</code></td><td><code>t</code></td><td>period</td><td>header</td><td>waveform period used to turn notes into dividers (default 2.0)</td></tr>
@@ -183,7 +183,7 @@ body-only.</p>
 <tr><td><code>noteoff</code></td><td><code>n</code></td><td>&mdash;</td><td>body</td><td>mark where the release section begins</td></tr>
 <tr><td><code>end</code></td><td><code>e</code></td><td>&mdash;</td><td>body</td><td>stop the envelope</td></tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="sect-3-3">3.3. Tuning and note frequencies</h3>
 <p>The compiled envelope stores a 10-bit Lynx <em>divider</em>, not a frequency. Music
 tracks name notes in a three-character <code>nXo</code> form &mdash; note letter, an
@@ -214,7 +214,7 @@ command line.</p>
 <h3 id="sect-4-2">4.2. Track commands</h3>
 <p>Inside a block, bare tokens in <code>nXo</code> form (section&nbsp;<a href="#sect-3-3">3.3</a>)
 are notes; everything else is a command with a long name and short alias:</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Long</th><th>Short</th><th>Arguments</th><th>Effect</th></tr></thead>
 <tbody>
 <tr><td><code>using</code></td><td><code>u</code></td><td>instrument</td><td>select the instrument this block plays with</td></tr>
@@ -232,7 +232,7 @@ are notes; everything else is a command with a long name and short alias:</p>
 <tr><td><code>break</code></td><td><code>b</code></td><td>&mdash;</td><td>break out of the current loop</td></tr>
 <tr><td><code>end</code></td><td><code>e</code></td><td>&mdash;</td><td>stop the track</td></tr>
 </tbody>
-</table>
+</table></div>
 <h2 id="sect-5">5. Output files and the base address</h2>
 <p>The first argument to hmcc is a base address written as <code>$dest_addr</code> (a
 16-bit hex value; a fractional part is rejected). HandyMusic bakes <em>absolute</em>

@@ -158,7 +158,7 @@ as <code>_UART_TIMER</code> at <code>$FD14</code>). The bit rate is</p>
 <p>With the fastest clock (1&nbsp;&micro;s) and the smallest reload, a handful of
 common rates come out as follows &mdash; the small residual error is well within a
 UART's tolerance:</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Baud (nominal)</th><th>CLOCK4</th><th>TIMER4 reload</th><th>Actual</th></tr></thead>
 <tbody>
 <tr><td>62500</td><td>1&nbsp;&micro;s</td><td>1</td><td>62500</td></tr>
@@ -167,7 +167,7 @@ UART's tolerance:</p>
 <tr><td>1200</td><td>1&nbsp;&micro;s</td><td>103</td><td>1202</td></tr>
 <tr><td>300</td><td>2&nbsp;&micro;s</td><td>207</td><td>300.5</td></tr>
 </tbody>
-</table>
+</table></div>
 <p>The two &ldquo;native&rdquo; Lynx speeds used by the linked games are
 62500&nbsp;and 31250&nbsp;baud; the library exposes those plus the usual RS-232-style
 rates down to 75&nbsp;baud (<a href="#sect-3-1">section&nbsp;3.1</a>).</p>
@@ -563,7 +563,7 @@ logon-control pair <code>EndLogonRequest</code> and <code>LogonInProgress</code>
 <h3 id="sect-4-5">4.5. Game ID numbers</h3>
 <p>Each linked game needed a unique <code>GAME_ID</code> so that only matching
 titles would communicate. The IDs Epyx listed as in use were:</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>ID</th><th>Game</th></tr></thead>
 <tbody>
 <tr><td>0</td><td>test programs</td></tr>
@@ -578,7 +578,7 @@ titles would communicate. The IDs Epyx listed as in use were:</p>
 <tr><td>4949</td><td>Rampage</td></tr>
 <tr><td>65535</td><td>test programs</td></tr>
 </tbody>
-</table>
+</table></div>
 
 <h3 id="sect-4-6">4.6. Limitations and resource cost</h3>
 <p>The hardware can electrically support up to 18 connected consoles, but Redeye

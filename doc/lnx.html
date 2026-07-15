@@ -49,7 +49,7 @@ is a post-build format conversion of a finished object, not a second linker.</p>
 <h2 id="sect-2">2. The .lnx header</h2>
 <p>The header is 64 bytes; multi-byte numbers are little-endian. String fields are
 stored fixed-width and NUL-padded.</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Offset</th><th>Size</th><th>Field</th><th>Notes</th></tr></thead>
 <tbody>
 <tr><td>0</td><td>4</td><td>magic</td><td>ASCII <code>"LYNX"</code></td></tr>
@@ -63,7 +63,7 @@ stored fixed-width and NUL-padded.</p>
 <tr><td>60</td><td>1</td><td>eeprom</td><td>EEPROM flag bit field (below)</td></tr>
 <tr><td>61</td><td>3</td><td>spare</td><td>reserved, written as zero</td></tr>
 </tbody>
-</table>
+</table></div>
 <p>The EEPROM flag byte (offset 60) is a bit field: bits 0&ndash;2 select the chip
 (0 none, 1 93c46, 2 93c56, 3 93c66, 4 93c76, 5 93c86; size in bits is
 2<sup>chip+9</sup>), bits 3&ndash;5 are reserved, bit 6 is 0 for a real EEPROM
@@ -204,7 +204,7 @@ rejected as errors, which catches typos rather than silently doing nothing.</p>
   "version": 1
 }</pre>
 <p>The keys map to header fields as follows:</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>JSON key</th><th>Header field</th><th>JSON type</th></tr></thead>
 <tbody>
 <tr><td><code>cartname</code></td><td>cart name</td><td>string</td></tr>
@@ -219,7 +219,7 @@ rejected as errors, which catches typos rather than silently doing nothing.</p>
 <tr><td><code>bank1_page_size</code></td><td>bank-1 page size</td><td>number</td></tr>
 <tr><td><code>version</code></td><td>version</td><td>number</td></tr>
 </tbody>
-</table>
+</table></div>
 <p>The EEPROM byte can be set as a whole (<code>eeprom_flag</code>) or field by field
 (<code>eeprom_chip</code>, <code>eeprom_lynxsd</code>, <code>eeprom_word_size</code>), and the same applies to
 the matching command-line flags. The pieces are combined in a fixed order
@@ -263,7 +263,7 @@ a raw cartridge ROM that boots on real hardware, emulators and flash carts.</p>
 <strong>big-endian</strong>. Bytes 6&ndash;9 hold the ASCII magic <code>"BS93"</code> &mdash; this is what
 <code>lnx bll</code> checks to recognise the file (note the magic sits after the address and
 length fields, not at offset 0).</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Offset</th><th>Size</th><th>Field</th><th>Notes</th></tr></thead>
 <tbody>
 <tr><td>0</td><td>2</td><td>loader hint</td><td>not used by the conversion</td></tr>
@@ -272,7 +272,7 @@ length fields, not at offset 0).</p>
 <tr><td>6</td><td>4</td><td>magic</td><td>ASCII <code>"BS93"</code></td></tr>
 <tr><td>10</td><td>&hellip;</td><td>body</td><td>the program image (block length &minus; 10 bytes)</td></tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="sect-6-2">6.2. The cartridge ROM it builds</h3>
 <p>The output is a raw cartridge image: the 203-byte secondary loader, an 8-byte
 directory entry at offset <code>0xCB</code>, the object body at offset 211 (<code>0xD3</code>), and

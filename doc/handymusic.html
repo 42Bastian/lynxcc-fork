@@ -148,7 +148,7 @@ its priority to zero is silent. Reserve distinct priority bands for notes versus
 the accumulator, matching the driver's assembly entry points exactly.</p>
 
 <h3 id="sect-5-1">5.1. Playback control</h3>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Function</th><th>Effect</th></tr></thead>
 <tbody>
 <tr><td><code><a href="funcref.html#handymusic_init">handymusic_init</a>&nbsp;(void)</code></td><td>Initialize the engine and audio hardware (stereo on, all channels idle). Call once, after the VBL interrupt is running.</td></tr>
@@ -162,7 +162,7 @@ the accumulator, matching the driver's assembly entry points exactly.</p>
 <tr><td><code><a href="funcref.html#handymusic_register_pcm">handymusic_register_pcm</a>&nbsp;(num,&nbsp;buf,&nbsp;len)</code></td><td>Register a sample in slot <code>num</code> so the song's &ldquo;play sample&rdquo; command can trigger it.</td></tr>
 <tr><td><code><a href="funcref.html#handymusic_pcm_playing">handymusic_pcm_playing</a>&nbsp;(void)</code></td><td>Nonzero while a PCM sample is streaming; zero once channel&nbsp;0 is handed back.</td></tr>
 </tbody>
-</table>
+</table></div>
 
 <h3 id="sect-5-2">5.2. Pointing the driver at the SFX tables</h3>
 <p>hmcc emits an <code>.equ</code> file with the absolute addresses of the SFX block's three

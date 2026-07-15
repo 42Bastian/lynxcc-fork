@@ -72,7 +72,7 @@ or you will draw black on black and see nothing.</p>
 the <a href="funcref.html#gfx_init">function reference</a> &mdash; this table is a
 map, not a second copy of the prototypes, so signatures live in exactly one place
 and cannot drift.</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Group</th><th>Function</th><th>Purpose</th></tr></thead>
 <tbody>
 <tr><td rowspan="3">Init / clear</td><td><code><a href="funcref.html#gfx_init">gfx_init</a></code></td><td>Initialise graphics; the one required call.</td></tr>
@@ -107,7 +107,7 @@ and cannot drift.</p>
 <tr><td><code>GFX_FONT_*</code>, <code>GFX_TEXT_*</code></td><td>Font and text-direction selectors.</td></tr>
 <tr><td><code><a href="funcref.html#gfx_getxres">gfx_getxres()</a></code> &hellip;</td><td>Zero-cost macros over the constants above.</td></tr>
 </tbody>
-</table>
+</table></div>
 
 <h2 id="sect-3">3. Frame buffers and double buffering</h2>
 <p>The Lynx has no dedicated video RAM: the display is refreshed straight out of
@@ -280,25 +280,25 @@ selects the display refresh rate in Hz. It returns 0 on success and nonzero for 
 other value &mdash; it is the only fallible call left in the library. Internally it
 writes just the two timer backup registers <code>HTIMBKUP</code> and
 <code>PBKUP</code> (the safe subset of Mikey timer handling), with these values:</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Rate</th><th><code>HTIMBKUP</code></th><th><code>PBKUP</code></th><th>Frame period</th></tr></thead>
 <tbody>
-<tr><td>50&nbsp;Hz</td><td><code>$BD</code></td><td><code>$31</code></td><td>20.0&nbsp;ms</td></tr>
-<tr><td>60&nbsp;Hz</td><td><code>$9E</code></td><td><code>$29</code></td><td>16.67&nbsp;ms</td></tr>
-<tr><td>75&nbsp;Hz</td><td><code>$7E</code></td><td><code>$20</code></td><td>13.33&nbsp;ms</td></tr>
+<tr><td>50&nbsp;Hz</td><td class="nowrap"><code>$BD</code></td><td class="nowrap"><code>$31</code></td><td>20.0&nbsp;ms</td></tr>
+<tr><td>60&nbsp;Hz</td><td class="nowrap"><code>$9E</code></td><td class="nowrap"><code>$29</code></td><td>16.67&nbsp;ms</td></tr>
+<tr><td>75&nbsp;Hz</td><td class="nowrap"><code>$7E</code></td><td class="nowrap"><code>$20</code></td><td>13.33&nbsp;ms</td></tr>
 </tbody>
-</table>
+</table></div>
 <p>The refresh rate sets your <strong>compute budget between frames</strong>. At the
 Lynx's roughly 4&nbsp;MHz 65SC02 the <em>gross</em> CPU budget per frame is about the
 system clock divided by the rate:</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Rate</th><th>Frame period</th><th>Gross CPU cycles/frame (~4&nbsp;MHz)</th></tr></thead>
 <tbody>
 <tr><td>50&nbsp;Hz</td><td>20.0&nbsp;ms</td><td>&asymp;&nbsp;80,000</td></tr>
 <tr><td>60&nbsp;Hz</td><td>16.67&nbsp;ms</td><td>&asymp;&nbsp;66,700</td></tr>
 <tr><td>75&nbsp;Hz</td><td>13.33&nbsp;ms</td><td>&asymp;&nbsp;53,300</td></tr>
 </tbody>
-</table>
+</table></div>
 <p>Treat those as a <strong>ceiling, not the real budget</strong>. Two things eat
 into it and neither is counted above: Mikey's display DMA steals cycles on every
 scanline to refresh the screen, and every synchronous

@@ -110,16 +110,16 @@ Behind the menu sits the <strong>game directory</strong> at byte offset
 <p>Each directory entry is 8 bytes, in Bastian Schick's <code>new_bll</code>
 <code>NEWHEAD</code> format. Entry <em>n</em> lives at
 <code>MULTICART_DIROFFSET&nbsp;+&nbsp;n&times;8</code>:</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Offset</th><th>Field</th><th>Meaning</th></tr></thead>
 <tbody>
-<tr><td><code>0</code></td><td><code>StartBlock</code></td><td>first cart block of the file</td></tr>
-<tr><td><code>1&ndash;2</code></td><td><code>BlockOffset</code></td><td>byte offset within that block (little-endian)</td></tr>
-<tr><td><code>3</code></td><td><code>ExecFlag</code></td><td><code>new_bll</code> exec flag (unused by this loader)</td></tr>
-<tr><td><code>4&ndash;5</code></td><td><code>DestAddr</code></td><td>RAM load address (little-endian); <code>0</code> = append to previous</td></tr>
-<tr><td><code>6&ndash;7</code></td><td><code>FileLen</code></td><td>image length in bytes (little-endian)</td></tr>
+<tr><td class="nowrap"><code>0</code></td><td class="nowrap"><code>StartBlock</code></td><td>first cart block of the file</td></tr>
+<tr><td class="nowrap"><code>1&ndash;2</code></td><td class="nowrap"><code>BlockOffset</code></td><td>byte offset within that block (little-endian)</td></tr>
+<tr><td class="nowrap"><code>3</code></td><td class="nowrap"><code>ExecFlag</code></td><td><code>new_bll</code> exec flag (unused by this loader)</td></tr>
+<tr><td class="nowrap"><code>4&ndash;5</code></td><td class="nowrap"><code>DestAddr</code></td><td>RAM load address (little-endian); <code>0</code> = append to previous</td></tr>
+<tr><td class="nowrap"><code>6&ndash;7</code></td><td class="nowrap"><code>FileLen</code></td><td>image length in bytes (little-endian)</td></tr>
 </tbody>
-</table>
+</table></div>
 <p>Every bundled program is a full BLL image whose <code>DestAddr</code> is
 <code>$0400</code> (<code>__MAIN_START__</code>), so each game loads to the same
 place the menu ran &mdash; over the top of it.</p>
@@ -208,13 +208,13 @@ selected game off the cartridge and runs it. It <strong>overwrites the menu and
 never returns</strong>, so call it only from a program that was itself built and
 bundled as a multicart menu. The header also exposes the two layout constants for
 reference and tooling:</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Macro</th><th>Value</th><th>Meaning</th></tr></thead>
 <tbody>
-<tr><td><code>MULTICART_DIROFFSET</code></td><td><code>0x0380</code> (896)</td><td>game-directory offset within cart block 0</td></tr>
-<tr><td><code>MULTICART_LOADER_ADDR</code></td><td><code>0x0040</code></td><td>where the runtime loader is copied to and runs</td></tr>
+<tr><td class="nowrap"><code>MULTICART_DIROFFSET</code></td><td class="nowrap"><code>0x0380</code> (896)</td><td>game-directory offset within cart block 0</td></tr>
+<tr><td class="nowrap"><code>MULTICART_LOADER_ADDR</code></td><td class="nowrap"><code>0x0040</code></td><td>where the runtime loader is copied to and runs</td></tr>
 </tbody>
-</table>
+</table></div>
 <p>A minimal launch, once the player has chosen a slot <code>sel</code>:</p>
 <pre><code>if (pressed &amp; JOY_BTN_A_MASK) {
     multicart_run (sel);        /* load + run game "sel"; never returns */

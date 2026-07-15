@@ -54,7 +54,7 @@ or rest takes an optional duration number (<code>C2</code>, <code>z4</code>); th
 real length in frames is <code>number &times; T</code>.</p>
 <h3 id="sect-2-2">2.2. Inline commands</h3>
 <p>Inline commands each take a numeric argument:</p>
-<table>
+<div class="table-wrap"><table class="grid">
 <thead><tr><th>Cmd</th><th>Name</th><th>Effect</th><th>Default</th></tr></thead>
 <tbody>
 <tr><td><code>V</code></td><td>Volume</td><td>channel target volume (0&ndash;127)</td><td>127</td></tr>
@@ -66,7 +66,7 @@ real length in frames is <code>number &times; T</code>.</p>
 <tr><td><code>I</code></td><td>Integrate</td><td>0 = square, 1 = integrate/triangle</td><td>&mdash;</td></tr>
 <tr><td><code>X</code></td><td>XOR taps</td><td>LFSR feedback taps (timbre / noise)</td><td>&mdash;</td></tr>
 </tbody>
-</table>
+</table></div>
 <h3 id="sect-2-3">2.3. Repeats and structure</h3>
 <p>For structure, <code>|:</code> opens a repeat (optionally followed by a count,
 <code>|:3</code>) and <code>:|</code> closes it; spaces are ignored. Bar lines
