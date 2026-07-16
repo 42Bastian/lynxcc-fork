@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Lynx Game Development SDK documentation, (c) 2026 the lynxcc authors,
+licensed under Creative Commons Attribution 4.0 International.
+See doc/licenses.html.
+-->
+
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lynxcc - HandyMusic scoring</title>
+<link rel="stylesheet" href="doc.css">
+<script>(function(){try{var t=localStorage.getItem("cc65-theme");document.documentElement.setAttribute("data-theme",t||"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head><body>
+<site-nav></site-nav><main class="doc"><article><header class="doc-header"><h1>Encoding sheet music for HandyMusic</h1></header><div class="abstract">HandyMusic tracks are written by hand: you read a piece of sheet music and
+transcribe it, one note at a time, into the <strong>hmcc</strong> script the
+compiler turns into a playable <code>.mus</code> blob. This page is the bridge
+between the two &mdash; how a note's <em>pitch</em> becomes a
+<code>nXo</code> token, how its <em>rhythm</em> becomes a count of 60&nbsp;Hz
+ticks, and how the parallel voices of a score stay aligned. It assumes you have
+read the note-format and track-command tables in the
+<a href="hmcc.html">hmcc guide</a>; here they are put to work on real bars of
+music. For the driver that replays the result and the C entry points that start
+and stop it, see the <a href="handymusic.html">HandyMusic engine</a> page.</div><nav class="toc"><h2>Contents</h2><ul>
+<li class="lvl1"><a href="#sect-1">1. The mental model: ticks, not tempo</a></li>
+<li class="lvl1"><a href="#sect-2">2. Pitch: staff notes to <code>nXo</code></a></li>
+<li class="lvl2"><a href="#sect-2-1">2.1. Octaves and middle C</a></li>
+<li class="lvl2"><a href="#sect-2-2">2.2. Accidentals and tuning</a></li>
+<li class="lvl1"><a href="#sect-3">3. Rhythm: note values to ticks</a></li>
+<li class="lvl2"><a href="#sect-3-1">3.1. Choose a ticks-per-beat resolution</a></li>
+<li class="lvl2"><a href="#sect-3-2">3.2. Quick conversion table</a></li>
+<li class="lvl2"><a href="#sect-3-3">3.3. Notes, rests and holds</a></li>
+<li class="lvl1"><a href="#sect-4">4. Worked example: a melody</a></li>
+<li class="lvl2"><a href="#sect-4-1">4.1. Reading the staff</a></li>
+<li class="lvl2"><a href="#sect-4-2">4.2. The finished track block</a></li>
+<li class="lvl2"><a href="#sect-4-3">4.3. Compiling it</a></li>
+<li class="lvl1"><a href="#sect-5">5. Worked example: keeping voices aligned</a></li>
+<li class="lvl1"><a href="#sect-6">6. Tips and pitfalls</a></li>
+<li class="lvl1"><a href="#sect-7">7. See also</a></li>
+</ul></nav>
+
+<h2 id="sect-1">1. The mental model: ticks, not tempo</h2>
+<p>Standard notation is written in <em>tempo-relative</em> time: a quarter note is
+one beat, and how long a beat lasts depends on a metronome mark you set once at
+the top of the piece. HandyMusic has no such concept. The driver updates once
+per video frame &mdash; a fixed <strong>60&nbsp;Hz tick</strong> &mdash; and every
+duration in a track is simply a count of those ticks. Sixty ticks is one second;
+there is no beats-per-minute field anywhere in the format.</p>
+<p>So transcribing a score is a two-part translation done note by note. The
+<em>pitch</em> of each note becomes a three-character <code>nXo</code> token
+(section&nbsp;<a href="#sect-2">2</a>). The <em>rhythmic value</em> of each note
+&mdash; quarter, eighth, dotted half &mdash; becomes a tick count you compute once
+you have chosen how many ticks a beat is worth (section&nbsp;<a href="#sect-3">3</a>).
+Everything else on the page &mdash; the barlines, the time signature, the beaming
+&mdash; is bookkeeping that helps you keep the running tick total correct; it never
+appears in the script.</p>
+<p>The upside of a raw tick grid is that it is exact and never drifts. The cost
+is that <em>you</em> are the sequencer: nothing enforces that a bar adds up, and
+nothing keeps two voices in step except the tick counts you write. The habit
+that makes this manageable &mdash; annotating each bar with its running tick total
+&mdash; is the single most useful thing on this page, and section&nbsp;<a href="#sect-5">5</a>
+is built around it.</p>
+
+<h2 id="sect-2">2. Pitch: staff notes to <code>nXo</code></h2>
+<p>A note token is three characters, <code>nXo</code>: the note letter
+(<code>a</code>&ndash;<code>g</code>), an accidental character, and a single
+octave digit. The accidental is <code>.</code> for a natural, <code>s</code> for
+a sharp and <code>b</code> for a flat &mdash; so <code>c.4</code> is middle C,
+<code>fs5</code> is F&sharp; in the fifth octave and <code>eb3</code> is
+E&flat; in the third. hmcc turns the token into a frequency relative to
+<strong>A4&nbsp;=&nbsp;440&nbsp;Hz</strong> and folds it through the Lynx divider
+table; you never write a frequency yourself.</p>
+
+<h3 id="sect-2-1">2.1. Octaves and middle C</h3>
+<p>The octave digit follows <em>scientific pitch notation</em>, the same numbering
+most notation software prints: the octave number increments at C, and
+<strong>middle C is <code>c.4</code></strong>. Concert A above it &mdash; the note
+your tuner calls A440 &mdash; is <code>a.4</code>. Reading a treble staff, the
+notes map to tokens like this:</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 160" style="width:100%;height:auto;max-width:640px" role="img"
+     aria-label="A treble staff showing, bottom to top, the notes middle C through D5 with their nXo tokens: middle C is c dot 4 on a ledger line below the staff, the bottom line is e dot 4.">
+  <g stroke="var(--border)" stroke-width="1">
+    <line x1="150" y1="40" x2="660" y2="40"/>
+    <line x1="150" y1="55" x2="660" y2="55"/>
+    <line x1="150" y1="70" x2="660" y2="70"/>
+    <line x1="150" y1="85" x2="660" y2="85"/>
+    <line x1="150" y1="100" x2="660" y2="100"/>
+  </g>
+  <!-- ledger line for middle C (one below the E4 bottom line) -->
+  <line x1="168" y1="115" x2="204" y2="115" stroke="var(--border)" stroke-width="1"/>
+  <g fill="var(--accent)" stroke="none">
+    <!-- staff spacing 15: E4 line=100, G4=85, B4=70, D5=55, F5=40 -->
+    <ellipse cx="186" cy="115"   rx="7" ry="5"/>   <!-- C4 middle C, ledger -->
+    <ellipse cx="252" cy="107.5" rx="7" ry="5"/>   <!-- D4 space below staff -->
+    <ellipse cx="318" cy="100"   rx="7" ry="5"/>   <!-- E4 bottom line -->
+    <ellipse cx="384" cy="92.5"  rx="7" ry="5"/>   <!-- F4 first space -->
+    <ellipse cx="450" cy="85"    rx="7" ry="5"/>   <!-- G4 second line -->
+    <ellipse cx="516" cy="77.5"  rx="7" ry="5"/>   <!-- A4 second space -->
+    <ellipse cx="582" cy="70"    rx="7" ry="5"/>   <!-- B4 middle line -->
+    <ellipse cx="648" cy="55"    rx="7" ry="5"/>   <!-- D5 fourth line -->
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12" fill="var(--ink)" text-anchor="middle">
+    <text x="186" y="150">c.4</text>
+    <text x="252" y="150">d.4</text>
+    <text x="318" y="150">e.4</text>
+    <text x="384" y="150">f.4</text>
+    <text x="450" y="150">g.4</text>
+    <text x="516" y="150">a.4</text>
+    <text x="582" y="150">b.4</text>
+    <text x="648" y="150">d.5</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="90" y="118">middle C &rarr;</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">
+  Treble-staff pitches and their <code>nXo</code> tokens. Middle C
+  (<code>c.4</code>) sits on its ledger line below the staff; the octave digit
+  rolls over to&nbsp;5 at the next&nbsp;C above.</figcaption>
+</figure>
+
+<p>Bass-clef material works the same way with lower octave digits: the C two
+octaves below middle C is <code>c.2</code>, and a bass line often lives in
+octaves 1&ndash;3. If a note looks an octave off when you play it back, the
+octave digit is almost always the culprit &mdash; check it against
+<code>c.4</code>&nbsp;=&nbsp;middle&nbsp;C first.</p>
+
+<h3 id="sect-2-2">2.2. Accidentals and tuning</h3>
+<p>Write the accidental the score shows, choosing whichever enharmonic spelling
+matches the key &mdash; <code>as3</code> and <code>bb3</code> are the same pitch,
+so use the one the sheet music prints. A key signature is not stored anywhere:
+apply it yourself as you read, so a piece in D major means typing <code>fs</code>
+and <code>cs</code> every time those notes occur (or their natural forms where the
+music cancels them).</p>
+<p>One subtlety carries over from the <a href="hmcc.html#sect-3-3">hmcc guide</a>:
+notes are only in tune if the instrument's <code>tuning</code> period matches its
+waveform. Each instrument in your bank sets its own <code>tuning</code>; as long
+as you picked (or copied) a correctly tuned instrument, <code>a.4</code> really is
+440&nbsp;Hz. If a whole voice sounds sharp or flat by a constant amount, the fix is
+in the instrument's <code>tuning</code>, not in the notes.</p>
+
+<h2 id="sect-3">3. Rhythm: note values to ticks</h2>
+
+<h3 id="sect-3-1">3.1. Choose a ticks-per-beat resolution</h3>
+<p>Because durations are whole ticks, you fix the rhythm grid by deciding how many
+ticks a <em>beat</em> (a quarter note, in common time) is worth. Call that number
+the resolution, <var>B</var>. Every other note value is a simple fraction or
+multiple of it, and the effective tempo falls out of the arithmetic:</p>
+<p style="text-align:center"><em>tempo</em> (BPM) = 3600 &divide; <var>B</var>
+&nbsp;&nbsp;&nbsp; <em>B</em> = 3600 &divide; <em>tempo</em></p>
+<p>Pick <var>B</var> so the shortest note you need stays a whole number of ticks.
+A resolution of <code>24</code> gives clean thirds and halves (a triplet-eighth is
+8&nbsp;ticks, a sixteenth is 6) at 150&nbsp;BPM; <code>30</code> is a natural
+120&nbsp;BPM if you only need down to sixteenths; <code>48</code> buys you a slow,
+finely divisible 75&nbsp;BPM. When a division does not land on an integer,
+round it and let the annotated bar total (section&nbsp;<a href="#sect-5">5</a>)
+absorb the rounding so the bar still closes exactly.</p>
+
+<h3 id="sect-3-2">3.2. Quick conversion table</h3>
+<p>With the beat set to <var>B</var> ticks, the common note values are:</p>
+<div class="table-wrap"><table class="grid">
+<thead><tr><th>Note value</th><th>In beats</th><th>Ticks</th><th class="nowrap"><var>B</var>=24 (150&nbsp;BPM)</th><th class="nowrap"><var>B</var>=30 (120&nbsp;BPM)</th><th class="nowrap"><var>B</var>=48 (75&nbsp;BPM)</th></tr></thead>
+<tbody>
+<tr><td>whole</td><td>4</td><td><code>4&times;B</code></td><td class="nowrap">96</td><td class="nowrap">120</td><td class="nowrap">192</td></tr>
+<tr><td>half</td><td>2</td><td><code>2&times;B</code></td><td class="nowrap">48</td><td class="nowrap">60</td><td class="nowrap">96</td></tr>
+<tr><td>dotted quarter</td><td>1&frac12;</td><td><code>3&times;B&divide;2</code></td><td class="nowrap">36</td><td class="nowrap">45</td><td class="nowrap">72</td></tr>
+<tr><td>quarter (beat)</td><td>1</td><td><code>B</code></td><td class="nowrap">24</td><td class="nowrap">30</td><td class="nowrap">48</td></tr>
+<tr><td>eighth</td><td>&frac12;</td><td><code>B&divide;2</code></td><td class="nowrap">12</td><td class="nowrap">15</td><td class="nowrap">24</td></tr>
+<tr><td>triplet eighth</td><td>&#8531;</td><td><code>B&divide;3</code></td><td class="nowrap">8</td><td class="nowrap">10</td><td class="nowrap">16</td></tr>
+<tr><td>sixteenth</td><td>&frac14;</td><td><code>B&divide;4</code></td><td class="nowrap">6</td><td class="nowrap">7&frac12;&nbsp;&rarr;&nbsp;8</td><td class="nowrap">12</td></tr>
+</tbody>
+</table></div>
+<p>A dot adds half the note's value, so a dotted note is <code>1.5&times;</code>
+its plain length; a tie just adds the two tick counts together into one longer
+number.</p>
+
+<h3 id="sect-3-3">3.3. Notes, rests and holds</h3>
+<p>A note in a track is the pitch token followed by its tick count &mdash;
+<code>e.4&nbsp;30</code> plays E4 for thirty ticks, then the track moves to the
+next command. Write <strong>one note or command per line</strong>: hmcc reads a
+single event from each line and treats anything left over as an error, so a bar is
+a short column of note lines, not a row. Three more things are worth knowing when
+you turn note values into these counts:</p>
+<ul>
+<li>A new note token <em>retriggers</em> the instrument, so two notes at the same
+pitch written back to back (<code>g.4 15 g.4 15</code>) sound as two distinct
+attacks &mdash; you do not need a gap between them just to hear both.</li>
+<li>For an actual silence, use <code>rest&nbsp;<var>n</var></code>; it releases the
+current note and waits <var>n</var> ticks. A rest in the score is a
+<code>rest</code> in the script, with the same tick count any note of that value
+would get.</li>
+<li>To hold one note longer than a single command &mdash; a note tied across a
+barline, say &mdash; add <code>wait&nbsp;<var>n</var></code> after it, or simply
+write the summed tick count on the note. For a detached, staccato feel, split a
+beat into a short note plus a <code>rest</code> that fills the remainder
+(<code>c.4 8 rest 22</code> for a clipped quarter at <var>B</var>=30).</li>
+</ul>
+
+<h2 id="sect-4">4. Worked example: a melody</h2>
+<p>Take the opening phrase of Beethoven's &ldquo;Ode to Joy&rdquo; &mdash; four bars
+of common time, entirely in C major so there are no accidentals to track. We will
+score it at <var>B</var>&nbsp;=&nbsp;30 ticks per beat (120&nbsp;BPM), so each plain
+quarter is <code>30</code> and every bar must total <code>120</code>.</p>
+
+<h3 id="sect-4-1">4.1. Reading the staff</h3>
+<p>The first two bars read <em>E E F G, G F E D</em> &mdash; all quarter notes.
+Under each note head is the token and tick count it becomes:</p>
+
+<figure style="margin:1.2em 0;text-align:center">
+<svg viewBox="0 0 720 170" style="width:100%;height:auto;max-width:700px" role="img"
+     aria-label="Two bars of Ode to Joy on a treble staff. Bar one is E4 E4 F4 G4, bar two is G4 F4 E4 D4, all quarter notes of thirty ticks each; a barline separates the bars and each bar totals one hundred twenty ticks.">
+  <g stroke="var(--border)" stroke-width="1">
+    <line x1="60" y1="40" x2="660" y2="40"/>
+    <line x1="60" y1="52" x2="660" y2="52"/>
+    <line x1="60" y1="64" x2="660" y2="64"/>
+    <line x1="60" y1="76" x2="660" y2="76"/>
+    <line x1="60" y1="88" x2="660" y2="88"/>
+  </g>
+  <!-- barline between bar 1 and bar 2, and final barline -->
+  <line x1="360" y1="40" x2="360" y2="88" stroke="var(--border)" stroke-width="1"/>
+  <line x1="656" y1="40" x2="656" y2="88" stroke="var(--ink-faint)" stroke-width="2"/>
+  <g fill="var(--accent)" stroke="none">
+    <!-- pitches: E4 line=88, F4 space=82, G4 line=76, D4 below bottom=94 -->
+    <ellipse cx="105" cy="88" rx="7" ry="5"/> <!-- E4 -->
+    <ellipse cx="180" cy="88" rx="7" ry="5"/> <!-- E4 -->
+    <ellipse cx="255" cy="82" rx="7" ry="5"/> <!-- F4 -->
+    <ellipse cx="330" cy="76" rx="7" ry="5"/> <!-- G4 -->
+    <ellipse cx="405" cy="76" rx="7" ry="5"/> <!-- G4 -->
+    <ellipse cx="480" cy="82" rx="7" ry="5"/> <!-- F4 -->
+    <ellipse cx="555" cy="88" rx="7" ry="5"/> <!-- E4 -->
+    <ellipse cx="630" cy="94" rx="7" ry="5"/> <!-- D4 -->
+  </g>
+  <!-- stems -->
+  <g stroke="var(--accent)" stroke-width="1.5">
+    <line x1="112" y1="86" x2="112" y2="58"/>
+    <line x1="187" y1="86" x2="187" y2="58"/>
+    <line x1="262" y1="80" x2="262" y2="52"/>
+    <line x1="337" y1="74" x2="337" y2="46"/>
+    <line x1="412" y1="74" x2="412" y2="46"/>
+    <line x1="487" y1="80" x2="487" y2="52"/>
+    <line x1="562" y1="86" x2="562" y2="58"/>
+    <line x1="637" y1="92" x2="637" y2="64"/>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12" fill="var(--ink)" text-anchor="middle">
+    <text x="105" y="122">e.4</text>
+    <text x="180" y="122">e.4</text>
+    <text x="255" y="122">f.4</text>
+    <text x="330" y="122">g.4</text>
+    <text x="405" y="122">g.4</text>
+    <text x="480" y="122">f.4</text>
+    <text x="555" y="122">e.4</text>
+    <text x="630" y="122">d.4</text>
+  </g>
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="105" y="136">30</text>
+    <text x="180" y="136">30</text>
+    <text x="255" y="136">30</text>
+    <text x="330" y="136">30</text>
+    <text x="405" y="136">30</text>
+    <text x="480" y="136">30</text>
+    <text x="555" y="136">30</text>
+    <text x="630" y="136">30</text>
+  </g>
+  <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" fill="var(--ink-faint)" text-anchor="middle">
+    <text x="210" y="160">bar 1 &mdash; 120 ticks</text>
+    <text x="508" y="160">bar 2 &mdash; 120 ticks</text>
+  </g>
+</svg>
+<figcaption style="color:var(--ink-faint);font-size:.85rem;margin-top:.4em">
+  The first two bars, note by note. Each quarter is <code>30</code> ticks and
+  each bar sums to <code>120</code> &mdash; the number written in the trailing
+  comment of the script below.</figcaption>
+</figure>
+
+<h3 id="sect-4-2">4.2. The finished track block</h3>
+<p>Bars 3 and 4 continue <em>C C D E, E&middot; D&nbsp;D</em>: the third bar is
+four more quarters, and the last bar is a dotted quarter (<code>45</code>), an
+eighth (<code>15</code>) and a half note (<code>60</code>) &mdash; still
+<code>120</code> ticks. Written as an hmcc track block &mdash; one note per line, with
+each bar's running total in a comment on its last note so a miscount is obvious at
+a glance:</p>
+<pre>OdeToJoy 150
+{
+    pan $ff
+    using MellowTriangle
+    e.4 30
+    e.4 30
+    f.4 30
+    g.4 30          ; bar 1 &mdash; 120
+    g.4 30
+    f.4 30
+    e.4 30
+    d.4 30          ; bar 2 &mdash; 120
+    c.4 30
+    c.4 30
+    d.4 30
+    e.4 30          ; bar 3 &mdash; 120
+    e.4 45
+    d.4 15
+    d.4 60          ; bar 4 &mdash; 120
+    end
+}</pre>
+<p>The <code>150</code> after the block name is the track's priority, marking it as
+the <em>main block</em> &mdash; the channel's entry point. <code>using
+MellowTriangle</code> picks the instrument (any name defined in the instrument
+script; <code>MellowTriangle</code> is one of the demo bank's). <code>pan
+$ff</code> opens both stereo sides. To make the tune loop instead of stopping,
+wrap the four bars in <code>loop&nbsp;-1</code>&nbsp;&hellip;&nbsp;<code>endloop</code>
+in place of the final <code>end</code>.</p>
+
+<h3 id="sect-4-3">4.3. Compiling it</h3>
+<p>Put the block in a track file (say <code>ode.txt</code>) and the instrument it
+names in an instrument file (<code>inst.txt</code>), then compile the pair for the
+address the cartridge will load the blob at &mdash; <code>$b000</code> in the
+default config:</p>
+<pre>hmcc $b000 ode.mus inst.txt ode.txt</pre>
+<p>That single-track invocation writes <code>ode.mus</code>, which you
+<code>.incbin</code> at the reserved region and hand to the driver exactly as the
+<a href="hmcc.html#sect-6-2">hmcc build flow</a> and the
+<a href="handymusic.html">HandyMusic engine</a> page describe. Additional voices
+are just more track files appended to the same command line, one per Mikey
+channel &mdash; which is the subject of the next section.</p>
+
+<h2 id="sect-5">5. Worked example: keeping voices aligned</h2>
+<p>A full score is up to four parallel tracks &mdash; one per Mikey audio channel,
+in the order they are passed to hmcc. The driver advances each track by its own
+tick counts completely independently; nothing synchronises them but the totals
+you write. If bar&nbsp;3 of the bass adds up to 118 ticks while the melody's
+bar&nbsp;3 adds up to 120, the two voices are two ticks out of phase from there to
+the end of the piece, and the error accumulates every bar. This is the one failure
+mode worth designing against, and the defence is the running per-bar total.</p>
+<p>Here is a two-bar loop scored across three voices &mdash; melody, bass and a
+drum pattern &mdash; all at <var>B</var>&nbsp;=&nbsp;30, so <strong>every voice must
+close each bar on 120 ticks</strong>. The melody plays quarters, the bass plays
+half notes, and the drums alternate kick and snare on each beat; different note
+values, identical bar totals:</p>
+<pre>; ---- track 1: melody (channel 0) ----
+Lead 150
+{
+    pan $ff
+    using MellowTriangle
+    c.5 30
+    e.5 30
+    g.5 30
+    e.5 30          ; bar 1 &mdash; 120
+    d.5 30
+    f.5 30
+    a.5 30
+    f.5 30          ; bar 2 &mdash; 120
+    end
+}
+
+; ---- track 2: bass (channel 1) ----
+Bass 150
+{
+    pan $ff
+    using Electar
+    c.3 60
+    g.2 60          ; bar 1 &mdash; 120
+    d.3 60
+    a.2 60          ; bar 2 &mdash; 120
+    end
+}
+
+; ---- track 3: drums (channel 2) ----
+Drums 150
+{
+    pan $ff
+    using Kick
+    sfx 30                             ; beat 1
+    using SnareShort
+    sfx 30                             ; beat 2
+    using Kick
+    sfx 30                             ; beat 3
+    using SnareShort
+    sfx 30                             ; beat 4 &mdash; bar 1, 120
+    using Kick
+    sfx 30
+    using SnareShort
+    sfx 30
+    using Kick
+    sfx 30
+    using SnareShort
+    sfx 30                             ; bar 2 &mdash; 120
+    end
+}</pre>
+<p>Percussion is played by firing an instrument as a hit with
+<code>sfx&nbsp;<var>ticks</var></code> after selecting it with <code>using</code>,
+so the drum track counts ticks exactly like the pitched ones &mdash; four
+<code>sfx 30</code> hits close the bar on 120. Compile all three behind one output,
+in channel order:</p>
+<pre>hmcc $b000 song.mus inst.txt lead.txt bass.txt drums.txt</pre>
+<p>If you ever hear the voices slip against each other as the loop repeats, do not
+reach for the note values &mdash; add up each bar in each track and find the one
+whose comment lies.</p>
+
+<h2 id="sect-6">6. Tips and pitfalls</h2>
+<ul>
+<li><strong>Annotate every bar with its running total.</strong> It is the only
+practical way to catch a dropped or doubled tick, and it makes voice-alignment
+bugs (section&nbsp;<a href="#sect-5">5</a>) visible without playing anything.</li>
+<li><strong>Factor repeated material into blocks.</strong> A phrase that recurs
+&mdash; a chorus, a drum pattern &mdash; can live in its own block and be reused
+with <code>call</code>/<code>return</code>, exactly as the bundled demo tracks do.
+Keep the tick total of a called block fixed so callers can budget around it.</li>
+<li><strong>Loop the whole track for BGM.</strong> A background tune wraps its body
+in <code>loop&nbsp;-1</code>&nbsp;&hellip;&nbsp;<code>endloop</code> so it repeats
+forever; a jingle ends with <code>end</code>.</li>
+<li><strong>Pick instruments before you transcribe.</strong> Timbre lives entirely
+in the instrument bank (<a href="hmcc.html#sect-3">hmcc guide &sect;3</a>); the
+track only references instruments by name. Copying and lightly editing an existing
+bank is far quicker than authoring envelopes from scratch.</li>
+<li><strong>Mind rounding.</strong> When a tempo makes a short note value
+non-integer (the sixteenth at <var>B</var>=30 is 7&frac12; ticks), round
+consistently and let one note per bar absorb the remainder so the bar total stays
+exact.</li>
+<li><strong>Verify by ear, not just by build.</strong> A track that compiles and
+boots can still be transposed an octave, a voice out of phase, or a hair out of
+tune. Play the <code>.mus</code> on hardware or an emulator and listen before
+calling it done.</li>
+</ul>
+
+<h2 id="sect-7">7. See also</h2>
+<p>The <a href="hmcc.html">hmcc guide</a> is the reference for the full script
+grammar this page draws on &mdash; the <a href="hmcc.html#sect-3">instrument and
+SFX language</a>, the <a href="hmcc.html#sect-4-2">track commands</a>, and the
+<a href="hmcc.html#sect-5">output layout and base address</a>. The
+<a href="handymusic.html">HandyMusic engine</a> page covers the runtime that
+replays the compiled blob and the C API that starts and stops it, and the
+<a href="sound.html">Sound</a> page sets HandyMusic against the lighter
+<code>snd</code> engine used elsewhere in the SDK. The format and driver are
+specified in full in <code>design/LYNX_HANDYMUSIC_DESIGN.md</code>.</p>
+</article></main><site-foot></site-foot>
+<script src="doc.js"></script>
+</body></html>

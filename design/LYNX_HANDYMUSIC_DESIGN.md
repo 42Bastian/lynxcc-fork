@@ -301,6 +301,15 @@ PCM samples are ordinary resident byte arrays linked into RAM and handed to
   nav (`TOPBAR_HTML` in `doc.js`, Reference dropdown, alphabetically after
   Graphics fonts), the `index.html` Reference grid, and the doc search index. The
   script-format material stays on `doc/hmcc.html` and is not duplicated.
+- **`doc/handymusic-scoring.html` — DONE.** A "how to transcribe sheet music into
+  HandyMusic tracks" Reference page: the ticks-not-tempo model, pitch→`nXo`
+  mapping (with a theme-aware treble-staff SVG per `DOC_SVG_STYLE_DESIGN.md`), a
+  note-value→ticks conversion table, a worked single-voice melody (Ode to Joy,
+  second SVG) and a three-voice bar-alignment example. Registered in the shared
+  nav (`TOPBAR_HTML`, Reference dropdown, alphabetically after HandyMusic), the
+  `index.html` Reference grid, and the doc search index; cross-linked from
+  `hmcc.html` §4 and `handymusic.html` §1. It teaches the authoring workflow only
+  and defers all grammar to `hmcc.html`.
 - **`doc/funcref.html` — DONE.** The eight `handymusic_*` entries were added
   (fnIndex, §2.26 `lynx/handymusic.h` by-header subsection, and §3 alphabetical
   entries with the whole §3 re-sorted/renumbered per the funcref convention).

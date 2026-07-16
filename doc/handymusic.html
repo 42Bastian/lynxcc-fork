@@ -43,7 +43,10 @@ that shape a channel's waveform, volume and frequency over time &mdash; and can 
 <strong>sound effects</strong>, which are the same kind of envelope script but requested
 on demand and slotted into a channel by priority. Everything is authored as text and
 compiled to compact byte-code blobs by <a href="hmcc.html">hmcc</a>; the driver walks those
-blobs once per frame and writes Mikey's registers.</p>
+blobs once per frame and writes Mikey's registers. Writing those scripts from a
+piece of sheet music &mdash; pitches to <code>nXo</code> tokens, note values to
+ticks &mdash; is covered in
+<a href="handymusic-scoring.html">Encoding sheet music for HandyMusic</a>.</p>
 <p>Because it carries a full instrument model, per-channel frequency and volume envelopes,
 loop/pattern control and a priority mixer, HandyMusic is <em>larger</em> than the snd
 engine. The two are mutually exclusive by design: link one library or the other. Reach for
