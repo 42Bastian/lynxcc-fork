@@ -54,6 +54,7 @@ EXAMPLES = [
     "mikey/sndtune",       # snd engine: compiled ABC tune + direct SFX
     "games/breakout",      # a complete game frame
     "games/tetris",        # menu-driven falling-block puzzle
+    "games/lander",        # lunar-lander physics, rotation sheets, music+sfx
 ]
 
 HERE = os.path.dirname(os.path.abspath(__file__))

@@ -50,7 +50,7 @@ endif
 # examples root; every other example is a flat .c inside its group directory.
 
 ROOT_EXAMPLES = lynxdemo
-GAMES         = breakout invaders raycaster sybil tetris
+GAMES         = breakout invaders lander raycaster sybil tetris
 SUZY          = muldivtest spritetest spritesheet spriteslice sprpcktest spritefx suzyasync suzyasyncbench suzybench packtest fonttest fontvar textdir collision palette
 MIKEY         = setbpp sndtune sfxtest sfxdemo poweroff
 MEMORY        = heaptest zeropage
@@ -228,6 +228,30 @@ mikey/sfxtest.lnx: mikey/sfxtest.o mikey/sfx.o
 games/invaders.lnx: games/invaders.o games/invtheme.o
 	$(CL) $(LDFLAGS) -o $@ -m $(@:.lnx=.map) $^
 
+# lander is a lunar-lander physics game (games/lander.c). It draws the module
+# and its exhaust from two 24-heading rotation sprite sheets sp65 slices out of
+# games/lander.pcx and games/flame.pcx, plus one solid fill sprite from
+# games/solidsq.pcx for the terrain, pads and stars (all three .pcx are emitted
+# by games/lander.pcx.py). Its three background tunes are the committed abccc
+# streams landermenu.s / landergame.s / landerbass.s (regenerate by hand from
+# the matching .abc; see games/lander.c and doc/sound.html).
+
+LANDER_HDRS = games/lander_anim.h games/flame_anim.h games/solidsq.h
+
+games/lander_anim.h: games/lander.pcx
+	$(SP65) -r $< --sprite-sheet name=$@,ident=lander_anim,fw=24,fh=24,mode=packed
+
+games/flame_anim.h: games/flame.pcx
+	$(SP65) -r $< --sprite-sheet name=$@,ident=flame_anim,fw=24,fh=24,mode=packed
+
+games/solidsq.h: games/solidsq.pcx
+	$(SP65) -r $< -c lynx-sprite,mode=packed -w $@,format=c,ident=solidsq
+
+games/lander.o: games/lander.c $(LANDER_HDRS)
+
+games/lander.lnx: games/lander.o games/landermenu.o games/landergame.o games/landerbass.o
+	$(CL) $(LDFLAGS) -o $@ -m $(@:.lnx=.map) $^
+
 # --------------------------------------------------------------------------
 
 examples: $(EXELIST) multicart-example handymusic-example
@@ -267,6 +291,9 @@ install:
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/games
 	$(INSTALL) -m0644 $(addprefix games/,$(addsuffix .c,$(GAMES))) $(DESTDIR)$(examplesdir)/games
 	$(INSTALL) -m0644 games/invtheme.s $(DESTDIR)$(examplesdir)/games
+	$(INSTALL) -m0644 games/lander.pcx.py games/lander.pcx games/flame.pcx games/solidsq.pcx $(DESTDIR)$(examplesdir)/games
+	$(INSTALL) -m0644 games/landermenu.abc games/landergame.abc games/landerbass.abc $(DESTDIR)$(examplesdir)/games
+	$(INSTALL) -m0644 games/landermenu.s games/landergame.s games/landerbass.s $(DESTDIR)$(examplesdir)/games
 	$(INSTALL) -d $(DESTDIR)$(examplesdir)/suzy
 	$(INSTALL) -m0644 $(addprefix suzy/,$(addsuffix .c,$(SUZY))) $(DESTDIR)$(examplesdir)/suzy
 	$(INSTALL) -m0644 suzy/heart.pcx suzy/heart.pcx.py $(DESTDIR)$(examplesdir)/suzy
@@ -298,7 +325,7 @@ zip:
 # Clean-up rules
 
 mostlyclean:
-	@$(DEL) $(EXELIST:.lnx=.map) $(EXELIST:.lnx=.o) $(EXELIST:.lnx=.s) $(SPRITETEST_HDRS) suzy/sheet_anim.h $(SHEET_FRAMES) $(SPRITEFX_HDRS) $(SPRPCK_SPR) suzy/sprpckdata.o suzy/logo.pal mikey/theme.o mikey/sfx.o games/invtheme.o 2>$(NULLDEV)
+	@$(DEL) $(EXELIST:.lnx=.map) $(EXELIST:.lnx=.o) $(EXELIST:.lnx=.s) $(SPRITETEST_HDRS) suzy/sheet_anim.h $(SHEET_FRAMES) $(SPRITEFX_HDRS) $(SPRPCK_SPR) suzy/sprpckdata.o suzy/logo.pal mikey/theme.o mikey/sfx.o games/invtheme.o $(LANDER_HDRS) games/landermenu.o games/landergame.o games/landerbass.o 2>$(NULLDEV)
 
 clean: mostlyclean
 	@$(DEL) $(EXELIST) 2>$(NULLDEV)
