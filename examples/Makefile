@@ -50,7 +50,7 @@ endif
 # examples root; every other example is a flat .c inside its group directory.
 
 ROOT_EXAMPLES = lynxdemo
-GAMES         = breakout invaders raycaster sybil
+GAMES         = breakout invaders raycaster sybil tetris
 SUZY          = muldivtest spritetest spritesheet spriteslice sprpcktest spritefx suzyasync suzyasyncbench suzybench packtest fonttest fontvar textdir collision palette
 MIKEY         = setbpp sndtune sfxtest sfxdemo poweroff
 MEMORY        = heaptest zeropage

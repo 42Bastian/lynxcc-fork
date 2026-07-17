@@ -53,6 +53,7 @@ EXAMPLES = [
     "mikey/setbpp",        # Mikey display-DMA bit depths
     "mikey/sndtune",       # snd engine: compiled ABC tune + direct SFX
     "games/breakout",      # a complete game frame
+    "games/tetris",        # menu-driven falling-block puzzle
 ]
 
 HERE = os.path.dirname(os.path.abspath(__file__))

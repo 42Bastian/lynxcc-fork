@@ -32,7 +32,7 @@ produces the same hash every run (verified across repeated runs).
 
 The `EXAMPLES` list in `gearlynx_check.py` is a curated set spanning the
 subsystems — the `lynxdemo` starter, `suzy/spritetest`, `suzy/fonttest`,
-`mikey/setbpp`, `games/breakout`. Add a name to that list and run with
+`mikey/setbpp`, `games/breakout`, `games/tetris`. Add a name to that list and run with
 `--update` to mint its golden.
 
 ## Usage
