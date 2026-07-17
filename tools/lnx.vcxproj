@@ -76,6 +76,7 @@
     <ClInclude Include="lnx\jsoncfg.h" />
     <ClInclude Include="lnx\bllrom.h" />
     <ClInclude Include="lnx\blloader_gen.h" />
+    <ClInclude Include="lnx\multicart.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lnx\main.c" />
@@ -83,6 +84,7 @@
     <ClCompile Include="lnx\jsoncfg.c" />
     <ClCompile Include="lnx\bllrom.c" />
     <ClCompile Include="lnx\blloader_gen.c" />
+    <ClCompile Include="lnx\multicart.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
