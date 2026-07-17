@@ -32,6 +32,7 @@
 ** whether the user supplied the option, so flags overlay onto config values. */
 typedef struct {
     const char*   config;          /* --config path, or NULL */
+    int           allow_unknown;   /* --allow-unknown: tolerate extra config keys */
 
     int           cartname_set;
     const char*   cartname;
@@ -86,6 +87,8 @@ static void Usage(FILE* f)
         "\n"
         "field options (patch/create/bll):\n"
         "  --config <file.json>         read fields from a JSON config\n"
+        "  --allow-unknown              accept (and ignore) config keys the tool\n"
+        "                               does not recognise, instead of erroring\n"
         "  --cartname <str>             set the 32-byte cart name\n"
         "  --manufacturer <str>         set the 16-byte manufacturer name\n"
         "  --rotation none|left|right   set the rotation flag (or 0|1|2)\n"
@@ -163,7 +166,7 @@ static int WriteFile(const char* path, const unsigned char* buf, size_t size)
 static int ApplyOptions(const Options* o, LnxHeader* h)
 {
     if (o->config) {
-        if (LnxApplyJsonConfig(o->config, h) != 0) {
+        if (LnxApplyJsonConfig(o->config, h, o->allow_unknown) != 0) {
             return -1;
         }
     }
@@ -216,6 +219,8 @@ static int ParseFieldArgs(int argc, char** argv, int start, Options* o)
         if (strcmp(a, "--config") == 0) {
             if (++i >= argc) { fprintf(stderr, "lnx: --config needs a path\n"); return -1; }
             o->config = argv[i];
+        } else if (strcmp(a, "--allow-unknown") == 0) {
+            o->allow_unknown = 1;
         } else if (strcmp(a, "--cartname") == 0) {
             if (++i >= argc) { fprintf(stderr, "lnx: --cartname needs a value\n"); return -1; }
             o->cartname = argv[i]; o->cartname_set = 1;

@@ -94,6 +94,7 @@ bll options:
 
 field options (patch/create/bll):
   --config &lt;file.json&gt;         read fields from a JSON config
+  --allow-unknown              accept (and ignore) unrecognised config keys
   --cartname &lt;str&gt;             set the 32-byte cart name
   --manufacturer &lt;str&gt;         set the 16-byte manufacturer name
   --rotation none|left|right   set the rotation flag (or 0|1|2)
@@ -161,6 +162,10 @@ of the checked-in per-game JSON:</p>
 <dl>
 <dt><code>--config &lt;file.json&gt;</code></dt>
 <dd><p>Read header fields from a JSON config (see section 4).</p></dd>
+<dt><code>--allow-unknown</code></dt>
+<dd><p>Accept and ignore config keys the tool does not recognise, instead of
+  rejecting them as errors. Lets a shared config carry extra attributes the tool
+  has no field for (see section 4).</p></dd>
 <dt><code>--cartname &lt;str&gt;</code></dt>
 <dd><p>Set the 32-byte cart name (truncated to 31 characters if longer).</p></dd>
 <dt><code>--manufacturer &lt;str&gt;</code></dt>
@@ -192,7 +197,10 @@ of the checked-in per-game JSON:</p>
 <p>The per-game config is a flat JSON object. Every key is optional &mdash; only keys
 that are present change the header, so the config layers cleanly on top of the
 existing header (for <code>patch</code>) or the defaults (for <code>create</code>). Unknown keys are
-rejected as errors, which catches typos rather than silently doing nothing.</p>
+rejected as errors by default, which catches typos rather than silently doing
+nothing; pass <code>--allow-unknown</code> to accept and ignore keys the tool has no field
+for (their values must still be a supported scalar &mdash; a string, an integer, or
+<code>true</code>/<code>false</code>/<code>null</code>; nested objects and arrays remain unsupported).</p>
 <pre class="verb">{
   "cartname": "Sybil's Quest",
   "manufacturer": "lynxcc SDK",

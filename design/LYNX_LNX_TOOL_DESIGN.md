@@ -86,6 +86,7 @@ Commands:
 
 Field options (patch / create):
   --config <file.json>          Read header fields from a JSON config (§4)
+  --allow-unknown               Accept and ignore unrecognised config keys (§4)
   --cartname <str>              Set the 32-byte cart name
   --manufacturer <str>          Set the 16-byte manufacturer name
   --rotation none|left|right    Set the rotation flag (also accepts 0|1|2)
@@ -125,8 +126,12 @@ Notes:
 ## 4. JSON per-game configuration
 
 The per-game config is a flat JSON object. Every key is optional; only present
-keys change the header. Unknown keys are an error (catches typos rather than
-silently doing nothing). Example `game.json`:
+keys change the header. Unknown keys are an error by default (catches typos
+rather than silently doing nothing); pass `--allow-unknown` to accept and ignore
+keys the tool has no field for, so a shared config may carry extra attributes
+(their values must still be a supported scalar — string, integer, or
+`true`/`false`/`null`; nested objects and arrays remain unsupported). Example
+`game.json`:
 
 ```json
 {

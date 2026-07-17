@@ -39,10 +39,11 @@ typedef struct {
 } Value;
 
 typedef struct {
-    const char*   p;     /* cursor */
+    const char*   p;             /* cursor */
     const char*   end;
-    int           error; /* set once an error has been reported */
-    LnxEepromSpec ee;    /* EEPROM fields accumulated, composed after parse */
+    int           error;         /* set once an error has been reported */
+    int           allow_unknown; /* keep going past keys we don't recognise */
+    LnxEepromSpec ee;            /* EEPROM fields accumulated, composed after parse */
 } Parser;
 
 static void Fail(Parser* ps, const char* msg)
@@ -251,6 +252,9 @@ static int ApplyPair(Parser* ps, const char* key, const Value* v, LnxHeader* h)
         return 0;
     }
 
+    if (ps->allow_unknown) {
+        return 0; /* extra attribute the tool has no field for; leave header be */
+    }
     fprintf(stderr, "lnx: config: unknown key \"%s\"\n", key);
     ps->error = 1;
     return -1;
@@ -312,7 +316,7 @@ static int ParseObject(Parser* ps, LnxHeader* h)
     return 0;
 }
 
-int LnxApplyJsonConfig(const char* path, LnxHeader* h)
+int LnxApplyJsonConfig(const char* path, LnxHeader* h, int allow_unknown)
 {
     FILE*  f;
     long   size;
@@ -347,9 +351,10 @@ int LnxApplyJsonConfig(const char* path, LnxHeader* h)
     fclose(f);
     buf[size] = '\0';
 
-    ps.p     = buf;
-    ps.end   = buf + size;
-    ps.error = 0;
+    ps.p             = buf;
+    ps.end           = buf + size;
+    ps.error         = 0;
+    ps.allow_unknown = allow_unknown;
     memset(&ps.ee, 0, sizeof(ps.ee));
 
     rc = ParseObject(&ps, h);
