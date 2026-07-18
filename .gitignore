@@ -7,62 +7,73 @@
 /wrk/
 
 # Compiled example artifacts (sources are *.c + Makefile). The root holds the
-# lynxdemo starter; every other example lives in a group subdirectory.
-examples/*.lnx
-examples/*.map
-examples/*.o
-examples/*.s
-examples/*/*.lnx
-examples/*/*.map
-examples/*/*.o
-examples/*/*.s
-# ...except the hand-authored tune/effect streams that are committed beside their
-# examples (theme.s is the abccc-compiled sndtune tune; invtheme.s is the two-voice
-# invaders theme extracted from the reference cartridge; sprpckdata.s is the
-# .incbin glue that embeds sprpck's binary .spr output for sprpcktest).
-!examples/mikey/theme.s
-!examples/games/invtheme.s
-!examples/suzy/sprpckdata.s
+# lynxdemo starter; single-file examples are flat inside their group, and
+# multi-file examples live in their own subdirectory with their own Makefile, so
+# artifacts may be one or two levels deep (the ** globs cover both).
+examples/**/*.lnx
+examples/**/*.map
+examples/**/*.o
+examples/**/*.s
+# ...except the hand-authored / pre-compiled tune & effect streams committed
+# beside their examples (theme.s is the abccc-compiled sndtune tune; the lander*
+# .s are lander's abccc background tunes; invtheme.s is the two-voice invaders
+# theme extracted from the reference cartridge; hmdemo.s is the HandyMusic demo's
+# .incbin glue; sfx.s is the hand-authored sfxtest effect streams; sprpckdata.s
+# is the .incbin glue that embeds sprpck's binary .spr output for sprpcktest).
+!examples/mikey/sndtune/theme.s
+!examples/mikey/sfxtest/sfx.s
+!examples/mikey/handymusic/hmdemo.s
+!examples/games/invaders/invtheme.s
+!examples/games/lander/landermenu.s
+!examples/games/lander/landergame.s
+!examples/games/lander/landerbass.s
+!examples/suzy/sprpcktest/sprpckdata.s
 
-# sp65-generated sprite headers (rebuilt from suzy/heart.pcx)
-examples/suzy/heart_packed.h
-examples/suzy/heart_literal.h
+# sp65-generated sprite headers (rebuilt from suzy/spritetest/heart.pcx)
+examples/suzy/spritetest/heart_packed.h
+examples/suzy/spritetest/heart_literal.h
 
-# sprpck-generated sprite/palette assets (rebuilt from suzy/logo.bmp + icon.sps)
-examples/suzy/logo.spr
-examples/suzy/icon.spr
-examples/suzy/logo.pal
+# sprpck-generated sprite/palette assets (rebuilt from sprpcktest/logo.bmp + icon.sps)
+examples/suzy/sprpcktest/logo.spr
+examples/suzy/sprpcktest/icon.spr
+examples/suzy/sprpcktest/logo.pal
 
-# sp65-generated sprite-sheet headers (rebuilt from suzy/sheet.pcx)
-examples/suzy/sheet_anim.h
-examples/suzy/frame0.h
-examples/suzy/frame1.h
-examples/suzy/frame2.h
-examples/suzy/frame3.h
+# sp65-generated sprite-sheet headers (spritesheet and spriteslice each rebuild
+# from their own copy of sheet.pcx)
+examples/suzy/spritesheet/sheet_anim.h
+examples/suzy/spriteslice/frame0.h
+examples/suzy/spriteslice/frame1.h
+examples/suzy/spriteslice/frame2.h
+examples/suzy/spriteslice/frame3.h
+
+# sp65-generated rotation-sheet + fill headers (rebuilt from the lander PCX files)
+examples/games/lander/lander_anim.h
+examples/games/lander/flame_anim.h
+examples/games/lander/solidsq.h
 
 # sp65-generated action-point sprite headers (rebuilt from the spritefx PCX
-# shapes: 5 variants per shape + the marker; see suzy/spritefx.c)
-examples/suzy/cube_tl.h
-examples/suzy/cube_tr.h
-examples/suzy/cube_c.h
-examples/suzy/cube_bl.h
-examples/suzy/cube_br.h
-examples/suzy/crystal_tl.h
-examples/suzy/crystal_tr.h
-examples/suzy/crystal_c.h
-examples/suzy/crystal_bl.h
-examples/suzy/crystal_br.h
-examples/suzy/star_tl.h
-examples/suzy/star_tr.h
-examples/suzy/star_c.h
-examples/suzy/star_bl.h
-examples/suzy/star_br.h
-examples/suzy/ball_tl.h
-examples/suzy/ball_tr.h
-examples/suzy/ball_c.h
-examples/suzy/ball_bl.h
-examples/suzy/ball_br.h
-examples/suzy/marker.h
+# shapes: 5 variants per shape + the marker; see suzy/spritefx/spritefx.c)
+examples/suzy/spritefx/cube_tl.h
+examples/suzy/spritefx/cube_tr.h
+examples/suzy/spritefx/cube_c.h
+examples/suzy/spritefx/cube_bl.h
+examples/suzy/spritefx/cube_br.h
+examples/suzy/spritefx/crystal_tl.h
+examples/suzy/spritefx/crystal_tr.h
+examples/suzy/spritefx/crystal_c.h
+examples/suzy/spritefx/crystal_bl.h
+examples/suzy/spritefx/crystal_br.h
+examples/suzy/spritefx/star_tl.h
+examples/suzy/spritefx/star_tr.h
+examples/suzy/spritefx/star_c.h
+examples/suzy/spritefx/star_bl.h
+examples/suzy/spritefx/star_br.h
+examples/suzy/spritefx/ball_tl.h
+examples/suzy/spritefx/ball_tr.h
+examples/suzy/spritefx/ball_c.h
+examples/suzy/spritefx/ball_bl.h
+examples/suzy/spritefx/ball_br.h
+examples/suzy/spritefx/marker.h
 
 # Python bytecode cache
 __pycache__/

@@ -47,7 +47,7 @@ The pipeline is one image → one sprite:
    `const unsigned char heart_packed[] = { … };` plus `heart_packed_WIDTH`,
    `_HEIGHT`, `_COLORS` macros.
 4. The example sets `scb.data = heart_packed` and calls `gfx_sprite(&scb)`
-   (`examples/suzy/spritetest.c`).
+   (`examples/suzy/spritetest/spritetest.c`).
 
 So **every frame is its own image file, its own sp65 invocation, its own C
 array, and its own symbol.** A four-frame walk cycle with left/right facings is
@@ -233,7 +233,8 @@ The only SDK surface that grows is sp65 (the asset side) and the docs.
 
 ## 7. Verification — measured
 
-All on the shared 4-frame `examples/suzy/sheet.pcx`; emulator results on the
+All on the 4-frame `sheet.pcx` (a copy lives in each of
+`examples/suzy/spritesheet/` and `examples/suzy/spriteslice/`); emulator results on the
 headless GearLynx (`tests/emu/gearlynx`), the method used for
 `spritetest`/`packtest`.
 
@@ -265,9 +266,10 @@ Updated in the same pass as the code:
 - `doc/sp65.html` §6.2 — the Sprite-sheets section, `--slice` and
   `--sprite-sheet` documented in the option reference, and a sheet→frames→table
   SVG (per `design/DOC_SVG_STYLE_DESIGN.md`).
-- `doc/samples.html` + `examples/Makefile` — two examples and their build rules:
-  `examples/suzy/spritesheet.c` (driver) and `examples/suzy/spriteslice.c`
-  (manual chain), sharing `examples/suzy/sheet.pcx` (`sheet.pcx.py`).
+- `doc/samples.html` + each example's own Makefile — two examples and their
+  build rules: `examples/suzy/spritesheet/spritesheet.c` (driver) and
+  `examples/suzy/spriteslice/spriteslice.c` (manual chain), each with its own
+  copy of `sheet.pcx` (`sheet.pcx.py`) so its subdirectory is self-contained.
 - `compiler/sp65` `--help` text and `sp65.vcxproj` for the new source file.
 - This file — status note (top) and the measured results below.
 

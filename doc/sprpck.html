@@ -266,8 +266,8 @@ from each format and draws them side by side. Its build wires sprpck into the
 examples <code>Makefile</code>:</p>
 <pre class="verb">        sprpck -t6 -s4 logo.bmp logo.spr          # BMP  -> packed 4bpp sprite
         sprpck -t2 -i016016 -s4 icon.sps icon.spr  # SPS  -> packed 4bpp sprite</pre>
-<p>Both <code>.spr</code> blobs are embedded by <code>suzy/sprpckdata.s</code>
-with <code>.incbin</code> (assembled with <code>--bin-include-dir suzy</code> so
+<p>Both <code>.spr</code> blobs are embedded by <code>suzy/sprpcktest/sprpckdata.s</code>
+with <code>.incbin</code> (assembled with <code>--bin-include-dir .</code> so
 the generated files are found beside it) and drawn through one SCB with a shared
 palette &mdash; the crystal in the BMP's compacted pens 1&ndash;3, the star in
 its SPS pens 6 and 8:</p>

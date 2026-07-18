@@ -155,6 +155,19 @@ def golden_path(name):
     return os.path.join(GOLDEN_DIR, name.replace("/", "__") + ".sha256")
 
 
+def example_rom(name):
+    """Locate a built example .lnx. Flat examples live at <name>.lnx; multi-file
+    examples live in their own subdirectory as <name>/<basename>.lnx (their name
+    already points at the directory). Returns the path or None if not built."""
+    flat = os.path.join(EXAMPLES_DIR, name + ".lnx")
+    if os.path.exists(flat):
+        return flat
+    nested = os.path.join(EXAMPLES_DIR, name, os.path.basename(name) + ".lnx")
+    if os.path.exists(nested):
+        return nested
+    return None
+
+
 def run(names, frames, update):
     if not emulator_available():
         print("SKIP: GearLynx emulator or BIOS not present "
@@ -164,8 +177,8 @@ def run(names, frames, update):
     os.makedirs(GOLDEN_DIR, exist_ok=True)
     failures = 0
     for name in names:
-        rom = os.path.join(EXAMPLES_DIR, name + ".lnx")
-        if not os.path.exists(rom):
+        rom = example_rom(name)
+        if rom is None:
             print("FAIL %-20s no .lnx built (run `make -C examples all`)" % name)
             failures += 1
             continue

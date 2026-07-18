@@ -468,31 +468,51 @@ only in an advanced variant.
 
 **`examples/`** replaces `samples/`. Today `samples/` is a flat pile of `.c` +
 generated `.lnx/.map/.o/.s` + asset files. The programs are sorted into
-**subsystem group subdirectories** so the top level stays uncluttered. Each
-group holds the example `.c` files directly (the generated `.s/.o/.map/.lnx`
-land beside them); the smallest complete program, `lynxdemo.c`, is the starter
-and sits at the `examples/` root rather than in a group:
+**subsystem group subdirectories** so the top level stays uncluttered. A
+**single-file example** is a flat `.c` inside its group (the generated
+`.s/.o/.map/.lnx` land beside it), built by the generic `one .c -> one .lnx`
+rule in `examples/Makefile`. An example that needs **more than one file** —
+extra hand-authored objects, build-time sprite/audio assets, or a non-default
+link config — instead lives in **its own subdirectory with its own Makefile**,
+so its inputs and build products never mingle with sibling examples. The
+top-level Makefile builds each of those by delegating with `make -C <dir>` (the
+`SUBDIR_EXAMPLES` list), so one `make` still builds the whole set. The smallest
+complete program, `lynxdemo.c`, is the starter and sits at the `examples/` root:
 
 ```
 examples/
-├── Makefile          # iterates the group subdirs
+├── Makefile          # builds flat examples; delegates to each SUBDIR_EXAMPLES dir
 ├── lynxdemo.c        # starter: the smallest complete program, kept at the root
-├── games/            # breakout.c  invaders.c  raycaster.c  sybil.c
-├── suzy/             # muldivtest.c  spritetest.c  suzyasync.c  suzyasyncbench.c
-│                     #   suzybench.c  packtest.c  fonttest.c
-│                     #   (+ spritetest assets: heart.pcx, heart.pcx.py, and the
-│                     #    generated heart_packed.h / heart_literal.h)
-├── mikey/            # setbpp.c
-├── memory/           # heaptest.c  zeropage.c
-└── network/          # comlynx.c
+├── games/            # flat: breakout.c  raycaster.c  sybil.c  tetris.c
+│   ├── invaders/     # own Makefile: invaders.c + invtheme.s
+│   └── lander/       # own Makefile: lander.c + sprite sheets + abccc tunes
+├── suzy/             # flat: muldivtest.c  suzyasync.c  suzyasyncbench.c
+│   │                 #       suzybench.c  packtest.c  fonttest.c  fontvar.c
+│   │                 #       textdir.c  collision.c  palette.c
+│   ├── spritetest/   # own Makefile: spritetest.c + heart.pcx
+│   ├── spritesheet/  # own Makefile: spritesheet.c + sheet.pcx (--sprite-sheet)
+│   ├── spriteslice/  # own Makefile: spriteslice.c + sheet.pcx (--slice/--pop)
+│   ├── spritefx/     # own Makefile: spritefx.c + 5 shape PCX
+│   └── sprpcktest/   # own Makefile: sprpcktest.c + sprpckdata.s + BMP/SPS
+├── mikey/            # flat: setbpp.c  sfxdemo.c  poweroff.c
+│   ├── sndtune/      # own Makefile: sndtune.c + theme.s
+│   ├── sfxtest/      # own Makefile: sfxtest.c + sfx.s
+│   └── handymusic/   # own Makefile: hmcc-built blobs + reserved-region cfg
+├── memory/           # flat: heaptest.c  zeropage.c
+├── network/          # flat: comlynx.c
+├── sdcard-gd/        # flat: sdcardls.c
+└── multicart/        # own Makefile: menu + game ROMs via lnx multicart + lynxdir
 ```
 
 Group meanings: `games/` complete playable demos; `suzy/` exercises of the Suzy
 sprite engine and hardware-math operators (`!*` `!/` `!%`, synchronous and
 async) plus build-time/runtime sprite packing and the scaled Lynx graphics fonts;
-`mikey/` Mikey display-DMA modes; `memory/` the heap allocator and zero-page
-placement; `network/` ComLynx serial. The `sprpack` sample is renamed to
-`spritetest`, and its `heart.*` assets live in `suzy/` alongside it.
+`mikey/` Mikey display-DMA modes and the sound engines; `memory/` the heap
+allocator and zero-page placement; `network/` ComLynx serial. The `sprpack`
+sample is renamed to `spritetest`, and its `heart.*` assets live in its own
+`suzy/spritetest/` directory alongside it. The `spritesheet` and `spriteslice`
+examples each keep their own copy of `sheet.pcx` so each subdirectory is
+self-contained.
 
 This grouping is mirrored in `doc/samples.html`: its section headings follow the
 same five groups (with `lynxdemo` documented first as the starter), so the
