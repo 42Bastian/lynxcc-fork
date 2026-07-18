@@ -38,6 +38,14 @@ echo "== compiler =="
 python3 "$HERE/compiler/member_addr_cast.py"
 
 echo
+echo "== compiler audit =="
+# Differential-optimization audit: directed corpus + fixed-seed lynxsmith
+# batch, executed per -O level on headless GearLynx (skips execution when
+# the emulator is absent). See design/LYNX_COMPILER_AUDIT_DESIGN.md and
+# tests/compiler/harness/.
+python3 "$HERE/compiler/audit.py"
+
+echo
 echo "== integration =="
 python3 "$HERE/integration/gearlynx_check.py" "$@"
 

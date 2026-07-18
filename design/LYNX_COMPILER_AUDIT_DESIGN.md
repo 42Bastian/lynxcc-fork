@@ -1,6 +1,10 @@
 # Compiler correctness audit — design
 
-Status: DESIGN ONLY — no harness or tests implemented yet.
+Status: phases 1–3 IMPLEMENTED (2026-07-19) — harness, directed corpus,
+upstream fix mining, and the lynxsmith generator are in `tests/compiler/`
+and wired into `tests/run.sh` as the "compiler audit" stage. Findings so
+far are logged in sec. 8; fixes are deliberately deferred (sec. 8.3).
+Phases 4 (fork-diff review) and 5 (nightly-scale sweeps) remain open.
 
 ## 1. Motivation
 
@@ -191,3 +195,78 @@ full sandbox rebuild + all examples → design note (new
 - *Throughput*: builds are the bottleneck, not emulation — batching and
   compile-only differential (asm diff without execution for quick triage)
   keep iteration fast in the sandbox's 45 s command windows.
+
+## 8. Implementation addendum (2026-07-19)
+
+### 8.1 What was built
+
+```
+tests/compiler/
+    audit.py                CI stage: corpus + fixed-seed generator batch,
+                            chunked into emulator-sized carts
+    harness/
+        audit.h             shared test-function header; u8..i32 pinned on
+                            both oracles (-DAUDIT_HOST -> stdint), crcstep()
+        cartbuild.py        batch-cart builder (T3); .s kept for the asm
+                            scan; addresses recovered from -Ln labels
+        emurun.py           GearLynx MCP runner (reset, clear magic, step,
+                            read CRC table)
+        hostrun.py          host twin oracle (T2), -DAUDIT_HOST -fwrapv
+        differential.py     T1 driver + T4 localisation: per-function CRC
+                            compare across O0/-O/-Oi/-Ors, host-oracle
+                            cross-check, --bisect (delta-debug over
+                            --disable-opt), --asm-diff triage
+    corpus/                 directed T7 cases (execution-checked)
+        known/              repros for CONFIRMED, not-yet-fixed miscompiles,
+                            marked "known-bug": reported as XFAIL, and a
+                            stale marker (bug fixed) fails the run
+    gen/
+        lynxsmith.py        T2 generator (seed-deterministic; --suzy mode)
+        SEMANTICS.md        the UB-avoidance / twin-oracle rules
+    upstream/
+        mine.py             T6 enumerator over an upstream clone
+        FIXES.md            curated classification + next candidates
+```
+
+Markers in test sources: `no-host` (fork-only syntax, skip host oracle),
+`hw-ok` (may touch $FC00-$FDFF, exempt from the asm scan), `known-bug`
+(expected divergence, sec. 8.2). The asm scan checks instruction operands
+only — data directives and immediates carrying $FCxx/$FDxx values are
+constants, not accesses.
+
+### 8.2 Findings (all logged, none fixed yet — sec. 8.3)
+
+Found by the host-twin oracle: all four are in BASE codegen/parse, live at
+every -O level, so the O-differential alone could never see them — and all
+four match fixes upstream shipped after 2.19 (T6 classification in
+`tests/compiler/upstream/FIXES.md`):
+
+1. **Signed `/ 2^k` floors instead of truncating** — `g_div` strength-
+   reduces to `asrax*` (and a sign-extended byte move for `/256`);
+   `-7/2 == -4`, `-300/256 == -2`. Repro `corpus/known/sdiv_pow2.c`.
+2. **signed char vs unsigned constant comparison** wrong (upstream
+   `d628772cd1`). Repro `corpus/known/scharcmp_uconst.c`.
+3. **signed long vs smaller unsigned comparison** wrong (upstream
+   `c8956ce19b`); `-2L < 40000u` is false. Repro
+   `corpus/known/slongcmp_mixed.c`.
+4. **`p++[0]` rejected by the parser** (upstream `1450f146a5`) —
+   accepts-valid bug, noted in `corpus/upstream_shapes.c`.
+
+Everything else is green: the 13-file directed corpus (member-address
+shapes, inc/dec lvalues, char promotion, div/mod boundaries, 32-bit
+runtime helpers, register vars, bitfields, struct/pointer mixes,
+ternary/short-circuit, volatile, `__zeropage`, Suzy `!*`/`!/`/`!%` with
+fused muldiv, upstream-fix shapes) and lynxsmith seeds 1–4 pass all four
+O levels on GearLynx with both oracles agreeing. The two-oracle rule
+paid for itself immediately: it caught two harness bugs (missing
+`-DAUDIT_HOST`; host struct padding invalidating a cross-member byte
+trick) before any compiler code was suspected.
+
+User-facing summary of the four findings: `doc/optlim.html` sec. 3.
+
+### 8.3 Deliberately not done
+
+Compiler fixes for the findings (kept as XFAIL known-bug regressions per
+sec. 5, so the fix-side workflow starts with a failing test), phase 4
+fork-diff review, phase 5 nightly seed sweeps, and porting of the
+"applies?" candidates in FIXES.md.

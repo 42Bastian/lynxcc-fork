@@ -16,9 +16,16 @@ checks) into a single repeatable gate, driven by `run.sh` and wired into CI.
 
 ```
 tests/
-├── run.sh          # entry point: unit, compiler, then integration
+├── run.sh          # entry point: unit, compiler, compiler audit, integration
 ├── unit/           # host-built C checks (no emulator) — always run
-├── compiler/       # cc65 codegen regressions: compile repro C, check the asm
+├── compiler/       # cc65 codegen regressions + the compiler audit
+│   ├── member_addr_cast.py   # asm-shape-pinned ArrayRef regression
+│   ├── audit.py              # CI stage: corpus + fixed-seed generator
+│   ├── corpus/               # directed execution-checked test functions
+│   │   └── known/            # repros for known, not-yet-fixed miscompiles
+│   ├── gen/                  # lynxsmith random-program generator
+│   ├── harness/              # batch-cart builder, GearLynx runner, oracles
+│   └── upstream/             # post-2.19 upstream fix mining (T6)
 ├── integration/    # boot examples on GearLynx, diff screenshot vs golden
 ├── golden/         # committed reference screenshot hashes
 └── emu/gearlynx/   # the headless emulator + MCP harness (NOT shipped)
@@ -41,10 +48,30 @@ codegen regressions: each script compiles a small repro with the freshly built
 `bin/cc65` is not built). Currently: `member_addr_cast.py`, pinning the fix for
 the 2.19-inherited ArrayRef bug where a constant subscript overwrote a struct
 member's pending address offset (`((unsigned char*)&s->m)[1]` stored through
-`s+1` — see `design/LYNX_MEMBER_ADDR_CAST_FIX_DESIGN.md`). Last are the
-**integration** tests, which boot each built example `.lnx` on the headless
-GearLynx emulator, step a fixed number of frames with no input, screenshot, and
-compare a SHA-256 of the PNG against `golden/`.
+`s+1` — see `design/LYNX_MEMBER_ADDR_CAST_FIX_DESIGN.md`).
+
+Then comes the **compiler audit** (`design/LYNX_COMPILER_AUDIT_DESIGN.md`):
+`audit.py` builds batch carts of self-checking test functions — the directed
+corpus in `compiler/corpus/` plus a fixed-seed batch from the `lynxsmith`
+generator — at every optimization level (no `-O`, `-O`, `-Oi`, `-Ors`), runs
+each build on headless GearLynx, and compares the per-function CRC tables.
+The unoptimized build is the oracle; a host-compiled twin of the same sources
+is the second oracle. Any level diverging from the oracle is a compiler bug.
+Repros for known, not-yet-fixed miscompiles live in `corpus/known/` with a
+`known-bug` marker: the harness reports them as XFAIL and flags the marker as
+stale once they start passing (see `compiler/upstream/FIXES.md` for the
+classification of mined upstream fixes). A static scan of the kept `.s` files
+also asserts generated code never addresses the hardware pages `$FC00-$FDFF`
+unless the source did. Larger runs go straight through the tools:
+
+```bash
+python3 tests/compiler/gen/lynxsmith.py --seed 99 --funcs 40 --out /tmp/s99
+python3 tests/compiler/harness/differential.py --bisect /tmp/s99/*.c
+```
+
+Last are the **integration** tests, which boot each built example `.lnx` on
+the headless GearLynx emulator, step a fixed number of frames with no input,
+screenshot, and compare a SHA-256 of the PNG against `golden/`.
 
 ## The emulator is optional
 

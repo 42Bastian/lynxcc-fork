@@ -16,6 +16,7 @@ See doc/licenses.html.
 cc65&nbsp;2.19, and the deliberate hardware limitations it works within.</div><nav class="toc"><h2>Contents</h2><ul>
 <li class="lvl1"><a href="#sect-1">1. Lynx-specific code-generation optimizations</a></li>
 <li class="lvl1"><a href="#sect-2">2. Limitations</a></li>
+<li class="lvl1"><a href="#sect-3">3. Known compiler bugs (under audit)</a></li>
 </ul></nav><h2 id="sect-1">1. Lynx-specific code-generation optimizations</h2>
 <p>This tree contains a set of 65SC02/Lynx code-generation improvements over
 stock cc65 2.19. The full design, measurements, and verification plan are in
@@ -105,6 +106,39 @@ stock cc65 2.19. The full design, measurements, and verification plan are in
   I and Lynx II is worth more than that margin. See
   <code>design/LYNX_CODEGEN_DESIGN.md</code> section 3 for the full rationale.</p>
 </dd>
+</dl>
+<h2 id="sect-3">3. Known compiler bugs (under audit)</h2>
+<p>A systematic correctness audit of the compiler
+  (<code>design/LYNX_COMPILER_AUDIT_DESIGN.md</code>, harness in
+  <code>tests/compiler/</code>) tracks miscompiles inherited from
+  cc65&nbsp;2.19. The following are <strong>confirmed present</strong> and not
+  yet fixed; each has an execution-checked regression in
+  <code>tests/compiler/corpus/known/</code> and an upstream-fix reference in
+  <code>tests/compiler/upstream/FIXES.md</code>. Until they are fixed, avoid
+  the affected shapes in game code:</p>
+<dl>
+<dt>Signed division by a power-of-two constant rounds wrong</dt>
+<dd><p><code>n&nbsp;/&nbsp;2</code>, <code>n&nbsp;/&nbsp;8</code>,
+  <code>n&nbsp;/&nbsp;256</code>&hellip; with a <em>signed</em> negative
+  dividend is compiled to an arithmetic shift, which floors:
+  <code>-7&nbsp;/&nbsp;2</code> yields <code>-4</code> instead of the correct
+  <code>-3</code>. Signed <code>%</code>, division by non-powers of two, by
+  negative constants, and all unsigned division are correct. Workaround: use
+  unsigned operands, or a variable divisor.</p></dd>
+<dt>signed char compared with an unsigned constant</dt>
+<dd><p>Natural spellings like <code>if&nbsp;(sc&nbsp;&gt;&nbsp;100u)</code>
+  (where <code>sc</code> is a <code>signed char</code>) can compare wrongly.
+  Workaround: cast explicitly, e.g.
+  <code>(int)sc&nbsp;&gt;&nbsp;100</code>.</p></dd>
+<dt>signed long compared with a smaller unsigned type</dt>
+<dd><p><code>slong&nbsp;&lt;&nbsp;uint_var</code> can produce the wrong
+  truth value (e.g. <code>-2L&nbsp;&lt;&nbsp;40000u</code> comes out false).
+  Workaround: cast the unsigned operand to <code>long</code> first.</p></dd>
+<dt><code>p++[0]</code> does not parse</dt>
+<dd><p>A subscript, call, or member operator directly after a postfix
+  <code>++</code>/<code>--</code> is rejected with a parse error. Workaround:
+  parenthesise or split the expression (<code>(*p++)</code>,
+  <code>v&nbsp;=&nbsp;p[0];&nbsp;++p;</code>).</p></dd>
 </dl>
 </article></main><site-foot></site-foot>
 <script src="doc.js"></script>
