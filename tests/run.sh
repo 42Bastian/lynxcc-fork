@@ -12,7 +12,10 @@
 #
 # Order:
 #   1. unit/        host-built arithmetic checks — always run, no emulator.
-#   2. integration/ boot the built examples on headless GearLynx and diff a
+#   2. compiler/    codegen regressions: compile repro C with the built
+#                   bin/cc65 and pattern-check the emitted asm. SKIPS (exit 0)
+#                   if bin/cc65 is not built.
+#   3. integration/ boot the built examples on headless GearLynx and diff a
 #                   screenshot against tests/golden/. SKIPS itself (still exit 0)
 #                   when the emulator or BIOS is absent, so CI without GearLynx
 #                   stays green on the unit gate alone.
@@ -29,6 +32,10 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "== unit =="
 make -C "$HERE/unit"
+
+echo
+echo "== compiler =="
+python3 "$HERE/compiler/member_addr_cast.py"
 
 echo
 echo "== integration =="

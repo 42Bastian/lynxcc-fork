@@ -16,8 +16,9 @@ checks) into a single repeatable gate, driven by `run.sh` and wired into CI.
 
 ```
 tests/
-├── run.sh          # entry point: unit then integration
+├── run.sh          # entry point: unit, compiler, then integration
 ├── unit/           # host-built C checks (no emulator) — always run
+├── compiler/       # cc65 codegen regressions: compile repro C, check the asm
 ├── integration/    # boot examples on GearLynx, diff screenshot vs golden
 ├── golden/         # committed reference screenshot hashes
 └── emu/gearlynx/   # the headless emulator + MCP harness (NOT shipped)
@@ -34,10 +35,16 @@ tests/run.sh lynxdemo suzy/spritetest   # integration: only these examples
 ```
 
 `run.sh` runs the **unit** tests first — ordinary host programs that finish in
-milliseconds and need nothing but a C compiler. It then runs the **integration**
-tests, which boot each built example `.lnx` on the headless GearLynx emulator,
-step a fixed number of frames with no input, screenshot, and compare a SHA-256
-of the PNG against `golden/`.
+milliseconds and need nothing but a C compiler. Next come the **compiler**
+codegen regressions: each script compiles a small repro with the freshly built
+`bin/cc65` and pattern-checks the emitted assembly (they skip, exit 0, when
+`bin/cc65` is not built). Currently: `member_addr_cast.py`, pinning the fix for
+the 2.19-inherited ArrayRef bug where a constant subscript overwrote a struct
+member's pending address offset (`((unsigned char*)&s->m)[1]` stored through
+`s+1` — see `design/LYNX_MEMBER_ADDR_CAST_FIX_DESIGN.md`). Last are the
+**integration** tests, which boot each built example `.lnx` on the headless
+GearLynx emulator, step a fixed number of frames with no input, screenshot, and
+compare a SHA-256 of the PNG against `golden/`.
 
 ## The emulator is optional
 

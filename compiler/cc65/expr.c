@@ -1031,10 +1031,28 @@ static void ArrayRef (ExprDesc* Expr)
                 if (ConstBaseAddr || ED_IsLVal (Expr)) {
                     LoadExpr (CF_NONE, Expr);
                     ED_MakeRValExpr (Expr);
-                }
 
-                /* Use the offset */
-                Expr->IVal = Subscript.IVal;
+                    /* The pointer value is now in the primary with no
+                    ** pending offset (ED_MakeRValExpr cleared IVal), so the
+                    ** scaled subscript is the whole offset.
+                    */
+                    Expr->IVal = Subscript.IVal;
+
+                } else {
+
+                    /* The pointer is already an rvalue in the primary, but
+                    ** it may carry a pending offset in IVal: taking the
+                    ** address of a struct member through a pointer, e.g.
+                    ** ((unsigned char*)&s->m)[k], leaves the primary holding
+                    ** s and IVal holding offsetof(m) (see StructRef). ADD
+                    ** the subscript to that pending offset instead of
+                    ** overwriting it; a plain assignment here dropped the
+                    ** member offset and stored through s+k. See
+                    ** design/LYNX_MEMBER_ADDR_CAST_FIX_DESIGN.md.
+                    */
+                    Expr->IVal += Subscript.IVal;
+
+                }
             }
 
         } else {
