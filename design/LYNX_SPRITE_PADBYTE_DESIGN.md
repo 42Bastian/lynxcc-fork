@@ -142,7 +142,7 @@ runtime to prove the two encodings interchangeable (§5–6):
 | `examples/setbpp/setbpp.c` | `band_img` | 4bpp | per-band pen (opaque) | `$22` |
 | `examples/breakout/breakout.c` | `brick_img`, `paddle_img`, `ball_img` | 4bpp | pen 0 (transparent) | `$00` |
 | `examples/invaders/invaders.c` | `inv_a/inv_b/inv_boom`, `ship_img`, bullets, bomb, bunker, ufo | 4bpp | pen 0 | `$00` |
-| `examples/raycaster/raycaster.c` | `solid_img`, `guard_img`, `guard_img2`, `gun_img`, `flash_img` | 4bpp | pen 0 (`PEN_NONE`) | `$00` |
+| `examples/raycaster/raycaster.c` | `solid_img`, `guard_img`, `guard_img2`, `gun_img`, `flash_img`, `face_img`, `face_img2` | 4bpp | pen 0 (`PEN_NONE`) | `$00` |
 | `examples/sybil/sybil.c` | `syb0..syb2(+l)`, `en_a/en_b`, `coin_img`, `blk_img` | 4bpp | pen 0 (identity penpal) | `$00` |
 | `libraries/graphics/gfx-text.s` | runtime 8×8 glyph strip (`build8x8`) | 1bpp | draw pen (active-low) | `$FF` |
 | `libraries/graphics/gfx-text5x5.s` | runtime 5×5 glyph strip (`build5x5`) | 1bpp | — | exempt (§4) |
