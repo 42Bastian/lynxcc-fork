@@ -18,25 +18,31 @@
 **      vsize field to the slice height the raycaster computed. 80
 **      such scaled sprites paint the whole 3D view - no per-pixel
 **      plotting, Suzy does the column fills. The sky/ceiling band,
-**      the billboard enemies and the whole status-bar panel are
-**      scaled sprites too.
+**      the floor band, the billboard enemies and the whole status-bar
+**      panel are scaled sprites too - all members of ONE chained
+**      engine run, so there is no per-frame screen clear at all.
 **
-**   2. Suzy hardware math. The DDA inner loop needs a divide per
-**      column for the delta-distances (`ABSCALE !/ arX`) and another
-**      for the slice height (`PROJK !/ perp`); the wall-hit distance
-**      inside a cell is a hardware multiply (`!*`); the billboard and
-**      hitscan projections are the FUSED multiply-divide the fork
-**      recognises as one op (`lat !* PROJH !/ depth`). All of it runs
-**      in the main loop (never in IRQ, per design/LYNX_CODEGEN_DESIGN.md
-**      2.6) so the math unit is never contended - and all of it runs
-**      BEFORE any sprite is launched, since the sprite engine shares
-**      Suzy's math registers.
+**   2. Suzy hardware math. The wall-hit distance inside a cell is a
+**      hardware multiply (`!*`); the billboard and hitscan projections
+**      are the FUSED multiply-divide the fork recognises as one op
+**      (`lat !* PROJH !/ depth`). The per-column delta-distances and
+**      slice height WERE Suzy divides but are now reciprocal-table
+**      lookups (recip[]/slicelut[], built once at startup - see the
+**      cast_walls() header), so cast_walls() issues no divide at all.
+**      All of it runs in the main loop (never in IRQ, per
+**      design/LYNX_CODEGEN_DESIGN.md 2.6) so the math unit is never
+**      contended - and all of it runs BEFORE any sprite is launched,
+**      since the sprite engine shares Suzy's math registers.
 **
 **   3. Cheap per-frame ray setup. The camera-plane sweep across the 80
 **      columns is a linear ramp, so instead of a divide + multiply per
 **      column the ray direction is stepped INCREMENTALLY with a 32-bit
-**      add (accX/accY), removing 80 software divides and 160 long
-**      multiplies from every frame.
+**      add (accX/accY) - and because those per-column values depend
+**      only on the view ANGLE, the whole ramp runs only on frames the
+**      player turns (rebuild_raycache); walking reuses the cached
+**      tables, and a frame where nothing moved skips the cast
+**      entirely. The DDA inner loop itself is add/index/load/test on
+**      a flat 256-byte map with the hot scalars in the zero page.
 **
 **   4. A Wolfenstein-style status bar across the bottom 22 rows: an
 **      animated soldier face, WAVE / SCORE / HEALTH / enemies-left.
@@ -49,7 +55,9 @@
 ** up/down walks, left/right turns (hold B to strafe), A fires your
 ** pistol at whatever is under the crosshair. Clear every guard to
 ** advance a wave. Guards that reach you chip your health; at zero
-** it's game over (A restarts).
+** it's game over (A restarts). Opt 1 toggles the HUD/text overlay
+** for a clean, glyph-free view; Opt 2 toggles a half-resolution
+** fast mode (40 double-width columns - half the raycast per frame).
 **
 ** All fixed-point math is integer. Positions are 8.8 in map cells;
 ** angles are 0..255 = full circle via a 256-entry signed sine LUT.
@@ -62,6 +70,7 @@
 #include <lynx/joystick.h>
 #include <6502.h>
 #include <string.h>
+#include <zeropage.h>
 
 /* ------------------------------------------------------------------ */
 /* Geometry / tuning                                                   */
@@ -80,6 +89,12 @@
 #define CAMSTEP     1638            /* 8.8 camera-plane step / column  */
                                     /* = 512*256/80 (sweep -256..+256) */
 
+/* Opt 2 low-res mode (design 9.3 item 9): half the columns, each twice
+** as wide. Halves the whole cast (and the ray-cache rebuild on turns)
+** at a visible coarsening - an explicit quality/speed tradeoff. */
+#define NCOL_LO     40
+#define CAMSTEP_LO  3276            /* = 512*256/40                    */
+
 #define MAPW        16
 #define MAPH        16
 
@@ -89,6 +104,8 @@
 #define ABSCALE     4096            /* DDA delta-dist numerator        */
 #define DDMAX       255             /* clamp so fracX*ddX fits 16 bits */
 #define MAXSLICE    VIEW_H          /* wall never overdraws the HUD    */
+#define RECIP_MAX   430             /* recip[] domain: max clamped |ray|  */
+#define SLICE_N     641             /* slicelut[] entries (indexed perp>>1)*/
 
 #define MOVESPEED   26              /* 8.8 cell step per frame         */
 #define TURNSPEED   4               /* angle units per frame           */
@@ -124,26 +141,35 @@
 #define ST_WIN      2
 
 /* ------------------------------------------------------------------ */
-/* Map. 0 = open, 1..3 = wall types (folded to two materials).         */
+/* Map. 0 = open, 1..3 = wall types (folded to two materials). Stored  */
+/* as a FLAT 256-byte array indexed (mapY << 4) | mapX so the DDA in   */
+/* cast_walls() walks it with +/-1 (X step) and +/-16 (Y step) index   */
+/* adds - no row multiply, and the whole map coordinate fits one byte  */
+/* (design/LYNX_RAYCASTER_DRAW_DESIGN.md 9.1 item 3).                  */
+/*                                                                     */
+/* INVARIANT: every border cell is a wall (nonzero). The DDA inner     */
+/* loop carries NO bounds tests (9.1 item 2) - each step moves exactly */
+/* one axis, so a ray can never leave the map without first hitting    */
+/* the border ring. Keep the ring closed when editing the layout.      */
 /* ------------------------------------------------------------------ */
 
-static const unsigned char worldmap[MAPH][MAPW] = {
-    {1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
-    {1,0,0,0,3,3,0,0,0,0,2,2,0,0,0,2},
-    {1,0,0,0,3,0,0,0,0,0,0,2,0,0,0,2},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
-    {1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,2},
-    {1,0,0,0,0,0,1,0,1,0,0,0,3,3,0,2},
-    {1,0,0,0,0,0,1,0,0,0,0,0,0,3,0,3},
-    {3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3},
-    {3,0,0,2,2,0,0,0,0,0,0,0,0,0,0,1},
-    {3,0,0,2,0,0,0,3,3,3,0,0,0,0,0,1},
-    {3,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1},
-    {3,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1},
-    {3,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1},
-    {3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {3,3,3,3,3,1,1,1,1,1,2,2,2,2,1,1},
+static const unsigned char worldmap[MAPH * MAPW] = {
+    1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,
+    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,
+    1,0,0,0,3,3,0,0,0,0,2,2,0,0,0,2,
+    1,0,0,0,3,0,0,0,0,0,0,2,0,0,0,2,
+    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,
+    1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,2,
+    1,0,0,0,0,0,1,0,1,0,0,0,3,3,0,2,
+    1,0,0,0,0,0,1,0,0,0,0,0,0,3,0,3,
+    3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,
+    3,0,0,2,2,0,0,0,0,0,0,0,0,0,0,1,
+    3,0,0,2,0,0,0,3,3,3,0,0,0,0,0,1,
+    3,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,
+    3,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,
+    3,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,
+    3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+    3,3,3,3,3,1,1,1,1,1,2,2,2,2,1,1,
 };
 
 /* ------------------------------------------------------------------ */
@@ -436,11 +462,21 @@ static SCB_REHV_PAL sky_scb = {
     { (PEN_NONE << 4) | PEN_SKY, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-static SCB_REHV_PAL guard_scb = {
+/* Floor band: rows VIEW_CY..VIEW_H-1, a chain member right after the sky.
+** Replaces the old full-screen gfx_clear() - sky + floor + opaque HUD panel
+** cover every row, so nothing needs a clear (design 9.1 item 1: ~62 % of the
+** cleared pixels were repainted the same frame anyway). */
+static SCB_REHV_PAL floor_scb = {
     BPP_4 | TYPE_NORMAL, LITERAL | REHV, NO_COLLIDE,
-    0, guard_img, 0, 0, 0x0100, 0x0100,
-    { (PEN_NONE << 4) | PEN_EUNI, (PEN_ESKIN << 4) | PEN_NONE, 0, 0, 0, 0, 0, 0 }
+    0, solid_img, 0, VIEW_CY, 0x5000, (unsigned)(VIEW_H - VIEW_CY) << 8,
+    { (PEN_NONE << 4) | PEN_FLOOR, 0, 0, 0, 0, 0, 0, 0 }
 };
+
+/* One SCB per visible billboard, so they can coexist as distinct members of
+** the single master chain (each with its own data/hpos/vpos/size). The shared
+** control and penpal bytes are initialised once in main(); project_enemies()
+** fills and links the first draw_n of these each frame. */
+static SCB_REHV_PAL guardscb[NENEMY];
 
 static SCB_REHV_PAL gun_scb = {
     BPP_4 | TYPE_NORMAL, LITERAL | REHV, NO_COLLIDE,
@@ -502,11 +538,7 @@ static const unsigned char espawn[NENEMY][2] = {
 /* Pre-projected billboard draw list (built by project_enemies, far->near,
 ** already depth-tested against the wall z-buffer). Kept separate from the
 ** draw pass so all Suzy math finishes before any sprite is launched. */
-static unsigned char draw_n;
-static unsigned char draw_data[NENEMY];   /* frame: normal / attack     */
-static int           draw_x[NENEMY];       /* SCB hpos                   */
-static int           draw_y[NENEMY];       /* SCB vpos                   */
-static unsigned int  draw_s[NENEMY];       /* SCB hsize == vsize scale   */
+static unsigned char draw_n;   /* visible billboards -> guardscb[0..draw_n-1] */
 
 static int  health;
 static unsigned int score;
@@ -519,6 +551,13 @@ static unsigned char gunkick;       /* recoil offset frames       */
 static unsigned char faceflash;     /* hurt-face timer            */
 
 static unsigned char joy, prev_joy, pressed;
+static unsigned char show_text = 1;     /* Opt 1 toggles HUD/text     */
+
+/* Opt 2 quality toggle (design 9.3 item 9): 80 crisp or 40 fat columns. */
+static unsigned char lowres;            /* nonzero: NCOL_LO wide columns  */
+static unsigned char ncol = NCOL;       /* active column count            */
+static unsigned char colshift = 1;      /* screen x -> column: sx>>colshift */
+static int  camstep = CAMSTEP;          /* 8.8 camera-plane step / column */
 
 /* HUD strings. */
 static char hud_wave[]  = "WV 01";
@@ -533,7 +572,7 @@ static unsigned char walkable (int x, int y)
     int cx = x >> 8;
     int cy = y >> 8;
     if (cx < 0 || cx >= MAPW || cy < 0 || cy >= MAPH) return 0;
-    return worldmap[cy][cx] == 0;
+    return worldmap[(cy << 4) | cx] == 0;
 }
 
 static void fmt2 (unsigned int v, char* p)
@@ -549,12 +588,32 @@ static void fmt3 (unsigned int v, char* p)
     p[2] = '0' + (char)(v % 10);
 }
 
+static unsigned char raydirty;      /* view angle changed: ray cache stale */
+
 static void update_camera (void)
 {
     dirX = COSINE (ang);
     dirY = SINE (ang);
     planeX = (int)(((long)(-dirY) * FOV) >> 8);
     planeY = (int)(((long)dirX * FOV) >> 8);
+    raydirty = 1;                   /* cast_walls() rebuilds the ray cache */
+}
+
+/* Configure the wall run for the current quality setting: column count,
+** width, spacing and the intra-run .next links. The static sprctl/data
+** fields cover all NCOL SCBs (set once in main()), so flipping back and
+** forth just relinks the first ncol of them. */
+static void set_quality (void)
+{
+    unsigned char i;
+    if (lowres) { ncol = NCOL_LO; colshift = 2; camstep = CAMSTEP_LO; }
+    else        { ncol = NCOL;    colshift = 1; camstep = CAMSTEP;    }
+    for (i = 0; i < ncol; ++i) {
+        wallscb[i].hpos  = (int)i << colshift;
+        wallscb[i].hsize = lowres ? 0x0200 : 0x0100;  /* 2px src -> COLW */
+        wallscb[i].next  = (i + 1 < ncol) ? (char*)&wallscb[i + 1] : 0;
+    }
+    raydirty = 1;                   /* column rays changed: full recast */
 }
 
 /* ------------------------------------------------------------------ */
@@ -656,9 +715,9 @@ static void update_player (void)
                 sx = SCREEN_W / 2 + proj;
                 if (sx < SCREEN_W / 2 - AIM_TOL ||
                     sx > SCREEN_W / 2 + AIM_TOL) continue;
-                col = sx >> 1;                       /* /COLW */
+                col = sx >> colshift;                /* /COLW */
                 if (col < 0) col = 0;
-                if (col >= NCOL) col = NCOL - 1;
+                if (col >= ncol) col = ncol - 1;
                 if ((unsigned)(depthC >> 4) >= zbuf[col]) continue; /* wall */
                 if (depthC < bestdepth) { bestdepth = depthC; best = i; }
             }
@@ -722,36 +781,108 @@ static void update_enemies (void)
 }
 
 /* ------------------------------------------------------------------ */
-/* Raycast the 80 wall columns into the chained wallscb[] + zbuf[].    */
+/* Reciprocal lookup tables (design/LYNX_RAYCASTER_DRAW_DESIGN.md 8.2/8.3).*/
 /*                                                                     */
-/* The ray direction sweeps the camera plane linearly, so rather than  */
-/* a per-column divide+multiply it is stepped incrementally: accX/accY */
-/* hold planeX/planeY * camX in 16.16 and advance by a constant add    */
-/* each column. The two DDA delta-distance divides, the in-cell first- */
-/* step multiplies and the slice-height divide are all Suzy hardware   */
-/* ops, and no sprite is launched here, so the math unit is exclusive. */
+/* cast_walls() used three Suzy divides per column (240/frame): the two */
+/* delta-distance reciprocals ABSCALE/ar and the slice height PROJK/perp.*/
+/* A reciprocal is nonlinear so it cannot be stepped incrementally the  */
+/* way the ray direction is, but it can be precomputed once and looked  */
+/* up - the same "divide once" idea DDA is built on. Both delta-distance */
+/* divides are the SAME map (ABSCALE/ar, DDMAX-clamped) so they share    */
+/* recip[]; slicelut[] holds PROJK/perp clamped to [1,MAXSLICE]. Built   */
+/* once at startup (build_tables), so the frame loop issues zero divides */
+/* here - only the in-cell first-step Suzy multiplies remain.           */
 /* ------------------------------------------------------------------ */
 
-static void cast_walls (void)
+static unsigned char recip[RECIP_MAX + 1];  /* ABSCALE/ar, DDMAX-clamped  */
+static unsigned char slicelut[SLICE_N];      /* PROJK/perp, indexed perp>>1*/
+static unsigned char vposlut[SLICE_N];       /* (VIEW_H - slicelut[i]) / 2 */
+
+static void build_tables (void)
 {
-    int col;
+    unsigned int a, q;
+
+    recip[0] = DDMAX;                        /* ar<16 never used; keep safe */
+    for (a = 1; a <= RECIP_MAX; ++a) {
+        q = ABSCALE / a;
+        recip[a] = (q > DDMAX) ? DDMAX : (unsigned char)q;
+    }
+
+    /* slicelut[i] answers PROJK/perp for perp in {2i, 2i+1} (the low bit is
+    ** dropped by the perp>>1 index); i==0 stands in for the clamped perp>=1. */
+    for (a = 0; a < SLICE_N; ++a) {
+        unsigned int perp = a ? (a << 1) : 1;
+        q = PROJK / perp;
+        if (q > MAXSLICE) q = MAXSLICE;
+        if (q < 1) q = 1;
+        slicelut[a] = (unsigned char)q;
+        /* parallel table: the wall slice's screen row for that height, so
+        ** cast_walls() skips the signed (VIEW_H - lh) / 2 per column
+        ** (design 9.1 item 4). */
+        vposlut[a] = (unsigned char)((VIEW_H - q) / 2);
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* Raycast the 80 wall columns into the chained wallscb[] + zbuf[].    */
+/*                                                                     */
+/* Second optimization pass (design 9.1/9.2):                          */
+/*                                                                     */
+/*  - The per-column ray quantities that depend only on the view ANGLE */
+/*    (delta-distances and step directions) live in a cache rebuilt    */
+/*    only when the player turns (rebuild_raycache). Walk-only frames  */
+/*    skip the whole 32-bit camera-plane ramp, the small-ray clamps,   */
+/*    the abs and both recip[] lookups for every column.               */
+/*  - If neither the position nor the angle changed, the cast is       */
+/*    skipped outright: zbuf[] and every wall SCB still hold exactly   */
+/*    last frame's (correct) values.                                   */
+/*  - The DDA inner loop is add/index/load/test only: flat map index   */
+/*    stepped +/-1 or +/-16, no bounds tests (see the worldmap border  */
+/*    invariant), and the hot scalars are __zeropage statics instead   */
+/*    of cc65 stack-frame locals.                                      */
+/*                                                                     */
+/* The in-cell first-step is still a Suzy multiply, and no sprite is   */
+/* launched here, so the math unit is exclusive.                       */
+/* ------------------------------------------------------------------ */
+
+/* Per-column ray cache, a pure function of ang (design 9.2 item 5). */
+static unsigned char cddX[NCOL];    /* delta-distance per X cell        */
+static unsigned char cddY[NCOL];    /* delta-distance per Y cell        */
+static signed char   cstepX[NCOL];  /* flat-map index step on X: +/-1   */
+static signed char   cstepY[NCOL];  /* flat-map index step on Y: +/-16  */
+
+static int lastX, lastY;            /* position of the last full cast   */
+
+/* Hot DDA scalars, hoisted to the zero page (design 9.1 item 4): file-
+** scope __zeropage statics use the fast zp addressing modes instead of
+** stack-frame locals. Plain scratch, only touched from the main loop.  */
+static __zeropage__ unsigned int  sideX;
+static __zeropage__ unsigned int  sideY;
+static __zeropage__ unsigned int  perp;
+static __zeropage__ unsigned int  pi;
+static __zeropage__ unsigned char ddX;
+static __zeropage__ unsigned char ddY;
+static __zeropage__ unsigned char mi;
+static __zeropage__ unsigned char mi0;
+static __zeropage__ unsigned char fracX;
+static __zeropage__ unsigned char fracY;
+static __zeropage__ unsigned char tex;
+static __zeropage__ unsigned char side;
+static __zeropage__ unsigned char guard;
+static __zeropage__ signed char   stepX;
+static __zeropage__ signed char   stepYi;
+
+static void rebuild_raycache (void)
+{
+    unsigned char col;
+    int rayX, rayY;
+    unsigned int arX, arY;
     long accX = -((long)planeX << 16);
     long accY = -((long)planeY << 16);
-    long dAX  =  (long)planeX * CAMSTEP;
-    long dAY  =  (long)planeY * CAMSTEP;
+    long dAX  =  (long)planeX * camstep;
+    long dAY  =  (long)planeY * camstep;
 
-    for (col = 0; col < NCOL; ++col) {
-        int rayX, rayY;
-        unsigned int arX, arY, ddX, ddY;
-        int mapX, mapY;
-        signed char stepX, stepY;
-        unsigned int sideX, sideY;
-        unsigned int fracX, fracY;
-        unsigned int perp;
-        unsigned int lh;
-        unsigned char side, tex, hit, guard, pen;
-        SCB_REHV_PAL* s = &wallscb[col];
-
+    for (col = 0; col < ncol; ++col) {
         rayX = dirX + (int)(accX >> 16);
         rayY = dirY + (int)(accY >> 16);
         accX += dAX;
@@ -761,53 +892,84 @@ static void cast_walls (void)
 
         arX = (rayX < 0) ? -rayX : rayX;
         arY = (rayY < 0) ? -rayY : rayY;
-        ddX = ABSCALE !/ arX;                       /* Suzy divide */
-        ddY = ABSCALE !/ arY;
-        if (ddX > DDMAX) ddX = DDMAX;               /* keep frac*dd < 2^16 */
-        if (ddY > DDMAX) ddY = DDMAX;
+        if (arX > RECIP_MAX) arX = RECIP_MAX;
+        if (arY > RECIP_MAX) arY = RECIP_MAX;
+        cddX[col] = recip[arX];         /* was ABSCALE !/ arX, DDMAX-clamped */
+        cddY[col] = recip[arY];         /* frac*dd stays < 2^16             */
+        cstepX[col] = (rayX < 0) ? -1 : 1;
+        cstepY[col] = (rayY < 0) ? -MAPW : MAPW;
+    }
+}
 
-        mapX = posX >> 8;
-        mapY = posY >> 8;
-        fracX = (unsigned int)(posX & 255);
-        fracY = (unsigned int)(posY & 255);
+static void cast_walls (void)
+{
+    unsigned char col, pen;
+    SCB_REHV_PAL* s;
+
+    if (raydirty) {
+        rebuild_raycache ();
+        raydirty = 0;
+    } else if (posX == lastX && posY == lastY) {
+        /* Idle skip (design 9.2 item 6): nothing the cast depends on     */
+        /* changed, so zbuf[] and the wall SCBs are still exactly right.  */
+        return;
+    }
+    lastX = posX;
+    lastY = posY;
+
+    /* Position-derived values shared by all 80 columns. */
+    mi0   = (unsigned char)(((posY >> 8) << 4) | (posX >> 8));
+    fracX = (unsigned char)posX;
+    fracY = (unsigned char)posY;
+
+    /* Running SCB pointer: &wallscb[col] would be a (software) multiply by
+    ** sizeof(SCB_REHV_PAL) per column; ++s is a constant add. */
+    s = wallscb;
+    for (col = 0; col < ncol; ++col, ++s) {
+        ddX    = cddX[col];
+        ddY    = cddY[col];
+        stepX  = cstepX[col];
+        stepYi = cstepY[col];
+
         /* first-step distances: Suzy multiply, >>8 back to step units */
-        if (rayX < 0) { stepX = -1; sideX = (fracX !* ddX) >> 8; }
-        else          { stepX =  1; sideX = ((256 - fracX) !* ddX) >> 8; }
-        if (rayY < 0) { stepY = -1; sideY = (fracY !* ddY) >> 8; }
-        else          { stepY =  1; sideY = ((256 - fracY) !* ddY) >> 8; }
+        if (stepX < 0) sideX = (fracX !* ddX) >> 8;
+        else           sideX = ((256 - fracX) !* ddX) >> 8;
+        if (stepYi < 0) sideY = (fracY !* ddY) >> 8;
+        else            sideY = ((256 - fracY) !* ddY) >> 8;
 
-        side = 0; tex = 1; hit = 0; guard = 0;
-        while (!hit && guard < 40) {
-            ++guard;
-            if (sideX < sideY) { sideX += ddX; mapX += stepX; side = 0; }
-            else               { sideY += ddY; mapY += stepY; side = 1; }
-            if (mapX < 0 || mapX >= MAPW || mapY < 0 || mapY >= MAPH) {
-                tex = 1; hit = 1; break;
-            }
-            tex = worldmap[mapY][mapX];
-            if (tex) hit = 1;
-        }
+        /* DDA walk. No bounds tests: the worldmap border ring is solid   */
+        /* wall (see the invariant at its definition), so every ray hits. */
+        mi = mi0;
+        side = 0;
+        tex = 0;
+        guard = 40;
+        do {
+            if (sideX < sideY) { sideX += ddX; mi += stepX;  side = 0; }
+            else               { sideY += ddY; mi += stepYi; side = 1; }
+            tex = worldmap[mi];
+            if (tex) break;
+        } while (--guard);
 
         perp = (side == 0) ? (sideX - ddX) : (sideY - ddY);
         if (perp < 1) perp = 1;
         zbuf[col] = perp;
 
-        lh = PROJK !/ perp;                         /* Suzy divide */
-        if (lh > MAXSLICE) lh = MAXSLICE;
-        if (lh < 1) lh = 1;
+        pi = perp >> 1;                             /* was PROJK !/ perp   */
+        if (pi >= SLICE_N) pi = SLICE_N - 1;        /* same clamped lh = 1 */
 
         /* two wall materials, lit for E/W faces, dark (+1) for N/S */
         pen = (tex >= 2) ? PEN_WALLB : PEN_WALLA;
         if (side == 1) ++pen;
 
-        s->sprctl0 = BPP_4 | TYPE_NORMAL;
-        s->sprctl1 = LITERAL | REHV;
-        s->sprcoll = NO_COLLIDE;
-        s->data    = solid_img;
-        s->hpos    = col * COLW;
-        s->vpos    = (VIEW_H - (int)lh) / 2;
-        s->hsize   = 0x0100;                         /* source already 2px */
-        s->vsize   = lh << 8;
+        /* Invariant fields (sprctl0/1, sprcoll, data, hpos, hsize) are set
+        ** once in main(); only these vary per frame. The vsize low byte is
+        ** always zero (whole-pixel heights) and wallscb[] is BSS, so only
+        ** the high byte is ever written (design 9.1 item 4). This store
+        ** once miscompiled (member offset dropped - fixed in the compiler,
+        ** see design/LYNX_MEMBER_ADDR_CAST_FIX_DESIGN.md); it doubles as a
+        ** live regression canary for that fix. */
+        s->vpos      = vposlut[pi];
+        ((unsigned char*)&s->vsize)[1] = slicelut[pi];
         s->penpal[0] = (PEN_NONE << 4) | pen;
     }
 }
@@ -852,52 +1014,50 @@ static void project_enemies (void)
         int projh = PROJH;                                   /* var so !*!/ fuses */
         int proj = lat !* projh !/ depthC;                   /* Suzy fused MDV */
         int sx  = SCREEN_W / 2 + proj;
-        int sh  = PROJK !/ (unsigned)(depthC >> 4);          /* Suzy div */
+        /* Billboard height: same reciprocal map as the wall slices, so the
+        ** slicelut[] lookup replaces the last mid-frame Suzy divide (design
+        ** 9.2 item 7; the VIEW_H clamp is baked into the table). The >>5
+        ** index never overruns: depthC < 8192, so depthC>>5 < 256.        */
+        int sh  = slicelut[(unsigned)depthC >> 5];  /* was PROJK !/ (depthC>>4) */
         int col;
 
-        if (sh > VIEW_H) sh = VIEW_H;
         if (sh < 6) continue;                       /* too far to see */
 
         /* occlusion: test the centre column against the wall z-buffer */
-        col = sx >> 1;
+        col = sx >> colshift;
         if (col < 0) col = 0;
-        if (col >= NCOL) col = NCOL - 1;
+        if (col >= ncol) col = ncol - 1;
         if ((unsigned)(depthC >> 4) >= zbuf[col]) continue;
 
-        draw_data[draw_n] = enemy[order[i]].hurtflash;
-        draw_x[draw_n]    = sx - (sh >> 1);
-        draw_y[draw_n]    = (VIEW_H - sh) / 2;
-        draw_s[draw_n]    = ((unsigned)sh << 8) / 16;   /* 16px src -> sh */
+        {
+            SCB_REHV_PAL* g = &guardscb[draw_n];
+            g->data  = enemy[order[i]].hurtflash ? guard_img2 : guard_img;
+            g->hpos  = sx - (sh >> 1);
+            g->vpos  = (VIEW_H - sh) / 2;
+            g->hsize = ((unsigned)sh << 8) / 16;    /* 16px src -> sh */
+            g->vsize = g->hsize;
+        }
         ++draw_n;
     }
-}
 
-/* ------------------------------------------------------------------ */
-/* Draw pass: sprites + text only. No Suzy math is issued here, so the */
-/* sprite engine (which shares the math registers) runs unobstructed.  */
-/* ------------------------------------------------------------------ */
-
-static void draw_enemies (void)
-{
-    unsigned char i;
-    for (i = 0; i < draw_n; ++i) {
-        guard_scb.data  = draw_data[i] ? guard_img2 : guard_img;
-        guard_scb.hpos  = draw_x[i];
-        guard_scb.vpos  = draw_y[i];
-        guard_scb.hsize = draw_s[i];
-        guard_scb.vsize = draw_s[i];
-        gfx_sprite (&guard_scb);
+    /* Relink the variable middle of the master sprite chain. Pointer stores
+    ** only (no Suzy access), so the all-math-before-the-single-launch contract
+    ** still holds. The static joints (sky->walls, hud tail, flash->hud) are set
+    ** once in main(); only these three vary with the frame's draw list. */
+    {
+        unsigned char k;
+        for (k = 0; k < draw_n; ++k)
+            guardscb[k].next = (k + 1 < draw_n) ? (char*)&guardscb[k + 1]
+                                                : (char*)&gun_scb;
+        wallscb[ncol - 1].next = draw_n ? (char*)&guardscb[0]
+                                        : (char*)&gun_scb;
+        gun_scb.next = flash_t ? (char*)&flash_scb : (char*)&hud_scb;
     }
 }
 
-static void draw_hud (void)
+/* Status-bar glyph readouts (WV / SC / HP / EN). Gated on show_text. */
+static void draw_hud_text (void)
 {
-    gfx_sprite (&hud_scb);          /* panel */
-    gfx_sprite (&hudlt_scb);        /* top highlight edge */
-
-    face_scb.data = faceflash ? face_img2 : face_img;
-    gfx_sprite (&face_scb);
-
     fmt2 (wave, hud_wave + 3);
     fmt3 (score, hud_score + 3);
     fmt3 ((unsigned)health, hud_hp + 3);
@@ -916,39 +1076,40 @@ static void draw (void)
 {
     while (gfx_busy ()) {}
 
-    /* floor fills the viewport, ceiling band over the top half */
-    gfx_setcolor (PEN_FLOOR);
-    gfx_clear ();
+    /* No screen clear: the sky, floor and HUD-panel chain members are opaque
+    ** and cover every row between them (design 9.1 item 1). */
+
+    /* Per-frame field updates for chain members that are not touched by
+    ** project_enemies() (no Suzy math here — just field/pointer stores). The
+    ** gun kicks down on recoil; the face shows its hurt frame on faceflash. */
+    gun_scb.vpos  = 58 + (gunkick ? 4 : 0);
+    face_scb.data = faceflash ? face_img2 : face_img;
+
+    /* One launch walks the whole master chain, back-to-front:
+    ** sky -> floor -> walls -> [enemies] -> gun -> [flash] -> hud
+    ** panel/edge/face. The variable joints were relinked in
+    ** project_enemies(). */
     gfx_sprite (&sky_scb);
+    if (flash_t) --flash_t;         /* flash was linked in for this frame */
 
-    /* one chained engine run paints all 80 wall columns */
-    gfx_sprite (&wallscb[0]);
-
-    draw_enemies ();
-
-    /* gun viewmodel (kicks down on recoil) */
-    gun_scb.vpos = 58 + (gunkick ? 4 : 0);
-    gfx_sprite (&gun_scb);
-    if (flash_t) {
-        gfx_sprite (&flash_scb);
-        --flash_t;
-    }
-
-    /* crosshair */
-    gfx_setcolor (PEN_TEXT);
-    gfx_outtextxy (SCREEN_W / 2 - 4, VIEW_CY - 4, "+");
-
-    draw_hud ();
-
-    if (state == ST_OVER) {
-        gfx_setcolor (PEN_WARN);
-        gfx_outtextxy (44, 30, "GAME OVER");
+    /* All glyph text (crosshair, HUD readouts, banners) is drawn last and
+    ** gated on show_text so Opt 1 flips to a clean, glyph-free view. */
+    if (show_text) {
         gfx_setcolor (PEN_TEXT);
-        gfx_outtextxy (28, 44, "A = NEW GAME");
-    } else if (state == ST_WIN) {
-        gfx_setcolor (PEN_TEXT);
-        gfx_outtextxy (32, 30, "WAVE CLEAR!");
-        gfx_outtextxy (28, 44, "A = NEXT WAVE");
+        gfx_outtextxy (SCREEN_W / 2 - 4, VIEW_CY - 4, "+");   /* crosshair */
+
+        draw_hud_text ();
+
+        if (state == ST_OVER) {
+            gfx_setcolor (PEN_WARN);
+            gfx_outtextxy (44, 30, "GAME OVER");
+            gfx_setcolor (PEN_TEXT);
+            gfx_outtextxy (28, 44, "A = NEW GAME");
+        } else if (state == ST_WIN) {
+            gfx_setcolor (PEN_TEXT);
+            gfx_outtextxy (32, 30, "WAVE CLEAR!");
+            gfx_outtextxy (28, 44, "A = NEXT WAVE");
+        }
     }
 
     gfx_updatedisplay ();
@@ -964,9 +1125,45 @@ void main (void)
     CLI ();
     while (gfx_busy ()) {}
 
-    /* chain the wall SCBs once; fields are rewritten each frame */
-    for (i = 0; i < NCOL; ++i)
-        wallscb[i].next = (i + 1 < NCOL) ? (char*)&wallscb[i + 1] : 0;
+    build_tables ();                /* reciprocal LUTs for cast_walls()   */
+
+    /* Initialise every wall-SCB field that never changes; cast_walls()
+    ** rewrites only vpos, the vsize high byte and penpal[0]. The chain
+    ** links, hpos spacing and hsize depend on the Opt 2 quality setting
+    ** and are (re)built by set_quality(); the wall-run tail
+    ** (wallscb[ncol-1].next) is a variable joint of the master chain and
+    ** is relinked each frame by project_enemies(). */
+    for (i = 0; i < NCOL; ++i) {
+        SCB_REHV_PAL* s = &wallscb[i];
+        s->sprctl0 = BPP_4 | TYPE_NORMAL;
+        s->sprctl1 = LITERAL | REHV;
+        s->sprcoll = NO_COLLIDE;
+        s->data    = solid_img;
+    }
+    set_quality ();                 /* hpos/hsize/.next for 80-col mode */
+
+    /* Shared control/penpal bytes for the billboard SCBs (data/pos/size and
+    ** the .next links are filled per frame by project_enemies()). */
+    for (i = 0; i < NENEMY; ++i) {
+        guardscb[i].sprctl0   = BPP_4 | TYPE_NORMAL;
+        guardscb[i].sprctl1   = LITERAL | REHV;
+        guardscb[i].sprcoll   = NO_COLLIDE;
+        guardscb[i].penpal[0] = (PEN_NONE << 4) | PEN_EUNI;
+        guardscb[i].penpal[1] = (PEN_ESKIN << 4) | PEN_NONE;
+    }
+
+    /* Static joints of the single master sprite chain (the whole frame is one
+    ** gfx_sprite(&sky_scb) launch). Back-to-front z-order:
+    **   sky -> floor -> walls -> [enemies] -> gun -> [flash]
+    **       -> hud panel -> edge -> face
+    ** Only the wall tail, the enemy links and gun->{flash|hud} vary per frame
+    ** (set in project_enemies()); everything else is fixed here. */
+    sky_scb.next   = (char*)&floor_scb;
+    floor_scb.next = (char*)&wallscb[0];
+    flash_scb.next = (char*)&hud_scb;   /* only reached when flash is linked in */
+    hud_scb.next   = (char*)&hudlt_scb;
+    hudlt_scb.next = (char*)&face_scb;
+    face_scb.next  = 0;                 /* end of chain */
 
     MIKEY.mstereo = 0x00;
     snd_silence (&MIKEY.channel_a);
@@ -986,6 +1183,12 @@ void main (void)
         joy = (unsigned char)joy_read ();
         pressed = joy & (unsigned char)~prev_joy;
         prev_joy = joy;
+
+        if (pressed & JOY_OPT1_MASK) show_text ^= 1;   /* clean-view toggle */
+        if (pressed & JOY_OPT2_MASK) {                 /* quality toggle    */
+            lowres ^= 1;
+            set_quality ();
+        }
 
         if (state == ST_PLAY) {
             update_player ();
