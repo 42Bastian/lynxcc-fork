@@ -2694,17 +2694,76 @@ void g_div (unsigned flags, unsigned long val)
     /* Do strength reduction if the value is constant and a power of two */
     int p2;
     if ((flags & CF_CONST) && (p2 = PowerOf2 (val)) >= 0) {
-        /* Generate a shift instead */
-        g_asr (flags, p2);
-    } else {
-        /* Generate a division */
-        if (flags & CF_CONST) {
-            /* lhs is not on stack */
-            flags &= ~CF_FORCECHAR;     /* Handle chars as ints */
-            g_push (flags & ~CF_CONST, 0);
+
+        int UseShift = 1;
+
+        /* An arithmetic shift alone FLOORS (rounds toward negative
+        ** infinity), but ISO C requires signed division to truncate
+        ** toward zero: -7/2 must be -3, a bare asrax1 gives -4. cc65
+        ** 2.19 shipped the bare shift; found live by the compiler audit
+        ** (tests/compiler/corpus/sdiv_pow2.c, doc/compilerbugs.html).
+        ** For negative dividends add (2^p2)-1 before shifting - then
+        ** shift and truncation agree; the adjustment cannot overflow.
+        ** 8/16-bit operands get the adjustment inline below; 32-bit
+        ** signed operands keep using the runtime divide (the sreg
+        ** test-and-adjust sequence would rival tosdiveax in size).
+        */
+        if ((flags & CF_UNSIGNED) == 0 && p2 > 0) {
+            unsigned long Mask = (1UL << p2) - 1;
+            unsigned Label;
+            switch (flags & CF_TYPEMASK) {
+
+                case CF_CHAR:
+                    if (flags & CF_FORCECHAR) {
+                        /* Signed char in A (8-bit wrap keeps the sum
+                        ** correct even when the add carries out) */
+                        Label = GetLocalLabel ();
+                        AddCodeLine ("cmp #$80");
+                        AddCodeLine ("bcc %s", LocalLabelName (Label));
+                        AddCodeLine ("clc");
+                        AddCodeLine ("adc #$%02X", (unsigned char) Mask);
+                        g_defcodelabel (Label);
+                        break;
+                    }
+                    /* FALLTHROUGH - chars in AX are handled as ints */
+
+                case CF_INT:
+                    /* Signed int in AX; the carry out of the low add
+                    ** must propagate into X (-1 + 1 == 0x0000) */
+                    Label = GetLocalLabel ();
+                    AddCodeLine ("cpx #$80");
+                    AddCodeLine ("bcc %s", LocalLabelName (Label));
+                    AddCodeLine ("clc");
+                    AddCodeLine ("adc #$%02X", (unsigned char) Mask);
+                    AddCodeLine ("pha");
+                    AddCodeLine ("txa");
+                    AddCodeLine ("adc #$%02X", (unsigned char) (Mask >> 8));
+                    AddCodeLine ("tax");
+                    AddCodeLine ("pla");
+                    g_defcodelabel (Label);
+                    break;
+
+                default:
+                    /* Signed long: use the runtime divide */
+                    UseShift = 0;
+                    break;
+            }
         }
-        oper (flags, val, ops);
+
+        if (UseShift) {
+            /* Generate a shift instead */
+            g_asr (flags, p2);
+            return;
+        }
     }
+
+    /* Generate a division */
+    if (flags & CF_CONST) {
+        /* lhs is not on stack */
+        flags &= ~CF_FORCECHAR;         /* Handle chars as ints */
+        g_push (flags & ~CF_CONST, 0);
+    }
+    oper (flags, val, ops);
 }
 
 

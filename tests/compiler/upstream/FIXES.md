@@ -19,11 +19,16 @@ Statuses:
   misses it — the corpus file notes which shape ran).
 - **n/a** — parser/diagnostic/build-system only; cannot miscompile.
 
+## Confirmed and FIXED in this fork
+
+| Upstream commit | What | Repro | Status |
+|---|---|---|---|
+| ~`85e73e91` chain (2020-07) | signed `/ 2^k` strength-reduced to arithmetic shift in `g_div` — floor, not C truncation toward zero; `-7/2 == -4`, `-300/256 == -2`. | `corpus/sdiv_pow2.c` | **FIXED 2026-07-19** — `g_div` adds `(2^k)-1` to negative 8/16-bit dividends before the shift; signed 32-bit uses the runtime divide. See `doc/compilerbugs.html`. |
+
 ## Confirmed live in this fork (repros in `corpus/known/`)
 
 | Upstream commit | What | Repro | Status |
 |---|---|---|---|
-| ~`85e73e91` chain (2020-07) | signed `/ 2^k` strength-reduced to arithmetic shift in `g_div` — floor, not C truncation toward zero; `-7/2 == -4`, `-300/256 == -2`. Fork `g_div` is byte-identical to V2.19. | `corpus/known/sdiv_pow2.c` | **CONFIRMED** |
 | `d628772cd1` (2021-02) | signed char compared with unsigned numeric constants gives wrong results | `corpus/known/scharcmp_uconst.c` | **CONFIRMED** |
 | `c8956ce19b` (2022-03) | signed long compared with smaller unsigned types gives wrong results (`-2L < 40000u` false) | `corpus/known/slongcmp_mixed.c` | **CONFIRMED** |
 | `1450f146a5` (2021-05) | `[]`/`()`/`.`/`->` after a postfix `++`/`--` — this fork REJECTS `p++[0]` with a parse error (accepts-valid bug, not a miscompile) | noted in `corpus/upstream_shapes.c` | **CONFIRMED** (parse) |

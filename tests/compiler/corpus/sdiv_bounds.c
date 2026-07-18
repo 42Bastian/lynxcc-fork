@@ -40,19 +40,20 @@ u32 t_sdiv_bounds (void)
         }
     }
 
-    /* variable / constant: strength-reduced path. Signed division by a
-    ** POWER OF TWO constant (n/2, n/8, n/256 ...) is deliberately absent
-    ** here: this fork inherits cc65 2.19's g_div, which strength-reduces
-    ** it to an arithmetic shift (floor, not C's truncation toward zero).
-    ** That known miscompile lives in corpus/known/sdiv_pow2.c until the
-    ** upstream fix is ported (tests/compiler/upstream/FIXES.md). */
+    /* variable / constant: strength-reduced path, powers of two and not.
+    ** The signed / 2^k shapes were cc65 2.19's floor-instead-of-truncate
+    ** miscompile, fixed in g_div 2026-07-19 — dedicated regression in
+    ** corpus/sdiv_pow2.c, history in doc/compilerbugs.html. */
     for (i = 0; i < 8; ++i) {
         n = nums[i];
+        crc = crcstep (crc, (u32) (u16) (i16) (n / 2));
         crc = crcstep (crc, (u32) (u16) (i16) (n % 2));
+        crc = crcstep (crc, (u32) (u16) (i16) (n / 8));
         crc = crcstep (crc, (u32) (u16) (i16) (n % 8));
         crc = crcstep (crc, (u32) (u16) (i16) (n / -2));
         crc = crcstep (crc, (u32) (u16) (i16) (n / 10));
         crc = crcstep (crc, (u32) (u16) (i16) (n % 10));
+        crc = crcstep (crc, (u32) (u16) (i16) (n / 256));
         crc = crcstep (crc, (u32) (u16) (i16) (n % 256));
     }
 

@@ -234,16 +234,21 @@ Markers in test sources: `no-host` (fork-only syntax, skip host oracle),
 only — data directives and immediates carrying $FCxx/$FDxx values are
 constants, not accesses.
 
-### 8.2 Findings (all logged, none fixed yet — sec. 8.3)
+### 8.2 Findings (finding 1 fixed 2026-07-19; 2–4 open, sec. 8.3)
 
 Found by the host-twin oracle: all four are in BASE codegen/parse, live at
 every -O level, so the O-differential alone could never see them — and all
 four match fixes upstream shipped after 2.19 (T6 classification in
-`tests/compiler/upstream/FIXES.md`):
+`tests/compiler/upstream/FIXES.md`). The user-facing tracker for fixed and
+open bugs is `doc/compilerbugs.html`.
 
 1. **Signed `/ 2^k` floors instead of truncating** — `g_div` strength-
    reduces to `asrax*` (and a sign-extended byte move for `/256`);
-   `-7/2 == -4`, `-300/256 == -2`. Repro `corpus/known/sdiv_pow2.c`.
+   `-7/2 == -4`, `-300/256 == -2`. **FIXED 2026-07-19** per sec. 5:
+   negative 8/16-bit dividends get `(2^k)-1` added before the shift
+   (signed 32-bit falls back to the runtime divide); regression promoted
+   from `known/` to `corpus/sdiv_pow2.c`, and the harness's stale-marker
+   check fired exactly as designed when the fix landed.
 2. **signed char vs unsigned constant comparison** wrong (upstream
    `d628772cd1`). Repro `corpus/known/scharcmp_uconst.c`.
 3. **signed long vs smaller unsigned comparison** wrong (upstream
@@ -266,7 +271,7 @@ User-facing summary of the four findings: `doc/optlim.html` sec. 3.
 
 ### 8.3 Deliberately not done
 
-Compiler fixes for the findings (kept as XFAIL known-bug regressions per
+Compiler fixes for findings 2–4 (kept as XFAIL known-bug regressions per
 sec. 5, so the fix-side workflow starts with a failing test), phase 4
 fork-diff review, phase 5 nightly seed sweeps, and porting of the
 "applies?" candidates in FIXES.md.
