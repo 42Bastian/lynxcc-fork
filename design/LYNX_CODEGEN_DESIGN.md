@@ -365,7 +365,10 @@ values 0/1/$7FFF/$8000/$FFFF, randoms, and exhaustive small cases), for both sig
 the old separate-op path diverged on ~199,982 of them (the overflow now fixed). Compiler
 output confirmed: signed→`tossuzymuldivax`, unsigned→`tossuzyumuldivax`, a lone `!*` still
 emits `tossuzymulax`, and `a !* b !/ c !/ d` fuses the first pair then chains a plain
-`tossuzydivax`. Pending: on-emulator/hardware run.
+`tossuzydivax`. **On-emulator run done (2026-07-19):** `examples/suzy/muldivtest.lnx`
+booted on headless GearLynx reports `ALL PASS` — MDS 3840/3840 and MDU 3840/3840 fused
+muldiv cases (16³ corner triples minus `c == 0`), each Suzy result matching its
+independent 32-bit `long` software reference.
 
 #### 2.6.2 Effect on the shipped library code
 
@@ -481,7 +484,11 @@ caveat above). `muldivtest` now sweeps plain `!/` and `!%` (signed and unsigned)
 the fused operator, over a corner table that includes divisors `1`/`127`/`255` (narrow),
 `256` (boundary) and `$FFFF`/`30000`/`32767` (wide), comparing each against the stock
 software `/`/`%`. A host model of the exact byte stores validated 0 mismatches over all 176
-narrow-path corner pairs (unsigned and signed div/mod). Pending: on-emulator/hardware run.
+narrow-path corner pairs (unsigned and signed div/mod). **On-emulator run done
+(2026-07-19):** the same `muldivtest` cart on headless GearLynx passes every sweep —
+DVS 240/240, DVU 240/240, MOS 240/240, MOU 240/240 — so the normalized narrow path and
+the wide path both agree with the stock software `/` and `%` on real emulated Suzy
+hardware, not just in the host model.
 
 ### 2.7 Infrastructure: a cycle-cost model — IMPLEMENTED
 
@@ -558,18 +565,22 @@ ABI changes would break every existing object file and driver.
 | Direct codegen (§2.3) | general | 1–3% on unoptimized builds |
 | SMC runtime (§2.5) | block copy/fill loops | measured 8–12% on memcpy/memset n ≥ 256 |
 | Suzy hardware math (§2.6) | int multiply/divide/modulo | 3–8× on those operations |
-| Speed-biased stack inline (§2.7) | bare `incsp1`/`incsp2` drops at `-Oi` | 12/9 cyc per site (rare; 2 sites in corpus), +14 bytes total |
+| Speed-biased stack inline (§2.7) | bare `incsp1`/`incsp2` drops at `-Oi` | 12/9 cyc per site modelled, ≈15.8 measured on GearLynx (§6); +14 bytes total |
 
 ## 5. Verification plan
 
 1. **Correctness**: rebuild `lynx.lib`; assemble-and-compare — for each changed runtime
-   routine, a sim65-style unit harness is gone from this tree, so use Handy/Mednafen emulator
-   test ROMs built from `examples/lynxdemo/lynxdemo.c` plus targeted test programs per routine.
+   routine, a sim65-style unit harness is gone from this tree, so use headless GearLynx
+   (`tests/emu/gearlynx`, driven over its MCP interface) with test ROMs built from
+   `examples/lynxdemo/lynxdemo.c` plus targeted test programs per routine —
+   `examples/suzy/muldivtest.c` is the Suzy-math one.
 2. **Register-contract audit**: any routine whose header documents exit register state
    (e.g. `pushax`'s Y contract) gets its contract re-validated against `codeinfo.c` tables.
-3. **Performance**: cycle-count micro-benchmarks in an emulator with cycle counting
-   (Mednafen debugger), before/after per change; compare `.map` sizes as a proxy for fetch
-   cost.
+3. **Performance**: cycle-count micro-benchmarks on headless GearLynx, before/after per
+   change; compare `.map` sizes as a proxy for fetch cost. Method (§6): bracket the measured
+   region with two empty marker functions, breakpoint the second one, and read `total_ticks`
+   from `get_6502_status`; tick counts are deterministic across launches, and a `nop`-loop
+   calibration cart converts ticks to effective CPU cycles.
 4. **Regression**: compile the library and sample at `-O`, `-Oi`, `-Or`, `-Os` and diff
    generated `.s` output between baseline and patched compiler to confirm changes are
    intentional.
@@ -590,5 +601,23 @@ Cycle-model verification used the existing tooling: a standalone harness links t
 hand-encoded authoritative reference (0/150); the speed pass was A/B'd with
 `--disable-opt Opt65C02StackOps` to isolate its effect, the transformed `.s` re-assembled
 clean with `ca65`, and a label-canonicalised diff confirmed only the intended sites change.
-On-emulator (Handy/Mednafen) cycle-count confirmation of the inlined drops remains pending,
-as for the other runtime changes.
+
+**On-emulator cycle confirmation — done (2026-07-19, headless GearLynx).** The A/B pair was
+turned into a timed cart: a 200-iteration loop whose odd iterations allocate a two-byte local
+(one `jsr incsp2` drop site, so 100 executions), bracketed by two empty marker functions used
+as execution breakpoints, built twice from identical source with and without
+`--disable-opt Opt65C02StackOps`. Emulator tick counts at the end marker are deterministic
+(bit-identical across separate launches): **10,427,123 inlined vs 10,433,421 called — 6,298
+ticks saved over 100 sites, 63.0 ticks per site.** A calibration cart (the same loop plus
+1,000 `nop`s) measures 11.494 ticks per `nop`, i.e. GearLynx ticks run 4 per nominal CPU
+cycle with Lynx RAM wait states inflating a 2-cycle `nop` to ≈2.9 effective cycles. Read
+against that scale the saving is ≈15.8 effective cycles per site, comfortably *above* the
+model's 9 — expected, since the removed `jsr`/`rts` pay stack-RAM wait states the pure-cycle
+table does not model. Direction and magnitude both confirm the pass; the model stays the
+conservative estimator it is meant to be.
+
+The same harness measured absolute runtime-routine costs for the §2.1 fast paths
+(`pushax` + `incsp2` ≈ 355 ticks per iteration, `ldax0sp` ≈ 160 ticks), which are consistent
+with the shipped bodies; a true before/after A/B for §2.1 would need the pre-fast-path
+library rebuilt from history and was not attempted. Benchmark carts are throwaway (built
+under the outputs directory), not committed.
