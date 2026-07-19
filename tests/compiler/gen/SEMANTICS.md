@@ -31,7 +31,7 @@ it deliberately, the generator only shifts in the unsigned domain.
 **Division and modulo divisors are forced nonzero** by emitting
 `((U)(b) | 1u)`; generated `/ %` stay in the unsigned domain (the
 signed-division edge cases are directed-corpus territory —
-`corpus/sdiv_bounds.c` and `corpus/known/sdiv_pow2.c`).
+`corpus/sdiv_bounds.c` and `corpus/sdiv_pow2.c`).
 
 **Array indexes are masked to the array bounds** (sizes are powers of
 two) at every subscript, and the generator emits BOTH constant and

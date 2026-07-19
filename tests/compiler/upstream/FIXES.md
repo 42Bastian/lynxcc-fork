@@ -24,17 +24,15 @@ Statuses:
 | Upstream commit | What | Repro | Status |
 |---|---|---|---|
 | ~`85e73e91` chain (2020-07) | signed `/ 2^k` strength-reduced to arithmetic shift in `g_div` — floor, not C truncation toward zero; `-7/2 == -4`, `-300/256 == -2`. | `corpus/sdiv_pow2.c` | **FIXED 2026-07-19** — `g_div` adds `(2^k)-1` to negative 8/16-bit dividends before the shift; signed 32-bit uses the runtime divide. See `doc/compilerbugs.html`. |
+| `d628772cd1` (2021-02) | signed char compared with unsigned numeric constants gives wrong results | `corpus/scharcmp_uconst.c` | **FIXED 2026-07-19** — direct port of the upstream fix into `hie_compare`: the char-vs-constant fast path now requires a signed constant; mixed signedness compares full-width unsigned. |
+| `c8956ce19b` (2022-03) | signed long compared with smaller unsigned types gives wrong results (`-2L < 40000u` false) | `corpus/slongcmp_mixed.c` | **FIXED 2026-07-19** — fork equivalent of the upstream fix: `g_typeadjust` now applies the usual arithmetic conversions (a smaller unsigned operand converts to plain signed long; only an unsigned long makes the operation unsigned), and `hie_compare`'s constant fold and unsigned strength reduction follow the converted common type. Also corrects signed-long `/`/`%` with smaller unsigned operands. |
+| `1450f146a5` (2021-05) | `[]`/`()`/`.`/`->` after a postfix `++`/`--` — this fork REJECTED `p++[0]` with a parse error (accepts-valid bug, not a miscompile) | `corpus/upstream_shapes.c` (`p++[0]` shape) | **FIXED 2026-07-19** — upstream port: postfix `++`/`--` moved into `hie11`'s postfix-operator loop. |
 
 ## Confirmed live in this fork (repros in `corpus/known/`)
 
-| Upstream commit | What | Repro | Status |
-|---|---|---|---|
-| `d628772cd1` (2021-02) | signed char compared with unsigned numeric constants gives wrong results | `corpus/known/scharcmp_uconst.c` | **CONFIRMED** |
-| `c8956ce19b` (2022-03) | signed long compared with smaller unsigned types gives wrong results (`-2L < 40000u` false) | `corpus/known/slongcmp_mixed.c` | **CONFIRMED** |
-| `1450f146a5` (2021-05) | `[]`/`()`/`.`/`->` after a postfix `++`/`--` — this fork REJECTS `p++[0]` with a parse error (accepts-valid bug, not a miscompile) | noted in `corpus/upstream_shapes.c` | **CONFIRMED** (parse) |
-
-Fixing any of these follows the sec. 5 workflow; when a repro stops
-diverging the harness flags its `known-bug` marker as stale.
+None currently open. When a new find is confirmed it gets a `known-bug`
+repro here, fixing it follows the sec. 5 workflow, and when the repro
+stops diverging the harness flags its `known-bug` marker as stale.
 
 ## Probed and passing (`corpus/upstream_shapes.c` and friends)
 

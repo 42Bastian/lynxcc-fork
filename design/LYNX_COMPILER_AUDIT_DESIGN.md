@@ -2,9 +2,10 @@
 
 Status: phases 1–3 IMPLEMENTED (2026-07-19) — harness, directed corpus,
 upstream fix mining, and the lynxsmith generator are in `tests/compiler/`
-and wired into `tests/run.sh` as the "compiler audit" stage. Findings so
-far are logged in sec. 8; fixes are deliberately deferred (sec. 8.3).
-Phases 4 (fork-diff review) and 5 (nightly-scale sweeps) remain open.
+and wired into `tests/run.sh` as the "compiler audit" stage. All four
+findings logged in sec. 8 are FIXED (2026-07-19); `corpus/known/` is
+empty. Phases 4 (fork-diff review) and 5 (nightly-scale sweeps) remain
+open.
 
 ## 1. Motivation
 
@@ -234,7 +235,7 @@ Markers in test sources: `no-host` (fork-only syntax, skip host oracle),
 only — data directives and immediates carrying $FCxx/$FDxx values are
 constants, not accesses.
 
-### 8.2 Findings (finding 1 fixed 2026-07-19; 2–4 open, sec. 8.3)
+### 8.2 Findings (all four FIXED 2026-07-19)
 
 Found by the host-twin oracle: all four are in BASE codegen/parse, live at
 every -O level, so the O-differential alone could never see them — and all
@@ -250,12 +251,32 @@ open bugs is `doc/compilerbugs.html`.
    from `known/` to `corpus/sdiv_pow2.c`, and the harness's stale-marker
    check fired exactly as designed when the fix landed.
 2. **signed char vs unsigned constant comparison** wrong (upstream
-   `d628772cd1`). Repro `corpus/known/scharcmp_uconst.c`.
+   `d628772cd1`). **FIXED 2026-07-19** by porting the upstream fix into
+   `hie_compare` (`compiler/cc65/expr.c`): the char-vs-constant fast
+   path now requires a signed constant, and mixed signedness falls
+   through to the full-width unsigned compare. Regression promoted from
+   `known/` to `corpus/scharcmp_uconst.c`.
 3. **signed long vs smaller unsigned comparison** wrong (upstream
-   `c8956ce19b`); `-2L < 40000u` is false. Repro
-   `corpus/known/slongcmp_mixed.c`.
+   `c8956ce19b`); `-2L < 40000u` was false. **FIXED 2026-07-19** — the
+   upstream commit removes machinery this 2.19 base never had, so the
+   fork fix goes to the root instead: `g_typeadjust`
+   (`compiler/cc65/codegen.c`) now applies the usual arithmetic
+   conversions — a smaller unsigned operand converts to plain (signed)
+   long; only an unsigned long operand makes the operation unsigned —
+   and `hie_compare`'s both-constant fold and unsigned strength
+   reduction (`< 1` ⇒ `== 0` etc.) follow the converted common type
+   instead of raw operand signedness. Because `g_typeadjust` feeds all
+   binary generators, this also corrects signed-long `/` and `%` with
+   smaller unsigned operands (helper selection tosdiv/tosmod vs
+   tosudiv/tosumod); the promoted regression `corpus/slongcmp_mixed.c`
+   covers the compare, strength-reduction, and div/mod shapes.
 4. **`p++[0]` rejected by the parser** (upstream `1450f146a5`) —
-   accepts-valid bug, noted in `corpus/upstream_shapes.c`.
+   accepts-valid bug. **FIXED 2026-07-19** by porting the upstream fix:
+   postfix `++`/`--` moved from `hie10`'s epilogue into `hie11`'s
+   postfix-operator loop (with forward declarations for
+   `PostInc`/`PostDec`), so `[]`, `()`, `.`, `->`, and further
+   `++`/`--` may follow a postfix inc/dec. Executable `p++[0]` shape
+   added to `corpus/upstream_shapes.c`.
 
 Everything else is green: the 13-file directed corpus (member-address
 shapes, inc/dec lvalues, char promotion, div/mod boundaries, 32-bit
@@ -271,7 +292,7 @@ User-facing summary of the four findings: `doc/optlim.html` sec. 3.
 
 ### 8.3 Deliberately not done
 
-Compiler fixes for findings 2–4 (kept as XFAIL known-bug regressions per
-sec. 5, so the fix-side workflow starts with a failing test), phase 4
-fork-diff review, phase 5 nightly seed sweeps, and porting of the
-"applies?" candidates in FIXES.md.
+Phase 4 fork-diff review, phase 5 nightly seed sweeps, and porting of
+the "applies?" candidates in FIXES.md. (Findings 2–4 were fixed
+2026-07-19 following the sec. 5 workflow — each fix started from its
+XFAIL known-bug regression, and `corpus/known/` is now empty.)

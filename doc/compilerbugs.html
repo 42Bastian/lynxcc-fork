@@ -72,42 +72,59 @@ inherited from the upstream cc65&nbsp;2.19 base this SDK forked from.</div><nav 
   <code>corpus/sdiv_bounds.c</code>; upstream classification in
   <code>tests/compiler/upstream/FIXES.md</code></td>
 </tr>
+<tr>
+<td style="white-space:nowrap">2026-07-19</td>
+<td><code>expr.c</code><br>(<code>hie_compare</code>)</td>
+<td><code>signed char</code> compared with an <strong>unsigned
+  constant</strong> could give the wrong truth value:
+  <code>sc&nbsp;&gt;&nbsp;100u</code>, <code>sc&nbsp;==&nbsp;0x80u</code>&hellip;
+  The char-vs-constant fast path clamped the unsigned constant into char
+  range and compared as a char op. Inherited from cc65&nbsp;2.19; port of
+  upstream fix <code>d628772cd1</code>: the fast path now requires a signed
+  constant, and mixed signedness compares full-width unsigned, as ISO&rsquo;s
+  usual arithmetic conversions require.</td>
+<td>Execution test <code>corpus/scharcmp_uconst.c</code>; upstream
+  classification in <code>tests/compiler/upstream/FIXES.md</code></td>
+</tr>
+<tr>
+<td style="white-space:nowrap">2026-07-19</td>
+<td><code>codegen.c</code><br>(<code>g_typeadjust</code>)<br>
+  <code>expr.c</code><br>(<code>hie_compare</code>)</td>
+<td><code>signed long</code> against a <strong>smaller unsigned
+  type</strong> was compared (and divided) as unsigned:
+  <code>-2L&nbsp;&lt;&nbsp;40000u</code> came out false. ISO converts the
+  smaller unsigned operand to plain (signed) <code>long</code> &mdash; only an
+  <code>unsigned&nbsp;long</code> operand makes the operation unsigned.
+  Inherited from cc65&nbsp;2.19 (upstream fixed it in
+  <code>c8956ce19b</code>); the fork fix teaches
+  <code>g_typeadjust</code> the usual arithmetic conversions and makes
+  <code>hie_compare</code>&rsquo;s constant fold and unsigned strength
+  reduction follow the converted common type. Also corrects signed-long
+  <code>/</code> and <code>%</code> with smaller unsigned operands.</td>
+<td>Execution test <code>corpus/slongcmp_mixed.c</code>; upstream
+  classification in <code>tests/compiler/upstream/FIXES.md</code></td>
+</tr>
+<tr>
+<td style="white-space:nowrap">2026-07-19</td>
+<td>parser<br>(<code>hie11</code>)</td>
+<td>A subscript, call, or member operator directly after a postfix
+  <code>++</code>/<code>--</code> was rejected with a parse error:
+  <code>p++[0]</code> did not compile (accepts-valid bug, not a
+  miscompile). Inherited from cc65&nbsp;2.19; port of upstream fix
+  <code>1450f146a5</code>: postfix <code>++</code>/<code>--</code> are
+  handled in <code>hie11</code>&rsquo;s postfix-operator loop so further
+  postfix operators may follow them.</td>
+<td>Execution test <code>corpus/upstream_shapes.c</code>
+  (<code>p++[0]</code> shape); upstream classification in
+  <code>tests/compiler/upstream/FIXES.md</code></td>
+</tr>
 </tbody>
 </table></div>
 <h2 id="sect-3">3. Known open bugs</h2>
-<p>Confirmed present and not yet fixed. Each has an expected-to-fail
-  regression in <code>tests/compiler/corpus/known/</code> and an upstream
-  fix reference in <code>tests/compiler/upstream/FIXES.md</code>. Until they
-  are fixed, avoid the affected shapes in game code:</p>
-<div class="table-wrap"><table class="grid">
-<thead><tr><th>Component</th><th>Bug</th><th>Workaround</th></tr></thead>
-<tbody>
-<tr>
-<td>comparison codegen</td>
-<td><code>signed char</code> compared with an unsigned constant can give the
-  wrong truth value: <code>sc&nbsp;&gt;&nbsp;100u</code>,
-  <code>sc&nbsp;==&nbsp;0x80u</code>&hellip;
-  (<code>corpus/known/scharcmp_uconst.c</code>)</td>
-<td>Cast explicitly: <code>(int)sc&nbsp;&gt;&nbsp;100</code></td>
-</tr>
-<tr>
-<td>comparison codegen</td>
-<td><code>signed long</code> compared with a smaller unsigned type can give
-  the wrong truth value: <code>-2L&nbsp;&lt;&nbsp;40000u</code> comes out
-  false (<code>corpus/known/slongcmp_mixed.c</code>)</td>
-<td>Cast the unsigned operand to <code>long</code> first</td>
-</tr>
-<tr>
-<td>parser</td>
-<td>A subscript, call, or member operator directly after a postfix
-  <code>++</code>/<code>--</code> is rejected with a parse error:
-  <code>p++[0]</code> does not compile (noted in
-  <code>corpus/upstream_shapes.c</code>)</td>
-<td>Parenthesise or split: <code>(*p++)</code>, or
-  <code>v&nbsp;=&nbsp;p[0];&nbsp;++p;</code></td>
-</tr>
-</tbody>
-</table></div>
+<p>None currently. When the audit confirms a new miscompile it gets an
+  expected-to-fail regression in <code>tests/compiler/corpus/known/</code>,
+  an upstream fix reference in <code>tests/compiler/upstream/FIXES.md</code>,
+  and an entry here with a workaround until it is fixed.</p>
 </article></main><site-foot></site-foot>
 <script src="doc.js"></script>
 </body></html>

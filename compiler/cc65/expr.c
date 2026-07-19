@@ -70,6 +70,13 @@ static GenDesc GenAASGN  = { TOK_AND_ASSIGN,    GEN_NOPUSH,     g_and };
 static GenDesc GenXOASGN = { TOK_XOR_ASSIGN,    GEN_NOPUSH,     g_xor };
 static GenDesc GenOASGN  = { TOK_OR_ASSIGN,     GEN_NOPUSH,     g_or  };
 
+/* Forward declarations for the postfix operators, so that hie11 can chain
+** '[]', '()', '.' and '->' after a postfix '++'/'--' (upstream cc65
+** 1450f146a5).
+*/
+static void PostInc (ExprDesc* Expr);
+static void PostDec (ExprDesc* Expr);
+
 /* Suzy hardware math generators for the fork-specific '!*', '!/' and '!%'
 ** operators (see design/LYNX_CODEGEN_DESIGN.md 2.6). Same precedence, associativity
 ** and type rules as the standard multiplicative operators; only the code
@@ -1339,7 +1346,8 @@ static void hie11 (ExprDesc *Expr)
     Primary (Expr);
 
     /* Check for a rhs */
-    while (CurTok.Tok == TOK_LBRACK || CurTok.Tok == TOK_LPAREN ||
+    while (CurTok.Tok == TOK_INC    || CurTok.Tok == TOK_DEC    ||
+           CurTok.Tok == TOK_LBRACK || CurTok.Tok == TOK_LPAREN ||
            CurTok.Tok == TOK_DOT    || CurTok.Tok == TOK_PTR_REF) {
 
         switch (CurTok.Tok) {
@@ -1381,6 +1389,14 @@ static void hie11 (ExprDesc *Expr)
                     Error ("Struct pointer expected");
                 }
                 StructRef (Expr);
+                break;
+
+            case TOK_INC:
+                PostInc (Expr);
+                break;
+
+            case TOK_DEC:
+                PostDec (Expr);
                 break;
 
             default:
@@ -1892,15 +1908,11 @@ void hie10 (ExprDesc* Expr)
 
             } else {
 
-                /* An expression */
+                /* An expression. Postfix '++'/'--' are handled inside
+                ** hie11 so that further postfix operators may follow
+                ** them (upstream cc65 1450f146a5).
+                */
                 hie11 (Expr);
-
-                /* Handle post increment */
-                switch (CurTok.Tok) {
-                    case TOK_INC:   PostInc (Expr); break;
-                    case TOK_DEC:   PostDec (Expr); break;
-                    default:                        break;
-                }
 
             }
             break;
@@ -2312,9 +2324,19 @@ static void hie_compare (const GenDesc* Ops,    /* List of generators */
             /* Both operands are constant, remove the generated code */
             RemoveCode (&Mark1);
 
-            /* Determine if this is a signed or unsigned compare */
-            if (IsClassInt (Expr->Type) && IsSignSigned (Expr->Type) &&
-                IsClassInt (Expr2.Type) && IsSignSigned (Expr2.Type)) {
+            /* Determine if this is a signed or unsigned compare. Two
+            ** signed operands compare signed; and per the usual
+            ** arithmetic conversions a (32-bit) long can represent all
+            ** values of the smaller unsigned types, so a signed long
+            ** against a smaller unsigned type is also a signed compare
+            ** (upstream cc65 c8956ce19b).
+            */
+            if (IsClassInt (Expr->Type) && IsClassInt (Expr2.Type) &&
+                ((IsSignSigned (Expr->Type) && IsSignSigned (Expr2.Type)) ||
+                 (IsTypeLong (Expr->Type) && IsSignSigned (Expr->Type) &&
+                  !IsTypeLong (Expr2.Type)) ||
+                 (IsTypeLong (Expr2.Type) && IsSignSigned (Expr2.Type) &&
+                  !IsTypeLong (Expr->Type)))) {
 
                 /* Evaluate the result for signed operands */
                 signed long Val1 = Expr->IVal;
@@ -2365,7 +2387,7 @@ static void hie_compare (const GenDesc* Ops,    /* List of generators */
             }
 
             /* Determine the type of the operation. */
-            if (IsTypeChar (Expr->Type) && rconst) {
+            if (IsTypeChar (Expr->Type) && rconst && RightSigned) {
 
                 /* Left side is unsigned char, right side is constant.
                 ** Determine the minimum and maximum values
@@ -2377,20 +2399,6 @@ static void hie_compare (const GenDesc* Ops,    /* List of generators */
                 } else {
                     LeftMin = 0;
                     LeftMax = 255;
-                }
-                /* An integer value is always represented as a signed in the
-                ** ExprDesc structure. This may lead to false results below,
-                ** if it is actually unsigned, but interpreted as signed
-                ** because of the representation. Fortunately, in this case,
-                ** the actual value doesn't matter, since it's always greater
-                ** than what can be represented in a char. So correct the
-                ** value accordingly.
-                */
-                if (!RightSigned && Expr2.IVal < 0) {
-                    /* Correct the value so it is an unsigned. It will then
-                    ** anyway match one of the cases below.
-                    */
-                    Expr2.IVal = LeftMax + 1;
                 }
 
                 /* Comparing a char against a constant may have a constant
@@ -2471,7 +2479,7 @@ static void hie_compare (const GenDesc* Ops,    /* List of generators */
                 if (rconst) {
                     flags |= CF_FORCECHAR;
                 }
-                if (!LeftSigned) {
+                if (!LeftSigned || !RightSigned) {
                     flags |= CF_UNSIGNED;
                 }
             } else {
@@ -2479,11 +2487,14 @@ static void hie_compare (const GenDesc* Ops,    /* List of generators */
                 flags |= g_typeadjust (ltype, rtype);
             }
 
-            /* If the left side is an unsigned and the right is a constant,
-            ** we may be able to change the compares to something more
-            ** effective.
+            /* If the comparison is made as unsigned types and the right is a
+            ** constant, we may be able to change the compares to something more
+            ** effective. The signedness of the comparison is the signedness
+            ** of the common type determined above (flags), NOT that of the
+            ** operands: a smaller unsigned operand converts to plain signed
+            ** long (upstream cc65 c8956ce19b).
             */
-            if (!LeftSigned && rconst) {
+            if ((flags & CF_UNSIGNED) != 0 && rconst) {
 
                 switch (Tok) {
 

@@ -1359,13 +1359,33 @@ unsigned g_typeadjust (unsigned lhs, unsigned rhs)
     ltype = lhs & CF_TYPEMASK;
     rtype = rhs & CF_TYPEMASK;
 
+    /* Determine the result type for the operation:
+    **  - The result is const if both operands are const.
+    **  - The result is long if one of the operands is long.
+    **  - The signedness follows the usual arithmetic conversions: for
+    **    equal-rank operands either one being unsigned makes the result
+    **    unsigned, but a (32-bit) long can represent all values of the
+    **    smaller unsigned types, so a smaller unsigned operand converts
+    **    to plain (signed) long and only an unsigned long operand makes
+    **    a long result unsigned (upstream cc65 c8956ce19b).
+    **  - Otherwise the result is int sized.
+    */
+    result = (lhs & CF_CONST) & (rhs & CF_CONST);
+    if (ltype == CF_LONG || rtype == CF_LONG) {
+        result |= CF_LONG;
+        if ((ltype == CF_LONG && (lhs & CF_UNSIGNED)) ||
+            (rtype == CF_LONG && (rhs & CF_UNSIGNED))) {
+            result |= CF_UNSIGNED;
+        }
+    } else {
+        result |= (lhs & CF_UNSIGNED) | (rhs & CF_UNSIGNED);
+        result |= CF_INT;
+    }
+
     /* Check if a conversion is needed */
     if (ltype == CF_LONG && rtype != CF_LONG && (rhs & CF_CONST) == 0) {
         /* We must promote the primary register to long */
         g_reglong (rhs);
-        /* Get the new rhs type */
-        rhs = (rhs & ~CF_TYPEMASK) | CF_LONG;
-        rtype = CF_LONG;
     } else if (ltype != CF_LONG && (lhs & CF_CONST) == 0 && rtype == CF_LONG) {
         /* We must promote the lhs to long */
         if (lhs & CF_REG) {
@@ -1373,24 +1393,8 @@ unsigned g_typeadjust (unsigned lhs, unsigned rhs)
         } else {
             g_toslong (lhs);
         }
-        /* Get the new rhs type */
-        lhs = (lhs & ~CF_TYPEMASK) | CF_LONG;
-        ltype = CF_LONG;
     }
 
-    /* Determine the result type for the operation:
-    **  - The result is const if both operands are const.
-    **  - The result is unsigned if one of the operands is unsigned.
-    **  - The result is long if one of the operands is long.
-    **  - Otherwise the result is int sized.
-    */
-    result = (lhs & CF_CONST) & (rhs & CF_CONST);
-    result |= (lhs & CF_UNSIGNED) | (rhs & CF_UNSIGNED);
-    if (rtype == CF_LONG || ltype == CF_LONG) {
-        result |= CF_LONG;
-    } else {
-        result |= CF_INT;
-    }
     return result;
 }
 

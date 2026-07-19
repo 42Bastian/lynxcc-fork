@@ -86,14 +86,17 @@ u32 t_upstream_shapes (void)
         gc = 0;
         v = (*p++);
         crc = crcstep (crc, (u32) v);
-        /* NOTE p++[0] (subscript after postfix ++) is REJECTED by this
-        ** fork's parser — upstream fixed that in 1450f146a5 ("'[]', '()'
-        ** '.' and '->' operators following a postfix increment/
-        ** decrement"). Classified in upstream/FIXES.md; the shape below
-        ** is the spelling that does compile. */
+        /* p++[0] (subscript after postfix ++) was REJECTED by this
+        ** fork's parser until 2026-07-19, when upstream 1450f146a5
+        ** ("'[]', '()' '.' and '->' operators following a postfix
+        ** increment/decrement") was ported: postfix ++/-- now live in
+        ** hie11's postfix-operator loop. p++[0] reads the element BEFORE
+        ** the increment (the ++ yields the old pointer value). */
+        v = p++[0];
+        crc = crcstep (crc, (u32) v);               /* arr[1] == 20 */
         v = *(p++);
         crc = crcstep (crc, (u32) v);
-        crc = crcstep (crc, (u32) (u16) (p - arr));       /* 2 */
+        crc = crcstep (crc, (u32) (u16) (p - arr));       /* 3 */
         v = (u16) sizeof (gc++);        /* gc must NOT change */
         crc = crcstep (crc, (u32) v);
         crc = crcstep (crc, (u32) gc);
