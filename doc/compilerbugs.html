@@ -119,7 +119,7 @@ inherited from the upstream cc65&nbsp;2.19 base this SDK forked from.</div><nav 
   <code>tests/compiler/upstream/FIXES.md</code></td>
 </tr>
 <tr>
-<td style="white-space:nowrap">2026-07-19</td>
+<td style="white-space:nowrap">2026-07-19<br><code>d42945671</code></td>
 <td><code>coptind.c</code><br>(<code>OptDeadCode</code>)</td>
 <td>In a jump-table-dispatched <code>switch</code> (5+ dense cases), a case
   body consisting of a bare infinite loop &mdash;
@@ -133,7 +133,7 @@ inherited from the upstream cc65&nbsp;2.19 base this SDK forked from.</div><nav 
   shape test <code>tests/compiler/forkdiff_t5.py</code></td>
 </tr>
 <tr>
-<td style="white-space:nowrap">2026-07-19</td>
+<td style="white-space:nowrap">2026-07-19<br><code>d42945671</code></td>
 <td><code>expr.c</code><br>(fused muldiv)</td>
 <td>The fused <code>a&nbsp;!*&nbsp;b&nbsp;!/&nbsp;c</code> silently truncated
   a <code>long</code> divisor to 16 bits (<code>c&nbsp;==&nbsp;0x10000</code>
@@ -147,7 +147,7 @@ inherited from the upstream cc65&nbsp;2.19 base this SDK forked from.</div><nav 
   diagnostic test <code>tests/compiler/forkdiff_t5.py</code></td>
 </tr>
 <tr>
-<td style="white-space:nowrap">2026-07-19</td>
+<td style="white-space:nowrap">2026-07-19<br><code>d42945671</code></td>
 <td><code>codegen.c</code><br>(<code>g_suzydiv</code>)</td>
 <td>Signed <code>!/</code> by a <strong>power-of-two constant</strong>
   floored instead of truncating: <code>-7&nbsp;!/&nbsp;2</code> gave
