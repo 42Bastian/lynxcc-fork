@@ -350,6 +350,27 @@ void CE_ClearJumpTo (CodeEntry* E)
 
 
 
+int CE_HasRetainedLabel (const CodeEntry* E)
+/* Check if any label attached to the entry is marked CLF_RETAINED, i.e.
+** referenced from data (e.g. a switch jump table). Such an entry may be
+** reached through references the optimizer cannot see, so passes that
+** justify a deletion or move by enumerating a label's visible references
+** must check this first (see OptDeadCode's self-jump exception).
+*/
+{
+    unsigned I;
+    unsigned Count = CollCount (&E->Labels);
+    for (I = 0; I < Count; ++I) {
+        const CodeLabel* L = CollConstAt (&E->Labels, I);
+        if (L->Flags & CLF_RETAINED) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
+
 void CE_MoveLabel (CodeLabel* L, CodeEntry* E)
 /* Move the code label L from it's former owner to the code entry E. */
 {

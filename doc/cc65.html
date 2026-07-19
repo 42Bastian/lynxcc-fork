@@ -1318,8 +1318,14 @@ several times faster than the software loops.</p>
         form <code>a !* b !/ c</code> &mdash; when both factors are runtime 16-bit
         ints &mdash; as a single operation that keeps the full 32-bit product as
         the dividend, avoiding the overflow. A constant or <code>long</code>
-        operand, or a trailing <code>!%</code>, falls back to the per-operator
-        path.</p>
+        <em>factor</em>, or a trailing <code>!%</code>, falls back to the
+        per-operator path. The <em>divisor</em> of the fused form must be a
+        16-bit integer &mdash; the Suzy divider takes 16 bits, and by the time
+        the divisor&rsquo;s type is known the fusion is already committed, so a
+        <code>long</code> divisor is a compile error rather than a silent
+        truncation. Write <code>(a&nbsp;!*&nbsp;b)&nbsp;!/&nbsp;c</code> to
+        divide by a <code>long</code>: the parenthesized form takes the
+        standalone path (16-bit product, software long division).</p>
 </li>
 <li>
 <p>The hardware remainder register is unusable (a documented Lynx bug), so

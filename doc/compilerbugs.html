@@ -118,6 +118,48 @@ inherited from the upstream cc65&nbsp;2.19 base this SDK forked from.</div><nav 
   (<code>p++[0]</code> shape); upstream classification in
   <code>tests/compiler/upstream/FIXES.md</code></td>
 </tr>
+<tr>
+<td style="white-space:nowrap">2026-07-19</td>
+<td><code>coptind.c</code><br>(<code>OptDeadCode</code>)</td>
+<td>In a jump-table-dispatched <code>switch</code> (5+ dense cases), a case
+  body consisting of a bare infinite loop &mdash;
+  <code>case&nbsp;k:&nbsp;for(;;);</code> &mdash; was deleted as dead code:
+  the pass&rsquo;s self-jump exception counted only the visible jump
+  reference and could not see the case label&rsquo;s reference from the
+  rodata jump table, so dispatching <code>k</code> fell into the next case.
+  Fork-introduced (<code>0d92ee308</code>); found by the phase-4 fork-diff
+  review (T5).</td>
+<td><code>design/LYNX_COMPILER_AUDIT_DESIGN.md</code> sec.&nbsp;9 (F1);
+  shape test <code>tests/compiler/forkdiff_t5.py</code></td>
+</tr>
+<tr>
+<td style="white-space:nowrap">2026-07-19</td>
+<td><code>expr.c</code><br>(fused muldiv)</td>
+<td>The fused <code>a&nbsp;!*&nbsp;b&nbsp;!/&nbsp;c</code> silently truncated
+  a <code>long</code> divisor to 16 bits (<code>c&nbsp;==&nbsp;0x10000</code>
+  even became a divide by zero). Now a compile error &mdash; the Suzy divider
+  takes 16 bits and the divisor&rsquo;s type is only known after the fusion
+  is committed; write <code>(a&nbsp;!*&nbsp;b)&nbsp;!/&nbsp;c</code> to
+  divide by a <code>long</code> through the software routines.
+  Fork-introduced (<code>ad4095a6c</code>); found by the phase-4 fork-diff
+  review (T5).</td>
+<td><code>design/LYNX_COMPILER_AUDIT_DESIGN.md</code> sec.&nbsp;9 (F2);
+  diagnostic test <code>tests/compiler/forkdiff_t5.py</code></td>
+</tr>
+<tr>
+<td style="white-space:nowrap">2026-07-19</td>
+<td><code>codegen.c</code><br>(<code>g_suzydiv</code>)</td>
+<td>Signed <code>!/</code> by a <strong>power-of-two constant</strong>
+  floored instead of truncating: <code>-7&nbsp;!/&nbsp;2</code> gave
+  <code>-4</code> instead of <code>-3</code>. Same class as the
+  <code>g_div</code> bug above, reintroduced by strength-reducing straight
+  to <code>g_asr</code> and bypassing the fixup; now delegates to
+  <code>g_div</code>. Fork-introduced (<code>d2908f2a6</code>); found by
+  the phase-4 fork-diff review (T5).</td>
+<td><code>design/LYNX_COMPILER_AUDIT_DESIGN.md</code> sec.&nbsp;9 (F3);
+  execution test <code>corpus/suzyops.c</code> (constant power-of-two
+  section)</td>
+</tr>
 </tbody>
 </table></div>
 <h2 id="sect-3">3. Known open bugs</h2>

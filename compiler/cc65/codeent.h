@@ -155,6 +155,14 @@ INLINE CodeLabel* CE_GetLabel (CodeEntry* E, unsigned Index)
 #  define CE_GetLabel(E, Index) CollAt (&(E)->Labels, (Index))
 #endif
 
+int CE_HasRetainedLabel (const CodeEntry* E);
+/* Check if any label attached to the entry is marked CLF_RETAINED, i.e.
+** referenced from data (e.g. a switch jump table). Such an entry may be
+** reached through references the optimizer cannot see, so passes that
+** justify a deletion or move by enumerating a label's visible references
+** must check this first (see OptDeadCode's self-jump exception).
+*/
+
 void CE_MoveLabel (CodeLabel* L, CodeEntry* E);
 /* Move the code label L from it's former owner to the code entry E. */
 

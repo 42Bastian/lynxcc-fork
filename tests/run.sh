@@ -36,6 +36,7 @@ make -C "$HERE/unit"
 echo
 echo "== compiler =="
 python3 "$HERE/compiler/member_addr_cast.py"
+python3 "$HERE/compiler/forkdiff_t5.py"
 
 echo
 echo "== compiler audit =="

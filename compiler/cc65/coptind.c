@@ -401,7 +401,13 @@ unsigned OptDeadCode (CodeSeg* S)
 
         /* Check if it's an unconditional branch, and if the next entry has
         ** no labels attached, or if the label is just used so that the insn
-        ** can jump to itself.
+        ** can jump to itself. The self-jump exception must not fire when the
+        ** entry carries a retained label (CLF_RETAINED): such a label is
+        ** referenced from data (e.g. a switch jump table), so the refcount
+        ** of the visible jump does not prove the entry is unreachable -
+        ** deleting it would make the table dispatch into whatever follows
+        ** (found by the phase-4 fork-diff review, see
+        ** design/LYNX_COMPILER_AUDIT_DESIGN.md sec. 9).
         */
         if ((E->Info & OF_DEAD) != 0                     &&     /* Dead code follows */
             (N = CS_GetNextEntry (S, I)) != 0            &&     /* Has next entry */
@@ -409,7 +415,8 @@ unsigned OptDeadCode (CodeSeg* S)
              ((N->Info & OF_UBRA) != 0          &&              /* Uncond branch */
               (LN = N->JumpTo) != 0             &&              /* Jumps to known label */
               LN->Owner == N                    &&              /* Attached to insn */
-              CL_GetRefCount (LN) == 1))) {                     /* Only reference */
+              CL_GetRefCount (LN) == 1          &&              /* Only visible reference */
+              !CE_HasRetainedLabel (N)))) {                     /* No data references */
 
             /* Delete the next entry */
             CS_DelEntry (S, I+1);

@@ -335,8 +335,17 @@ product in `MATHE..MATHH`, which *is* the divide's dividend register. So the par
 the chain into one operation: when `hie_internal` (multiplicative level) sees a Suzy `!*`
 immediately followed by a Suzy `!/`, with both factors runtime 16-bit ints, it pushes both
 factors, parses the divisor, and emits `g_suzymuldiv` instead of two separate generators.
-Any constant/long operand, or a following `!%`, falls through to the standard
-per-operator path (still correct). This is the legitimate, *polled* form of the
+A constant or long *factor*, or a following `!%`, falls through to the standard
+per-operator path (still correct). The *divisor* is different: its type is only
+known after the fusion is committed (the `!/` tokens consumed, its code emitted),
+so a fall-through is impossible in the one-pass parser — a `long` divisor is a
+**compile error** ("must be a 16-bit integer"), with the parenthesized spelling
+`(a !* b) !/ c` as the escape hatch: it takes the standalone path and the software
+long division, with standalone (16-bit product) semantics. Truncating silently
+instead would miscompile — a divisor of `0x10000` even becomes a divide by zero
+(phase-4 fork-diff review finding F2, `design/LYNX_COMPILER_AUDIT_DESIGN.md`
+sec. 9). A constant 16-bit divisor stays fused, and correctly divides the full
+32-bit product. This is the legitimate, *polled* form of the
 multiply→divide register chaining that the "QbertRoot" hardware joke (hardware docs 12.4)
 abuses by racing an unfinished multiply.
 

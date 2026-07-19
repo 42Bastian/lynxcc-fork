@@ -2044,6 +2044,22 @@ static void hie_internal (const GenDesc* Ops,   /* List of generators */
                 Error ("Integer expression expected");
                 ED_MakeConstAbsInt (&Expr3, 1);
             }
+
+            /* The Suzy divider takes a 16-bit divisor, and by the time the
+            ** divisor's type is known its code has been emitted and the '!/'
+            ** consumed, so a fall-through to the software long division is
+            ** not possible in this one-pass parser. Truncating silently would
+            ** miscompile (a divisor of 0x10000 even becomes a divide by
+            ** zero), so a long divisor is a compile error; the parenthesized
+            ** spelling takes the standalone path, which handles longs.
+            ** Found by the phase-4 fork-diff review, see
+            ** design/LYNX_COMPILER_AUDIT_DESIGN.md sec. 9.
+            */
+            if (SizeOf (Expr3.Type) > SIZEOF_INT) {
+                Error ("The divisor of a fused '!*'/'!/' must be a 16-bit "
+                       "integer; write '(a !* b) !/ c' to divide by a long");
+                ED_MakeConstAbsInt (&Expr3, 1);
+            }
             LoadExpr (CF_NONE, &Expr3);
 
             /* Usual arithmetic conversions on 16-bit ints: the result is

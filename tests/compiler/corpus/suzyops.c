@@ -107,5 +107,28 @@ u32 t_suzyops (void)
         crc = crcstep (crc, (u32) (u16) (i16) (a !/ c));
         crc = crcstep (crc, (u32) (u16) (i16) (a / c));
     }
+
+    /* '!/' by a CONSTANT power of two strength-reduces to a shift, and a
+    ** bare arithmetic shift FLOORS - but '!/' must truncate toward zero
+    ** like the runtime divide (phase-4 fork-diff review finding F3,
+    ** design/LYNX_COMPILER_AUDIT_DESIGN.md sec. 9: g_suzydiv called g_asr
+    ** directly, so -7 !/ 2 gave -4 instead of -3). The oracle divides by
+    ** the same values loaded from a table, which defeats the constant
+    ** strength-reduction path and always takes the runtime divide.
+    */
+    {
+        static const i16 pd[4] = { 2, 4, 8, 256 };
+        for (i = 0; i < 6; ++i) {
+            i16 a = sv[i];
+            crc = crcstep (crc, (u32) (u16) (i16) (a !/ 2));
+            crc = crcstep (crc, (u32) (u16) (i16) (a / pd[0]));
+            crc = crcstep (crc, (u32) (u16) (i16) (a !/ 4));
+            crc = crcstep (crc, (u32) (u16) (i16) (a / pd[1]));
+            crc = crcstep (crc, (u32) (u16) (i16) (a !/ 8));
+            crc = crcstep (crc, (u32) (u16) (i16) (a / pd[2]));
+            crc = crcstep (crc, (u32) (u16) (i16) (a !/ 256));
+            crc = crcstep (crc, (u32) (u16) (i16) (a / pd[3]));
+        }
+    }
     return crc;
 }

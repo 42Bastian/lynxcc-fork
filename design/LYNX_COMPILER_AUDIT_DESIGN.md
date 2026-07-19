@@ -1,11 +1,11 @@
 # Compiler correctness audit — design
 
-Status: phases 1–3 IMPLEMENTED (2026-07-19) — harness, directed corpus,
+Status: phases 1–4 IMPLEMENTED (2026-07-19) — harness, directed corpus,
 upstream fix mining, and the lynxsmith generator are in `tests/compiler/`
 and wired into `tests/run.sh` as the "compiler audit" stage. All four
 findings logged in sec. 8 are FIXED (2026-07-19); `corpus/known/` is
-empty. Phases 4 (fork-diff review) and 5 (nightly-scale sweeps) remain
-open.
+empty. The phase-4 fork-diff review (T5) is done — three further findings,
+all FIXED, sec. 9. Phase 5 (nightly-scale sweeps) remains open.
 
 ## 1. Motivation
 
@@ -292,7 +292,67 @@ User-facing summary of the four findings: `doc/optlim.html` sec. 3.
 
 ### 8.3 Deliberately not done
 
-Phase 4 fork-diff review, phase 5 nightly seed sweeps, and porting of
-the "applies?" candidates in FIXES.md. (Findings 2–4 were fixed
-2026-07-19 following the sec. 5 workflow — each fix started from its
-XFAIL known-bug regression, and `corpus/known/` is now empty.)
+Phase 5 nightly seed sweeps, and porting of the "applies?" candidates in
+FIXES.md. (Findings 2–4 were fixed 2026-07-19 following the sec. 5
+workflow — each fix started from its XFAIL known-bug regression, and
+`corpus/known/` is now empty.)
+
+## 9. Phase-4 fork-diff review addendum (2026-07-19)
+
+The T5 checklist review of the section-A commits. All of `0d92ee308`
+(codegen/codeseg/codeent/codelab), `d2908f2a6`/`ad4095a6c` (Suzy
+operators + fused muldiv), `3675bcc1d` (cycle model + 65C02 peepholes),
+`f93733c8f` (TRB/TSB guard) and `503cbf87e` (`__zeropage`) were walked
+against the checklist (flag liveness, stale X/Y assumptions, StackPtr
+tracking, label refcounts after deletion, $FC00–$FDFF safety, operand
+evaluation order around the fused muldiv, volatile survival). Three
+findings, all FIXED 2026-07-19; regressions in
+`tests/compiler/forkdiff_t5.py` (shape/diagnostic-pinned, both findings
+F1/F2 reproduced against the pre-fix compiler) and
+`tests/compiler/corpus/suzyops.c` (F3, execution-checked).
+
+1. **F1 — `OptDeadCode` vs retained jump-table labels** (from
+   `0d92ee308`). The pass's self-jump exception deletes an unconditional
+   branch whose target label is attached to itself with one visible
+   reference. A `case k: for(;;);` body in a table-dispatched switch is
+   exactly that shape — but its case label is `CLF_RETAINED` (referenced
+   only from the rodata jump table), so the entry was deleted and the
+   label moved onto the following code: dispatching `k` fell into the
+   next case. Fixed by `CE_HasRetainedLabel` (`codeent.c`) guarding the
+   exception in `coptind.c`. The rest of the retention machinery
+   (`CS_MergeLabels`, `CS_MoveLabels`, `CS_RemoveLabelRef`,
+   `CS_IsBasicBlock`, `CS_GenRegInfo`) checked out, and a sweep found no
+   other pass justifying a deletion by visible-reference counting.
+
+2. **F2 — fused `a !* b !/ c` with a long divisor** (from `ad4095a6c`).
+   The fusion guard checks the factors' sizes but the divisor's type is
+   only known after the `!/` tokens are consumed and its code emitted, so
+   a `long` divisor was silently truncated to 16 bits (`c == 0x10000`
+   even became a divide by zero) — while §2.6.1 of
+   `design/LYNX_CODEGEN_DESIGN.md` claimed long operands fall through.
+   That claim is unimplementable for the divisor in a one-pass parser;
+   a long divisor is now a **compile error** with a hint to write
+   `(a !* b) !/ c`, which takes the standalone path and software long
+   division (with standalone 16-bit-product semantics). §2.6.1 corrected.
+
+3. **F3 — `!/` by a constant power of two floors for signed operands**
+   (from `d2908f2a6`). `g_suzydiv` strength-reduced through a direct
+   `g_asr` call, bypassing the signed truncation fixup that sec. 8
+   finding 1 added to `g_div`: `-7 !/ 2` gave `-4` instead of `-3`.
+   Fixed by delegating the constant-power-of-two case to `g_div`.
+
+Reviewed and found sound, for the record: the `g_switchtable` dispatch
+(range/density guards, `jmp (table,x)` parsed as `AM65_ZPX_IND` with
+`JumpTo == 0`, so the jmp→bra shortening and cascade passes cannot touch
+it), the `g_getind`/`g_putind`/`g_reglong`/`g_asr` stz rewrites (operand
+and flag effects verified in context; the runtime shift helpers load Y
+themselves), `Opt65C02StackOps` (inline bodies byte-equivalent to
+`incsp1.s`/`incsp2.s`, insertion indices and label motion correct, final
+flags identical), the cycle model's consumers (a wrong cost can only
+suppress or misjudge an optimization, not miscompile), the Suzy
+`FuncInfoTable` entries (masks match actual clobbers; `tmp2`/`tmp3` are
+untracked registers; `tossuzy[u]muldivax` is absent from the table and
+therefore worst-cased), synthesized RMW instructions (all zeropage
+except the guarded TRB/TSB rewrite), and `__zeropage` (zp objects appear
+as `AM65_ABS` to the optimizer — a safe overestimate for branch
+distance; zero-initialization is documented as not promised).

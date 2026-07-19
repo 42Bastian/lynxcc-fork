@@ -2858,10 +2858,17 @@ void g_suzydiv (unsigned flags, unsigned long val)
         return;
     }
 
-    /* Do strength reduction if the value is constant and a power of two */
+    /* Do strength reduction if the value is constant and a power of two.
+    ** Delegate to g_div, which contains the signed truncation fixup: a bare
+    ** arithmetic shift FLOORS, but '!/' truncates like '/' (the runtime
+    ** routine computes |a|/|b| and fixes the sign). Calling g_asr directly
+    ** here reintroduced audit finding 1 for '!/' - found by the phase-4
+    ** fork-diff review, see design/LYNX_COMPILER_AUDIT_DESIGN.md sec. 9.
+    */
     if ((flags & CF_CONST) && (p2 = PowerOf2 (val)) >= 0) {
-        /* Generate a shift instead */
-        g_asr (flags, p2);
+        /* g_div performs the same strength reduction with the fixup */
+        (void) p2;
+        g_div (flags, val);
     } else {
         /* Generate a division */
         if (flags & CF_CONST) {
